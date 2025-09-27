@@ -1,5 +1,109 @@
 # 📋 Telegram Bot Development Changelog
 
+## 2025-09-27 - Phase 5.1: Mastra Observability Integration 📊
+
+### 🎉 **COMPREHENSIVE OBSERVABILITY ACHIEVED**
+
+#### Mastra PinoLogger Integration ✅
+- **Structured Logging**: Replaced all console logging with Mastra's PinoLogger
+- **Correlation IDs**: Added distributed request tracing (`hc-{timestamp}-{id}`)
+- **Metadata Enrichment**: All logs include component, status, execution time
+- **Environment-specific Levels**: Debug/info/warn/error with proper categorization
+- **Health Check Context**: Special `healthCheck: true` flag for filtering
+
+#### Mastra-Specific Health Checkers ✅
+- **AgentHealthChecker**: Tests agent connectivity with real AI generation calls
+  - Validates agent availability and responsiveness
+  - Tracks response times and model provider information
+  - Tests with minimal "health check ping" messages
+  - 8-second timeout with retry logic
+
+- **WorkflowHealthChecker**: Validates workflow system integrity
+  - Checks workflow registration and instantiation capability
+  - Validates `createRunAsync` functionality without execution
+  - Monitors step count and workflow availability
+  - 5-second timeout for lightweight checks
+
+- **MemoryHealthChecker**: Tests Mastra memory system health
+  - Validates storage connectivity for memory operations
+  - Tests thread retrieval capabilities
+  - Monitors storage type and operational status
+  - 3-second timeout for database operations
+
+#### Enhanced Health Check Architecture ✅
+- **Request Correlation**: All health checks now include correlation IDs
+- **Performance Metrics**: Execution time tracking for all operations
+- **Retry Logic Enhancement**: Exponential backoff with structured logging
+- **Error Context**: Detailed error types and categorization
+- **Health Check Manager**: Centralized logging with metadata summaries
+
+#### Production Health Endpoints ✅
+- **`/health`**: Comprehensive health check with all Mastra components
+- **`/health/live`**: Lightweight liveness probe (essential checks only)
+- **`/health/ready`**: Readiness probe with component validation
+- **`/health/metrics`**: Detailed metrics for Prometheus/monitoring
+
+### 🔧 **Technical Implementation**
+
+#### Files Enhanced:
+- ✅ `src/health/healthCheck.ts` - Added 300+ lines of observability features
+  - Mastra logger integration with correlation IDs
+  - AgentHealthChecker, WorkflowHealthChecker, MemoryHealthChecker
+  - Enhanced BaseHealthChecker with structured logging methods
+  - HealthCheckManager with Mastra component discovery
+
+- ✅ `src/mastra/index.ts` - Health endpoint enhancements
+  - Logger injection into HealthCheckManager
+  - Mastra-specific component health validation
+  - Differentiated health checks per endpoint type
+
+#### Observability Features:
+- ✅ **Structured JSON Logging**: All health operations logged with metadata
+- ✅ **Distributed Tracing Ready**: Correlation IDs for request tracking
+- ✅ **Performance Monitoring**: Response times and execution metrics
+- ✅ **Component Discovery**: Automatic agent/workflow health checker creation
+- ✅ **Health Categorization**: External APIs + Mastra components + System metrics
+
+#### Health Check Coverage:
+- ✅ **External APIs**: Notion, Telegram, Invoice Generator, Google AI
+- ✅ **Mastra Components**: Agents, Workflows, Memory, Storage
+- ✅ **System Metrics**: CPU, Memory, Process statistics
+- ✅ **Request Tracing**: Correlation IDs and distributed logging
+
+---
+
+## 2025-09-27 - Phase 4: Production Health Checks ✅
+
+### 🏥 **PRODUCTION MONITORING ACHIEVED**
+
+#### Comprehensive Health Check System ✅
+- **Built production-ready framework** (`src/health/healthCheck.ts` - 600+ lines)
+- **Mastra 2025 Compliance**: Validated against official observability documentation
+- **Circuit Breaker Patterns**: Retry logic with exponential backoff
+- **HTTP Status Awareness**: Proper 200/503 responses with observability headers
+
+#### Health Check Endpoints ✅
+- **`/health`**: Overall system health with detailed service status
+- **`/health/live`**: Kubernetes/Docker liveness probe
+- **`/health/ready`**: Load balancer readiness probe with component validation
+- **`/health/metrics`**: Prometheus/monitoring metrics export
+
+#### External Service Monitoring ✅
+- **NotionHealthChecker**: API connectivity and response validation
+- **TelegramHealthChecker**: Bot API health with getMe endpoint
+- **InvoiceGeneratorHealthChecker**: PDF service availability
+- **GoogleAIHealthChecker**: LLM API connectivity with models endpoint
+- **StorageHealthChecker**: Database/LibSQL connectivity validation
+
+#### Production Features ✅
+- **Parallel Execution**: All health checks run concurrently for performance
+- **Status Aggregation**: Intelligent overall health calculation
+- **System Metrics**: Memory, CPU, process information
+- **Response Headers**: X-Health-Status, X-Health-Timestamp, Cache-Control
+- **Environment Detection**: Development vs production configurations
+
+---
+
 ## 2025-09-27 - Major Infrastructure & Validation System
 
 ### 🎉 **MAJOR ACHIEVEMENTS**
