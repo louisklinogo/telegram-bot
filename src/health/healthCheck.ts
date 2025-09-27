@@ -46,17 +46,19 @@ export interface HealthStatus {
 
 /**
  * Base health checker class with retry logic and timeout handling
- * Integrated with Mastra's PinoLogger for structured logging
+ * Integrated with Mastra's PinoLogger for structured logging and OpenTelemetry tracing
  */
 abstract class BaseHealthChecker {
   protected timeout: number;
   protected retries: number;
   protected logger?: any; // Mastra logger instance
+  protected tracer?: any; // OpenTelemetry tracer
 
-  constructor(timeout = 5000, retries = 2, logger?: any) {
+  constructor(timeout = 5000, retries = 2, logger?: any, tracer?: any) {
     this.timeout = timeout;
     this.retries = retries;
     this.logger = logger;
+    this.tracer = tracer;
   }
 
   /**
@@ -101,24 +103,38 @@ abstract class BaseHealthChecker {
     }
   }
 
-  abstract check(): Promise<HealthCheckResult>;
+  protected abstract checkHealth(): Promise<HealthCheckResult>;
 
   /**
    * Execute health check with timeout and retry logic
-   * Integrated with Mastra's PinoLogger for structured logging
+   * Integrated with Mastra's PinoLogger for structured logging and OpenTelemetry tracing
    */
   public async executeWithRetry(): Promise<HealthCheckResult> {
     let lastError: Error | undefined;
     const correlationId = this.generateCorrelationId();
     const componentName = this.constructor.name.replace('HealthChecker', '').toLowerCase();
 
-    // Log health check start
-    this.logInfo('Health check started', {
-      correlationId,
-      component: componentName,
-      timeout: this.timeout,
-      maxRetries: this.retries
+    // Create OpenTelemetry span for tracing
+    const span = this.tracer?.startSpan(`health_check.${componentName}`, {
+      attributes: {
+        'health.check.component': componentName,
+        'health.check.correlation_id': correlationId,
+        'health.check.timeout': this.timeout,
+        'health.check.max_retries': this.retries,
+        'service.name': 'cimantikos-telegram-bot',
+        'operation.name': 'health_check'
+      }
     });
+
+    try {
+      // Log health check start
+      this.logInfo('Health check started', {
+        correlationId,
+        component: componentName,
+        timeout: this.timeout,
+        maxRetries: this.retries,
+        traceId: span?.spanContext().traceId
+      });
 
     for (let attempt = 0; attempt <= this.retries; attempt++) {
       try {
@@ -131,7 +147,7 @@ abstract class BaseHealthChecker {
 
         // Race between health check and timeout
         const result = await Promise.race([
-          this.check(),
+          this.checkHealth(),
           timeoutPromise
         ]);
 
@@ -148,8 +164,19 @@ abstract class BaseHealthChecker {
           status: result.status,
           responseTime,
           attempt: attempt + 1,
-          maxRetries: this.retries + 1
+          maxRetries: this.retries + 1,
+          traceId: span?.spanContext().traceId
         });
+
+        // Update span with success attributes
+        span?.setAttributes({
+          'health.check.status': result.status,
+          'health.check.response_time_ms': responseTime,
+          'health.check.attempts': attempt + 1,
+          'health.check.success': true
+        });
+        span?.setStatus({ code: 1 }); // OK status
+        span?.end();
 
         return result;
       } catch (error) {
@@ -161,6 +188,14 @@ abstract class BaseHealthChecker {
           component: componentName,
           attempt: attempt + 1,
           maxRetries: this.retries + 1,
+          error: lastError.message,
+          errorType: lastError.constructor.name,
+          traceId: span?.spanContext().traceId
+        });
+        
+        // Add attempt failure to span
+        span?.addEvent('health_check_attempt_failed', {
+          attempt: attempt + 1,
           error: lastError.message,
           errorType: lastError.constructor.name
         });
@@ -187,8 +222,21 @@ abstract class BaseHealthChecker {
       component: componentName,
       totalAttempts: this.retries + 1,
       finalError: lastError?.message || 'Unknown error',
-      errorType: lastError?.constructor.name || 'Unknown'
+      errorType: lastError?.constructor.name || 'Unknown',
+      traceId: span?.spanContext().traceId
     });
+
+    // Update span with failure attributes
+    span?.setAttributes({
+      'health.check.status': 'unhealthy',
+      'health.check.attempts': this.retries + 1,
+      'health.check.success': false,
+      'health.check.error': lastError?.message || 'Unknown error',
+      'health.check.error_type': lastError?.constructor.name || 'Unknown'
+    });
+    span?.recordException(lastError || new Error('Health check failed'));
+    span?.setStatus({ code: 2, message: lastError?.message }); // ERROR status
+    span?.end();
 
     return {
       name: componentName,
@@ -199,7 +247,17 @@ abstract class BaseHealthChecker {
       attempts: this.retries + 1,
       timestamp: new Date().toISOString()
     };
+  } catch (spanError) {
+    // Ensure span is ended even if there's an error in span handling
+    span?.recordException(spanError);
+    span?.setStatus({ code: 2, message: 'Span handling error' });
+    span?.end();
+    
+    // Re-throw the original error or span error
+    throw lastError || spanError;
+    }
   }
+
 }
 
 /**
@@ -208,12 +266,12 @@ abstract class BaseHealthChecker {
 export class NotionHealthChecker extends BaseHealthChecker {
   private apiKey: string;
 
-  constructor(apiKey: string, logger?: any) {
-    super(5000, 2, logger); // 5 second timeout, 2 retries
+  constructor(apiKey: string, logger?: any, tracer?: any) {
+    super(5000, 2, logger, tracer); // 5 second timeout, 2 retries
     this.apiKey = apiKey;
   }
 
-  async check(): Promise<HealthCheckResult> {
+  async checkHealth(): Promise<HealthCheckResult> {
     try {
       const response = await fetch('https://api.notion.com/v1/users/me', {
         method: 'GET',
@@ -250,12 +308,12 @@ export class NotionHealthChecker extends BaseHealthChecker {
 export class InvoiceGeneratorHealthChecker extends BaseHealthChecker {
   private apiKey: string;
 
-  constructor(apiKey: string, logger?: any) {
-    super(5000, 2, logger);
+  constructor(apiKey: string, logger?: any, tracer?: any) {
+    super(5000, 2, logger, tracer);
     this.apiKey = apiKey;
   }
 
-  async check(): Promise<HealthCheckResult> {
+  async checkHealth(): Promise<HealthCheckResult> {
     try {
       // Test endpoint - using a minimal request to check API health
       const response = await fetch('https://invoice-generator.com/developers', {
@@ -293,12 +351,12 @@ export class InvoiceGeneratorHealthChecker extends BaseHealthChecker {
 export class TelegramHealthChecker extends BaseHealthChecker {
   private botToken: string;
 
-  constructor(botToken: string, logger?: any) {
-    super(5000, 2, logger);
+  constructor(botToken: string, logger?: any, tracer?: any) {
+    super(5000, 2, logger, tracer);
     this.botToken = botToken;
   }
 
-  async check(): Promise<HealthCheckResult> {
+  async checkHealth(): Promise<HealthCheckResult> {
     try {
       const response = await fetch(`https://api.telegram.org/bot${this.botToken}/getMe`, {
         method: 'GET',
@@ -333,12 +391,12 @@ export class TelegramHealthChecker extends BaseHealthChecker {
 export class StorageHealthChecker extends BaseHealthChecker {
   private storage: any; // MastraStorage type from Mastra
 
-  constructor(storage: any, logger?: any) {
-    super(3000, 1, logger); // Shorter timeout for database checks
+  constructor(storage: any, logger?: any, tracer?: any) {
+    super(3000, 1, logger, tracer); // Shorter timeout for database checks
     this.storage = storage;
   }
 
-  async check(): Promise<HealthCheckResult> {
+  async checkHealth(): Promise<HealthCheckResult> {
     if (!this.storage) {
       return {
         name: 'storage',
@@ -376,12 +434,12 @@ export class StorageHealthChecker extends BaseHealthChecker {
 export class GoogleAIHealthChecker extends BaseHealthChecker {
   private apiKey: string;
 
-  constructor(apiKey: string, logger?: any) {
-    super(10000, 2, logger); // Longer timeout for AI APIs
+  constructor(apiKey: string, logger?: any, tracer?: any) {
+    super(10000, 2, logger, tracer); // Longer timeout for AI APIs
     this.apiKey = apiKey;
   }
 
-  async check(): Promise<HealthCheckResult> {
+  async checkHealth(): Promise<HealthCheckResult> {
     try {
       // Use the models list endpoint to check API health
       const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${this.apiKey}`, {
@@ -416,13 +474,13 @@ export class AgentHealthChecker extends BaseHealthChecker {
   private mastraInstance: any;
   private agentName: string;
 
-  constructor(mastraInstance: any, agentName: string, logger?: any) {
-    super(8000, 2, logger); // 8 second timeout for agent responses
+  constructor(mastraInstance: any, agentName: string, logger?: any, tracer?: any) {
+    super(8000, 2, logger, tracer); // 8 second timeout for agent responses
     this.mastraInstance = mastraInstance;
     this.agentName = agentName;
   }
 
-  async check(): Promise<HealthCheckResult> {
+  async checkHealth(): Promise<HealthCheckResult> {
     try {
       const agent = this.mastraInstance.getAgent(this.agentName);
       
@@ -482,13 +540,13 @@ export class WorkflowHealthChecker extends BaseHealthChecker {
   private mastraInstance: any;
   private workflowName: string;
 
-  constructor(mastraInstance: any, workflowName: string, logger?: any) {
-    super(5000, 2, logger); // 5 second timeout for workflow checks
+  constructor(mastraInstance: any, workflowName: string, logger?: any, tracer?: any) {
+    super(5000, 2, logger, tracer); // 5 second timeout for workflow checks
     this.mastraInstance = mastraInstance;
     this.workflowName = workflowName;
   }
 
-  async check(): Promise<HealthCheckResult> {
+  async checkHealth(): Promise<HealthCheckResult> {
     try {
       const workflow = this.mastraInstance.getWorkflow(this.workflowName);
       
@@ -539,12 +597,12 @@ export class WorkflowHealthChecker extends BaseHealthChecker {
 export class MemoryHealthChecker extends BaseHealthChecker {
   private mastraInstance: any;
 
-  constructor(mastraInstance: any, logger?: any) {
-    super(3000, 2, logger); // 3 second timeout for memory checks
+  constructor(mastraInstance: any, logger?: any, tracer?: any) {
+    super(3000, 2, logger, tracer); // 3 second timeout for memory checks
     this.mastraInstance = mastraInstance;
   }
 
-  async check(): Promise<HealthCheckResult> {
+  async checkHealth(): Promise<HealthCheckResult> {
     try {
       const storage = this.mastraInstance.getStorage();
       
@@ -627,10 +685,12 @@ export class HealthCheckManager {
   private checkers: BaseHealthChecker[] = [];
   private startTime: number;
   private logger?: any;
+  private tracer?: any;
 
-  constructor(logger?: any) {
+  constructor(logger?: any, tracer?: any) {
     this.startTime = Date.now();
     this.logger = logger;
+    this.tracer = tracer;
   }
 
   /**
@@ -652,19 +712,19 @@ export class HealthCheckManager {
 
     // Add Notion checker if API key is available
     if (env.NOTION_API_KEY) {
-      this.checkers.push(new NotionHealthChecker(env.NOTION_API_KEY, this.logger));
+      this.checkers.push(new NotionHealthChecker(env.NOTION_API_KEY, this.logger, this.tracer));
       this.logInfo('Added Notion health checker');
     }
 
     // Add Invoice Generator checker if API key is available
     if (env.INVOICE_GENERATOR_API_KEY) {
-      this.checkers.push(new InvoiceGeneratorHealthChecker(env.INVOICE_GENERATOR_API_KEY, this.logger));
+      this.checkers.push(new InvoiceGeneratorHealthChecker(env.INVOICE_GENERATOR_API_KEY, this.logger, this.tracer));
       this.logInfo('Added Invoice Generator health checker');
     }
 
     // Add Telegram checker if bot token is available
     if (env.TELEGRAM_BOT_TOKEN) {
-      this.checkers.push(new TelegramHealthChecker(env.TELEGRAM_BOT_TOKEN, this.logger));
+      this.checkers.push(new TelegramHealthChecker(env.TELEGRAM_BOT_TOKEN, this.logger, this.tracer));
       this.logInfo('Added Telegram health checker');
     }
 
@@ -672,7 +732,8 @@ export class HealthCheckManager {
     if (env.GOOGLE_API_KEY || env.GOOGLE_GENERATIVE_AI_API_KEY) {
       this.checkers.push(new GoogleAIHealthChecker(
         env.GOOGLE_GENERATIVE_AI_API_KEY || env.GOOGLE_API_KEY!,
-        this.logger
+        this.logger,
+        this.tracer
       ));
       this.logInfo('Added Google AI health checker');
     }
@@ -686,7 +747,7 @@ export class HealthCheckManager {
    * Add storage health checker (called from Mastra context)
    */
   addStorageChecker(storage: any) {
-    this.checkers.push(new StorageHealthChecker(storage, this.logger));
+    this.checkers.push(new StorageHealthChecker(storage, this.logger, this.tracer));
     this.logInfo('Added storage health checker', {
       storageType: storage?.constructor.name || 'unknown'
     });
@@ -701,19 +762,19 @@ export class HealthCheckManager {
     // Add agent health checkers for registered agents
     const agents = mastraInstance.getAgents();
     Object.keys(agents).forEach(agentName => {
-      this.checkers.push(new AgentHealthChecker(mastraInstance, agentName, this.logger));
+      this.checkers.push(new AgentHealthChecker(mastraInstance, agentName, this.logger, this.tracer));
       this.logInfo('Added agent health checker', { agentName });
     });
 
     // Add workflow health checkers for registered workflows  
     const workflows = mastraInstance.getWorkflows();
     Object.keys(workflows).forEach(workflowName => {
-      this.checkers.push(new WorkflowHealthChecker(mastraInstance, workflowName, this.logger));
+      this.checkers.push(new WorkflowHealthChecker(mastraInstance, workflowName, this.logger, this.tracer));
       this.logInfo('Added workflow health checker', { workflowName });
     });
 
     // Add memory system health checker
-    this.checkers.push(new MemoryHealthChecker(mastraInstance, this.logger));
+    this.checkers.push(new MemoryHealthChecker(mastraInstance, this.logger, this.tracer));
     this.logInfo('Added memory health checker');
 
     this.logInfo('Mastra-specific health checkers added', {

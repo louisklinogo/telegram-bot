@@ -1,1 +1,185 @@
 1. Remember to add semantic recall and working memory func for the agents .. lets check what what vector store options we have available
+
+2.I got this error whilst testing our implementation:
+ mastra  0.13.2-alpha.4 ready in 14440 ms
+
+│ Playground: http://0.0.0.0:4111/
+│ API:        http://0.0.0.0:4111/api
+
+◯ watching for file changes...
+Measurement validation results: 📊 MEASUREMENT VALIDATION SUMMARY:
+✅ Valid measurements: 9/9
+
+Created new client: 27bd63b0-1370-8140-a4dc-df8aaefd96a3
+Measurement created: 27bd63b0-1370-81bf-9fc2-d998f202b825
+WARN [2025-09-27 20:06:40.619 +0000] (Cimantikos-Bot): Tool input validation failed for 'notionOrdersTool'
+    toolName: "notionOrdersTool"
+    errors: {
+      "_errors": [],
+      "invoice_file_url": {
+        "_errors": [
+          "Expected string, received null"
+        ]
+      }
+    }
+    args: {
+      "items": [
+        {
+          "unit_cost": 1000,
+          "name": "Black kaftan",
+          "quantity": 1,
+          "total_cost": 1000
+        },
+        {
+          "unit_cost": 500,
+          "quantity": 1,
+          "total_cost": 500,
+          "name": "Ankara shirt"
+        }
+      ],
+      "phone_number": "0206589477",
+      "customer_name": "Adwoa Noella",
+      "invoice_file_url": null,
+      "total_price": 1500
+    }
+Error generating invoice: Error: Invoice generation failed: 400 - {"error":"The option 'total_cost' does not exist. Defined options are: 'description', 'name', 'quantity', 'unit_cost'."}
+    at execute (file:///C:/Users/louis/Projects/invoice/telegram-bot/.mastra/output/index.mjs:166:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async execFunction (file:///C:/Users/louis/Projects/invoice/telegram-bot/node_modules/@mastra/core/dist/chunk-SQFVIROI.js:645:20)    
+    at async Immediate.<anonymous> (file:///C:/Users/louis/Projects/invoice/telegram-bot/node_modules/@mastra/core/dist/chunk-SQFVIROI.js:693:30)
+Error result validation failed: ZodError: [
+  {
+    "code": "invalid_type",
+    "expected": "string",
+    "received": "undefined",
+    "path": [
+      "message"
+    ],
+    "message": "Required"
+  }
+]
+    at get error (file:///C:/Users/louis/Projects/invoice/telegram-bot/node_modules/zod/v3/types.js:39:31)
+    at execute (file:///C:/Users/louis/Projects/invoice/telegram-bot/.mastra/output/index.mjs:225:74)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async execFunction (file:///C:/Users/louis/Projects/invoice/telegram-bot/node_modules/@mastra/core/dist/chunk-SQFVIROI.js:645:20)    
+    at async Immediate.<anonymous> (file:///C:/Users/louis/Projects/invoice/telegram-bot/node_modules/@mastra/core/dist/chunk-SQFVIROI.js:693:30) {
+  issues: [
+    {
+      code: 'invalid_type',
+      expected: 'string',
+      received: 'undefined',
+      path: [Array],
+      message: 'Required'
+    }
+  ],
+  addIssue: [Function (anonymous)],
+  addIssues: [Function (anonymous)],
+  errors: [
+    {
+      code: 'invalid_type',
+      expected: 'string',
+      received: 'undefined',
+      path: [Array],
+      message: 'Required'
+    }
+  ]
+}
+ERROR [2025-09-27 20:06:49.081 +0000] (invoiceGenerator): [Agent:Cimantikós Telegram Bot] - Failed tool execution
+    runId: "telegramInvoiceAgent"
+    threadId: "1b498419-0432-4b61-b60d-96bca6f1ccb7"
+    resourceId: "telegramInvoiceAgent"
+    agentName: "Cimantikós Telegram Bot"
+    tracingContext: {
+      "currentSpan": {
+        "aiTracing": {
+          "component": "AI_TRACING",
+          "config": {
+            "exporters": [
+              "[Object]",
+              "[Object]"
+            ],
+            "includeInternalSpans": false,
+            "name": "default",
+            "processors": [
+              "[Object]"
+            ],
+            "sampling": {
+              "type": "always"
+            },
+            "serviceName": "mastra"
+          },
+          "logger": {
+            "level": "info",
+            "logger": {
+              "levels": "[Object]"
+            },
+            "name": "Cimantikos-Bot",
+            "transports": {}
+          },
+          "name": "mastra"
+        },
+        "attributes": {
+          "agentId": "Cimantikós Telegram Bot",
+          "instructions": "\n    You are a helpful assistant for Cimantikós Clothing Company's Telegram bot.\n    \n    You specialize in two main business functions:\n    \n    📝 INVOICE GENERATION:\n    When you receive messages containing customer orders with items and prices:\n    - Example: \"Adwoa Noella Black kaftan : 1000cedis Ankara shirt 500cedis +233 24 135 7090\"\n    - Extract customer name, items with prices, and phone number\n    - Use the invoiceGenerator tool to create a professional PDF invoice\n    - Update the Notion database with order details using notionOrdersTool\n    - Confirm successful invoice creation with the customer\n    \n    📏 MEASUREMENT RECORDING:\n    When you receive messages with body measurements and abbreviations:\n    - Example: \"CH 39 ST 33 SL 23 SH 17 LT 27/31 RD 13/15 NK 16 WT 30.5 Kofi\"\n    - IMPORTANT: Validate all measurements using these rules:\n    \n    DUAL ENTRIES (Based on Notion Database):\n    - LT: If two values (e.g., \"LT 31/37\"), first is Top Length, second is Trouser Length\n    - RD: If two values (e.g., \"RD 15/16\"), first is Bicep Round, second is Ankle Round\n    - Single LT defaults to Top Length (LT)\n    - Single RD defaults to Bicep Round (RD)\n    \n    NOTION FIELD MAPPINGS & REALISTIC RANGES:\n    - CH = Chest (CH): 20-70\"\n    - SH = Shoulder (SH): 10-30\"\n    - SL = Sleeve Length (SL): 12-40\"\n    - WT = Waist (WT): 16-60\"\n    - HP = Hip (HP): 20-65\"\n    - LP = Lap (LP): 18-45\"\n    - CF = Calf (CF): 8-25\"\n    - NK = Neck (NK): 8-25\"\n    - ST = Stomach (ST): 18-65\"\n    \n    VALIDATION RULES:\n    1. All measurements must be positive numbers within realistic ranges\n    2. Essential measurements: Chest (CH), Stomach (ST), Sleeve Length (SL), Shoulder (SH)\n    3. Dual entries like \"LT 31/37\" create separate records: Top Length=31, Trouser Length=37\n    4. Ask for clarification if measurements seem unrealistic or outside ranges\n    5. Always confirm the customer name and validate before saving\n    \n    - Extract customer name (usually at the end of the message)\n    - Use notionMeasurementsTool to record measurements in the database\n    - Provide detailed confirmation showing which measurements were recorded\n    \n    🎆 GENERAL GUIDELINES:\n    - Always be professional, friendly, and helpful\n    - If information is unclear or missing, politely ask for clarification\n    - Provide clear confirmations after completing any task\n    - Guide users on proper message formats if needed\n    - Handle errors gracefully and suggest solutions\n    - For measurements, always validate data integrity before saving\n    \n    Use your available tools to complete these tasks efficiently and always keep the customer informed of progress.\n  "
+        },
+        "id": "af54d18694796cf3",
+        "input": [
+          {
+            "content": "0206589477",
+            "role": "user"
+          }
+        ],
+        "isEvent": false,
+        "isInternal": false,
+        "metadata": {
+          "resourceId": "telegramInvoiceAgent",
+          "runId": "telegramInvoiceAgent",
+          "threadId": "1b498419-0432-4b61-b60d-96bca6f1ccb7"
+        },
+        "name": "agent run: 'Cimantikós Telegram Bot'",
+        "startTime": "2025-09-27T20:06:31.712Z",
+        "traceId": "b77afe3a294173dac91a166e865eebda",
+        "type": "agent_run"
+      }
+    }
+    model: {
+      "specificationVersion": "v2",
+      "modelId": "gemini-2.5-pro",
+      "config": {
+        "provider": "google.generative-ai",
+        "baseURL": "https://generativelanguage.googleapis.com/v1beta"
+      }
+    }
+    requireApproval: false
+    description: "Generate PDF invoices using Invoice-Generator.com API"
+    args: {
+      "customer_name": "Adwoa Noella",
+      "phone_number": "0206589477",
+      "items": [
+        {
+          "quantity": 1,
+          "name": "Black kaftan",
+          "unit_cost": 1000
+        },
+        {
+          "quantity": 1,
+          "name": "Ankara shirt",
+          "unit_cost": 500
+        }
+      ]
+    }
+    error: {
+      "message": "Internal error validation error",
+      "details": {
+        "message": "Internal error validation error",
+        "domain": "TOOL",
+        "category": "USER",
+        "details": {
+          "errorMessage": "[Agent:Cimantikós Telegram Bot] - Failed tool execution",
+          "argsJson": "{\"customer_name\":\"Adwoa Noella\",\"phone_number\":\"0206589477\",\"items\":[{\"quantity\":1,\"name\":\"Black kaftan\",\"unit_cost\":1000},{\"quantity\":1,\"name\":\"Ankara shirt\",\"unit_cost\":500}]}",
+          "model": "gemini-2.5-pro"
+        }
+      },
+      "code": "TOOL_EXECUTION_FAILED"
+    }
+

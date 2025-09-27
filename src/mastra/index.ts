@@ -27,6 +27,21 @@ export const mastra = new Mastra({
     name: 'Cimantikos-Bot', 
     level: 'info' 
   }),
+  // OpenTelemetry tracing configuration for observability
+  telemetry: {
+    serviceName: 'cimantikos-telegram-bot',
+    enabled: true,
+    sampling: {
+      type: 'always_on', // Sample all traces for comprehensive health monitoring
+    },
+    export: {
+      type: 'console', // Start with console for development, can be configured for production
+    },
+  },
+  // AI Tracing for enhanced observability of agent and workflow operations
+  observability: {
+    default: { enabled: true }, // Enables DefaultExporter and CloudExporter
+  },
   server: {
     port: 4111,
     host: '0.0.0.0',
@@ -46,8 +61,12 @@ export const mastra = new Mastra({
           const mastraInstance = c.get('mastra');
           const logger = mastraInstance.getLogger();
           
-          // Initialize health check manager with Mastra logger for structured logging
-          const healthManager = new HealthCheckManager(logger);
+          // Get OpenTelemetry tracer for health check tracing (if available)
+          // Note: Mastra may not expose tracer directly, so we'll work without it for now
+          const tracer = null; // TODO: Integrate with Mastra's tracing system when available
+          
+          // Initialize health check manager with Mastra logger and tracer
+          const healthManager = new HealthCheckManager(logger, tracer);
           healthManager.initializeCheckers();
           
           // Add storage checker using Mastra's documented getStorage() method
@@ -70,7 +89,8 @@ export const mastra = new Mastra({
         handler: async (c) => {
           const mastraInstance = c.get('mastra');
           const logger = mastraInstance.getLogger();
-          const healthManager = new HealthCheckManager(logger);
+          const tracer = null; // TODO: Integrate with Mastra's tracing system when available
+          const healthManager = new HealthCheckManager(logger, tracer);
           healthManager.initializeCheckers();
           
           // Add essential checkers for liveness probe (lighter checks)
@@ -146,7 +166,8 @@ export const mastra = new Mastra({
         handler: async (c) => {
           const mastraInstance = c.get('mastra');
           const logger = mastraInstance.getLogger();
-          const healthManager = new HealthCheckManager(logger);
+          const tracer = null; // TODO: Integrate with Mastra's tracing system when available
+          const healthManager = new HealthCheckManager(logger, tracer);
           healthManager.initializeCheckers();
           
           const storage = mastraInstance.getStorage();
