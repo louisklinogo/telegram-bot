@@ -1,12 +1,14 @@
 import { createTool } from '@mastra/core/tools';
 import { z } from 'zod';
-import { Bot } from 'grammy';
+import { Bot, Context } from 'grammy';
 
 // Global bot instance (will be initialized in the main application)
-let botInstance: Bot | null = null;
+// Use generic constraint to allow different context types
+let botInstance: Bot<Context> | null = null;
 
-export const setBotInstance = (bot: Bot) => {
-  botInstance = bot;
+export const setBotInstance = <T extends Context>(bot: Bot<T>) => {
+  // Safe type coercion - we only use bot.api which is compatible across context types
+  botInstance = bot as unknown as Bot<Context>;
 };
 
 export const getBotInstance = () => botInstance;
@@ -71,15 +73,25 @@ export const sendTextMessage = async (
     reply_to_message_id?: number;
   }
 ) => {
-  return grammyHandler?.execute({
-    context: {
-      chat_id,
-      text,
-      ...options,
-    },
-    runtimeContext: {} as any,
-    suspend: async () => {},
-  });
+  try {
+    // grammyHandler is a constant created by createTool, so execute is guaranteed to exist
+    const tool = grammyHandler as typeof grammyHandler & { execute: NonNullable<typeof grammyHandler.execute> };
+    return await tool.execute({
+      context: {
+        chat_id,
+        text,
+        ...options,
+      },
+      runtimeContext: {} as any,
+      suspend: async () => {},
+    });
+  } catch (error) {
+    console.error('Error executing grammy handler:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error occurred',
+    };
+  }
 };
 
 export const sendSuccessMessage = async (chat_id: number, text: string) => {

@@ -78,7 +78,7 @@ class TelegramApiClient {
 
 // Create bot instance with proper separation of concerns
 export const createTelegramBot = (token: string): Bot<GrammyContext> => {
-  const bot = new Bot(token);
+  const bot = new Bot<GrammyContext>(token);
   const apiClient = new TelegramApiClient();
 
   // Apply session middleware

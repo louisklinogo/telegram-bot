@@ -86,7 +86,7 @@ app.get('/agent/status', async (c) => {
       success: true,
       agent: {
         name: agent.name,
-        description: agent.description || 'N/A',
+        description: agent.getDescription() || 'N/A',
         available: true
       }
     });

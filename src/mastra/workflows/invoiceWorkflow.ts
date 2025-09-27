@@ -185,7 +185,7 @@ export const invoiceWorkflow = createWorkflow({
     if (generateResult.status === 'error') {
       // Invoice generation failed - execute fallback
       const fallbackId = `FALLBACK_${Date.now()}_${initData.customer_name.replace(/[^a-zA-Z0-9]/g, '')}`;
-      const totalAmount = initData.items.reduce((sum: number, item) => sum + (item.unit_cost * item.quantity), 0);
+      const totalAmount = initData.items.reduce((sum: number, item: { name: string; quantity: number; unit_cost: number }) => sum + (item.unit_cost * item.quantity), 0);
       
       const fallbackMessage = `
 ⚠️ *Invoice Service Temporarily Unavailable*
@@ -195,7 +195,7 @@ export const invoiceWorkflow = createWorkflow({
 *Total Amount:* GHS ${totalAmount}
 
 📋 *Items:*
-${initData.items.map((item) => `• ${item.name}: ${item.quantity} × GHS ${item.unit_cost}`).join('\n')}
+${initData.items.map((item: { name: string; quantity: number; unit_cost: number }) => `• ${item.name}: ${item.quantity} × GHS ${item.unit_cost}`).join('\n')}
 
 📝 Your order has been recorded. We'll generate the formal invoice shortly and send it to you.
 

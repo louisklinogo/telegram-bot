@@ -108,7 +108,7 @@ export const notionInvoicesTool = createTool({
 
       // Add optional properties if provided
       if (payment_method) {
-        invoiceData.properties['Payment Method'] = {
+        (invoiceData.properties as any)['Payment Method'] = {
           select: {
             name: payment_method,
           },
@@ -116,7 +116,7 @@ export const notionInvoicesTool = createTool({
       }
 
       if (invoice_pdf_url) {
-        invoiceData.properties['Invoice PDF'] = {
+        (invoiceData.properties as any)['Invoice PDF'] = {
           url: invoice_pdf_url,
         };
       }

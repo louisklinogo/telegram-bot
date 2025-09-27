@@ -225,6 +225,7 @@ export function createRateLimitMiddleware(config: Partial<RateLimitConfig> = {})
     for (const blockKey of blockKeys) {
       if (await store.isBlocked(blockKey)) {
         await logSecurityEvent({
+          timestamp: Math.floor(Date.now() / 1000),
           event_type: 'rate_limit_exceeded',
           severity: 'high',
           user_id: userId,
@@ -255,6 +256,7 @@ export function createRateLimitMiddleware(config: Partial<RateLimitConfig> = {})
           await store.recordViolation(`block:user:${userId}`);
           
           await logSecurityEvent({
+            timestamp: Math.floor(Date.now() / 1000),
             event_type: 'rate_limit_exceeded',
             severity: 'medium',
             user_id: userId,
@@ -262,8 +264,8 @@ export function createRateLimitMiddleware(config: Partial<RateLimitConfig> = {})
             user_agent: userAgent,
             additional_info: {
               limit_type: 'user',
-              count: userCount,
-              limit: finalConfig.userLimit
+              count: userCount.toString(),
+              limit: finalConfig.userLimit.toString()
             }
           });
 
@@ -296,6 +298,7 @@ export function createRateLimitMiddleware(config: Partial<RateLimitConfig> = {})
         await store.recordViolation(`block:ip:${ip}`);
         
         await logSecurityEvent({
+          timestamp: Math.floor(Date.now() / 1000),
           event_type: 'rate_limit_exceeded',
           severity: 'high',
           user_id: userId,
@@ -303,8 +306,8 @@ export function createRateLimitMiddleware(config: Partial<RateLimitConfig> = {})
           user_agent: userAgent,
           additional_info: {
             limit_type: 'global',
-            count: globalCount,
-            limit: finalConfig.globalLimit
+            count: globalCount.toString(),
+            limit: finalConfig.globalLimit.toString()
           }
         });
 
@@ -336,6 +339,7 @@ export function createRateLimitMiddleware(config: Partial<RateLimitConfig> = {})
       // Log slow requests as potential security issues
       if (duration > 5000) { // 5 seconds
         await logSecurityEvent({
+          timestamp: Math.floor(Date.now() / 1000),
           event_type: 'suspicious_content',
           severity: 'low',
           user_id: userId,
@@ -354,6 +358,7 @@ export function createRateLimitMiddleware(config: Partial<RateLimitConfig> = {})
       console.error('Rate limiting middleware error:', error);
       
       await logSecurityEvent({
+        timestamp: Math.floor(Date.now() / 1000),
         event_type: 'malformed_request',
         severity: 'medium',
         user_id: userId,

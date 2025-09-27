@@ -286,81 +286,84 @@ const result = await testTool.execute({
 ---
 
 ## 📊 Phase 4: Performance & Monitoring (Week 4-5)
-**Status:** 🔴 Not Started  
-**Progress:** 0/8 tasks completed  
-**Priority:** MEDIUM - Optimize for production workloads
+**Status:** 🟡 In Progress  
+**Progress:** 0/6 tasks completed  
+**Priority:** HIGH - Production readiness and observability
 
-### 4.1 Performance Optimization
+> **Updated for 2025**: Focus on observability, real API monitoring, and production-grade logging
 
-#### Task 4.1.1: Memory Management
-- [ ] **Fix memory leaks**
-  - Remove agent creation in processors (already covered in Phase 1)
-  - Implement proper garbage collection
-  - Monitor memory usage with tools
+### 4.1 Production Health & Monitoring
 
-- [ ] **Optimize context window management**
-  - Limit conversation history sent to agents
-  - Implement smart context pruning
-  - Cache frequently used context
+#### Task 4.1.1: Comprehensive Health Check System
+- [ ] **Implement production health check endpoints**
+  - Create `/health` endpoint with memory usage, uptime, and service status
+  - Monitor external service dependencies (Notion, Invoice Generator, Telegram API)
+  - Add response time metrics and dependency health checks
+  - Follow 2025 observability patterns with structured JSON responses
 
-#### Task 4.1.2: Async Operations
-- [ ] **Convert blocking operations to async**
-  - Review all file operations
-  - Make all database operations async
-  - Implement proper async error handling
+#### Task 4.1.2: Structured Logging Foundation
+- [ ] **Set up Pino logger with 2025 standards**
+  - Implement Pino logger with correlation IDs for request tracing
+  - Add environment-specific log levels (dev/prod configurations)
+  - Structure JSON logging for production monitoring and debugging
+  - Include performance metrics and request/response logging
 
-### 4.2 Monitoring & Observability
+### 4.2 Performance Monitoring & Optimization
 
-#### Task 4.2.1: Logging & Monitoring
-- [ ] **Implement structured logging**
-  - Use Pino logger with proper log levels
-  - Add correlation IDs for request tracking
-  - Log performance metrics
+#### Task 4.2.1: Memory & Resource Monitoring
+- [ ] **Add comprehensive memory usage tracking**
+  - Implement memory usage monitoring and garbage collection metrics
+  - Add context window management for AI agents (conversation history optimization)
+  - Monitor for memory leaks and resource usage patterns
+  - Create alerts for memory thresholds
 
-- [ ] **Add health check endpoints**
-  - Create `/health` endpoint
-  - Monitor external service dependencies
-  - Implement readiness and liveness probes
+#### Task 4.2.2: Request Correlation & Distributed Tracing
+- [ ] **Implement request tracing system**
+  - Add correlation IDs to all requests for distributed tracing
+  - Implement request/response logging with performance metrics
+  - Follow 2025 observability standards (OpenTelemetry patterns)
+  - Enable end-to-end request tracking across services
 
 ---
 
-## 📝 Phase 5: Testing & Documentation (Week 5-6)
+## 📝 Phase 5: Real API Testing & Documentation (Week 5-6)
 **Status:** 🔴 Not Started  
-**Progress:** 0/8 tasks completed  
-**Priority:** LOW - Quality assurance and maintainability
+**Progress:** 0/4 tasks completed  
+**Priority:** MEDIUM - Quality assurance with real integrations
 
-### 5.1 Testing Strategy
+> **Updated for 2025**: Real API integration tests instead of mocks, comprehensive documentation
 
-#### Task 5.1.1: Unit Tests
-- [ ] **Add tests for agents**
-  - Test agent instructions and responses
-  - Mock external dependencies
-  - Test error handling paths
+### 5.1 Real API Integration Testing
 
-- [ ] **Add tests for tools**
-  - Test invoice generator with mocked APIs
-  - Test Notion integration tools
-  - Test error scenarios and edge cases
+#### Task 5.1.1: External Service Integration Tests
+- [ ] **Create real API integration tests**
+  - Build end-to-end tests using REAL APIs (Notion, Invoice Generator, Telegram)
+  - Test actual integrations with error scenarios and recovery paths
+  - Implement proper test data setup and cleanup procedures
+  - No mocks - test genuine external service interactions
 
-#### Task 5.1.2: Integration Tests
-- [ ] **End-to-end tests**
-  - Test complete invoice generation flow
-  - Test measurement recording workflow
-  - Test error recovery scenarios
+#### Task 5.1.2: Complete Workflow Testing
+- [ ] **Add comprehensive workflow integration tests**
+  - Test invoice and measurement workflows using real external services
+  - Test complete user journeys from Telegram message to Notion/PDF generation
+  - Include error recovery, retry logic, and fallback scenario testing
+  - Validate end-to-end data flow with actual API calls
 
-### 5.2 Documentation & Developer Experience
+### 5.2 Production Documentation
 
-#### Task 5.2.1: Code Documentation
-- [ ] **Add JSDoc comments**
-  - Document all public functions
-  - Add parameter and return type documentation
-  - Include usage examples
+#### Task 5.2.1: Comprehensive Code Documentation
+- [ ] **Add complete JSDoc documentation**
+  - Document all public APIs, agents, tools, and workflows with JSDoc comments
+  - Include parameter types, return types, and usage examples
+  - Add integration patterns and best practices for developer experience
+  - Document error handling and recovery mechanisms
 
-#### Task 5.2.2: Deployment Documentation
-- [ ] **Update README.md**
-  - Document new architecture
-  - Add environment variable documentation
-  - Include troubleshooting guide
+#### Task 5.2.2: Production Deployment Guide
+- [ ] **Create comprehensive deployment documentation**
+  - Update README.md with architecture documentation and deployment instructions
+  - Add environment setup, monitoring configuration, and troubleshooting guide
+  - Include production system requirements and scaling considerations
+  - Document security best practices and operational procedures
 
 ---
 
@@ -410,25 +413,54 @@ const result = await testTool.execute({
 
 ---
 
-## 🚀 IMMEDIATE NEXT ACTIONS (Current Session)
+### Phase 4 Quality Gate
+- [ ] Production health checks monitor all external dependencies
+- [ ] Structured logging with correlation IDs implemented
+- [ ] Memory usage monitoring and alerting configured
+- [ ] Request tracing and performance metrics operational
+- [ ] No memory leaks detected in production load testing
+
+### Phase 5 Quality Gate
+- [ ] Real API integration tests cover all critical workflows
+- [ ] End-to-end tests validate complete user journeys
+- [ ] All public APIs documented with JSDoc and examples
+- [ ] Production deployment guide tested and verified
+- [ ] Architecture documentation reflects current clean state
+
+---
+
+## 🚀 IMMEDIATE NEXT ACTIONS (Current Session - Updated)
 
 ### Current Session Objectives:
-1. **PRIORITY 1**: Fix remaining TypeScript errors for production readiness
-2. **PRIORITY 2**: Complete Phase 4 setup - Performance & Monitoring foundation
-3. **PRIORITY 3**: Basic testing of workflows end-to-end
+1. ✅ **PRIORITY 1**: Fix remaining TypeScript errors for production readiness - **COMPLETED**
+2. 🟡 **PRIORITY 2**: Complete Phase 4 setup - Performance & Monitoring foundation - **IN PROGRESS**
+3. 📋 **PRIORITY 3**: Real API integration testing - **PENDING**
 
-### Specific TypeScript Fixes Needed:
-- Fix agent description access in `telegramApi.ts` (use `getDescription()`)
-- Fix Grammy bot context type mismatches
-- Fix undefined chatId parameters in Grammy bot handlers
-- Fix grammy handler undefined invocation
-- Fix Notion properties type issues (Payment Method, Invoice PDF)
+### ✅ Completed This Session:
+- ✅ Fixed agent description access in `telegramApi.ts` (use `getDescription()`)
+- ✅ Fixed Grammy bot context type mismatches with proper generic constraints
+- ✅ Added null safety guards for chatId parameters
+- ✅ Fixed grammy handler undefined invocation with proper type assertions
+- ✅ Fixed Notion properties type issues (Payment Method, Invoice PDF)
+- ✅ Added explicit types for function parameters
+- ✅ Fixed security event logging schema with timestamp compliance
+- ✅ Fixed rate limiting type mismatches for HTTP headers
+- ✅ Added environment variable validation with null safety
+- ✅ **ARCHITECTURAL CLEANUP**: Removed duplicate `src/mastra/bot/grammyBot.ts` (282 lines)
+- ✅ **TODO.md UPDATED**: Revised Phase 4 & 5 with 2025 best practices and real API testing
 
-### Expected Session Outcomes:
-- All TypeScript errors resolved for clean production build
-- Phase 4 foundation established (health checks, structured logging)
-- Basic workflow testing completed
-- Production readiness assessment
+### 🎯 Next Phase 4 Tasks:
+1. **Implement Production Health Checks** - Comprehensive monitoring endpoints
+2. **Set up Structured Logging with Pino** - 2025 observability standards
+3. **Add Memory Usage Monitoring** - Performance tracking and optimization
+4. **Implement Request Correlation & Tracing** - Distributed system monitoring
+
+### Current Architecture Status:
+- ✅ **TypeScript Compilation**: Clean (0 errors)
+- ✅ **Architecture**: Clean separation (Grammy → HTTP API → Mastra)
+- ✅ **Code Quality**: 2025 TypeScript best practices implemented
+- ✅ **Security**: Rate limiting, input validation, error handling complete
+- 🟡 **Observability**: Basic health checks exist, need comprehensive monitoring
 
 ---
 

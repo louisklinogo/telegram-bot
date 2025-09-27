@@ -155,7 +155,7 @@ if (env.WEBHOOK_URL) {
   setTimeout(async () => {
     try {
       console.log(`🔗 Setting up webhook to: ${env.WEBHOOK_URL}`);
-      await bot.api.setWebhook(env.WEBHOOK_URL, {
+      await bot.api.setWebhook(env.WEBHOOK_URL!, {
         secret_token: env.TELEGRAM_WEBHOOK_SECRET,
       });
       console.log('✅ Webhook configured successfully');
