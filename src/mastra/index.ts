@@ -7,10 +7,6 @@ import { invoiceWorkflow } from './workflows/invoiceWorkflow';
 import { measurementWorkflow } from './workflows/measurementWorkflow';
 import { HealthCheckManager, createHealthResponse } from '../health/healthCheck';
 
-// Initialize health check manager following 2025 observability patterns
-const healthManager = new HealthCheckManager();
-healthManager.initializeCheckers();
-
 // Create Mastra instance with proper configuration
 export const mastra = new Mastra({
   agents: {
@@ -48,12 +44,20 @@ export const mastra = new Mastra({
         method: 'GET',
         handler: async (c) => {
           const mastraInstance = c.get('mastra');
+          const logger = mastraInstance.getLogger();
+          
+          // Initialize health check manager with Mastra logger for structured logging
+          const healthManager = new HealthCheckManager(logger);
+          healthManager.initializeCheckers();
           
           // Add storage checker using Mastra's documented getStorage() method
           const storage = mastraInstance.getStorage();
           if (storage) {
             healthManager.addStorageChecker(storage);
           }
+          
+          // Add Mastra-specific component health checkers
+          healthManager.addMastraCheckers(mastraInstance);
           
           const health = await healthManager.checkHealth();
           return createHealthResponse(c, health);
@@ -64,6 +68,17 @@ export const mastra = new Mastra({
       registerApiRoute('/health/live', {
         method: 'GET',
         handler: async (c) => {
+          const mastraInstance = c.get('mastra');
+          const logger = mastraInstance.getLogger();
+          const healthManager = new HealthCheckManager(logger);
+          healthManager.initializeCheckers();
+          
+          // Add essential checkers for liveness probe (lighter checks)
+          const storage = mastraInstance.getStorage();
+          if (storage) {
+            healthManager.addStorageChecker(storage);
+          }
+          
           const simpleHealth = await healthManager.getSimpleHealth();
           
           c.header('Content-Type', 'application/json');
@@ -130,11 +145,17 @@ export const mastra = new Mastra({
         method: 'GET',
         handler: async (c) => {
           const mastraInstance = c.get('mastra');
-          const storage = mastraInstance.getStorage();
+          const logger = mastraInstance.getLogger();
+          const healthManager = new HealthCheckManager(logger);
+          healthManager.initializeCheckers();
           
+          const storage = mastraInstance.getStorage();
           if (storage) {
             healthManager.addStorageChecker(storage);
           }
+          
+          // Add Mastra-specific component health checkers for detailed metrics
+          healthManager.addMastraCheckers(mastraInstance);
           
           const health = await healthManager.checkHealth();
           
