@@ -1,0 +1,1 @@
+1. Remember to add semantic recall and working memory func for the agents .. lets check what what vector store options we have available
