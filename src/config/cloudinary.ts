@@ -54,6 +54,7 @@ export async function uploadToCloudinary(
     folder?: string;
     public_id?: string;
     resource_type?: 'image' | 'video' | 'raw' | 'auto';
+    transformation?: any;
   } = {}
 ) {
   const cloudinaryInstance = getCloudinaryInstance();
@@ -61,10 +62,16 @@ export async function uploadToCloudinary(
   const uploadOptions = {
     resource_type: 'auto' as const,
     folder: 'cimantikos-invoices',
+    use_filename: false,
+    unique_filename: true,
+    overwrite: false,
+    access_mode: 'public', // Ensure public access by default
+    type: 'upload', // Explicit upload type
     ...options,
   };
 
   try {
+    console.log(`☁️ Uploading to Cloudinary with options:`, uploadOptions);
     const result = await cloudinaryInstance.uploader.upload(filePath, uploadOptions);
     console.log(`✅ File uploaded to Cloudinary: ${result.public_id}`);
     return result;

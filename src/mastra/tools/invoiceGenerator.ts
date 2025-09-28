@@ -173,29 +173,45 @@ export const invoiceGenerator = createTool({
           folder: 'cimantikos-invoices',
           public_id: `invoice_${sanitizedCustomerName}_${timestamp}`,
           resource_type: 'raw', // For PDF files
+          access_mode: 'public', // Make file publicly accessible
+          type: 'upload', // Ensure it's an upload type
         });
         console.log(`✅ PDF uploaded to Cloudinary: ${cloudinaryResult.secure_url}`);
+        
+        // Give Cloudinary a moment to process the file and make it accessible
+        console.log('🕒 Allowing Cloudinary processing time...');
+        await new Promise(resolve => setTimeout(resolve, 3000)); // 3 second delay
+        
       } catch (uploadError) {
         console.error('⚠️ Cloudinary upload failed, but PDF was generated locally:', uploadError);
         // Continue without failing - local PDF is still available
       }
       
-      // Clean up local file after successful upload
+      // Only clean up local file after successful upload AND if we want to clean up
+      // Keep local file as fallback if Cloudinary upload failed
       if (cloudinaryResult) {
         try {
-          await fs.unlink(filePath);
-          console.log('🧹 Local PDF file cleaned up after Cloudinary upload');
-        } catch (cleanupError) {
-          console.warn('⚠️ Failed to cleanup local PDF file:', cleanupError);
-          // Non-critical error, continue
+          // Wait a bit before cleanup to ensure the file can be accessed if needed
+          setTimeout(async () => {
+            try {
+              await fs.unlink(filePath);
+              console.log('🧹 Local PDF file cleaned up after Cloudinary upload');
+            } catch (cleanupError) {
+              console.warn('⚠️ Failed to cleanup local PDF file:', cleanupError);
+            }
+          }, 30000); // Clean up after 30 seconds
+        } catch (error) {
+          console.warn('⚠️ Cleanup scheduling failed:', error);
         }
+      } else {
+        console.log('📁 Local PDF file kept as fallback due to Cloudinary upload failure');
       }
 
       // Return success response
       const result = {
         success: true,
         invoice_id: filename,
-        pdf_path: cloudinaryResult ? undefined : filePath, // Only include local path if Cloudinary failed
+        pdf_path: filePath, // Always include local path as fallback
         pdf_url: cloudinaryResult?.secure_url,
         cloudinary_public_id: cloudinaryResult?.public_id,
         customer_name,

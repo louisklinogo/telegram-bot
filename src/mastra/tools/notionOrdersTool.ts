@@ -273,6 +273,10 @@ async function findOrCreateClient(
         console.log(`Found existing client: ${searchData.results[0].id}`);
         return searchData.results[0];
       }
+    } else {
+      // Log search error but continue to try creating the client
+      const errorText = await searchResponse.text();
+      console.warn(`Notion client search failed with status ${searchResponse.status}:`, errorText);
     }
 
     // Client not found, create new one
@@ -321,9 +325,12 @@ async function findOrCreateClient(
       const clientPage = await createResponse.json();
       console.log(`Created new client: ${clientPage.id}`);
       return clientPage;
+    } else {
+      // Get detailed error information
+      const errorText = await createResponse.text();
+      console.error(`Notion client creation failed with status ${createResponse.status}:`, errorText);
+      throw new Error(`Failed to create new client: ${createResponse.status} - ${errorText}`);
     }
-
-    throw new Error('Failed to create new client');
 
   } catch (error) {
     console.error('Error finding/creating client:', error);

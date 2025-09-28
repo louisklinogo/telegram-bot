@@ -17,10 +17,16 @@ export const fileHandler = createTool({
   }),
   execute: async ({ context, runtimeContext }) => {
     const { file_id, file_type, file_name, caption } = context;
-    const chat_id = context.chat_id || runtimeContext?.chat_id;
+    const chat_id = context.chat_id || runtimeContext?.get?.('chat_id') || runtimeContext?.get?.('chatId');
+
+    console.log(`🔄 Processing ${file_type} with file_id: ${file_id}, chat_id: ${chat_id}`);
 
     if (!chat_id) {
       throw new Error('chat_id must be provided');
+    }
+
+    if (!file_id || typeof file_id !== 'string' || file_id.trim().length === 0) {
+      throw new Error('Valid file_id must be provided');
     }
 
     const botInstance = getBotInstance();
@@ -29,7 +35,13 @@ export const fileHandler = createTool({
     }
 
     try {
+      // Validate file_id format (basic check) - Telegram file IDs can contain various characters
+      if (file_id.length > 250 || file_id.length < 10) {
+        throw new Error('Invalid file_id length');
+      }
+
       // Get file info from Telegram
+      console.log(`📁 Getting file info for file_id: ${file_id}`);
       const file = await botInstance.api.getFile(file_id);
       
       if (!file.file_path) {
@@ -97,19 +109,23 @@ The file has been processed and is available for the agent to analyze.`;
     } catch (error) {
       console.error('Error processing file:', error);
       
-      // Send error message to user
-      try {
-        await botInstance.api.sendMessage(
-          chat_id,
-          '❌ Sorry, I encountered an error processing your file. Please try again.'
-        );
-      } catch (msgError) {
-        console.error('Failed to send error message:', msgError);
+      // Try to send error message to user, but only if chat_id is valid
+      if (chat_id && typeof chat_id === 'number' && chat_id > 0) {
+        try {
+          await botInstance.api.sendMessage(
+            chat_id,
+            '❌ Sorry, I encountered an error processing your file. Please try again.'
+          );
+        } catch (msgError) {
+          console.error('Failed to send error message to chat', chat_id, ':', msgError);
+        }
       }
 
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Unknown error occurred',
+        file_id,
+        chat_id,
       };
     }
   },

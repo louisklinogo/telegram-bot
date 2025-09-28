@@ -4,6 +4,7 @@ import { getBotInstance } from './grammyHandler';
 import { InputFile } from 'grammy';
 import * as fs from 'fs/promises';
 import * as path from 'path';
+import fetch from 'node-fetch';
 
 export const pdfSender = createTool({
   id: 'pdf-sender',
@@ -19,7 +20,7 @@ export const pdfSender = createTool({
     const { pdf_path, pdf_url, caption, reply_to_message_id } = context;
     
     // Get chat_id from context or runtime context
-    const chat_id = context.chat_id || runtimeContext?.chat_id;
+    const chat_id = context.chat_id || runtimeContext?.get?.('chat_id') || runtimeContext?.get?.('chatId');
     
     if (!chat_id) {
       throw new Error('chat_id must be provided either in context or runtime context');
@@ -41,10 +42,94 @@ export const pdfSender = createTool({
       if (pdf_url) {
         // Use Cloudinary URL directly
         console.log('📤 Sending PDF from Cloudinary URL:', pdf_url);
-        document = pdf_url;
-        filename = 'invoice.pdf'; // Default filename for URL-based documents
-      } else if (pdf_path) {
-        // Use local file
+        
+        // Test if Cloudinary URL is accessible first with retry logic
+        let urlTestSuccessful = false;
+        let lastError = null;
+        
+        for (let attempt = 1; attempt <= 3; attempt++) {
+          try {
+            console.log(`🔍 Testing Cloudinary URL accessibility (attempt ${attempt}/3)...`);
+            
+            const controller = new AbortController();
+            const timeout = setTimeout(() => controller.abort(), 8000);
+            
+            // Add a small delay between attempts to allow Cloudinary processing
+            if (attempt > 1) {
+              await new Promise(resolve => setTimeout(resolve, 2000)); // 2 second delay
+            }
+            
+            const urlTest = await fetch(pdf_url, { 
+              method: 'HEAD', 
+              signal: controller.signal,
+              headers: {
+                'User-Agent': 'Mozilla/5.0 (compatible; TelegramBot/1.0)',
+              }
+            });
+            
+            clearTimeout(timeout);
+            
+            if (urlTest.ok) {
+              console.log(`✅ Cloudinary URL is accessible (attempt ${attempt})`);
+              urlTestSuccessful = true;
+              break;
+            } else {
+              lastError = new Error(`Cloudinary URL returned status ${urlTest.status}`);
+              console.warn(`⚠️ Cloudinary URL not accessible (attempt ${attempt}/3), status:`, urlTest.status);
+              
+              // For 401 errors, try a different approach - sometimes HEAD requests are blocked
+              if (urlTest.status === 401 && attempt < 3) {
+                console.log('🔄 Trying GET request instead of HEAD...');
+                
+                try {
+                  const getController = new AbortController();
+                  const getTimeout = setTimeout(() => getController.abort(), 8000);
+                  
+                  const getTest = await fetch(pdf_url, { 
+                    method: 'GET', 
+                    signal: getController.signal,
+                    headers: {
+                      'User-Agent': 'Mozilla/5.0 (compatible; TelegramBot/1.0)',
+                      'Range': 'bytes=0-1023' // Just get first 1KB to test accessibility
+                    }
+                  });
+                  
+                  clearTimeout(getTimeout);
+                  
+                  if (getTest.ok) {
+                    console.log(`✅ Cloudinary URL accessible via GET request (attempt ${attempt})`);
+                    urlTestSuccessful = true;
+                    break;
+                  }
+                } catch (getError) {
+                  console.log('❌ GET request also failed:', getError);
+                }
+              }
+            }
+          } catch (error) {
+            lastError = error;
+            console.warn(`❌ URL test failed (attempt ${attempt}/3):`, error instanceof Error ? error.message : 'Unknown error');
+          }
+        }
+        
+        if (urlTestSuccessful) {
+          // URL is accessible, use it
+          document = pdf_url;
+          filename = 'invoice.pdf'; // Default filename for URL-based documents
+        } else {
+          // All URL test attempts failed
+          console.error('❌ Cloudinary URL test failed after all attempts:', lastError);
+          if (pdf_path) {
+            console.log('🔄 Falling back to local file:', pdf_path);
+            // Don't set document here, let it fall through to local file handling
+          } else {
+            throw new Error(`Cloudinary URL inaccessible after 3 attempts and no local file provided: ${lastError instanceof Error ? lastError.message : 'Unknown error'}`);
+          }
+        }
+      }
+      
+      if (pdf_path && !document) {
+        // Use local file (either as primary or fallback)
         console.log('📤 Sending PDF from local file:', pdf_path);
         
         // Check if file exists
@@ -68,7 +153,10 @@ export const pdfSender = createTool({
         
         // Create InputFile from file path
         document = new InputFile(pdf_path, filename);
-      } else {
+      } 
+      
+      // Final check - if we have no document, throw error
+      if (!document) {
         throw new Error('No valid PDF source provided');
       }
 

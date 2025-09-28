@@ -40,10 +40,21 @@ app.get('/health', (c) => {
   });
 });
 
-// Webhook endpoint for Telegram
+// Webhook endpoint for Telegram with timeout protection
 app.post('/webhook', async (c) => {
+  const startTime = Date.now();
+  
   try {
     const body = await c.req.json();
+    
+    // Log incoming update info for debugging
+    if (body.message) {
+      const msg = body.message;
+      console.log(`📨 Webhook: ${msg.chat?.type || 'unknown'} ${msg.chat?.id} - ${msg.from?.username || 'unknown'} (${msg.from?.id})`);
+      if (msg.text) console.log(`   Text: ${msg.text.slice(0, 50)}${msg.text.length > 50 ? '...' : ''}`);
+      if (msg.photo) console.log(`   Photo: ${msg.photo.length} sizes`);
+      if (msg.document) console.log(`   Document: ${msg.document.file_name}`);
+    }
 
     // Verify the webhook secret if configured
     if (env.TELEGRAM_WEBHOOK_SECRET) {
@@ -54,13 +65,16 @@ app.post('/webhook', async (c) => {
       }
     }
 
-    // Handle the update with Grammy
+    // Handle the update with Grammy (Grammy handles its own timeout)
     await webhookCallback(bot, 'hono')(c);
+    
+    const processingTime = Date.now() - startTime;
+    console.log(`✅ Webhook processed in ${processingTime}ms`);
 
     return c.json({ ok: true });
   } catch (error) {
     console.error('Webhook error:', error);
-    return c.json({ error: 'Internal server error' }, 500);
+    return c.json({ ok: true }); // Return OK to prevent excessive retries from Telegram
   }
 });
 

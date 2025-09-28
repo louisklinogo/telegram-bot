@@ -1,5 +1,6 @@
 import { Hono } from 'hono';
 import { mastra } from '../mastra/index';
+import { RuntimeContext } from '@mastra/core/runtime-context';
 import { z } from 'zod';
 
 const app = new Hono();
@@ -32,20 +33,35 @@ app.post('/process-message', async (c) => {
     // Get the Telegram invoice agent from Mastra
     const agent = mastra.getAgent('telegramInvoiceAgent');
     
-    // Generate response using agent with memory context
-    const response = await agent.generateVNext(text, {
-      memory: {
-        resource: `user_${userId}`,
-        thread: { id: `chat_${chatId}` }
-      },
-      // Pass chat_id in runtime context for tools to access
-      runtimeContext: {
-        chat_id: chatId,
-        user_id: userId,
-        username: username
-      },
-      maxSteps: 5 // Allow multiple tool calls for complex operations
-    });
+    // Generate response using agent with memory context and timeout protection
+    const startTime = Date.now();
+    console.log(`🤖 Starting agent processing for user ${userId}`);
+    
+    const response = await Promise.race([
+      agent.generateVNext(text, {
+        memory: {
+          resource: `user_${userId}`,
+          thread: { id: `chat_${chatId}` }
+        },
+        // Create proper RuntimeContext instance for workflows and tools
+        runtimeContext: (() => {
+          const ctx = new RuntimeContext();
+          ctx.set('chatId', chatId);  // Keep both formats for compatibility
+          ctx.set('chat_id', chatId);
+          ctx.set('user_id', userId);
+          ctx.set('username', username);
+          return ctx;
+        })(),
+        maxSteps: 8 // Increased for workflow execution steps
+      }),
+      // Extended timeout for workflow processing - workflows handle their own user communication
+      new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Agent processing timeout after 45 seconds')), 45000)
+      )
+    ]) as any;
+    
+    const processingTime = Date.now() - startTime;
+    console.log(`✅ Agent processing completed in ${processingTime}ms`);
     
     return c.json({
       success: true,

@@ -141,22 +141,54 @@ Just send me your details and I'll handle the rest! 🚀
     const caption = ctx.message.caption;
     const chatId = ctx.chat.id;
     
+    // Validate inputs
+    if (!largestPhoto || !largestPhoto.file_id) {
+      console.error('Invalid photo data received');
+      await ctx.reply('❌ Sorry, I couldn\'t process this image. Please try sending it again.');
+      return;
+    }
+    
+    if (!chatId || typeof chatId !== 'number') {
+      console.error('Invalid chat ID');
+      return;
+    }
+    
+    console.log(`📷 Processing photo from chat ${chatId}, file_id: ${largestPhoto.file_id}`);
+    
     try {
       await ctx.replyWithChatAction('upload_document');
       
-      await processImage(chatId, largestPhoto.file_id, caption);
+      const result = await processImage(chatId, largestPhoto.file_id, caption);
+      
+      if (!result.success) {
+        console.error('Image processing failed:', result.error);
+        await ctx.reply('❌ Sorry, I had trouble processing your image. Please try again with a different image.');
+        return;
+      }
       
       // Let the agent know about the image
-      const imageText = `[Image received]${caption ? ` Caption: ${caption}` : ''}`;
-      const userId = ctx.from.id;
-      const username = ctx.from.username;
+      const imageText = `[Image received and processed]${caption ? ` Caption: ${caption}` : ''}`;
+      const userId = ctx.from?.id;
+      const username = ctx.from?.username;
       const messageId = ctx.message.message_id;
       
-      // Process through the agent
-      const response = await apiClient.processMessage(imageText, userId, chatId, username, messageId);
-      
-      if (response.success && response.message !== '✅ **File Processed**') {
-        await ctx.reply(response.message);
+      if (userId) {
+        try {
+          // Process through the agent with timeout
+          const response = await Promise.race([
+            apiClient.processMessage(imageText, userId, chatId, username, messageId),
+            new Promise((_, reject) => 
+              setTimeout(() => reject(new Error('Agent processing timeout')), 8000)
+            )
+          ]) as any;
+          
+          if (response.success && response.message && response.message !== '✅ **File Processed**') {
+            await ctx.reply(response.message);
+          }
+        } catch (agentError) {
+          console.error('Agent processing error for image:', agentError);
+          // Don't send error to user since file was processed successfully
+        }
       }
       
     } catch (error) {
@@ -171,22 +203,54 @@ Just send me your details and I'll handle the rest! 🚀
     const caption = ctx.message.caption;
     const chatId = ctx.chat.id;
     
+    // Validate inputs
+    if (!document || !document.file_id) {
+      console.error('Invalid document data received');
+      await ctx.reply('❌ Sorry, I couldn\'t process this document. Please try sending it again.');
+      return;
+    }
+    
+    if (!chatId || typeof chatId !== 'number') {
+      console.error('Invalid chat ID');
+      return;
+    }
+    
+    console.log(`📄 Processing document from chat ${chatId}, file_id: ${document.file_id}, name: ${document.file_name}`);
+    
     try {
       await ctx.replyWithChatAction('upload_document');
       
-      await processDocument(chatId, document.file_id, document.file_name, caption);
+      const result = await processDocument(chatId, document.file_id, document.file_name, caption);
+      
+      if (!result.success) {
+        console.error('Document processing failed:', result.error);
+        await ctx.reply('❌ Sorry, I had trouble processing your document. Please try again with a different file.');
+        return;
+      }
       
       // Let the agent know about the document
-      const docText = `[Document received: ${document.file_name}]${caption ? ` Caption: ${caption}` : ''}`;
-      const userId = ctx.from.id;
-      const username = ctx.from.username;
+      const docText = `[Document received and processed: ${document.file_name || 'unknown'}]${caption ? ` Caption: ${caption}` : ''}`;
+      const userId = ctx.from?.id;
+      const username = ctx.from?.username;
       const messageId = ctx.message.message_id;
       
-      // Process through the agent
-      const response = await apiClient.processMessage(docText, userId, chatId, username, messageId);
-      
-      if (response.success && response.message !== '✅ **File Processed**') {
-        await ctx.reply(response.message);
+      if (userId) {
+        try {
+          // Process through the agent with timeout
+          const response = await Promise.race([
+            apiClient.processMessage(docText, userId, chatId, username, messageId),
+            new Promise((_, reject) => 
+              setTimeout(() => reject(new Error('Agent processing timeout')), 8000)
+            )
+          ]) as any;
+          
+          if (response.success && response.message && response.message !== '✅ **File Processed**') {
+            await ctx.reply(response.message);
+          }
+        } catch (agentError) {
+          console.error('Agent processing error for document:', agentError);
+          // Don't send error to user since file was processed successfully
+        }
       }
       
     } catch (error) {
@@ -207,11 +271,32 @@ Just send me your details and I'll handle the rest! 🚀
       // Show typing indicator immediately
       await ctx.replyWithChatAction('typing');
       
+      // For longer messages or measurement data, show processing status
+      let processingMessage = null;
+      const isMeasurementData = /[A-Z]{2}\s+\d+/.test(text) || text.length > 100;
+      
+      if (isMeasurementData) {
+        const processingTimeout = setTimeout(async () => {
+          try {
+            const message = text.length > 100 && /[A-Z]{2}\s+\d+/.test(text) 
+              ? '📍 Processing measurements and saving to database... This may take up to 20 seconds.'
+              : '🤔 Processing your request... Please wait a moment.';
+            processingMessage = await ctx.reply(message);
+          } catch (e) {
+            console.error('Failed to send processing message:', e);
+          }
+        }, 3000);
+        
+        // Clear the timeout if processing completes quickly
+        const originalProcessMessage = apiClient.processMessage(text, userId, chatId, username, messageId);
+        originalProcessMessage.finally(() => clearTimeout(processingTimeout));
+      }
+      
       // Process message via API with timeout protection
       const response = await Promise.race([
         apiClient.processMessage(text, userId, chatId, username, messageId),
         new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('Processing timeout')), 8000)
+          setTimeout(() => reject(new Error('Processing timeout')), 50000)
         )
       ]) as any;
 
@@ -246,7 +331,15 @@ Just send me your details and I'll handle the rest! 🚀
       
       if (error.message === 'Processing timeout') {
         try {
-          await ctx.reply("Your request is being processed. Please wait a moment for the response.");
+          // Delete processing message if it exists
+          if (processingMessage) {
+            try {
+              await bot.api.deleteMessage(chatId, processingMessage.message_id);
+            } catch (e) {
+              // Ignore deletion errors
+            }
+          }
+          await ctx.reply("😅 Your request took longer than expected to process. For complex operations like invoices or measurements, please wait as workflows may still be running in the background. You'll receive a notification once complete!");
         } catch (replyError) {
           console.error('Failed to send timeout message:', replyError);
         }
