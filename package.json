@@ -5,13 +5,13 @@
   "main": "src/server.ts",
   "scripts": {
     "dev": "mastra dev",
-    "dev:webhook": "npx tsx src/webhook-server.ts",
-    "dev:both": "concurrently \"npm run dev\" \"npm run dev:webhook\"",
+    "dev:webhook": "bunx tsx src/webhook-server.ts",
+    "dev:both": "concurrently \"bun run dev\" \"bun src/server.ts\"",
     "build": "tsc",
     "start": "node dist/server.js",
     "type-check": "tsc --noEmit",
-    "audit": "npm audit",
-    "audit-fix": "npm audit fix"
+    "audit": "bun audit",
+    "audit-fix": "bun audit --fix"
   },
   "dependencies": {
     "@ai-sdk/google": "latest",
@@ -22,6 +22,8 @@
     "@mastra/mcp": "latest",
     "@mastra/memory": "latest",
     "@notionhq/client": "^2.2.15",
+    "cloudinary": "^2.7.0",
+    "concurrently": "^9.2.1",
     "dotenv": "^16.4.5",
     "grammy": "^1.34.1",
     "pdf-parse": "^1.1.1",
@@ -47,5 +49,6 @@
     "measurements"
   ],
   "author": "Cimantikós Clothing Company",
-  "license": "MIT"
+  "license": "MIT",
+  "packageManager": "bun@latest"
 }

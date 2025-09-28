@@ -42,6 +42,19 @@ const envSchema = z.object({
     message: "Invalid Notion API key format. Must start with 'ntn_'"
   }),
   
+  // Cloudinary configuration
+  CLOUDINARY_CLOUD_NAME: z.string().min(1, {
+    message: "CLOUDINARY_CLOUD_NAME is required"
+  }),
+  
+  CLOUDINARY_API_KEY: z.string().min(10, {
+    message: "CLOUDINARY_API_KEY must be at least 10 characters"
+  }),
+  
+  CLOUDINARY_API_SECRET: z.string().min(10, {
+    message: "CLOUDINARY_API_SECRET must be at least 10 characters"
+  }),
+  
   // Notion database IDs - must be valid UUID format
   NOTION_CLIENTS_DB_ID: z.string().uuid({
     message: "NOTION_CLIENTS_DB_ID must be a valid UUID"
@@ -58,7 +71,7 @@ const envSchema = z.object({
   NOTION_MEASUREMENTS_DB_ID: z.string().uuid({
     message: "NOTION_MEASUREMENTS_DB_ID must be a valid UUID"
   }),
-}).strict(); // Reject unknown environment variables
+}); // Allow unknown environment variables (system vars)
 
 // Infer TypeScript type from schema
 export type EnvConfig = z.infer<typeof envSchema>;
@@ -207,6 +220,9 @@ export function getRedactedEnvInfo(): Record<string, string> {
     FIRECRAWL_API_KEY: redactSecret(validatedEnv.FIRECRAWL_API_KEY, 4, 0),
     INVOICE_GENERATOR_API_KEY: redactSecret(validatedEnv.INVOICE_GENERATOR_API_KEY, 4, 4),
     NOTION_API_KEY: redactSecret(validatedEnv.NOTION_API_KEY, 4, 4),
+    CLOUDINARY_CLOUD_NAME: validatedEnv.CLOUDINARY_CLOUD_NAME,
+    CLOUDINARY_API_KEY: redactSecret(validatedEnv.CLOUDINARY_API_KEY, 4, 4),
+    CLOUDINARY_API_SECRET: redactSecret(validatedEnv.CLOUDINARY_API_SECRET, 4, 4),
     DATABASE_IDS_LOADED: '4 databases configured',
   };
 }
@@ -240,6 +256,8 @@ function getLoadedApiKeysCount(): number {
     validatedEnv.FIRECRAWL_API_KEY,
     validatedEnv.INVOICE_GENERATOR_API_KEY,
     validatedEnv.NOTION_API_KEY,
+    validatedEnv.CLOUDINARY_API_KEY,
+    validatedEnv.CLOUDINARY_API_SECRET,
   ];
   
   return apiKeys.filter(key => key && key.length > 0).length;
@@ -269,6 +287,11 @@ INVOICE_GENERATOR_API_KEY=sk_your-invoice-generator-key
 
 # Notion Integration
 NOTION_API_KEY=ntn_your-notion-api-key
+
+# Cloudinary Configuration
+CLOUDINARY_CLOUD_NAME=your-cloud-name
+CLOUDINARY_API_KEY=your-api-key
+CLOUDINARY_API_SECRET=your-api-secret
 
 # Notion Database IDs (must be valid UUIDs)
 NOTION_CLIENTS_DB_ID=550e8400-e29b-41d4-a716-446655440000

@@ -1,20 +1,28 @@
 import 'dotenv/config';
 import { validateEnvironmentVariables, getEnvConfig, getRedactedEnvInfo } from './config/validateEnv';
+import { configureCloudinary } from './config/cloudinary';
 import { Hono } from 'hono';
 import { serve } from '@hono/node-server';
 import { mastra } from './mastra/index';
 import { telegramApi } from './api/telegramApi';
 import { createTelegramBot } from './telegram/botHandler';
+import { setBotInstance } from './mastra/tools/grammyHandler';
 import { webhookCallback } from 'grammy';
 
 // Validate environment variables first - fail fast if invalid
 const env = validateEnvironmentVariables();
+
+// Configure Cloudinary with validated environment variables
+configureCloudinary();
 
 // Create separate Hono app for main server
 const app = new Hono();
 
 // Create Telegram bot instance using validated environment
 const bot = createTelegramBot(env.TELEGRAM_BOT_TOKEN);
+
+// Initialize bot instance for grammyHandler and pdfSender tools
+setBotInstance(bot);
 
 // Mount Telegram API routes
 app.route('/api/telegram', telegramApi);
@@ -120,13 +128,11 @@ app.post('/send-message', async (c) => {
   }
 });
 
-// Start both servers using validated configuration
+// Start the main Telegram bot server
 const mainPort = env.PORT;
-const mastraPort = 4111;
 
-console.log(`🚀 Starting Cimantikós Telegram Bot servers...`);
+console.log(`🚀 Starting Cimantikós Telegram Bot Server...`);
 console.log(`📡 Main server (Telegram webhooks): http://localhost:${mainPort}`);
-console.log(`🧠 Mastra server (AI agents): http://localhost:${mastraPort}`);
 console.log('');
 console.log('🔒 Security Status:');
 const redactedInfo = getRedactedEnvInfo();
@@ -141,14 +147,14 @@ serve({
   port: mainPort,
 });
 
-// Mastra server starts automatically with its configuration
-
-console.log(`✅ All servers are running!`);
+console.log(`✅ Main Telegram server is running!`);
 console.log(`📊 Main health check: http://localhost:${mainPort}/health`);
 console.log(`🔗 Telegram webhook: http://localhost:${mainPort}/webhook`);
 console.log(`🤖 API endpoint: http://localhost:${mainPort}/api/telegram/process-message`);
-console.log(`🎯 Mastra playground: http://localhost:${mastraPort}`);
 console.log(`🧠 Agent status: http://localhost:${mainPort}/api/telegram/agent/status`);
+console.log('');
+console.log('⚠️  IMPORTANT: You must also run "mastra dev" in a separate terminal for AI agents to work!');
+console.log('🧠 Mastra server should be running on: http://localhost:4111');
 
 // Set up webhook if URL is configured
 if (env.WEBHOOK_URL) {
@@ -165,7 +171,9 @@ if (env.WEBHOOK_URL) {
     }
   }, 2000); // Wait 2 seconds for server to start
 } else {
-  console.log('ℹ️  WEBHOOK_URL not configured. Running in polling mode for development.');
-  console.log('📋 Set WEBHOOK_URL in .env for production deployment.');
-  console.log('🔧 Use /set-webhook endpoint to configure webhook manually.');
+  console.log('ℹ️  WEBHOOK_URL not configured. Webhook mode NOT active.');
+  console.log('📋 To enable webhooks:');
+  console.log('   1. Set WEBHOOK_URL in .env, OR');
+  console.log('   2. Use POST /set-webhook endpoint with ngrok URL');
+  console.log('🔧 For development testing, set up ngrok tunnel first!');
 }

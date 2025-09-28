@@ -23,7 +23,7 @@ export const notionOrdersTool = createTool({
       total_cost: z.number(),
     })).describe('Order items'),
     total_price: z.number().describe('Total price of the order'),
-    invoice_file_url: z.string().optional().describe('URL to the generated invoice PDF'),
+    invoice_file_url: z.string().nullable().optional().describe('URL to the generated invoice PDF'),
     notes: z.string().optional().describe('Order notes'),
   }),
   outputSchema: z.object({

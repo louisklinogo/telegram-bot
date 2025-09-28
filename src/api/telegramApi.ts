@@ -33,10 +33,16 @@ app.post('/process-message', async (c) => {
     const agent = mastra.getAgent('telegramInvoiceAgent');
     
     // Generate response using agent with memory context
-    const response = await agent.generate(text, {
+    const response = await agent.generateVNext(text, {
       memory: {
         resource: `user_${userId}`,
         thread: { id: `chat_${chatId}` }
+      },
+      // Pass chat_id in runtime context for tools to access
+      runtimeContext: {
+        chat_id: chatId,
+        user_id: userId,
+        username: username
       },
       maxSteps: 5 // Allow multiple tool calls for complex operations
     });

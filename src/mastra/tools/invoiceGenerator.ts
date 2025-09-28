@@ -2,6 +2,7 @@ import { createTool } from '@mastra/core/tools';
 import { z } from 'zod';
 import { InvoiceItem, InvoiceRequest, InvoiceResponse } from '../agents/types/invoice';
 import { InvoiceResponseSchema } from '../agents/types/invoice';
+import { uploadToCloudinary } from '../../config/cloudinary';
 import fetch from 'node-fetch';
 import { Agent as HttpAgent } from 'https';
 
@@ -30,6 +31,8 @@ export const invoiceGenerator = createTool({
     success: z.boolean(),
     invoice_id: z.string().optional(),
     pdf_path: z.string().optional(),
+    pdf_url: z.string().optional(),
+    cloudinary_public_id: z.string().optional(),
     customer_name: z.string().optional(),
     total_amount: z.number().optional(),
     items: z.array(z.object({
@@ -61,24 +64,27 @@ export const invoiceGenerator = createTool({
         ? `${customer_name}\n${phone_number}`
         : customer_name;
 
-      // Calculate totals
-      const itemsWithTotals = items.map(item => ({
-        ...item,
-        total_cost: item.quantity * item.unit_cost,
-      }));
+      // Calculate total amount for internal tracking only
+      const totalAmount = items.reduce((sum, item) => sum + (item.quantity * item.unit_cost), 0);
 
-      const totalAmount = itemsWithTotals.reduce((sum, item) => sum + item.total_cost, 0);
-
-      // Prepare invoice data
+      // Prepare invoice data exactly like the working Python script
       const invoiceData = {
+        from: 'Cimantikós Clothing Company\nWestlands Boulevard Rd,190\n+233208467699',
         to: customerAddress,
-        items: itemsWithTotals,
+        logo: 'https://res.cloudinary.com/dk4b0brc0/image/upload/v1754602556/Logo-6_ykuaue.jpg',
+        currency: 'GHS',
         date: new Date().toLocaleDateString('en-US', {
           year: 'numeric',
           month: 'short',
           day: 'numeric',
         }),
-        total: totalAmount,
+        // Items without total_cost - API calculates automatically
+        items: items.map(item => ({
+          name: item.name.charAt(0).toUpperCase() + item.name.slice(1), // Title case like Python script
+          quantity: item.quantity,
+          unit_cost: item.unit_cost,
+        })),
+        terms: 'Customers are required to make full payment before work commences.\n\nPayment options are as stated below:\n\nMTN MOMO: 0558413199\nCimantikos Clothing Company (Edward Osei-Agyeman)\n\nCAL Bank account no: 1400009095472\nBranch: Madina',
         notes: notes || '',
       };
 
@@ -158,15 +164,48 @@ export const invoiceGenerator = createTool({
       }
 
       console.log(`Invoice generated: ${filePath}`);
+      
+      // Upload to Cloudinary
+      let cloudinaryResult;
+      try {
+        console.log('📤 Uploading PDF to Cloudinary...');
+        cloudinaryResult = await uploadToCloudinary(filePath, {
+          folder: 'cimantikos-invoices',
+          public_id: `invoice_${sanitizedCustomerName}_${timestamp}`,
+          resource_type: 'raw', // For PDF files
+        });
+        console.log(`✅ PDF uploaded to Cloudinary: ${cloudinaryResult.secure_url}`);
+      } catch (uploadError) {
+        console.error('⚠️ Cloudinary upload failed, but PDF was generated locally:', uploadError);
+        // Continue without failing - local PDF is still available
+      }
+      
+      // Clean up local file after successful upload
+      if (cloudinaryResult) {
+        try {
+          await fs.unlink(filePath);
+          console.log('🧹 Local PDF file cleaned up after Cloudinary upload');
+        } catch (cleanupError) {
+          console.warn('⚠️ Failed to cleanup local PDF file:', cleanupError);
+          // Non-critical error, continue
+        }
+      }
 
       // Return success response
       const result = {
         success: true,
         invoice_id: filename,
-        pdf_path: filePath,
+        pdf_path: cloudinaryResult ? undefined : filePath, // Only include local path if Cloudinary failed
+        pdf_url: cloudinaryResult?.secure_url,
+        cloudinary_public_id: cloudinaryResult?.public_id,
         customer_name,
         total_amount: totalAmount,
-        items: itemsWithTotals,
+        items: items.map(item => ({
+          name: item.name,
+          quantity: item.quantity,
+          unit_cost: item.unit_cost,
+          total_cost: item.quantity * item.unit_cost, // Calculate for return value only
+        })),
         generated_at: new Date().toISOString(),
       };
 
@@ -175,6 +214,8 @@ export const invoiceGenerator = createTool({
         success: z.boolean(),
         invoice_id: z.string().optional(),
         pdf_path: z.string().optional(),
+        pdf_url: z.string().optional(),
+        cloudinary_public_id: z.string().optional(),
         customer_name: z.string().optional(),
         total_amount: z.number().optional(),
         items: z.array(z.object({
@@ -264,7 +305,7 @@ export const parseInvoiceText = (text: string): Partial<InvoiceRequest> => {
           name: itemName,
           quantity: 1,
           unit_cost: price,
-          total_cost: price,
+          // Note: Don't include total_cost here - API calculates it automatically
         });
         break;
       }

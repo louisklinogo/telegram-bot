@@ -1,0 +1,167 @@
+
+paco@paco MINGW64 ~/Projects/invoice/telegram-bot (master)
+$ bun src/server.ts
+WARN [2025-09-28 00:34:07.806 +0000] (Cimantikos-Bot): If you are using a custom instrumentation file or want to disable this warning, set the globalThis.___MASTRA_TELEMETRY___ variable to true in your instrumentation file.
+CloudExporter disabled: MASTRA_CLOUD_ACCESS_TOKEN environment variable not set. 🚀 Sign up for Mastra Cloud at https://cloud.mastra.ai to see your AI traces online and obtain your access token.
+AI tracing exporter initialized {
+  strategy: "batch-with-updates",
+  source: "auto",
+  storageAdapter: "",
+  maxBatchSize: 1000,
+  maxBatchWaitMs: 5000,
+}
+🔍 Validating environment variables...
+✅ Environment validation passed
+   Environment: development
+   Server port: 8080
+   Webhook configured: No
+   API keys loaded: 8 keys
+
+✅ Cloudinary configured successfully
+   Cloud name: dk4b0brc0
+🚀 Starting Cimantikós Telegram Bot Server...
+📡 Main server (Telegram webhooks): http://localhost:8080
+
+🔒 Security Status:
+   Environment: development
+   Webhook secret: Not set
+   API keys: 5 loaded
+
+✅ Main Telegram server is running!
+📊 Main health check: http://localhost:8080/health
+🔗 Telegram webhook: http://localhost:8080/webhook
+🤖 API endpoint: http://localhost:8080/api/telegram/process-message
+🧠 Agent status: http://localhost:8080/api/telegram/agent/status
+
+⚠️  IMPORTANT: You must also run "mastra dev" in a separate terminal for AI agents to work!
+🧠 Mastra server should be running on: http://localhost:4111
+ℹ️  WEBHOOK_URL not configured. Webhook mode NOT active.
+📋 To enable webhooks:
+   1. Set WEBHOOK_URL in .env, OR
+   2. Use POST /set-webhook endpoint with ngrok URL
+🔧 For development testing, set up ngrok tunnel first!
+Webhook error: 57 |         return task;
+58 |     return new Promise((resolve, reject) => {
+59 |         const handle = setTimeout(() => {
+60 |             debugErr(`Request timed out after ${timeout} ms`);
+61 |             if (onTimeout === "throw") {
+62 |                 reject(new Error(`Request timed out after ${timeout} ms`));
+                            ^
+error: Request timed out after 10000 ms
+      at <anonymous> (C:\Users\louis\Projects\invoice\telegram-bot\node_modules\grammy\out\convenience\webhook.js:62:24)
+
+Processed message for user 8168118983: 1 steps, 2597 tokens
+Processed message for user 8168118983: 1 steps, 2750 tokens
+Processed message for user 8168118983: 1 steps, 3066 tokens
+Processed message for user 8168118983: 1 steps, 2772 tokens
+Processed message for user 8168118983: 1 steps, 3028 tokens
+Processed message for user 8168118983: 1 steps, 3001 tokens
+Webhook error: 57 |         return task;
+58 |     return new Promise((resolve, reject) => {
+59 |         const handle = setTimeout(() => {
+60 |             debugErr(`Request timed out after ${timeout} ms`);
+61 |             if (onTimeout === "throw") {
+62 |                 reject(new Error(`Request timed out after ${timeout} ms`));
+                            ^
+error: Request timed out after 10000 ms
+      at <anonymous> (C:\Users\louis\Projects\invoice\telegram-bot\node_modules\grammy\out\convenience\webhook.js:62:24)
+
+Measurement validation results: 📊 MEASUREMENT VALIDATION SUMMARY:
+✅ Valid measurements: 8/8
+⚠️ Warnings: 1
+   1. Missing essential measurements: ST
+
+Found existing client: 27bd63b0-1370-8140-a4dc-df8aaefd96a3
+Measurement created: 27cd63b0-1370-8130-881d-cc0422ff4945
+Measurement validation results: 📊 MEASUREMENT VALIDATION SUMMARY:
+✅ Valid measurements: 8/8
+⚠️ Warnings: 1
+   1. Missing essential measurements: ST
+
+Found existing client: 27bd63b0-1370-8140-a4dc-df8aaefd96a3
+Webhook error: 57 |         return task;
+58 |     return new Promise((resolve, reject) => {
+59 |         const handle = setTimeout(() => {
+60 |             debugErr(`Request timed out after ${timeout} ms`);
+61 |             if (onTimeout === "throw") {
+62 |                 reject(new Error(`Request timed out after ${timeout} ms`));
+                            ^
+error: Request timed out after 10000 ms
+      at <anonymous> (C:\Users\louis\Projects\invoice\telegram-bot\node_modules\grammy\out\convenience\webhook.js:62:24)
+
+Measurement created: 27cd63b0-1370-8102-aa94-d9078b943c65
+Bot handler error: 21 |     /** The called method name which caused this error to be thrown. */
+22 |     method,
+23 |     /** The payload that was passed when calling the method. */
+24 |     payload) {
+25 |         var _a;
+26 |         super(`${message} (${err.error_code}: ${err.description})`);
+             ^
+GrammyError: Call to 'sendMessage' failed! (400: Bad Request: can't parse entities: Can't find end of the entity starting at byte offset 509)
+     method: "sendMessage",
+    payload: {
+  chat_id: 8168118983,
+  text: "Thank you, Kwame! I have received your measurements. I will now save them to your profile.\n\nPlease give me a moment to process this.Thank you, Kwame Kodua. Your measurements have been successfully recorded in our database.\n\nHere is a summary of the measurements saved:\n*   **Chest (CH):** 47\"\n*   **Shoulder (SH):** 19.5\"\n*   **Sleeve Length (SL):** 24\"\n*   **Neck (NK):** 18\"\n*   **Waist (WT):** 41\"\n*   **Lap (LP):** 27\"\n*   **Top Length (LT):** 30\"\n*   **Trouser Length (LT):** 38\"\n*   **Bicep Round (RD):** 14\"\n\nPlease note that the Stomach (ST) measurement was not provided. If you'd like to add it later, just send it in the same format.\n\nIs there anything else I can help you with today?",
+  business_connection_id: undefined,
+  direct_messages_topic_id: undefined,
+  parse_mode: "Markdown",
+},
+         ok: false,
+ error_code: 400,
+ description: "Bad Request: can't parse entities: Can't find end of the entity starting at byte offset 509",
+ parameters: {},
+
+      at new GrammyError (C:\Users\louis\Projects\invoice\telegram-bot\node_modules\grammy\out\core\error.js:26:9)
+      at toGrammyError (C:\Users\louis\Projects\invoice\telegram-bot\node_modules\grammy\out\core\error.js:47:12)
+      at callApi (C:\Users\louis\Projects\invoice\telegram-bot\node_modules\grammy\out\core\client.js:97:34)
+
+Bot handler error: 21 |     /** The called method name which caused this error to be thrown. */
+22 |     method,
+23 |     /** The payload that was passed when calling the method. */
+24 |     payload) {
+25 |         var _a;
+26 |         super(`${message} (${err.error_code}: ${err.description})`);
+             ^
+GrammyError: Call to 'sendMessage' failed! (400: Bad Request: can't parse entities: Can't find end of the entity starting at byte offset 674)
+     method: "sendMessage",
+    payload: {
+  chat_id: 8168118983,
+  text: "Thank you, Kwame Kodua. I have received your measurements. I will now validate and record them for you.\n\nI see two entries for `LT` (Length). I will record the first as Top Length (30) and the second as Trouser Length (38).\n\nPlease wait a moment while I save this to your profile.Excellent, Kwame Kodua. Your measurements have been successfully recorded in our database.\n\nHere is a summary of the measurements we have saved for you:\n\n*   **Chest (CH):** 47\"\n*   **Shoulder (SH):** 19.5\"\n*   **Sleeve Length (SL):** 24\"\n*   **Neck (NK):** 18\"\n*   **Top Length (LT):** 30\"\n*   **Trouser Length (LT):** 38\"\n*   **Waist (WT):** 41\"\n*   **Lap (LP):** 27\"\n*   **Bicep Round (RD):** 14\"\n\nPlease note that the Stomach (ST) measurement was not provided. If you have it, feel free to send it over.\n\nIs there anything else I can help you with today?",
+  business_connection_id: undefined,
+  direct_messages_topic_id: undefined,
+  parse_mode: "Markdown",
+},
+         ok: false,
+ error_code: 400,
+ description: "Bad Request: can't parse entities: Can't find end of the entity starting at byte offset 674",
+ parameters: {},
+
+      at new GrammyError (C:\Users\louis\Projects\invoice\telegram-bot\node_modules\grammy\out\core\error.js:26:9)
+      at toGrammyError (C:\Users\louis\Projects\invoice\telegram-bot\node_modules\grammy\out\core\error.js:47:12)
+      at callApi (C:\Users\louis\Projects\invoice\telegram-bot\node_modules\grammy\out\core\client.js:97:34)
+
+Bot handler error: 21 |     /** The called method name which caused this error to be thrown. */
+22 |     method,
+23 |     /** The payload that was passed when calling the method. */
+24 |     payload) {
+25 |         var _a;
+26 |         super(`${message} (${err.error_code}: ${err.description})`);
+             ^
+GrammyError: Call to 'sendMessage' failed! (400: Bad Request: can't parse entities: Can't find end of the entity starting at byte offset 385)
+     method: "sendMessage",
+    payload: {
+  chat_id: 8168118983,
+  text: "Hello Kwame Kodua. It looks like I have already successfully recorded these exact measurements for you.\n\nHere is the summary I provided earlier:\n*   **Chest (CH):** 47\"\n*   **Shoulder (SH):** 19.5\"\n*   **Sleeve Length (SL):** 24\"\n*   **Neck (NK):** 18\"\n*   **Top Length (LT):** 30\"\n*   **Trouser Length (LT):** 38\"\n*   **Waist (WT):** 41\"\n*   **Lap (LP):** 27\"\n*   **Bicep Round (RD):** 14\"\n\nDid you want to make a change to these measurements, or is there something else I can help you with today?",
+  business_connection_id: undefined,
+  direct_messages_topic_id: undefined,
+  parse_mode: "Markdown",
+},
+         ok: false,
+ error_code: 400,
+ description: "Bad Request: can't parse entities: Can't find end of the entity starting at byte offset 385",
+ parameters: {},
+
+      at new GrammyError (C:\Users\louis\Projects\invoice\telegram-bot\node_modules\grammy\out\core\error.js:26:9)
+      at toGrammyError (C:\Users\louis\Projects\invoice\telegram-bot\node_modules\grammy\out\core\error.js:47:12)
+      at callApi (C:\Users\louis\Projects\invoice\telegram-bot\node_modules\grammy\out\core\client.js:97:34)
+

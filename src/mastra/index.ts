@@ -19,10 +19,8 @@ export const mastra = new Mastra({
   storage: new LibSQLStore({
     url: 'file:./mastra-data.db'
   }),
-  // TODO: Add vector store configuration when needed for semantic recall
-  // vectors: {
-  //   globalVectorStore
-  // },
+  // Note: Vector store is configured per-agent in their memory settings
+  // Agent uses LibSQLVector with Google embeddings for semantic recall
   logger: new PinoLogger({ 
     name: 'Cimantikos-Bot', 
     level: 'info' 
