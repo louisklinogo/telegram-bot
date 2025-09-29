@@ -36,7 +36,7 @@ export const notionSearchTool = createTool({
 
     for (const dbType of searchTargets) {
       try {
-        const dbId = databases[dbType];
+        const dbId = databases[dbType as keyof typeof databases];
         if (!dbId) continue;
 
         // Build search filter based on database type

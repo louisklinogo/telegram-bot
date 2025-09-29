@@ -36,8 +36,8 @@ export const pdfSender = createTool({
     }
 
     try {
-      let document: InputFile | string;
-      let filename: string;
+      let document: InputFile | string | undefined = undefined;
+      let filename: string = '';
 
       if (pdf_url) {
         // Use Cloudinary URL directly

@@ -1,7 +1,11 @@
 import { createTool } from '@mastra/core/tools';
 import { z } from 'zod';
-import { InvoiceItem, InvoiceRequest, InvoiceResponse } from '../agents/types/invoice';
-import { InvoiceResponseSchema } from '../agents/types/invoice';
+import { 
+  InvoiceItem, 
+  InvoiceRequest, 
+  InvoiceResponse,
+  InvoiceResponseSchema 
+} from '../types/invoiceGenerator';
 import { uploadToCloudinary } from '../../config/cloudinary';
 import fetch from 'node-fetch';
 import { Agent as HttpAgent } from 'https';
@@ -173,8 +177,8 @@ export const invoiceGenerator = createTool({
           folder: 'cimantikos-invoices',
           public_id: `invoice_${sanitizedCustomerName}_${timestamp}`,
           resource_type: 'raw', // For PDF files
-          access_mode: 'public', // Make file publicly accessible
-          type: 'upload', // Ensure it's an upload type
+          // access_mode: 'public', // Make file publicly accessible - removed as not supported
+          // type: 'upload', // Ensure it's an upload type - removed as not supported
         });
         console.log(`✅ PDF uploaded to Cloudinary: ${cloudinaryResult.secure_url}`);
         

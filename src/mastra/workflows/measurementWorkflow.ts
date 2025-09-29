@@ -1,7 +1,7 @@
 import { createStep, createWorkflow } from '@mastra/core/workflows';
 import { z } from 'zod';
-import { MeasurementDataSchema, MeasurementResponseSchema } from '../agents/types/measurement';
-import { notionMeasurementsTool } from '../tools/notionMeasurementsTool';
+// Old type imports removed - now using Zod schemas directly
+import { notionMeasurementManager } from '../tools/notionMeasurementManager';
 import { sendSuccessMessage, sendErrorMessage } from '../tools/grammyHandler';
 
 // Input schema for the workflow
@@ -88,7 +88,7 @@ const createNotionMeasurementStep = createStep({
 
       console.log('Creating Notion measurement for:', validated_data.customer_name);
 
-      const result = await notionMeasurementsTool.execute({
+      const result = await notionMeasurementManager.execute({
         context: validated_data,
         runtimeContext,
         suspend: async () => {},

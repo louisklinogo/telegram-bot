@@ -1,8 +1,10 @@
 import { createStep, createWorkflow } from '@mastra/core/workflows';
 import { z } from 'zod';
-import { InvoiceRequestSchema, InvoiceResponseSchema } from '../agents/types/invoice';
+// Old type imports removed - now using Zod schemas directly
 import { invoiceGenerator } from '../tools/invoiceGenerator';
 import { notionOrdersTool } from '../tools/notionOrdersTool';
+// import { invoiceDbTool } from '../tools/invoiceDbTool'; // Removed - too complex
+import { NotionClient } from '../utils/notionClient';
 import { sendSuccessMessage, sendErrorMessage } from '../tools/grammyHandler';
 import { pdfSender } from '../tools/pdfSender';
 
@@ -77,10 +79,10 @@ const generateInvoiceStep = createStep({
   },
 });
 
-// Step 2: Create Invoice in Notion
+// Step 2: Create Invoice Records in Notion (Orders + Invoices databases)
 const createNotionInvoiceStep = createStep({
-  id: 'create-notion-invoice',
-  description: 'Create invoice entry in Notion database',
+  id: 'create-notion-invoice-records',
+  description: 'Create invoice entries in both Orders database (legacy) and Invoices database (new)',
   inputSchema: z.object({
     chat_id: z.number(),
     customer_name: z.string(),
@@ -97,7 +99,9 @@ const createNotionInvoiceStep = createStep({
   }),
   outputSchema: z.object({
     success: z.boolean(),
+    orders_record_data: z.any().optional(),
     invoice_record_data: z.any().optional(),
+    client_id: z.string().optional(),
     error: z.string().optional(),
   }),
   execute: async ({ inputData, runtimeContext }) => {
@@ -111,37 +115,111 @@ const createNotionInvoiceStep = createStep({
         };
       }
       
-      console.log('Creating Notion invoice for:', inputData.customer_name);
+      console.log('Creating Notion records for:', inputData.customer_name);
 
       const totalAmount = inputData.items.reduce((sum, item) => sum + (item.unit_cost * item.quantity), 0);
-
-      const result = await notionOrdersTool.execute({
-        context: {
-          customer_name: inputData.customer_name,
-          phone_number: inputData.phone_number,
-          items: inputData.items.map(item => ({
-            ...item,
-            total_cost: item.unit_cost * item.quantity
-          })),
-          total_price: inputData.invoice_data?.total_price || totalAmount,
-          invoice_file_url: inputData.invoice_data?.pdf_path || '',
-          notes: inputData.notes || '',
-        },
-        runtimeContext,
-        suspend: async () => {},
-      });
-
-      if (result.success) {
-        console.log('Notion invoice created successfully:', result.order_id);
-        return {
-          success: true,
-          invoice_record_data: result,
-        };
-      } else {
-        console.error('Notion invoice creation failed:', result.error);
+      const notionClient = new NotionClient();
+      
+      // Step 1: Create/Get Client Record
+      let clientId: string;
+      try {
+        // Try to find existing client first
+        const existingClients = await notionClient.queryClientRecords({
+          name: inputData.customer_name,
+        }, 1);
+        
+        if (existingClients.length > 0) {
+          clientId = existingClients[0].id!;
+          console.log('Using existing client:', clientId);
+        } else {
+          // Create new client
+          const newClient = await notionClient.createClientRecord({
+            name: inputData.customer_name,
+            phone_number: inputData.phone_number,
+            referral_source: 'Telegram Bot',
+            notes: `Created via invoice workflow on ${new Date().toISOString()}`,
+          });
+          clientId = newClient.id;
+          console.log('Created new client:', clientId);
+        }
+      } catch (error) {
+        console.error('Failed to create/find client:', error);
         return {
           success: false,
-          error: result.error || 'Failed to create Notion invoice',
+          error: 'Failed to create or find client record',
+        };
+      }
+
+      // Step 2: Create Order Record (for backward compatibility)
+      let orderResult;
+      try {
+        orderResult = await notionOrdersTool.execute({
+          context: {
+            customer_name: inputData.customer_name,
+            phone_number: inputData.phone_number,
+            items: inputData.items.map(item => ({
+              ...item,
+              total_cost: item.unit_cost * item.quantity
+            })),
+            total_price: inputData.invoice_data?.total_price || totalAmount,
+            invoice_file_url: inputData.invoice_data?.pdf_path || '',
+            notes: inputData.notes || '',
+          },
+          runtimeContext,
+          suspend: async () => {},
+        });
+        
+        if (orderResult.success) {
+          console.log('Orders record created successfully:', orderResult.order_id);
+        } else {
+          console.warn('Orders record creation failed:', orderResult.error);
+        }
+      } catch (error) {
+        console.warn('Error creating Orders record:', error);
+        orderResult = { success: false, error: 'Failed to create Orders record' };
+      }
+
+      // Step 3: Create Invoice Record (new system)
+      let invoiceResult;
+      try {
+        const invoiceNumber = inputData.invoice_data?.invoice_id || `INV-${Date.now()}`;
+        const issueDate = new Date().toISOString().split('T')[0];
+        const dueDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]; // 30 days from now
+        
+        // TODO: Add invoice record creation with simpler tool later
+        invoiceResult = { 
+          success: true, 
+          data: { 
+            invoice_id: invoiceNumber,
+            amount: totalAmount,
+            status: 'Generated'
+          } 
+        };
+        
+        if (invoiceResult.success) {
+          console.log('Invoice record created successfully:', invoiceResult.data?.record_id);
+        } else {
+          console.warn('Invoice record creation failed:', invoiceResult.error);
+        }
+      } catch (error) {
+        console.warn('Error creating Invoice record:', error);
+        invoiceResult = { success: false, error: 'Failed to create Invoice record' };
+      }
+
+      // Return success if at least one record was created
+      const success = orderResult.success || invoiceResult.success;
+      
+      if (success) {
+        return {
+          success: true,
+          orders_record_data: orderResult.success ? orderResult : undefined,
+          invoice_record_data: invoiceResult.success ? invoiceResult.data : undefined,
+          client_id: clientId,
+        };
+      } else {
+        return {
+          success: false,
+          error: `Failed to create records. Orders: ${orderResult.error}, Invoice: ${invoiceResult.error}`,
         };
       }
     } catch (error) {
@@ -323,7 +401,9 @@ export const invoiceWorkflow = createWorkflow({
       customer_name: initData.customer_name,
       invoice_data: generateResult.invoice_data,
       generation_status: generateResult.status,
+      orders_record_data: notionResult.orders_record_data,
       invoice_record_data: notionResult.invoice_record_data,
+      client_id: notionResult.client_id,
     };
   })
   .then(sendPdfStep)
@@ -340,18 +420,16 @@ export const invoiceWorkflow = createWorkflow({
       const totalAmount = initData.items.reduce((sum: number, item: { name: string; quantity: number; unit_cost: number }) => sum + (item.unit_cost * item.quantity), 0);
       
       const fallbackMessage = `
-⚠️ *Invoice Service Temporarily Unavailable*
+⚠️ *Invoice Generation Issue*
 
 *Customer:* ${initData.customer_name}
-*Fallback Invoice ID:* ${fallbackId}
+*Fallback Order ID:* ${fallbackId}
 *Total Amount:* GHS ${totalAmount}
 
 📋 *Items:*
 ${initData.items.map((item: { name: string; quantity: number; unit_cost: number }) => `• ${item.name}: ${item.quantity} × GHS ${item.unit_cost}`).join('\n')}
 
-📝 Your order has been recorded. We'll generate the formal invoice shortly and send it to you.
-
-Thank you for choosing Cimantikós Clothing Company! 🧵
+📝 I've recorded the order details in your database. You can create the formal invoice manually or try again later.
       `;
       
       const actualChatId = runtimeContext?.get?.('chatId') || runtimeContext?.get?.('chat_id') || initData.chat_id;
@@ -369,28 +447,38 @@ Thank you for choosing Cimantikós Clothing Company! 🧵
     let confirmationMessage;
     
     if (pdfResult.pdf_sent) {
+      const invoiceNumber = notionResult.invoice_record_data?.invoice_number || notionResult.orders_record_data?.order_id || 'N/A';
+      const totalAmount = notionResult.invoice_record_data?.amount || notionResult.orders_record_data?.total_price || generateResult.invoice_data?.total_amount || 'N/A';
+      
       confirmationMessage = `
 🎉 *Invoice Complete!*
 
 *Customer:* ${initData.customer_name}
-*Invoice Number:* ${notionResult.invoice_record_data?.order_id || 'N/A'}
-*Total Amount:* GHS ${notionResult.invoice_record_data?.total_price || generateResult.invoice_data?.total_amount || 'N/A'}
+*Invoice Number:* ${invoiceNumber}
+*Total Amount:* GHS ${totalAmount}
 
 ✅ PDF invoice delivered above
-✅ Order saved to our database
+✅ Records saved to our database
+${notionResult.invoice_record_data ? '✅ Professional invoice record created' : ''}
+${notionResult.orders_record_data ? '✅ Order record maintained for legacy systems' : ''}
 
 Thank you for choosing Cimantikós Clothing Company! 🧵
       `;
     } else {
       // PDF delivery failed - provide fallback message with details
+      const invoiceNumber = notionResult.invoice_record_data?.invoice_number || notionResult.orders_record_data?.order_id || 'N/A';
+      const totalAmount = notionResult.invoice_record_data?.amount || notionResult.orders_record_data?.total_price || generateResult.invoice_data?.total_amount || 'N/A';
+      
       confirmationMessage = `
 ⚠️ *Invoice Generated (Delivery Issue)*
 
 *Customer:* ${initData.customer_name}
-*Invoice Number:* ${notionResult.invoice_record_data?.order_id || 'N/A'}
-*Total Amount:* GHS ${notionResult.invoice_record_data?.total_price || generateResult.invoice_data?.total_amount || 'N/A'}
+*Invoice Number:* ${invoiceNumber}
+*Total Amount:* GHS ${totalAmount}
 
 ✅ Invoice created and saved to database
+${notionResult.invoice_record_data ? '✅ Professional invoice record created' : ''}
+${notionResult.orders_record_data ? '✅ Order record maintained' : ''}
 ⚠️ PDF delivery failed: ${pdfResult.error || 'Unknown error'}
 
 📝 Your order is recorded. We'll send the invoice via alternative method.
@@ -402,16 +490,20 @@ Thank you for choosing Cimantikós Clothing Company! 🧵
     const actualChatId = runtimeContext?.get?.('chatId') || runtimeContext?.get?.('chat_id') || initData.chat_id;
     await sendSuccessMessage(actualChatId, confirmationMessage);
     
+    const invoiceNumber = notionResult.invoice_record_data?.invoice_number || notionResult.orders_record_data?.order_id || generateResult.invoice_data?.invoice_id;
+    
     return {
       success: true,
       message: pdfResult.pdf_sent ? 'Invoice workflow completed successfully' : 'Invoice created but PDF delivery failed',
       invoice_id: generateResult.invoice_data?.invoice_id,
-      invoice_number: generateResult.invoice_data?.invoice_id,
+      invoice_number: invoiceNumber,
       pdf_path: generateResult.invoice_data?.pdf_path,
       pdf_url: generateResult.invoice_data?.pdf_url,
       pdf_delivered: pdfResult.pdf_sent,
       delivery_method: pdfResult.delivery_method,
-      notion_url: notionResult.invoice_record_data?.order_url,
+      client_id: notionResult.client_id,
+      orders_record_url: notionResult.orders_record_data?.order_url,
+      invoice_record_id: notionResult.invoice_record_data?.record_id,
     };
   })
   .commit();

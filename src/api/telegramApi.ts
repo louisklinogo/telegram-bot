@@ -30,8 +30,8 @@ app.post('/process-message', async (c) => {
     
     const { text, userId, chatId, username } = validatedInput;
     
-    // Get the Telegram invoice agent from Mastra
-    const agent = mastra.getAgent('telegramInvoiceAgent');
+    // Get Maya - Cimantikós Business Assistant from Mastra
+    const agent = mastra.getAgent('cimantikosBizAssistant');
     
     // Generate response using agent with memory context and timeout protection
     const startTime = Date.now();
@@ -103,7 +103,7 @@ app.get('/health', (c) => {
 // Get agent status
 app.get('/agent/status', async (c) => {
   try {
-    const agent = mastra.getAgent('telegramInvoiceAgent');
+    const agent = mastra.getAgent('cimantikosBizAssistant');
     return c.json({
       success: true,
       agent: {

@@ -2,7 +2,7 @@ import { Mastra } from '@mastra/core';
 import { PinoLogger } from '@mastra/loggers';
 import { LibSQLStore } from '@mastra/libsql';
 import { registerApiRoute } from '@mastra/core/server';
-import { telegramInvoiceAgent } from './agents/telegramInvoiceAgent';
+import { cimantikosBizAssistant } from './agents/telegramInvoiceAgent';
 import { invoiceWorkflow } from './workflows/invoiceWorkflow';
 import { measurementWorkflow } from './workflows/measurementWorkflow';
 import { HealthCheckManager, createHealthResponse } from '../health/healthCheck';
@@ -10,7 +10,7 @@ import { HealthCheckManager, createHealthResponse } from '../health/healthCheck'
 // Create Mastra instance with proper configuration
 export const mastra = new Mastra({
   agents: {
-    telegramInvoiceAgent,
+    cimantikosBizAssistant,
   },
   workflows: {
     invoiceWorkflow,
