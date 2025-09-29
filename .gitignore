@@ -79,6 +79,8 @@ typedoc/
 
 # Next.js
 .next/
+.next
+apps/**/.next/
 .nuxt/
 
 # Nuxt.js
@@ -112,3 +114,7 @@ typedoc/
 
 # Mastra specific
 .mastra/
+apps/*/.mastra/
+
+# Workspace data artifacts
+data/

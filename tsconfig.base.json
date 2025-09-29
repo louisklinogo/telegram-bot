@@ -1,0 +1,24 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "strict": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "baseUrl": ".",
+    "paths": {
+      "@cimantikos/domain": ["packages/domain/src/index.ts"],
+      "@cimantikos/domain/*": ["packages/domain/src/*"],
+      "@cimantikos/services": ["packages/services/src/index.ts"],
+      "@cimantikos/services/*": ["packages/services/src/*"],
+      "@cimantikos/config": ["packages/config/src/index.ts"],
+      "@cimantikos/config/*": ["packages/config/src/*"]
+    }
+  }
+}

@@ -1,0 +1,8 @@
+# Workspace-specific ignores
+node_modules/
+.next/
+dist/
+build/
+temp-files/
+.DS_Store
+.env*
