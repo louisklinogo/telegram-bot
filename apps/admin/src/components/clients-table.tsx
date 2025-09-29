@@ -26,9 +26,11 @@ import {
 interface ClientsTableProps {
   clients: ClientRecord[];
   isLoading?: boolean;
+  onEdit?: (client: ClientRecord) => void;
+  onDelete?: (client: ClientRecord) => void;
 }
 
-export function ClientsTable({ clients, isLoading }: ClientsTableProps) {
+export function ClientsTable({ clients, isLoading, onEdit, onDelete }: ClientsTableProps) {
   if (isLoading) {
     return (
       <div className="space-y-3">
@@ -110,8 +112,15 @@ export function ClientsTable({ clients, isLoading }: ClientsTableProps) {
                     <DropdownMenuItem>View profile</DropdownMenuItem>
                     <DropdownMenuItem>View orders</DropdownMenuItem>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem>Edit client</DropdownMenuItem>
-                    <DropdownMenuItem className="text-destructive">Delete client</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => onEdit?.(client)}>
+                      Edit client
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      className="text-destructive"
+                      onClick={() => onDelete?.(client)}
+                    >
+                      Delete client
+                    </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
               </TableCell>
