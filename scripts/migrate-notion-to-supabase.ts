@@ -80,6 +80,11 @@ async function fetchDatabasePages(databaseId: string, token: string): Promise<No
 
     if (!response.ok) {
       const errorText = await response.text();
+      // Skip databases that don't exist or aren't shared
+      if (response.status === 404) {
+        console.warn(`⚠️  Database ${databaseId} not found or not shared - skipping`);
+        return [];
+      }
       throw new Error(`Notion API error (${databaseId}): ${response.status} - ${errorText}`);
     }
 
@@ -168,48 +173,36 @@ async function migrateOrders(
     const clientRelation = getRelationIds(props['Client']);
     const clientId = clientRelation.map((id) => clientIdMap.get(id)).find(Boolean) ?? null;
 
+    const itemsText = getPlainText(props['Items']);
+    const parsedItems = parseOrderItems(itemsText);
+    
+    // Extract order number from various fields
+    const orderNumber = getPlainText(props['Order ID']) ||
+                       getPlainText(props['Order Number']) ||
+                       getPlainText(props['Name']) ||
+                       `ORD-${page.id.slice(0, 8)}`;
+    
     const orderRecord = {
       notion_page_id: page.id,
-      order_number: getPlainText(props['Order ID']) || `ORD-${page.id.slice(0, 8)}`,
+      order_number: orderNumber,
       client_id: clientId,
-      status: getSelect(props['Status']) ?? 'New',
+      status: getSelect(props['Status']) ?? 'pending',
+      items: parsedItems,
       total_price: getNumber(props['Total Price']) ?? 0,
+      deposit_amount: getNumber(props['Deposit']) ?? 0,
+      balance_amount: (getNumber(props['Total Price']) ?? 0) - (getNumber(props['Deposit']) ?? 0),
       notes: getPlainText(props['Notes']) || null,
-      invoice_file_url: getURL(props['Invoice/File']) ?? null,
+      due_date: getDate(props['Due Date']),
       created_at: getDate(props['Date']) ?? page.created_time,
       updated_at: page.last_edited_time,
     };
 
-    const { data: orderData, error: orderError } = await supabase
+    const { error: orderError } = await supabase
       .from('orders')
-      .upsert(orderRecord, { onConflict: 'notion_page_id' })
-      .select('id')
-      .maybeSingle();
+      .upsert(orderRecord, { onConflict: 'notion_page_id' });
 
     if (orderError) {
       throw new Error(`Failed to upsert order ${orderRecord.order_number}: ${orderError.message}`);
-    }
-
-    if (!orderData?.id) continue;
-
-    await supabase.from('order_items').delete().eq('order_id', orderData.id);
-
-    const itemsText = getPlainText(props['Items']);
-    const parsedItems = parseOrderItems(itemsText);
-
-    if (parsedItems.length > 0) {
-      const insertPayload = parsedItems.map((item) => ({
-        order_id: orderData.id,
-        name: item.name,
-        quantity: item.quantity,
-        unit_cost: item.unit_cost,
-        total_cost: item.total_cost,
-      }));
-
-      const { error: itemError } = await supabase.from('order_items').insert(insertPayload);
-      if (itemError) {
-        throw new Error(`Failed to insert order items for ${orderRecord.order_number}: ${itemError.message}`);
-      }
     }
   }
 }
