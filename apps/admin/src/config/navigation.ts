@@ -1,15 +1,14 @@
 import type { LucideIcon } from "lucide-react";
 import {
-  BarChart3,
-  FileText,
-  FolderOpenDot,
-  GaugeCircle,
+  CreditCard,
+  Inbox,
   LayoutDashboard,
   NotebookPen,
   ReceiptText,
   Ruler,
   Settings,
   Users,
+  Vault,
 } from "lucide-react";
 
 export type NavItem = {
@@ -33,62 +32,70 @@ export const NAV_SECTIONS: NavSection[] = [
         title: "Dashboard",
         href: "/",
         icon: LayoutDashboard,
+        description: "Business overview",
       },
       {
-        title: "Performance",
-        href: "/analytics",
-        icon: BarChart3,
+        title: "Inbox",
+        href: "/inbox",
+        icon: Inbox,
+        description: "Messages & notifications",
       },
     ],
   },
   {
-    title: "Operations",
+    title: "Business",
     items: [
       {
-        title: "Clients",
-        href: "/clients",
-        icon: Users,
-        badge: "24",
+        title: "Transactions",
+        href: "/transactions",
+        icon: CreditCard,
+        description: "Payments & expenses",
       },
       {
         title: "Orders",
         href: "/orders",
         icon: NotebookPen,
+        description: "Tailoring orders",
       },
       {
         title: "Invoices",
         href: "/invoices",
         icon: ReceiptText,
+        description: "Billing & payments",
       },
       {
-        title: "Measurements",
-        href: "/measurements",
-        icon: Ruler,
-      },
-      {
-        title: "Files",
-        href: "/files",
-        icon: FolderOpenDot,
+        title: "Clients",
+        href: "/clients",
+        icon: Users,
+        description: "Customer database",
       },
     ],
   },
   {
-    title: "Systems",
+    title: "Tailoring",
     items: [
       {
-        title: "Health",
-        href: "/health",
-        icon: GaugeCircle,
+        title: "Measurements",
+        href: "/measurements",
+        icon: Ruler,
+        description: "Client measurements",
       },
       {
-        title: "Reports",
-        href: "/reports",
-        icon: FileText,
+        title: "Vault",
+        href: "/vault",
+        icon: Vault,
+        description: "Documents & files",
       },
+    ],
+  },
+  {
+    title: "Settings",
+    items: [
       {
         title: "Settings",
         href: "/settings",
         icon: Settings,
+        description: "App configuration",
       },
     ],
   },

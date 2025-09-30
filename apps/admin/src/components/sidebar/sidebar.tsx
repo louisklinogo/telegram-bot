@@ -46,50 +46,32 @@ export function Sidebar() {
 
       {/* Navigation */}
       <TooltipProvider delayDuration={0}>
-        <ScrollArea className="flex-1 py-6">
-          <nav className="flex flex-col gap-6 px-3">
-            {NAV_SECTIONS.map((section) => (
-              <div key={section.title} className="flex flex-col gap-2">
-                {isExpanded && (
-                  <p className="px-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                    {section.title}
-                  </p>
-                )}
-                <div className="flex flex-col gap-1">
-                  {section.items.map((item) => (
-                    <SidebarLink
-                      key={item.href}
-                      item={item}
-                      active={isLinkActive(item.href, pathname)}
-                      expanded={isExpanded}
-                    />
-                  ))}
+        <ScrollArea className="flex-1 pt-6 pb-6">
+          <nav className="w-full">
+            <div className="flex flex-col gap-6">
+              {NAV_SECTIONS.map((section) => (
+                <div key={section.title} className="flex flex-col gap-2">
+                  {isExpanded && (
+                    <p className="px-[17px] text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">
+                      {section.title}
+                    </p>
+                  )}
+                  <div className="flex flex-col gap-2">
+                    {section.items.map((item) => (
+                      <SidebarLink
+                        key={item.href}
+                        item={item}
+                        active={isLinkActive(item.href, pathname)}
+                        expanded={isExpanded}
+                      />
+                    ))}
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </nav>
         </ScrollArea>
       </TooltipProvider>
-
-      {/* User Section */}
-      <div className="border-t p-4">
-        <div
-          className={cn(
-            "flex items-center gap-3 rounded-lg border bg-secondary px-3 py-2 transition-all",
-            !isExpanded && "justify-center",
-          )}
-        >
-          <div className="h-8 w-8 shrink-0 rounded-full bg-primary/20 flex items-center justify-center text-xs font-semibold">
-            OM
-          </div>
-          {isExpanded && (
-            <div className="flex-1 min-w-0">
-              <p className="text-xs font-medium truncate">Operations</p>
-              <p className="text-[10px] text-muted-foreground truncate">Manager</p>
-            </div>
-          )}
-        </div>
-      </div>
     </aside>
   );
 }
@@ -111,46 +93,47 @@ function SidebarLink({ item, active, expanded }: SidebarLinkProps) {
   const Icon = item.icon as LucideIcon;
 
   const linkContent = (
-    <Link
-      href={item.href}
-      className="group relative block"
-    >
+    <Link prefetch href={item.href} className="group relative block">
       <div className="relative">
-        {/* Background that expands on hover/active */}
+        {/* Background that expands */}
         <div
           className={cn(
-            "absolute inset-0 rounded-md border transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)]",
-            active
-              ? "bg-accent/50 border-border"
-              : "bg-transparent border-transparent group-hover:bg-accent/30",
-            expanded ? "left-0 right-0" : "left-0 right-0",
+            "border border-transparent h-[40px] transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] ml-[15px] mr-[15px]",
+            active &&
+              "bg-[#F2F1EF] dark:bg-secondary border-[#DCDAD2] dark:border-[#2C2C2C]",
+            expanded ? "w-[calc(100%-30px)]" : "w-[40px]",
           )}
         />
 
-        {/* Content */}
-        <div className="relative flex items-center h-10 px-3 gap-3">
-          <Icon
-            className={cn(
-              "h-5 w-5 shrink-0 transition-colors",
-              active ? "text-foreground" : "text-muted-foreground group-hover:text-foreground",
-            )}
-          />
-          {expanded && (
+        {/* Icon - Fixed position from left */}
+        <div className="absolute top-0 left-[15px] w-[40px] h-[40px] flex items-center justify-center dark:text-[#666666] text-black group-hover:!text-primary pointer-events-none">
+          <div className={cn(active && "dark:!text-white")}>
+            <Icon className="h-5 w-5" />
+          </div>
+        </div>
+
+        {/* Label - appears when expanded */}
+        {expanded && (
+          <div className="absolute top-0 left-[55px] right-[4px] h-[40px] flex items-center pointer-events-none">
             <span
               className={cn(
-                "text-sm font-medium whitespace-nowrap transition-colors",
-                active ? "text-foreground" : "text-muted-foreground group-hover:text-foreground",
+                "text-sm font-medium transition-opacity duration-200 ease-in-out text-[#666] group-hover:text-primary",
+                "whitespace-nowrap overflow-hidden",
+                active && "text-primary",
               )}
             >
               {item.title}
             </span>
-          )}
-          {expanded && item.badge && (
-            <Badge variant="secondary" className="ml-auto text-[10px] h-5">
-              {item.badge}
-            </Badge>
-          )}
-        </div>
+            {item.badge && (
+              <Badge
+                variant="secondary"
+                className="ml-auto mr-2 text-[10px] h-5"
+              >
+                {item.badge}
+              </Badge>
+            )}
+          </div>
+        )}
       </div>
     </Link>
   );

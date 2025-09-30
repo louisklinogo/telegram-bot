@@ -14,6 +14,10 @@ import {
   fetchOrderById,
   fetchOrders,
 } from "@/lib/supabase-queries";
+import {
+  fetchTransactions,
+  fetchTransactionStats,
+} from "@/lib/supabase-transactions";
 
 export const queryKeys = {
   clients: ["clients"] as const,
@@ -24,6 +28,8 @@ export const queryKeys = {
   measurements: ["measurements"] as const,
   files: ["files"] as const,
   dashboardStats: ["dashboard", "stats"] as const,
+  transactions: ["transactions"] as const,
+  transactionStats: ["transactions", "stats"] as const,
 };
 
 export function useClients() {
@@ -81,6 +87,21 @@ export function useDashboardStats() {
   return useQuery({
     queryKey: queryKeys.dashboardStats,
     queryFn: fetchDashboardStats,
+    refetchInterval: 30000, // 30 seconds
+  });
+}
+
+export function useTransactions() {
+  return useQuery({
+    queryKey: queryKeys.transactions,
+    queryFn: fetchTransactions,
+  });
+}
+
+export function useTransactionStats() {
+  return useQuery({
+    queryKey: queryKeys.transactionStats,
+    queryFn: fetchTransactionStats,
     refetchInterval: 30000, // 30 seconds
   });
 }
