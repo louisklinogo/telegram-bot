@@ -29,10 +29,13 @@ export const createColumns = (options?: CreateColumnsOptions): ColumnDef<Measure
     cell: ({ row }) => {
       const measurement = row.original;
       return (
-        <div>
-          <p className="font-medium">{measurement.client?.name || "Unknown Client"}</p>
+        <div className="space-y-1">
+          <p className="font-medium text-sm">{measurement.client?.name || "Unknown Client"}</p>
           {measurement.record_name && (
-            <p className="text-xs text-muted-foreground">{measurement.record_name}</p>
+            <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+              <Ruler className="h-3 w-3" />
+              {measurement.record_name}
+            </p>
           )}
         </div>
       );
@@ -44,21 +47,21 @@ export const createColumns = (options?: CreateColumnsOptions): ColumnDef<Measure
     cell: ({ row }) => {
       const measurements = row.original.measurements as Record<string, string> | null;
       if (!measurements || Object.keys(measurements).length === 0) {
-        return <span className="text-muted-foreground text-sm">No measurements</span>;
+        return <span className="text-xs text-muted-foreground italic">No measurements recorded</span>;
       }
 
       // Display top 3 measurements
       const entries = Object.entries(measurements).slice(0, 3);
       return (
-        <div className="space-y-0.5">
+        <div className="space-y-1">
           {entries.map(([key, value]) => (
-            <div key={key} className="text-xs">
-              <span className="text-muted-foreground capitalize">{key.replace(/_/g, " ")}:</span>{" "}
-              <span className="font-mono font-medium">{value}"</span>
+            <div key={key} className="flex items-baseline gap-1.5 text-xs">
+              <span className="text-muted-foreground capitalize min-w-[80px]">{key.replace(/_/g, " ")}:</span>
+              <span className="font-mono font-semibold">{value}"</span>
             </div>
           ))}
           {Object.keys(measurements).length > 3 && (
-            <p className="text-xs text-muted-foreground">+{Object.keys(measurements).length - 3} more</p>
+            <p className="text-xs text-muted-foreground italic">+{Object.keys(measurements).length - 3} more...</p>
           )}
         </div>
       );
