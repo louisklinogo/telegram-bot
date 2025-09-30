@@ -123,6 +123,21 @@ export function ClientSheet({ open, onOpenChange, client }: ClientSheetProps) {
           </div>
 
           <div className="space-y-2">
+            <Label htmlFor="whatsapp">
+              WhatsApp <span className="text-destructive">*</span>
+            </Label>
+            <Input
+              id="whatsapp"
+              type="tel"
+              value={formData.whatsapp}
+              onChange={(e) => setFormData({ ...formData, whatsapp: e.target.value })}
+              placeholder="e.g., +233 24 123 4567"
+              required
+            />
+            <p className="text-xs text-muted-foreground">Required for WhatsApp marketing campaigns</p>
+          </div>
+
+          <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
             <Input
               id="email"

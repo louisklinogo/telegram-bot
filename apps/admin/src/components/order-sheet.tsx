@@ -156,7 +156,7 @@ export function OrderSheet({ open, onOpenChange, order }: OrderSheetProps) {
     if (order && open) {
       setFormData({
         client_id: order.client_id || "",
-        status: order.status || "Generated",
+        status: order.status || "generated",
         notes: order.notes || "",
         deposit_amount: parseFloat(String((order as any).deposit_amount || (order as any).depositAmount || "0")),
         due_date: ((order as any).due_date || (order as any).dueDate || "").split("T")[0] || "",

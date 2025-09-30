@@ -14,14 +14,22 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import type { OrderWithClient } from "@/lib/supabase-queries";
+import { formatCurrency } from "@/lib/currency";
 
 export type OrderColumn = OrderWithClient;
 
 const STATUS_VARIANTS: Record<string, "default" | "secondary" | "outline" | "destructive"> = {
-  Generated: "outline",
-  "In progress": "secondary",
-  Completed: "default",
-  Cancelled: "destructive",
+  generated: "outline",
+  in_progress: "secondary",
+  completed: "default",
+  cancelled: "destructive",
+};
+
+const STATUS_LABELS: Record<string, string> = {
+  generated: "Generated",
+  in_progress: "In Progress",
+  completed: "Completed",
+  cancelled: "Cancelled",
 };
 
 type BadgeVariant = "default" | "secondary" | "outline" | "destructive";
@@ -71,7 +79,8 @@ export const createColumns = (options?: CreateColumnsOptions): ColumnDef<OrderCo
     cell: ({ row }) => {
       const status = row.original.status;
       const variant = (STATUS_VARIANTS[status] || "outline") as BadgeVariant;
-      return <Badge variant={variant}>{status}</Badge>;
+      const label = STATUS_LABELS[status] || status;
+      return <Badge variant={variant}>{label}</Badge>;
     },
   },
   {
@@ -90,7 +99,7 @@ export const createColumns = (options?: CreateColumnsOptions): ColumnDef<OrderCo
     },
     cell: ({ row }) => {
       return (
-        <div className="text-right font-medium">₵{row.original.total_price.toLocaleString()}</div>
+        <div className="text-right font-medium">{formatCurrency(row.original.total_price)}</div>
       );
     },
   },
