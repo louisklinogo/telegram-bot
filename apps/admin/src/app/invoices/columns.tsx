@@ -14,8 +14,13 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import type { InvoiceWithOrder } from "@/lib/supabase-queries";
+import { formatCurrency } from "@/lib/currency";
 
 export type InvoiceColumn = InvoiceWithOrder;
+
+interface CreateColumnsOptions {
+  onMarkAsPaid?: (invoice: InvoiceColumn) => void;
+}
 
 const STATUS_VARIANTS: Record<string, "default" | "secondary" | "outline" | "destructive"> = {
   draft: "outline",
@@ -26,9 +31,18 @@ const STATUS_VARIANTS: Record<string, "default" | "secondary" | "outline" | "des
   cancelled: "outline",
 };
 
+const STATUS_LABELS: Record<string, string> = {
+  draft: "Draft",
+  pending: "Pending",
+  sent: "Sent",
+  paid: "Paid",
+  overdue: "Overdue",
+  cancelled: "Cancelled",
+};
+
 type BadgeVariant = "default" | "secondary" | "outline" | "destructive";
 
-export const createColumns = (): ColumnDef<InvoiceColumn>[] => [
+export const createColumns = (options?: CreateColumnsOptions): ColumnDef<InvoiceColumn>[] => [
   {
     accessorKey: "invoice_number",
     header: ({ column }) => {
@@ -68,7 +82,8 @@ export const createColumns = (): ColumnDef<InvoiceColumn>[] => [
     cell: ({ row }) => {
       const status = row.original.status;
       const variant = (STATUS_VARIANTS[status] || "outline") as BadgeVariant;
-      return <Badge variant={variant}>{status}</Badge>;
+      const label = STATUS_LABELS[status] || status;
+      return <Badge variant={variant}>{label}</Badge>;
     },
   },
   {
@@ -86,11 +101,11 @@ export const createColumns = (): ColumnDef<InvoiceColumn>[] => [
       );
     },
     cell: ({ row }) => {
-      return <div className="text-right font-medium">₵{row.original.amount.toLocaleString()}</div>;
+      return <span className="font-medium">{formatCurrency(row.original.amount)}</span>;
     },
   },
   {
-    accessorKey: "issued_at",
+    accessorKey: "created_at",
     header: ({ column }) => {
       return (
         <Button
@@ -98,7 +113,7 @@ export const createColumns = (): ColumnDef<InvoiceColumn>[] => [
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
           className="-ml-4 h-8"
         >
-          Issued
+          Created
           <ArrowUpDown className="ml-2 h-4 w-4" />
         </Button>
       );
@@ -106,7 +121,7 @@ export const createColumns = (): ColumnDef<InvoiceColumn>[] => [
     cell: ({ row }) => {
       return (
         <span className="text-sm text-muted-foreground">
-          {formatDistanceToNow(new Date(row.original.issued_at), {
+          {formatDistanceToNow(new Date(row.original.created_at), {
             addSuffix: true,
           })}
         </span>
@@ -128,7 +143,15 @@ export const createColumns = (): ColumnDef<InvoiceColumn>[] => [
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DropdownMenuItem disabled={!invoice.pdf_url}>
+            {invoice.status !== "paid" && (
+              <>
+                <DropdownMenuItem onClick={() => options?.onMarkAsPaid?.(invoice)}>
+                  Mark as Paid
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+              </>
+            )}
+            <DropdownMenuItem disabled={!invoice.invoice_url}>
               <Download className="mr-2 h-4 w-4" />
               Download PDF
             </DropdownMenuItem>
@@ -137,7 +160,6 @@ export const createColumns = (): ColumnDef<InvoiceColumn>[] => [
               View order
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>Mark as paid</DropdownMenuItem>
             <DropdownMenuItem>Send reminder</DropdownMenuItem>
             <DropdownMenuItem className="text-destructive">Cancel invoice</DropdownMenuItem>
           </DropdownMenuContent>

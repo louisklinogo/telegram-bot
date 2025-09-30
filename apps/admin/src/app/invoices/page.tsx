@@ -6,9 +6,16 @@ import { InvoicesTable } from "@/components/invoices-table";
 import { PageShell } from "@/components/page-shell";
 import { Button } from "@/components/ui/button";
 import { useInvoices } from "@/hooks/use-supabase-data";
+import { useMarkInvoiceAsPaid } from "@/hooks/use-invoice-mutations";
+import type { InvoiceColumn } from "@/app/invoices/columns";
 
 export default function InvoicesPage() {
   const { data: invoices, isLoading } = useInvoices();
+  const markAsPaidMutation = useMarkInvoiceAsPaid();
+
+  const handleMarkAsPaid = (invoice: InvoiceColumn) => {
+    markAsPaidMutation.mutate(invoice.id);
+  };
 
   const headerActions = (
     <div className="flex items-center gap-2">
@@ -28,7 +35,11 @@ export default function InvoicesPage() {
       headerActions={headerActions}
       className="space-y-6"
     >
-      <InvoicesTable invoices={invoices || []} isLoading={isLoading} />
+      <InvoicesTable 
+        invoices={invoices || []} 
+        isLoading={isLoading} 
+        onMarkAsPaid={handleMarkAsPaid}
+      />
     </PageShell>
   );
 }

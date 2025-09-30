@@ -102,7 +102,7 @@ export async function fetchInvoices(): Promise<InvoiceWithOrder[]> {
         client:clients(*)
       )
     `)
-    .order("issued_at", { ascending: false });
+    .order("created_at", { ascending: false });
 
   if (error) throw new Error(`Failed to fetch invoices: ${error.message}`);
   return data as InvoiceWithOrder[];
