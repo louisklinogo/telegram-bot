@@ -1,37 +1,21 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Inbox as InboxIcon, Plus } from "lucide-react";
+import { InboxGetStarted } from "@/components/inbox/inbox-get-started";
+import { InboxView } from "@/components/inbox/inbox-view";
+import { mockInboxMessages } from "@/lib/inbox/mock-data";
 
 export default function InboxPage() {
-  return (
-    <div className="flex flex-col gap-6 px-6">
-      {/* Header */}
-      <div className="flex justify-between py-6">
-        <div />
-        <Button size="sm" className="gap-2">
-          <Plus className="h-4 w-4" /> New Message
-        </Button>
-      </div>
+  // Check if we have any messages (in production, this would check if accounts are connected)
+  const hasMessages = mockInboxMessages.length > 0;
+  const isConnected = false; // Set to false to see the get started screen
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Coming Soon</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col items-center justify-center py-12 text-center">
-            <div className="rounded-full bg-muted p-6 mb-4">
-              <InboxIcon className="h-12 w-12 text-muted-foreground" />
-            </div>
-            <h3 className="text-lg font-semibold mb-2">Inbox Feature</h3>
-            <p className="text-sm text-muted-foreground max-w-md">
-              The inbox will centralize all your communications including client messages,
-              system notifications, and important updates in one place.
-            </p>
-          </div>
-        </CardContent>
-      </Card>
+  if (!isConnected || !hasMessages) {
+    return <InboxGetStarted />;
+  }
+
+  return (
+    <div className="flex h-[calc(100vh-64px)] flex-col">
+      <InboxView />
     </div>
   );
 }

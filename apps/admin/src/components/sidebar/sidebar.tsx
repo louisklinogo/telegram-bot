@@ -27,26 +27,43 @@ export function Sidebar() {
       {/* Logo/Brand Header */}
       <div
         className={cn(
-          "flex h-[70px] items-center border-b bg-background transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)]",
-          isExpanded ? "w-full px-4" : "w-[69px] justify-center",
+          "absolute top-0 left-0 h-[70px] flex items-center bg-background border-b border-border transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] z-50",
+          isExpanded ? "w-full px-[22px]" : "w-[69px]",
         )}
       >
-        <Link href="/" className="flex items-center gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground font-semibold">
-            <span>C</span>
-          </div>
+        <Link href="/" className={cn(
+          "flex items-center gap-3 transition-none",
+          !isExpanded && "justify-center w-full"
+        )}>
+          <svg
+            width="26"
+            height="26"
+            viewBox="0 0 26 26"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            className="shrink-0"
+          >
+            <circle cx="13" cy="13" r="13" fill="currentColor" />
+            <text
+              x="13"
+              y="18"
+              fontSize="14"
+              fontWeight="600"
+              fill="white"
+              textAnchor="middle"
+            >
+              C
+            </text>
+          </svg>
           {isExpanded && (
-            <div className="flex flex-col overflow-hidden">
-              <span className="text-sm font-semibold leading-tight whitespace-nowrap">Cimantikós</span>
-              <span className="text-xs text-muted-foreground whitespace-nowrap">Operations</span>
-            </div>
+            <span className="text-sm font-semibold whitespace-nowrap">Cimantikós</span>
           )}
         </Link>
       </div>
 
       {/* Navigation */}
       <TooltipProvider delayDuration={0}>
-        <ScrollArea className="flex-1 pt-6 pb-6">
+        <ScrollArea className="flex-1 pt-[70px] pb-6">
           <nav className="w-full">
             <div className="flex flex-col gap-6">
               {NAV_SECTIONS.map((section) => (
