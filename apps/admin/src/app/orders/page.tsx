@@ -12,15 +12,9 @@ export default function OrdersPage() {
   const { data: orders, isLoading } = useOrders();
 
   const headerActions = (
-    <div className="flex items-center gap-2">
-      <Input placeholder="Search orders..." className="h-9 w-64" />
-      <Button variant="outline" size="sm" className="gap-2">
-        <Filter className="h-4 w-4" /> Filter
-      </Button>
-      <Button size="sm" className="gap-2">
-        <Plus className="h-4 w-4" /> New Order
-      </Button>
-    </div>
+    <Button size="sm" className="gap-2">
+      <Plus className="h-4 w-4" /> New Order
+    </Button>
   );
 
   return (

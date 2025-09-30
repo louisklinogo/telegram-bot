@@ -13,10 +13,6 @@ export default function InvoicesPage() {
 
   const headerActions = (
     <div className="flex items-center gap-2">
-      <Input placeholder="Search invoices..." className="h-9 w-64" />
-      <Button variant="outline" size="sm" className="gap-2">
-        <Filter className="h-4 w-4" /> Filter
-      </Button>
       <Button variant="outline" size="sm" className="gap-2">
         <Download className="h-4 w-4" /> Export
       </Button>

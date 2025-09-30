@@ -11,6 +11,7 @@ import {
   type ColumnDef,
   type SortingState,
   type ColumnFiltersState,
+  type RowSelectionState,
 } from "@tanstack/react-table";
 
 import {
@@ -31,6 +32,7 @@ interface DataTableProps<TData, TValue> {
   isLoading?: boolean;
   searchKey?: string;
   searchPlaceholder?: string;
+  enableRowSelection?: boolean;
 }
 
 export function DataTable<TData, TValue>({
@@ -39,9 +41,11 @@ export function DataTable<TData, TValue>({
   isLoading,
   searchKey,
   searchPlaceholder = "Search...",
+  enableRowSelection = false,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+  const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
 
   const table = useReactTable({
     data,
@@ -52,9 +56,17 @@ export function DataTable<TData, TValue>({
     getSortedRowModel: getSortedRowModel(),
     onColumnFiltersChange: setColumnFilters,
     getFilteredRowModel: getFilteredRowModel(),
+    onRowSelectionChange: setRowSelection,
+    enableRowSelection: enableRowSelection,
+    initialState: {
+      pagination: {
+        pageSize: 50,
+      },
+    },
     state: {
       sorting,
       columnFilters,
+      rowSelection,
     },
   });
 
@@ -144,7 +156,14 @@ export function DataTable<TData, TValue>({
       {/* Pagination */}
       <div className="flex items-center justify-end space-x-2">
         <div className="flex-1 text-sm text-muted-foreground">
-          {table.getFilteredRowModel().rows.length} row(s) total.
+          {enableRowSelection && table.getFilteredSelectedRowModel().rows.length > 0 ? (
+            <span>
+              {table.getFilteredSelectedRowModel().rows.length} of{" "}
+              {table.getFilteredRowModel().rows.length} row(s) selected.
+            </span>
+          ) : (
+            <span>{table.getFilteredRowModel().rows.length} row(s) total.</span>
+          )}
         </div>
         <Button
           variant="outline"
