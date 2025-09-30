@@ -102,3 +102,40 @@ export async function updateInvoiceStatus(id: string, status: string, paidAt?: s
   if (error) throw error;
   return invoice;
 }
+
+// Measurement Mutations
+export async function createMeasurement(data: Omit<MeasurementInsert, "id" | "created_at" | "updated_at">) {
+  if (!supabaseBrowser) throw new Error("Supabase client not initialized");
+
+  const { data: measurement, error } = await supabaseBrowser
+    .from("measurements")
+    .insert(data)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return measurement;
+}
+
+export async function updateMeasurement(id: string, data: MeasurementUpdate) {
+  if (!supabaseBrowser) throw new Error("Supabase client not initialized");
+
+  const { data: measurement, error } = await supabaseBrowser
+    .from("measurements")
+    .update(data)
+    .eq("id", id)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return measurement;
+}
+
+export async function deleteMeasurement(id: string) {
+  if (!supabaseBrowser) throw new Error("Supabase client not initialized");
+
+  const { error } = await supabaseBrowser.from("measurements").delete().eq("id", id);
+
+  if (error) throw error;
+  return { id };
+}

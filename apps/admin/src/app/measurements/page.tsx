@@ -1,56 +1,81 @@
-import { PageShell } from "@/components/page-shell";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+"use client";
 
-const measurementTemplates = [
-  {
-    title: "Menswear Essentials",
-    fields: "CH, ST, SL, SH, LT, NK, WT",
-    usage: "Default for male bespoke orders",
-  },
-  {
-    title: "Womenswear Premium",
-    fields: "BU, WA, HP, BL, ARM, LT",
-    usage: "High-fashion fittings",
-  },
-  {
-    title: "Adjustments",
-    fields: "LT, WT, SL",
-    usage: "Quick alteration workflow",
-  },
-];
+import { useState } from "react";
+import { Plus, Ruler } from "lucide-react";
+import { MeasurementsTable } from "@/components/measurements-table";
+import { MeasurementSheet } from "@/components/measurement-sheet";
+import { DeleteMeasurementDialog } from "@/components/delete-measurement-dialog";
+import { PageShell } from "@/components/page-shell";
+import { Button } from "@/components/ui/button";
+import { useMeasurements } from "@/hooks/use-supabase-data";
+import type { MeasurementColumn } from "@/app/measurements/columns";
 
 export default function MeasurementsPage() {
+  const { data: measurements, isLoading } = useMeasurements();
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [selectedMeasurement, setSelectedMeasurement] = useState<MeasurementColumn | null>(null);
+
+  const handleEdit = (measurement: MeasurementColumn) => {
+    setSelectedMeasurement(measurement);
+    setSheetOpen(true);
+  };
+
+  const handleDelete = (measurement: MeasurementColumn) => {
+    setSelectedMeasurement(measurement);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleNewMeasurement = () => {
+    setSelectedMeasurement(null);
+    setSheetOpen(true);
+  };
+
+  const handleSheetClose = (open: boolean) => {
+    setSheetOpen(open);
+    if (!open) {
+      setSelectedMeasurement(null);
+    }
+  };
+
+  const handleDeleteDialogClose = (open: boolean) => {
+    setDeleteDialogOpen(open);
+    if (!open) {
+      setSelectedMeasurement(null);
+    }
+  };
+
+  const headerActions = (
+    <Button size="sm" className="gap-2" onClick={handleNewMeasurement}>
+      <Plus className="h-4 w-4" /> New Measurement
+    </Button>
+  );
+
   return (
     <PageShell
       title="Measurements"
-      description="Centralize measurement records synced from the Telegram workflow."
-      className="grid gap-4 lg:grid-cols-2"
+      description="Manage client measurements with support for dual values (e.g., 42/44)."
+      headerActions={headerActions}
+      className="space-y-6"
     >
-      {measurementTemplates.map((template) => (
-        <Card key={template.title} className="border-muted">
-          <CardHeader>
-            <CardTitle className="text-base font-semibold">{template.title}</CardTitle>
-            <p className="text-sm text-muted-foreground">{template.usage}</p>
-          </CardHeader>
-          <CardContent className="space-y-2 text-sm">
-            <p className="text-muted-foreground">Tracked fields</p>
-            <Badge variant="secondary" className="w-fit">
-              {template.fields}
-            </Badge>
-          </CardContent>
-        </Card>
-      ))}
+      <MeasurementsTable
+        measurements={measurements || []}
+        isLoading={isLoading}
+        onEdit={handleEdit}
+        onDelete={handleDelete}
+      />
 
-      <Card className="border-dashed">
-        <CardHeader>
-          <CardTitle className="text-base font-semibold">Smart validation</CardTitle>
-        </CardHeader>
-        <CardContent className="text-sm text-muted-foreground">
-          Measurement validation rules from the Telegram measurement workflow will appear here.
-          Configure warning thresholds, dual-length input formats, and Supabase storage logic.
-        </CardContent>
-      </Card>
+      <MeasurementSheet
+        open={sheetOpen}
+        onOpenChange={handleSheetClose}
+        measurement={selectedMeasurement}
+      />
+
+      <DeleteMeasurementDialog
+        open={deleteDialogOpen}
+        onOpenChange={handleDeleteDialogClose}
+        measurement={selectedMeasurement}
+      />
     </PageShell>
   );
 }
