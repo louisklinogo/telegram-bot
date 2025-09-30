@@ -64,8 +64,9 @@ export const createColumns = (): ColumnDef<OrderColumn>[] => [
     header: "Status",
     cell: ({ row }) => {
       const status = row.original.status;
+      const variant = (STATUS_VARIANTS[status] || "outline") as BadgeVariant;
       return (
-        <Badge variant={STATUS_VARIANTS[status] || "outline"}>
+        <Badge variant={variant}>
           {status}
         </Badge>
       );
