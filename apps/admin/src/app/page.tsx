@@ -9,11 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  useDashboardStats,
-  useMeasurements,
-  useOrders,
-} from "@/hooks/use-supabase-data";
+import { useDashboardStats, useMeasurements, useOrders } from "@/hooks/use-supabase-data";
 
 export default function DashboardPage() {
   const { data: stats, isLoading: statsLoading } = useDashboardStats();

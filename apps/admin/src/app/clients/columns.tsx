@@ -1,10 +1,9 @@
 "use client";
 
-import { formatDistanceToNow } from "date-fns";
-import { Mail, MoreVertical, Phone, ArrowUpDown } from "lucide-react";
-import type { ColumnDef } from "@tanstack/react-table";
-
 import type { ClientRecord } from "@cimantikos/services";
+import type { ColumnDef } from "@tanstack/react-table";
+import { formatDistanceToNow } from "date-fns";
+import { ArrowUpDown, Mail, MoreVertical, Phone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -19,7 +18,7 @@ export type ClientColumn = ClientRecord;
 
 export const createColumns = (
   onEdit: (client: ClientRecord) => void,
-  onDelete: (client: ClientRecord) => void
+  onDelete: (client: ClientRecord) => void,
 ): ColumnDef<ClientColumn>[] => [
   {
     accessorKey: "name",
@@ -40,9 +39,7 @@ export const createColumns = (
       return (
         <div>
           <p className="font-medium">{client.name}</p>
-          {client.address && (
-            <p className="text-xs text-muted-foreground">{client.address}</p>
-          )}
+          {client.address && <p className="text-xs text-muted-foreground">{client.address}</p>}
         </div>
       );
     },
@@ -75,9 +72,7 @@ export const createColumns = (
     header: "Referral Source",
     cell: ({ row }) => {
       return (
-        <span className="text-sm text-muted-foreground">
-          {row.original.referral_source || "—"}
-        </span>
+        <span className="text-sm text-muted-foreground">{row.original.referral_source || "—"}</span>
       );
     },
   },
@@ -123,13 +118,8 @@ export const createColumns = (
             <DropdownMenuItem>View profile</DropdownMenuItem>
             <DropdownMenuItem>View orders</DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => onEdit(client)}>
-              Edit client
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              className="text-destructive"
-              onClick={() => onDelete(client)}
-            >
+            <DropdownMenuItem onClick={() => onEdit(client)}>Edit client</DropdownMenuItem>
+            <DropdownMenuItem className="text-destructive" onClick={() => onDelete(client)}>
               Delete client
             </DropdownMenuItem>
           </DropdownMenuContent>

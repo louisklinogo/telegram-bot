@@ -1,10 +1,8 @@
 "use client";
 
+import type { ColumnDef } from "@tanstack/react-table";
 import { formatDistanceToNow } from "date-fns";
 import { ArrowUpDown, Download, ExternalLink, MoreVertical } from "lucide-react";
-import type { ColumnDef } from "@tanstack/react-table";
-
-import type { InvoiceWithOrder } from "@/lib/supabase-queries";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -15,6 +13,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import type { InvoiceWithOrder } from "@/lib/supabase-queries";
 
 export type InvoiceColumn = InvoiceWithOrder;
 
@@ -26,6 +25,8 @@ const STATUS_VARIANTS: Record<string, "default" | "secondary" | "outline" | "des
   overdue: "destructive",
   cancelled: "outline",
 };
+
+type BadgeVariant = "default" | "secondary" | "outline" | "destructive";
 
 export const createColumns = (): ColumnDef<InvoiceColumn>[] => [
   {
@@ -53,13 +54,9 @@ export const createColumns = (): ColumnDef<InvoiceColumn>[] => [
       const invoice = row.original;
       return (
         <div>
-          <p className="font-medium">
-            {invoice.order?.order_number || "Unknown Order"}
-          </p>
+          <p className="font-medium">{invoice.order?.order_number || "Unknown Order"}</p>
           {invoice.order?.client && (
-            <p className="text-xs text-muted-foreground">
-              {invoice.order.client.name}
-            </p>
+            <p className="text-xs text-muted-foreground">{invoice.order.client.name}</p>
           )}
         </div>
       );
@@ -71,11 +68,7 @@ export const createColumns = (): ColumnDef<InvoiceColumn>[] => [
     cell: ({ row }) => {
       const status = row.original.status;
       const variant = (STATUS_VARIANTS[status] || "outline") as BadgeVariant;
-      return (
-        <Badge variant={variant}>
-          {status}
-        </Badge>
-      );
+      return <Badge variant={variant}>{status}</Badge>;
     },
   },
   {
@@ -93,11 +86,7 @@ export const createColumns = (): ColumnDef<InvoiceColumn>[] => [
       );
     },
     cell: ({ row }) => {
-      return (
-        <div className="text-right font-medium">
-          ₵{row.original.amount.toLocaleString()}
-        </div>
-      );
+      return <div className="text-right font-medium">₵{row.original.amount.toLocaleString()}</div>;
     },
   },
   {
@@ -150,9 +139,7 @@ export const createColumns = (): ColumnDef<InvoiceColumn>[] => [
             <DropdownMenuSeparator />
             <DropdownMenuItem>Mark as paid</DropdownMenuItem>
             <DropdownMenuItem>Send reminder</DropdownMenuItem>
-            <DropdownMenuItem className="text-destructive">
-              Cancel invoice
-            </DropdownMenuItem>
+            <DropdownMenuItem className="text-destructive">Cancel invoice</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       );

@@ -1,11 +1,10 @@
 "use client";
 
-import { Download, Filter, Plus } from "lucide-react";
+import { Download, Plus } from "lucide-react";
 
 import { InvoicesTable } from "@/components/invoices-table";
 import { PageShell } from "@/components/page-shell";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { useInvoices } from "@/hooks/use-supabase-data";
 
 export default function InvoicesPage() {

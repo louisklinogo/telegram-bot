@@ -1,8 +1,8 @@
 "use client";
 
-import type { InvoiceWithOrder } from "@/lib/supabase-queries";
-import { DataTable } from "@/components/data-table";
 import { createColumns } from "@/app/invoices/columns";
+import { DataTable } from "@/components/data-table";
+import type { InvoiceWithOrder } from "@/lib/supabase-queries";
 
 interface InvoicesTableProps {
   invoices: InvoiceWithOrder[];

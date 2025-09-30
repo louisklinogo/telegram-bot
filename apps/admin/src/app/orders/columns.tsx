@@ -1,10 +1,8 @@
 "use client";
 
+import type { ColumnDef } from "@tanstack/react-table";
 import { formatDistanceToNow } from "date-fns";
 import { ArrowUpDown, ExternalLink, MoreVertical } from "lucide-react";
-import type { ColumnDef } from "@tanstack/react-table";
-
-import type { OrderWithClient } from "@/lib/supabase-queries";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -15,6 +13,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import type { OrderWithClient } from "@/lib/supabase-queries";
 
 export type OrderColumn = OrderWithClient;
 
@@ -25,7 +24,14 @@ const STATUS_VARIANTS: Record<string, "default" | "secondary" | "outline" | "des
   Cancelled: "destructive",
 };
 
-export const createColumns = (): ColumnDef<OrderColumn>[] => [
+type BadgeVariant = "default" | "secondary" | "outline" | "destructive";
+
+interface CreateColumnsOptions {
+  onEdit?: (order: OrderColumn) => void;
+  onDelete?: (order: OrderColumn) => void;
+}
+
+export const createColumns = (options?: CreateColumnsOptions): ColumnDef<OrderColumn>[] => [
   {
     accessorKey: "order_number",
     header: ({ column }) => {
@@ -65,11 +71,7 @@ export const createColumns = (): ColumnDef<OrderColumn>[] => [
     cell: ({ row }) => {
       const status = row.original.status;
       const variant = (STATUS_VARIANTS[status] || "outline") as BadgeVariant;
-      return (
-        <Badge variant={variant}>
-          {status}
-        </Badge>
-      );
+      return <Badge variant={variant}>{status}</Badge>;
     },
   },
   {
@@ -88,9 +90,7 @@ export const createColumns = (): ColumnDef<OrderColumn>[] => [
     },
     cell: ({ row }) => {
       return (
-        <div className="text-right font-medium">
-          ₵{row.original.total_price.toLocaleString()}
-        </div>
+        <div className="text-right font-medium">₵{row.original.total_price.toLocaleString()}</div>
       );
     },
   },
@@ -138,9 +138,12 @@ export const createColumns = (): ColumnDef<OrderColumn>[] => [
               View details
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>Edit order</DropdownMenuItem>
-            <DropdownMenuItem className="text-destructive">
-              Cancel order
+            <DropdownMenuItem onClick={() => options?.onEdit?.(order)}>Edit order</DropdownMenuItem>
+            <DropdownMenuItem
+              className="text-destructive"
+              onClick={() => options?.onDelete?.(order)}
+            >
+              Delete order
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

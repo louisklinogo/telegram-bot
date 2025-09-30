@@ -118,7 +118,7 @@ export interface MeasurementWithClient extends MeasurementRecord {
 
 export async function fetchMeasurements(): Promise<MeasurementWithClient[]> {
   const supabase = ensureSupabase();
-  const { data, error} = await supabase
+  const { data, error } = await supabase
     .from("measurements")
     .select(`
       *,

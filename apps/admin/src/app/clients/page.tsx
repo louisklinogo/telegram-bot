@@ -1,14 +1,12 @@
 "use client";
 
+import { Plus } from "lucide-react";
 import { useState } from "react";
-import { Filter, Plus } from "lucide-react";
-
-import { ClientsTable } from "@/components/clients-table";
 import { ClientSheet } from "@/components/client-sheet";
+import { ClientsTable } from "@/components/clients-table";
 import { DeleteClientDialog } from "@/components/delete-client-dialog";
 import { PageShell } from "@/components/page-shell";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { useClients } from "@/hooks/use-supabase-data";
 
 export default function ClientsPage() {
@@ -46,19 +44,15 @@ export default function ClientsPage() {
         headerActions={headerActions}
         className="space-y-6"
       >
-        <ClientsTable 
-          clients={clients || []} 
+        <ClientsTable
+          clients={clients || []}
           isLoading={isLoading}
           onEdit={handleEdit}
           onDelete={handleDelete}
         />
       </PageShell>
 
-      <ClientSheet
-        open={sheetOpen}
-        onOpenChange={setSheetOpen}
-        client={selectedClient}
-      />
+      <ClientSheet open={sheetOpen} onOpenChange={setSheetOpen} client={selectedClient} />
 
       <DeleteClientDialog
         open={deleteDialogOpen}

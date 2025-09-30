@@ -1,8 +1,8 @@
 "use client";
 
 import type { ClientRecord } from "@cimantikos/services";
-import { DataTable } from "@/components/data-table";
 import { createColumns } from "@/app/clients/columns";
+import { DataTable } from "@/components/data-table";
 
 interface ClientsTableProps {
   clients: ClientRecord[];
