@@ -1,0 +1,21 @@
+{
+  "name": "@cimantikos/supabase",
+  "version": "0.1.0",
+  "private": true,
+  "exports": {
+    "./client": "./src/client/index.ts",
+    "./server": "./src/client/server.ts",
+    "./middleware": "./src/middleware.ts",
+    "./queries": "./src/queries/index.ts",
+    "./mutations": "./src/mutations/index.ts",
+    "./types": "./src/types/index.ts"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.58.0",
+    "@supabase/ssr": "^0.7.0",
+    "server-only": "^0.0.1"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0"
+  }
+}

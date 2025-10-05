@@ -79,6 +79,8 @@ typedoc/
 
 # Next.js
 .next/
+.next
+apps/**/.next/
 .nuxt/
 
 # Nuxt.js
@@ -112,3 +114,19 @@ typedoc/
 
 # Mastra specific
 .mastra/
+apps/*/.mastra/
+
+# Workspace data artifacts
+data/
+
+# WhatsApp session files (contain encryption keys)
+apps/worker/.sessions/
+.sessions/
+
+# Embedded git repositories
+evolution-api/
+midday-assistant-v2/
+
+# Secret files with tokens/keys
+docs/essentials.txt
+token.txt

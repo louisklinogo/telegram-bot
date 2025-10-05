@@ -1,0 +1,21 @@
+## Error Type
+Runtime TypeError
+
+## Error Message
+Cannot read properties of undefined (reading 'name')
+
+
+    at map (file://C:/Users/louis/Projects/invoice/telegram-bot/apps/admin/.next/static/chunks/apps_admin_src_ef373e66._.js:551:38)
+    at Object.mutateAsync (file://C:/Users/louis/Projects/invoice/telegram-bot/apps/admin/.next/static/chunks/apps_admin_src_ef373e66._.js:563:53)
+    at handleSubmit (src/components/client-sheet.tsx:105:37)
+
+## Code Frame
+  103 |
+  104 |     if (isEdit) {
+> 105 |       await (updateMutation as any).mutateAsync({
+      |                                     ^
+  106 |         id: client.id,
+  107 |         ...data,
+  108 |         referralSource: data.referral_source,
+
+Next.js version: 15.5.4 (Turbopack)

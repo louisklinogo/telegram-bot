@@ -1,0 +1,47 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "strict": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "baseUrl": ".",
+    "paths": {
+      "@cimantikos/domain": ["packages/domain/src/index.ts"],
+      "@cimantikos/domain/*": ["packages/domain/src/*"],
+
+      "@cimantikos/services": ["packages/services/src/index.ts"],
+      "@cimantikos/services/*": ["packages/services/src/*"],
+
+      "@cimantikos/config": ["packages/config/src/index.ts"],
+      "@cimantikos/config/*": ["packages/config/src/*"],
+
+      "@cimantikos/database/*": ["packages/database/src/*"],
+      "@cimantikos/database": ["packages/database/src/index.ts"],
+      "@cimantikos/database/schema": ["packages/database/src/schema.ts"],
+
+      "@cimantikos/ui": ["packages/ui/src/index.ts"],
+      "@cimantikos/ui/*": [
+        "packages/ui/src/*",
+        "packages/ui/src/components/*"
+      ],
+
+      "@cimantikos/api/*": ["apps/api/src/*"],
+      "@cimantikos/api/trpc/*": ["apps/api/src/trpc/*"],
+
+      "@cimantikos/supabase/*": ["packages/supabase/src/*"],
+      "@cimantikos/supabase/server": ["packages/supabase/src/client/server.ts"],
+      "@cimantikos/supabase/client": ["packages/supabase/src/client/index.ts"],
+      "@cimantikos/supabase/browser": ["packages/supabase/src/client/browser.ts"],
+
+      "@cimantikos/schemas": ["packages/schemas/src/index.ts"],
+      "@cimantikos/schemas/*": ["packages/schemas/src/*"]
+    }
+  }
+}

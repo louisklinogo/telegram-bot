@@ -1,0 +1,14 @@
+{
+  "name": "@cimantikos/worker",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "bun --hot src/index.ts",
+    "start": "bun run src/index.ts",
+    "build": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@cimantikos/supabase": "workspace:*",
+    "@whiskeysockets/baileys": "^6.7.9"
+  }
+}

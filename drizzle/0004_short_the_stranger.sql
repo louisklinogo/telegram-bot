@@ -1,0 +1,1 @@
+ALTER TABLE "clients" ADD COLUMN "tags" jsonb DEFAULT '[]'::jsonb;
