@@ -10,6 +10,7 @@ import { registerWebhookRoutes } from "./rest/webhooks";
 import { registerCommunicationsRoutes } from "./rest/communications";
 import { registerProviderRoutes } from "./rest/providers";
 import { registerInvoicesRoutes } from "./rest/invoices";
+import { registerTransactionsRoutes } from "./rest/transactions";
 import { requireAuthTeam } from "./rest/middleware/auth";
 
 const app = new Hono<ApiEnv>();
@@ -34,9 +35,11 @@ registerWebhookRoutes(app);
 app.use("/communications/*", requireAuthTeam);
 app.use("/providers/*", requireAuthTeam);
 app.use("/invoices/*", requireAuthTeam);
+app.use("/transactions/*", requireAuthTeam);
 registerCommunicationsRoutes(app);
 registerProviderRoutes(app);
 registerInvoicesRoutes(app);
+registerTransactionsRoutes(app);
 
 export default {
   port: process.env.API_PORT ? Number(process.env.API_PORT) : 3001,

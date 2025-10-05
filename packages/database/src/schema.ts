@@ -358,6 +358,7 @@ export const teamsRelations = relations(teams, ({ many }) => ({
   measurements: many(measurements),
   memberships: many(teamMemberships),
   transactions: many(transactions),
+  financialAccounts: many(financialAccounts),
   transactionCategories: many(transactionCategories),
   transactionTags: many(transactionTags),
   transactionAttachments: many(transactionAttachments),
@@ -509,6 +510,37 @@ export const usersOnTeam = pgTable("users_on_team", {
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
+// Financial Accounts (manual first; ready for external providers later)
+export const financialAccounts = pgTable(
+  "financial_accounts",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    teamId: uuid("team_id")
+      .notNull()
+      .references(() => teams.id, { onDelete: "cascade" }),
+    type: varchar("type", { length: 32 }).notNull(), // cash | bank | mobile_money | card | other
+    name: text("name").notNull(),
+    currency: varchar("currency", { length: 3 }).default("GHS").notNull(),
+    provider: varchar("provider", { length: 64 }),
+    externalId: text("external_id"),
+    status: varchar("status", { length: 32 }).default("active").notNull(),
+    openingBalance: numeric("opening_balance", { precision: 12, scale: 2 }),
+    syncCursor: text("sync_cursor"),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => ({
+    teamIdx: index("idx_fin_accounts_team_id").on(table.teamId),
+    teamNameUnique: index("uq_fin_accounts_team_name").on(table.teamId, table.name),
+    teamProviderExternal: index("uq_fin_accounts_team_provider_external").on(
+      table.teamId,
+      table.provider,
+      table.externalId,
+    ),
+    statusIdx: index("idx_fin_accounts_status").on(table.status),
+  }),
+);
+
 // Financial transactions (Enhanced with Midday patterns)
 export const transactions = pgTable(
   "transactions",
@@ -544,6 +576,7 @@ export const transactions = pgTable(
     orderId: uuid("order_id").references(() => orders.id, { onDelete: "set null" }),
     invoiceId: uuid("invoice_id").references(() => invoices.id, { onDelete: "set null" }),
     assignedId: uuid("assigned_id").references(() => users.id, { onDelete: "set null" }), // Who owns/manages (NEW)
+    accountId: uuid("account_id").references(() => financialAccounts.id, { onDelete: "set null" }),
     
     // Metadata
     transactionNumber: varchar("transaction_number", { length: 50 }).notNull(),
@@ -559,6 +592,7 @@ export const transactions = pgTable(
     
     // AI enrichment (NEW)
     enrichmentCompleted: boolean("enrichment_completed").default(false),
+    excludeFromAnalytics: boolean("exclude_from_analytics").default(false).notNull(),
     
     // Timestamps
     transactionDate: timestamp("transaction_date", { withTimezone: true }).defaultNow().notNull(),
@@ -586,6 +620,7 @@ export const transactions = pgTable(
       table.date
     ),
     internalIdIdx: index("idx_transactions_internal_id").on(table.internalId),
+    accountIdx: index("idx_transactions_account_id").on(table.accountId),
   })
 );
 
@@ -957,6 +992,10 @@ export const transactionsRelations = relations(transactions, ({ one, many }) => 
     fields: [transactions.assignedId],
     references: [users.id],
   }),
+  account: one(financialAccounts, {
+    fields: [transactions.accountId],
+    references: [financialAccounts.id],
+  }),
   category: one(transactionCategories, {
     fields: [transactions.categorySlug],
     references: [transactionCategories.slug],
@@ -1024,4 +1063,12 @@ export const tagsRelations = relations(tags, ({ one, many }) => ({
     references: [teams.id],
   }),
   transactionTags: many(transactionTags),
+}));
+
+export const financialAccountsRelations = relations(financialAccounts, ({ one, many }) => ({
+  team: one(teams, {
+    fields: [financialAccounts.teamId],
+    references: [teams.id],
+  }),
+  transactions: many(transactions),
 }));

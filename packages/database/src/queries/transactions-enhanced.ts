@@ -10,6 +10,16 @@ import {
   users,
 } from "../schema";
 
+type TransactionTagJson = { id: string; name: string; color: string | null };
+type TransactionAttachmentJson = {
+  id: string;
+  name: string;
+  type: string | null;
+  size: number | null;
+  path: string[];
+  mimeType: string | null;
+};
+
 /**
  * Enhanced query with all joins for transaction data
  * Includes: client, category, tags, attachments count, assigned user
@@ -27,6 +37,9 @@ export async function getTransactionsEnriched(
     startDate?: Date;
     endDate?: Date;
     hasAttachments?: boolean;
+    accounts?: string[];
+    amountMin?: number;
+    amountMax?: number;
     limit?: number;
     cursor?: { date: Date | null; id: string } | null;
   }
@@ -42,6 +55,9 @@ export async function getTransactionsEnriched(
     startDate,
     endDate,
     hasAttachments,
+    accounts,
+    amountMin,
+    amountMax,
     limit = 50,
     cursor,
   } = params;
@@ -56,6 +72,7 @@ export async function getTransactionsEnriched(
       ? inArray(transactions.categorySlug, categories)
       : sql`true`,
     assignedId ? eq(transactions.assignedId, assignedId) : sql`true`,
+    accounts && accounts.length > 0 ? inArray(transactions.accountId, accounts as any) : sql`true`,
     search
       ? or(
           ilike(transactions.name, `%${search}%`),
@@ -63,6 +80,8 @@ export async function getTransactionsEnriched(
           ilike(transactions.counterpartyName, `%${search}%`)
         )
       : sql`true`,
+    amountMin != null ? gte(transactions.amount, amountMin as any) : sql`true`,
+    amountMax != null ? lte(transactions.amount, amountMax as any) : sql`true`,
     startDate ? gte(transactions.date, startDate.toISOString().slice(0, 10)) : sql`true`,
     endDate ? lte(transactions.date, endDate.toISOString().slice(0, 10)) : sql`true`,
     cursor?.date
@@ -81,7 +100,7 @@ export async function getTransactionsEnriched(
       category: transactionCategories,
       assignedUser: users,
       // Aggregate tags
-      tags: sql<any[]>`
+      tags: sql<TransactionTagJson[]>`
         COALESCE(
           json_agg(
             DISTINCT jsonb_build_object(
@@ -133,7 +152,7 @@ export async function getTransactionsEnriched(
   // Apply tag filter if specified
   if (tagIds && tagIds.length > 0) {
     return results.filter((r) => {
-      const transactionTagIds = r.tags.map((t: any) => t.id);
+      const transactionTagIds = r.tags.map((t) => t.id);
       return tagIds.some((tagId) => transactionTagIds.includes(tagId));
     });
   }
@@ -154,12 +173,14 @@ export async function searchTransactions(
 ) {
   const { teamId, query, limit = 20 } = params;
 
-  // Note: This requires FTS setup from migrations
-  return await db
+  // Use FTS on the stored generated column fts_vector (set up by migrations)
+  // Order by rank, then date/id for stable pagination
+  const results = await db
     .select({
       transaction: transactions,
       client: clients,
       category: transactionCategories,
+      rank: sql<number>`ts_rank_cd(fts_vector, websearch_to_tsquery('english', ${query}))`,
     })
     .from(transactions)
     .leftJoin(clients, eq(transactions.clientId, clients.id))
@@ -174,15 +195,13 @@ export async function searchTransactions(
       and(
         eq(transactions.teamId, teamId),
         isNull(transactions.deletedAt),
-        // Will use fts_vector once created
-        or(
-          ilike(transactions.name, `%${query}%`),
-          ilike(transactions.description, `%${query}%`),
-          ilike(transactions.counterpartyName, `%${query}%`)
-        )
+        sql`fts_vector @@ websearch_to_tsquery('english', ${query})`
       )
     )
+    .orderBy(sql`rank DESC`, desc(transactions.date), desc(transactions.id))
     .limit(limit);
+
+  return results;
 }
 
 /**
@@ -221,6 +240,34 @@ export async function updateTransactionsBulk(
 }
 
 /**
+ * Bulk soft delete transactions (manual only)
+ */
+export async function softDeleteTransactionsBulk(
+  db: DbClient,
+  params: {
+    teamId: string;
+    transactionIds: string[];
+  }
+) {
+  const { teamId, transactionIds } = params;
+
+  const res = await db
+    .update(transactions)
+    .set({ deletedAt: new Date(), updatedAt: new Date() })
+    .where(
+      and(
+        eq(transactions.teamId, teamId),
+        inArray(transactions.id, transactionIds),
+        isNull(transactions.deletedAt),
+        eq(transactions.manual, true)
+      )
+    )
+    .returning({ id: transactions.id });
+
+  return { deletedCount: res.length, ids: res.map((r) => r.id) };
+}
+
+/**
  * Get single transaction with full details
  */
 export async function getTransactionById(
@@ -238,7 +285,7 @@ export async function getTransactionById(
       client: clients,
       category: transactionCategories,
       assignedUser: users,
-      tags: sql<any[]>`
+      tags: sql<TransactionTagJson[]>`
         COALESCE(
           json_agg(
             DISTINCT jsonb_build_object(
@@ -250,7 +297,7 @@ export async function getTransactionById(
           '[]'::json
         )
       `,
-      attachments: sql<any[]>`
+      attachments: sql<TransactionAttachmentJson[]>`
         COALESCE(
           json_agg(
             DISTINCT jsonb_build_object(

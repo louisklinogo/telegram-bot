@@ -742,6 +742,59 @@ export type Database = {
           },
         ]
       }
+      financial_accounts: {
+        Row: {
+          created_at: string
+          currency: string
+          external_id: string | null
+          id: string
+          name: string
+          opening_balance: number | null
+          provider: string | null
+          status: string
+          sync_cursor: string | null
+          team_id: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          currency?: string
+          external_id?: string | null
+          id?: string
+          name: string
+          opening_balance?: number | null
+          provider?: string | null
+          status?: string
+          sync_cursor?: string | null
+          team_id: string
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          currency?: string
+          external_id?: string | null
+          id?: string
+          name?: string
+          opening_balance?: number | null
+          provider?: string | null
+          status?: string
+          sync_cursor?: string | null
+          team_id?: string
+          type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "financial_accounts_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       instagram_contacts: {
         Row: {
           created_at: string
@@ -1481,6 +1534,161 @@ export type Database = {
           },
         ]
       }
+      transaction_category_embeddings: {
+        Row: {
+          created_at: string
+          embedding: string | null
+          model: string
+          name: string
+          system: boolean
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          embedding?: string | null
+          model?: string
+          name: string
+          system?: boolean
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          embedding?: string | null
+          model?: string
+          name?: string
+          system?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      transaction_embeddings: {
+        Row: {
+          created_at: string
+          embedding: string | null
+          id: string
+          model: string
+          source_text: string
+          team_id: string
+          transaction_id: string
+        }
+        Insert: {
+          created_at?: string
+          embedding?: string | null
+          id?: string
+          model?: string
+          source_text: string
+          team_id: string
+          transaction_id: string
+        }
+        Update: {
+          created_at?: string
+          embedding?: string | null
+          id?: string
+          model?: string
+          source_text?: string
+          team_id?: string
+          transaction_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transaction_embeddings_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transaction_embeddings_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: true
+            referencedRelation: "transactions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transaction_embeddings_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: true
+            referencedRelation: "transactions_expenses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transaction_embeddings_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: true
+            referencedRelation: "transactions_income"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      transaction_enrichments: {
+        Row: {
+          confidence: number | null
+          created_at: string
+          id: string
+          metadata: Json | null
+          reviewed: boolean
+          suggested_category_slug: string | null
+          team_id: string
+          transaction_id: string
+        }
+        Insert: {
+          confidence?: number | null
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          reviewed?: boolean
+          suggested_category_slug?: string | null
+          team_id: string
+          transaction_id: string
+        }
+        Update: {
+          confidence?: number | null
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          reviewed?: boolean
+          suggested_category_slug?: string | null
+          team_id?: string
+          transaction_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_suggested_category"
+            columns: ["team_id", "suggested_category_slug"]
+            isOneToOne: false
+            referencedRelation: "transaction_categories"
+            referencedColumns: ["team_id", "slug"]
+          },
+          {
+            foreignKeyName: "transaction_enrichments_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transaction_enrichments_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "transactions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transaction_enrichments_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "transactions_expenses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transaction_enrichments_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "transactions_income"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       transaction_tags: {
         Row: {
           created_at: string
@@ -1543,6 +1751,7 @@ export type Database = {
       }
       transactions: {
         Row: {
+          account_id: string | null
           amount: number
           assigned_id: string | null
           balance: number | null
@@ -1559,6 +1768,7 @@ export type Database = {
           description: string | null
           due_date: string | null
           enrichment_completed: boolean | null
+          exclude_from_analytics: boolean
           frequency: Database["public"]["Enums"]["transaction_frequency"] | null
           fts_vector: unknown | null
           id: string
@@ -1580,6 +1790,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          account_id?: string | null
           amount: number
           assigned_id?: string | null
           balance?: number | null
@@ -1596,6 +1807,7 @@ export type Database = {
           description?: string | null
           due_date?: string | null
           enrichment_completed?: boolean | null
+          exclude_from_analytics?: boolean
           frequency?:
             | Database["public"]["Enums"]["transaction_frequency"]
             | null
@@ -1619,6 +1831,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          account_id?: string | null
           amount?: number
           assigned_id?: string | null
           balance?: number | null
@@ -1635,6 +1848,7 @@ export type Database = {
           description?: string | null
           due_date?: string | null
           enrichment_completed?: boolean | null
+          exclude_from_analytics?: boolean
           frequency?:
             | Database["public"]["Enums"]["transaction_frequency"]
             | null
@@ -1658,6 +1872,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "transactions_account_id_financial_accounts_id_fk"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "financial_accounts"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "fk_transactions_assigned_user"
             columns: ["assigned_id"]
