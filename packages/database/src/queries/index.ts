@@ -14,3 +14,4 @@ export * from "./transactions";
 export * from "./transactions-enhanced";
 export * from "./analytics";
 export * from "./documents";
+export * from "./transaction-categories";

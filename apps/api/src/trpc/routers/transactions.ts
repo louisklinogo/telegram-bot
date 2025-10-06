@@ -6,6 +6,7 @@ import {
   getTransactionStats,
   getTransactionsEnriched,
   searchTransactions,
+  getTransactionById,
   updateTransactionsBulk,
   softDeleteTransactionsBulk,
 } from "@cimantikos/database/queries";
@@ -212,6 +213,56 @@ export const transactionsRouter = createTRPCRouter({
       return created;
     }),
 
+  // Create category
+  categoriesCreate: teamProcedure
+    .input(
+      z.object({
+        name: z.string().min(1),
+        color: z.string().regex(/^#([0-9a-fA-F]{3}){1,2}$/).optional(),
+        parentId: z.string().uuid().optional(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const toSlug = (s: string) =>
+        s
+          .toLowerCase()
+          .trim()
+          .replace(/[^a-z0-9\s-]/g, "")
+          .replace(/\s+/g, "-")
+          .replace(/-+/g, "-");
+
+      let base = toSlug(input.name);
+      if (!base) base = `category-${Date.now()}`;
+
+      // Ensure unique per team by appending numeric suffix
+      let slug = base;
+      let i = 2;
+      // eslint-disable-next-line no-constant-condition
+      while (true) {
+        const existing = await ctx.db
+          .select({ id: transactionCategories.id })
+          .from(transactionCategories)
+          .where(and(eq(transactionCategories.teamId, ctx.teamId), eq(transactionCategories.slug, slug)))
+          .limit(1);
+        if (!existing[0]) break;
+        slug = `${base}-${i++}`;
+      }
+
+      const [created] = await ctx.db
+        .insert(transactionCategories)
+        .values({
+          teamId: ctx.teamId,
+          name: input.name,
+          slug,
+          color: input.color ?? null,
+          parentId: input.parentId ?? null,
+          system: false,
+        })
+        .returning({ id: transactionCategories.id, name: transactionCategories.name, slug: transactionCategories.slug, color: transactionCategories.color });
+
+      return created;
+    }),
+
   // List categories (flat) for selection in UI
   categories: teamProcedure.query(async ({ ctx }) => {
     const rows = await ctx.db
@@ -285,6 +336,14 @@ export const transactionsRouter = createTRPCRouter({
       return { items: rows, nextCursor };
     }),
 
+  // Get single transaction with full details
+  byId: teamProcedure
+    .input(z.object({ id: z.string().uuid() }))
+    .query(async ({ ctx, input }) => {
+      const row = await getTransactionById(ctx.db, { teamId: ctx.teamId, transactionId: input.id });
+      return row;
+    }),
+
   // FTS search using fts_vector
   search: teamProcedure
     .input(z.object({ query: z.string().min(1), limit: z.number().min(1).max(100).default(20) }))
@@ -307,6 +366,7 @@ export const transactionsRouter = createTRPCRouter({
             .enum(["weekly", "biweekly", "monthly", "semi_monthly", "annually", "irregular"]) // matches enum
             .nullable()
             .optional(),
+          excludeFromAnalytics: z.boolean().optional(),
         }),
       })
     )

@@ -1,0 +1,15 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+echo "Regenerating Supabase types..."
+# Use local CLI via bun scripts
+bun run db:types || {
+  echo "Type generation failed" >&2
+  exit 1
+}
+
+echo "Checking for Supabase types drift..."
+git diff --quiet -- packages/supabase/src/types/database.generated.ts || {
+  echo "Supabase types drift detected. Please commit regenerated types." >&2
+  exit 1
+}

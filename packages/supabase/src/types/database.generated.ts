@@ -1485,11 +1485,15 @@ export type Database = {
           color: string | null
           created_at: string
           description: string | null
+          excluded: boolean
           id: string
           name: string
           parent_id: string | null
           slug: string
           system: boolean
+          tax_rate: number | null
+          tax_reporting_code: string | null
+          tax_type: string | null
           team_id: string
           updated_at: string
         }
@@ -1497,11 +1501,15 @@ export type Database = {
           color?: string | null
           created_at?: string
           description?: string | null
+          excluded?: boolean
           id?: string
           name: string
           parent_id?: string | null
           slug: string
           system?: boolean
+          tax_rate?: number | null
+          tax_reporting_code?: string | null
+          tax_type?: string | null
           team_id: string
           updated_at?: string
         }
@@ -1509,11 +1517,15 @@ export type Database = {
           color?: string | null
           created_at?: string
           description?: string | null
+          excluded?: boolean
           id?: string
           name?: string
           parent_id?: string | null
           slug?: string
           system?: boolean
+          tax_rate?: number | null
+          tax_reporting_code?: string | null
+          tax_type?: string | null
           team_id?: string
           updated_at?: string
         }
@@ -1873,13 +1885,6 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "transactions_account_id_financial_accounts_id_fk"
-            columns: ["account_id"]
-            isOneToOne: false
-            referencedRelation: "financial_accounts"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "fk_transactions_assigned_user"
             columns: ["assigned_id"]
             isOneToOne: false
@@ -1892,6 +1897,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "transaction_categories"
             referencedColumns: ["team_id", "slug"]
+          },
+          {
+            foreignKeyName: "transactions_account_id_financial_accounts_id_fk"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "financial_accounts"
+            referencedColumns: ["id"]
           },
           {
             foreignKeyName: "transactions_client_id_fkey"
@@ -2290,10 +2302,10 @@ export type Database = {
       invoice_status:
         | "draft"
         | "sent"
-        | "partially_paid"
         | "paid"
         | "overdue"
         | "cancelled"
+        | "partially_paid"
       order_status: "generated" | "in_progress" | "completed" | "cancelled"
       team_role: "owner" | "admin" | "agent" | "viewer"
       transaction_frequency:

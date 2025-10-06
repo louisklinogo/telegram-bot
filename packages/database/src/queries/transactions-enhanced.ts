@@ -218,6 +218,7 @@ export async function updateTransactionsBulk(
       assignedId?: string | null;
       recurring?: boolean;
       frequency?: "weekly" | "biweekly" | "monthly" | "semi_monthly" | "annually" | "irregular" | null;
+      excludeFromAnalytics?: boolean;
     };
   }
 ) {
@@ -354,7 +355,7 @@ export async function getTransactionCategories(
     .select()
     .from(transactionCategories)
     .where(eq(transactionCategories.teamId, teamId))
-    .orderBy(transactionCategories.name);
+    .orderBy(desc(transactionCategories.system), transactionCategories.name);
 
   // Build hierarchy
   const categoryMap = new Map();

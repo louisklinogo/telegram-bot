@@ -22,6 +22,7 @@ Adherence (PR Checklist):
 - [ ] Minimal selects; `.returns<T>()` only at end.
 - [ ] Zod validation present; consistent error shape.
 - [ ] CI passes typecheck/lint/build; no schema/type drift.
+ - [ ] UI/UX mirrors Midday components and patterns by default; no placeholder UIs without explicit approval; deviations documented with rationale.
 
 Full document: `docs/engineering-constitution.md`
 
@@ -35,6 +36,7 @@ Full document: `docs/engineering-constitution.md`
 - Confirm before actions with side effects (migrations, data changes, pushes).
 - No emojis. Only necessary code comments. Don’t suggest extras unless asked.
 - When code is changed, end with a short, plain summary of what changed.
+ - In planning, explicitly list any new UI actions/links/buttons; do not add UI elements not listed in the plan unless approved.
 
 ## Human-Readable Control Flow
 When refactoring complex control flow, mirror natural human reasoning patterns:
@@ -73,7 +75,12 @@ I need honest feedback on my code.
 - Generate migrations: `bun run db:generate`
 - Push schema: `bun run db:push`
 - Studio (GUI): `bun run db:studio`
-- Generate Supabase types: `cd packages/supabase && supabase gen types --lang=typescript --project-id=zvatkstmsyuytbajzuvn > src/types/database.ts`
+- Generate Supabase types (used by app): `bun run db:types` → uses local CLI from devDependencies, writes to `packages/supabase/src/types/database.generated.ts`
+- Alternative: `bun run db:types:generated` (same as above)
+
+Automation:
+- Pre-commit hook (Husky): regenerates types and fails the commit on drift
+- CI workflow (Supabase Types Drift Check): regenerates types and fails PRs on drift (requires `SUPABASE_ACCESS_TOKEN` secret)
 
 ## Project Architecture
 
@@ -154,6 +161,15 @@ We have two reference implementations in the repo for learning:
 - Check when: Working on messaging features, understanding Baileys
 
 **Grep these codebases when stuck!** Don't reinvent the wheel.
+
+## UI/UX Parity with Midday (REQUIRED)
+
+- Mirror **EXACTLY** Midday’s UI/UX and component patterns by default (tables, filters, pagination, sheets/dialogs, empty states, spacing/typography).
+- DO NOT IMPROVISE!!!!
+- Prefer reusing existing components and patterns observed in `midday-assistant-v2`; only deviate with explicit approval and documented rationale.
+- Do not ship placeholder UIs; if scope is unclear, propose the design and wait for confirmation.
+- Before implementation, perform a “UI parity check with Midday” and reference the closest pages/components you are mirroring.
+- Plans must enumerate any new UI actions/links/buttons. Avoid adding actions not in the plan without approval.
 
 ## Development Patterns
 

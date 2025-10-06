@@ -1,5 +1,4 @@
 import { useId } from "react";
-import { PageShell } from "@/components/page-shell";
 import { TeamInvites } from "@/components/team-invites";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,11 +8,7 @@ export default function SettingsPage() {
   const supabaseUrlId = useId();
   const supabaseAnonId = useId();
   return (
-    <PageShell
-      title="Settings"
-      description="Configure integrations, permissions, and Supabase environment keys."
-      className="grid gap-6 lg:grid-cols-2"
-    >
+    <div className="px-6 py-6 grid gap-6 lg:grid-cols-2">
       <Card className="border-muted">
         <CardHeader>
           <CardTitle className="text-base font-semibold">Supabase project</CardTitle>
@@ -48,6 +43,6 @@ export default function SettingsPage() {
           <TeamInvites />
         </CardContent>
       </Card>
-    </PageShell>
+    </div>
   );
 }

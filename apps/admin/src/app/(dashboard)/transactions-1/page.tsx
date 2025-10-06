@@ -3,7 +3,7 @@ import { getCurrentTeamId, db } from "@/lib/trpc/server";
 import { getTransactionsEnriched, getTransactionStats } from "@cimantikos/database/queries";
 import { TransactionsView } from "./_components/transactions-view";
 
-export default async function TransactionsPage() {
+export default async function TransactionsPageV1() {
   const teamId = await getCurrentTeamId();
   if (!teamId) redirect("/teams");
 

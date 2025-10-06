@@ -134,13 +134,21 @@ export function TransactionsView({
     return input;
   }, [filterType, statuses, categories, tags, accounts, search, startDate, endDate, hasAttachments, amountMin, amountMax]);
 
-  // Enriched list (regular query instead of infinite to debug)
-  const { data: trxData } = trpc.transactions.enrichedList.useQuery(enrichedInput, {
-    initialData: initialTransactions.length > 0 ? { items: initialTransactions, nextCursor: null } : undefined,
-  });
-  const transactions = trxData?.items || [];
-  const byId = useMemo(() => new Map<string, any>(transactions.map((r: any) => [r.transaction.id, r])), [transactions]);
-  const { data: membersData } = trpc.transactions.members.useQuery(undefined, {
+  const [trxPages, { fetchNextPage, hasNextPage, isFetchingNextPage }] = trpc.transactions.enrichedList.useSuspenseInfiniteQuery(
+    enrichedInput,
+    {
+      getNextPageParam: (last) => (last as any)?.nextCursor ?? null,
+      initialData: initialTransactions.length > 0
+        ? {
+            pages: [{ items: initialTransactions, nextCursor: null }],
+            pageParams: [null],
+          }
+        : undefined,
+    }
+  );
+  const transactions = (trxPages?.pages || []).flatMap((p: any) => p?.items || []);
+  const byId = new Map<string, any>(transactions.map((r: any) => [r.transaction.id, r]));
+  const [membersData] = trpc.transactions.members.useSuspenseQuery(undefined, {
     staleTime: 30000,
   });
   const members = (membersData as any[]) ?? [];
@@ -175,11 +183,14 @@ export function TransactionsView({
     setEndDate("");
   };
   
-  // Stats (regular query instead of suspense to debug)
-  const { data: stats } = trpc.transactions.stats.useQuery(undefined, {
-    initialData: initialStats,
-    staleTime: 30000,
-  });
+  // ✅ CORRECT: Use initialData from server
+  const [stats] = trpc.transactions.stats.useSuspenseQuery(
+    undefined,
+    {
+      initialData: initialStats,
+      staleTime: 30000, // Don't refetch for 30 seconds
+    }
+  );
 
   const [allocateOpen, setAllocateOpen] = useState(false);
   const [selectedTrx, setSelectedTrx] = useState<any | null>(null);
@@ -188,7 +199,7 @@ export function TransactionsView({
   const [createAccountOpen, setCreateAccountOpen] = useState(false);
 
   // ✅ CORRECT: Use initialData from server, match query params with server
-  const { data: invoicesResult } = trpc.invoices.list.useQuery(
+  const [invoicesResult] = trpc.invoices.list.useSuspenseQuery(
     { limit: 50 },
     {
       initialData: initialInvoices as any,
@@ -234,7 +245,19 @@ export function TransactionsView({
     if (rows.length === 0) setFocusedIndex(0);
     else if (focusedIndex > rows.length - 1) setFocusedIndex(rows.length - 1);
   }, [rows.length]);
-  // Infinite scroll removed for debugging
+  useEffect(() => {
+    if (!hasNextPage) return;
+    const el = loadMoreRef.current;
+    if (!el) return;
+    const io = new IntersectionObserver((entries) => {
+      const first = entries[0];
+      if (first.isIntersecting) {
+        fetchNextPage();
+      }
+    }, { rootMargin: "200px" });
+    io.observe(el);
+    return () => io.disconnect();
+  }, [hasNextPage, fetchNextPage]);
 
   const openAllocate = (row: any) => {
     setSelectedTrx(row);
@@ -244,23 +267,16 @@ export function TransactionsView({
   };
 
   const toggleAll = (checked: boolean) => {
-    if (!checked) {
-      setRowSelection({});
-    } else {
-      const ids = rows.map((r: any) => r.transaction.id);
-      const selection = ids.reduce((acc, id) => ({ ...acc, [id]: true }), {});
-      setRowSelection(selection);
-    }
+    if (!checked) return setSelected(new Set());
+    const ids = rows.map((r: any) => r.transaction.id);
+    setSelected(new Set(ids));
   };
   const toggleRow = (id: string, checked: boolean) => {
-    setRowSelection((prev) => {
-      if (checked) {
-        return { ...prev, [id]: true };
-      } else {
-        const next = { ...prev };
-        delete next[id];
-        return next;
-      }
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (checked) next.add(id);
+      else next.delete(id);
+      return next;
     });
   };
 
@@ -365,7 +381,15 @@ export function TransactionsView({
       return createTransactionColumns({
         currencyCode,
         onToggleSelection: (id: string) => {
-          // Let TanStack Table handle selection, we'll sync via useEffect
+          setRowSelection((prev) => {
+            const isSelected = prev[id];
+            if (isSelected) {
+              const next = { ...prev };
+              delete next[id];
+              return next;
+            }
+            return { ...prev, [id]: true };
+          });
         },
         onViewDetails: (row) => {
           openParams({ transactionId: row.transaction.id });
@@ -424,8 +448,13 @@ export function TransactionsView({
     const selectedIds = new Set(
       table.getSelectedRowModel().rows.map((row) => row.original.transaction.id)
     );
-    setSelected(selectedIds);
-  }, [rowSelection, table]);
+    // Only update if the sets are different to prevent infinite loops
+    const currentSelected = Array.from(selected).sort();
+    const newSelected = Array.from(selectedIds).sort();
+    if (JSON.stringify(currentSelected) !== JSON.stringify(newSelected)) {
+      setSelected(selectedIds);
+    }
+  }, [rowSelection, table, selected]);
 
   return (
     <div className="flex flex-col gap-6 px-6">
@@ -712,7 +741,18 @@ export function TransactionsView({
             </Table>
             </div>
           )}
-          {/* Infinite scroll removed for debugging */}
+          {hasNextPage && (
+            <div className="pt-4">
+              <div ref={loadMoreRef} className="h-8" />
+              <Button
+                variant="ghost"
+                onClick={() => fetchNextPage()}
+                disabled={!hasNextPage || isFetchingNextPage}
+              >
+                {isFetchingNextPage ? "Loading…" : "Load more"}
+              </Button>
+            </div>
+          )}
       </div>
 
       {/* Filters Sheet */}

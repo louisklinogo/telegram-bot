@@ -1,0 +1,34 @@
+name: Supabase Types Drift Check
+
+on:
+  push:
+    branches: ["master", "feature/**", "refactor/**"]
+  pull_request:
+    branches: ["master"]
+
+jobs:
+  types-drift:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Supabase CLI login
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+        run: npx -y supabase@latest login --token "$SUPABASE_ACCESS_TOKEN"
+
+      - name: Regenerate Supabase types
+        run: npx -y supabase@latest gen types typescript --project-id zvatkstmsyuytbajzuvn > packages/supabase/src/types/database.generated.ts
+
+      - name: Check for types drift
+        run: |
+          git diff --exit-code -- packages/supabase/src/types/database.generated.ts || {
+            echo "Types drift detected. Run 'bun run db:types' and commit changes." >&2
+            exit 1
+          }

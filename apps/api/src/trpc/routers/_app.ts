@@ -8,6 +8,7 @@ import { invoicesRouter } from "./invoices";
 import { measurementsRouter } from "./measurements";
 import { teamsRouter } from "./teams";
 import { transactionsRouter } from "./transactions";
+import { transactionCategoriesRouter } from "./transaction-categories";
 import { analyticsRouter } from "./analytics";
 import { documentsRouter } from "./documents";
 
@@ -16,6 +17,7 @@ export const appRouter = createTRPCRouter({
   clients: clientsRouter,
   orders: ordersRouter,
   transactions: transactionsRouter,
+  transactionCategories: transactionCategoriesRouter,
   invoices: invoicesRouter,
   measurements: measurementsRouter,
   communications: communicationsRouter,

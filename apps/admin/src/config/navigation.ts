@@ -17,6 +17,7 @@ export type NavItem = {
   icon: LucideIcon;
   badge?: string;
   description?: string;
+  children?: { title: string; href: string }[];
 };
 
 export type NavSection = {
@@ -50,6 +51,10 @@ export const NAV_SECTIONS: NavSection[] = [
         href: "/transactions",
         icon: CreditCard,
         description: "Payments & expenses",
+        children: [
+          { title: "Transactions (New)", href: "/transactions-1" },
+          { title: "Categories", href: "/transactions/categories" },
+        ],
       },
       {
         title: "Orders",
@@ -96,6 +101,9 @@ export const NAV_SECTIONS: NavSection[] = [
         href: "/settings",
         icon: Settings,
         description: "App configuration",
+        children: [
+          { title: "Accounts", href: "/settings/accounts" },
+        ],
       },
     ],
   },

@@ -1,6 +1,7 @@
 "use client";
 
 import type { LucideIcon } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
@@ -19,6 +20,7 @@ type SidebarProps = {
 
 export function Sidebar({ teams = [], currentTeamId }: SidebarProps) {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [expandedItemHref, setExpandedItemHref] = useState<string | null>(null);
   const pathname = usePathname();
 
   return (
@@ -82,6 +84,8 @@ export function Sidebar({ teams = [], currentTeamId }: SidebarProps) {
                         item={item}
                         active={isLinkActive(item.href, pathname)}
                         expanded={isExpanded}
+                        expandedItemHref={expandedItemHref}
+                        onToggle={(href) => setExpandedItemHref((prev) => (prev === href ? null : href))}
                       />
                     ))}
                   </div>
@@ -109,10 +113,14 @@ type SidebarLinkProps = {
   item: NavItem;
   active: boolean;
   expanded: boolean;
+  expandedItemHref?: string | null;
+  onToggle?: (href: string) => void;
 };
 
-function SidebarLink({ item, active, expanded }: SidebarLinkProps) {
+function SidebarLink({ item, active, expanded, expandedItemHref, onToggle }: SidebarLinkProps) {
   const Icon = item.icon as LucideIcon;
+  const hasChildren = Boolean(item.children && item.children.length > 0);
+  const isItemExpanded = expanded && expandedItemHref === item.href;
 
   const linkContent = (
     <Link prefetch={false} href={item.href} className="group relative block">
@@ -135,7 +143,7 @@ function SidebarLink({ item, active, expanded }: SidebarLinkProps) {
 
         {/* Label - appears when expanded */}
         {expanded && (
-          <div className="absolute top-0 left-[55px] right-[4px] h-[40px] flex items-center pointer-events-none">
+          <div className="absolute top-0 left-[55px] right-[15px] h-[40px] flex items-center pointer-events-none">
             <span
               className={cn(
                 "text-sm font-medium transition-opacity duration-200 ease-in-out text-[#666] group-hover:text-primary",
@@ -145,11 +153,29 @@ function SidebarLink({ item, active, expanded }: SidebarLinkProps) {
             >
               {item.title}
             </span>
-            {item.badge && (
-              <Badge variant="secondary" className="ml-auto mr-2 text-[10px] h-5">
-                {item.badge}
-              </Badge>
-            )}
+            <div className="ml-auto flex items-center gap-1 pointer-events-auto">
+              {item.badge && (
+                <Badge variant="secondary" className="text-[10px] h-5">
+                  {item.badge}
+                </Badge>
+              )}
+              {hasChildren && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    onToggle?.(item.href);
+                  }}
+                  className={cn(
+                    "w-6 h-6 flex items-center justify-center text-[#888] hover:text-primary transition-transform",
+                    isItemExpanded && "rotate-180"
+                  )}
+                >
+                  <ChevronDown className="h-4 w-4" />
+                </button>
+              )}
+            </div>
           </div>
         )}
       </div>
@@ -157,7 +183,29 @@ function SidebarLink({ item, active, expanded }: SidebarLinkProps) {
   );
 
   if (expanded) {
-    return linkContent;
+    return (
+      <div className="flex flex-col">
+        {linkContent}
+        {hasChildren && isItemExpanded && (
+          <div className="mt-1 ml-[35px] mr-[15px] border-l border-[#DCDAD2] dark:border-[#2C2C2C]">
+            <div className="flex flex-col py-1 pl-3 gap-1">
+              {(item.children ?? []).map((child) => (
+                <Link
+                  key={child.href}
+                  prefetch={false}
+                  href={child.href}
+                  className={cn(
+                    "text-xs text-[#888] hover:text-primary transition-colors whitespace-nowrap overflow-hidden"
+                  )}
+                >
+                  {child.title}
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    );
   }
 
   return (

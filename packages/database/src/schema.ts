@@ -651,6 +651,11 @@ export const transactionCategories = pgTable(
     parentId: uuid("parent_id").references((): any => transactionCategories.id, {
       onDelete: "set null",
     }),
+    // Tax fields and analytics behavior
+    taxRate: numeric("tax_rate", { precision: 10, scale: 2 }),
+    taxType: text("tax_type"),
+    taxReportingCode: text("tax_reporting_code"),
+    excluded: boolean("excluded").default(false).notNull(),
     system: boolean("system").default(false).notNull(), // System-provided vs user-created
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),

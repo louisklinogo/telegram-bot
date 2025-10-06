@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -100,8 +100,22 @@ export function TransactionForm({ onSuccess, defaultInvoiceId, defaultClientId }
     { q: attachmentQuery, limit: 10 },
     { enabled: attachmentQuery.length > 1 }
   );
-  // Get categories (slug, name, color)
-  const { data: categories = [] } = trpc.transactions.categories.useQuery();
+  // Get categories (hierarchical)
+  const { data: categoriesTree = [] } = trpc.transactionCategories.list.useQuery();
+  type CategoryNode = { id: string; name: string; slug: string; color?: string | null; children?: CategoryNode[] };
+  const flattenCategories = (nodes: CategoryNode[], depth = 0): Array<CategoryNode & { depth: number }> => {
+    const out: Array<CategoryNode & { depth: number }> = [];
+    for (const n of nodes) {
+      out.push({ ...n, depth });
+      if (n.children && n.children.length) out.push(...flattenCategories(n.children, depth + 1));
+    }
+    return out;
+  };
+  const categoryItems = useMemo(() => {
+    const flat = flattenCategories((categoriesTree as any) || []);
+    return flat.map((c) => ({ id: c.slug, label: c.name, depth: c.depth, color: c.color || undefined })) as Array<ComboboxItem & { depth: number; color?: string }>;
+  }, [categoriesTree]);
+  const createCategoryMutation = trpc.transactionCategories.create.useMutation();
   // Team members for assignment
   const { data: members = [] } = trpc.transactions.members.useQuery();
 
@@ -318,13 +332,13 @@ export function TransactionForm({ onSuccess, defaultInvoiceId, defaultClientId }
           <Popover>
             <PopoverTrigger asChild>
               <Button type="button" variant="outline" className="w-full justify-start">
-                {watch("transactionDate") ? new Date(watch("transactionDate")).toLocaleDateString() : "Select date"}
+                {((): string => { const d = watch("transactionDate"); return d ? new Date(d as string).toLocaleDateString() : "Select date"; })()}
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0" align="start">
               <Calendar
                 mode="single"
-                selected={watch("transactionDate") ? new Date(watch("transactionDate")) : undefined}
+                selected={((): Date | undefined => { const d = watch("transactionDate"); return d ? new Date(d as string) : undefined; })()}
                 onSelect={(value) => {
                   setValue("transactionDate", value ? value.toISOString().split("T")[0] : "");
                 }}
@@ -378,17 +392,34 @@ export function TransactionForm({ onSuccess, defaultInvoiceId, defaultClientId }
         <div>
           <Label htmlFor="categorySlug">Category</Label>
           <ComboboxDropdown
-            items={categories.map((cat: any) => ({ id: cat.slug, label: cat.name, disabled: false }))}
-            selectedItem={categorySlug ? { id: categorySlug, label: (categories.find((c: any) => c.slug === categorySlug)?.name) || "" } as ComboboxItem : undefined}
+            items={categoryItems}
+            selectedItem={
+              categorySlug
+                ? (categoryItems.find((i) => i.id === categorySlug) as ComboboxItem | undefined)
+                : undefined
+            }
             onSelect={(item) => setValue("categorySlug", item?.id || "")}
             placeholder="Select category"
             searchPlaceholder="Search category"
+            onCreate={async (name) => {
+              const row = await createCategoryMutation.mutateAsync({ name });
+              await utils.transactionCategories.list.invalidate();
+              setValue("categorySlug", row.slug);
+            }}
+            renderOnCreate={(value) => <span>Create "{value}"</span>}
             renderListItem={({ isChecked, item }) => (
               <div className="flex items-center gap-2 w-full">
-                <span className="inline-block h-3 w-3 rounded-full border" style={{ backgroundColor: (categories.find((c: any) => c.slug === item.id)?.color) || "#e5e7eb" }} />
+                <span style={{ paddingLeft: `${(item as any).depth * 12}px` }} />
+                <span className="inline-block h-3 w-3 rounded-sm border" style={{ backgroundColor: ((item as any).color as string) || "#e5e7eb" }} />
                 <span className="flex-1 truncate">{item.label}</span>
                 {isChecked ? <span className="text-xs">Selected</span> : null}
               </div>
+            )}
+            renderSelectedItem={(sel) => (
+              <span className="flex items-center gap-2">
+                <span className="inline-block h-3 w-3 rounded-sm border" style={{ backgroundColor: ((sel as any).color as string) || "#e5e7eb" }} />
+                <span className="truncate">{sel.label}</span>
+              </span>
             )}
           />
         </div>
