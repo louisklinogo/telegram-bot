@@ -125,7 +125,7 @@ apps/worker/.sessions/
 
 # Embedded git repositories
 evolution-api/
-midday-assistant-v2/
+midday
 
 # Secret files with tokens/keys
 docs/essentials.txt
