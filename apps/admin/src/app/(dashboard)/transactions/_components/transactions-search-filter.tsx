@@ -1,8 +1,22 @@
 'use client';
 
-import { useMemo } from 'react';
-import type { FilterState } from './types';
+import { useEffect, useRef, useState, useMemo } from 'react';
+import { useHotkeys } from 'react-hotkeys-hook';
+import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+  DropdownMenuGroup,
+  DropdownMenuSub,
+  DropdownMenuSubTrigger,
+  DropdownMenuSubContent,
+  DropdownMenuPortal,
+  DropdownMenuCheckboxItem,
+} from '@/components/ui/dropdown-menu';
+import { Icons } from '@/components/ui/icons';
+import type { FilterState } from './types';
 
 type Props = {
   value?: FilterState;
@@ -10,28 +24,264 @@ type Props = {
   onAskAI?: (query: string) => Promise<Partial<FilterState>>;
 };
 
+const PLACEHOLDERS = [
+  'Software and taxes last month',
+  'Income last year', 
+  'Software last Q4',
+  'From Google without receipt',
+  'Search or filter',
+  'Without receipts this month',
+];
+
+interface FilterMenuItemProps {
+  icon: React.ComponentType<any>;
+  label: string;
+  children: React.ReactNode;
+}
+
+interface FilterCheckboxItemProps {
+  id: string;
+  name: string;
+  checked?: boolean;
+  onCheckedChange: () => void;
+}
+
+function FilterMenuItem({ icon: Icon, label, children }: FilterMenuItemProps) {
+  return (
+    <DropdownMenuGroup>
+      <DropdownMenuSub>
+        <DropdownMenuSubTrigger>
+          <Icon className="mr-2 size-4" />
+          <span>{label}</span>
+        </DropdownMenuSubTrigger>
+        <DropdownMenuPortal>
+          <DropdownMenuSubContent sideOffset={14} alignOffset={-4} className="p-0">
+            {children}
+          </DropdownMenuSubContent>
+        </DropdownMenuPortal>
+      </DropdownMenuSub>
+    </DropdownMenuGroup>
+  );
+}
+
+function FilterCheckboxItem({ id, name, checked = false, onCheckedChange }: FilterCheckboxItemProps) {
+  return (
+    <DropdownMenuCheckboxItem
+      key={id}
+      checked={checked}
+      onCheckedChange={onCheckedChange}
+    >
+      {name}
+    </DropdownMenuCheckboxItem>
+  );
+}
+
 export function TransactionsSearchFilter({ value, onChange, onAskAI }: Props) {
+  const [placeholder, setPlaceholder] = useState('');
+  const [streaming, setStreaming] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
+  const [isFocused, setIsFocused] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+  
   const current = useMemo<FilterState>(() => ({ limit: 50, ...(value || {}) }), [value]);
+  const [prompt, setPrompt] = useState(current.search || '');
 
   const patch = (p: Partial<FilterState>) => onChange({ ...current, ...p });
 
-  return (
-    <div className="flex w-full items-center gap-2">
-      <Input
-        placeholder="Search transactions by description, client, or reference..."
-        value={current.search || ''}
-        onChange={(e) => patch({ search: e.target.value })}
-        onKeyDown={async (e) => {
-          if (e.key === 'Enter' && onAskAI && (current.search || '').trim()) {
-            try {
-              const parsed = await onAskAI((current.search || '').trim());
-              if (parsed && Object.keys(parsed).length > 0) patch(parsed);
-            } catch {}
+  // Random placeholder
+  useEffect(() => {
+    const randomPlaceholder = PLACEHOLDERS[Math.floor(Math.random() * PLACEHOLDERS.length)] ?? 'Search or filter';
+    setPlaceholder(randomPlaceholder);
+  }, []);
+
+  // Keyboard shortcuts
+  useHotkeys(
+    'esc',
+    () => {
+      setPrompt('');
+      onChange({ limit: 50 });
+      setIsOpen(false);
+    },
+    {
+      enableOnFormTags: true,
+      enabled: Boolean(prompt) && isFocused,
+    }
+  );
+
+  useHotkeys('meta+s', (evt) => {
+    evt.preventDefault();
+    inputRef.current?.focus();
+  });
+
+  const handleSearch = (evt: React.ChangeEvent<HTMLInputElement>) => {
+    const value = evt.target.value;
+    setPrompt(value);
+    if (!value) {
+      patch({ search: null });
+    }
+  };
+
+  const handleSubmit = async () => {
+    if (prompt.split(' ').length > 1) {
+      // Multi-word: AI processing
+      setStreaming(true);
+      
+      try {
+        if (onAskAI) {
+          const parsed = await onAskAI(prompt.trim());
+          if (parsed && Object.keys(parsed).length > 0) {
+            patch({ search: null, ...parsed });
           }
-        }}
-        className="h-6 w-[360px] border-none bg-transparent p-0 text-sm focus-visible:ring-0"
-      />
-    </div>
+        }
+      } catch (error) {
+        console.error('AI parsing failed:', error);
+      } finally {
+        setStreaming(false);
+      }
+    } else {
+      // Single word: direct search
+      patch({ search: prompt.length > 0 ? prompt : null });
+    }
+  };
+
+  // Check if we have active filters (excluding search and limit)
+  const validFilters = Object.fromEntries(
+    Object.entries(current).filter(([key]) => key !== 'search' && key !== 'limit')
+  );
+  const hasValidFilters = Object.values(validFilters).some(
+    (value) => value !== null && value !== undefined && 
+    (Array.isArray(value) ? value.length > 0 : true)
+  );
+
+  return (
+    <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
+      <div className="flex flex-col space-y-2 w-full md:w-auto">
+        <form
+          className="relative"
+          onSubmit={(e) => {
+            e.preventDefault();
+            handleSubmit();
+          }}
+        >
+          <Icons.Search className="absolute pointer-events-none left-3 top-[11px] h-4 w-4" />
+          <Input
+            ref={inputRef}
+            placeholder={placeholder}
+            className="pl-9 w-full sm:w-[350px] pr-8"
+            value={prompt}
+            onChange={handleSearch}
+            onFocus={() => setIsFocused(true)}
+            onBlur={() => setIsFocused(false)}
+            autoComplete="off"
+            autoCapitalize="none"
+            autoCorrect="off"
+            spellCheck="false"
+          />
+
+          <DropdownMenuTrigger asChild>
+            <button
+              onClick={() => setIsOpen((prev) => !prev)}
+              type="button"
+              className={cn(
+                'absolute z-10 right-3 top-[10px] opacity-50 transition-opacity duration-300 hover:opacity-100',
+                hasValidFilters && 'opacity-100',
+                isOpen && 'opacity-100'
+              )}
+            >
+              {streaming ? <Icons.Refresh className="h-4 w-4 animate-spin" /> : <Icons.Filter className="h-4 w-4" />}
+            </button>
+          </DropdownMenuTrigger>
+        </form>
+
+        {/* Applied filters would go here */}
+      </div>
+
+      <DropdownMenuContent
+        className="w-[350px]"
+        align="end"
+        sideOffset={19}
+        alignOffset={-11}
+        side="top"
+      >
+        <FilterMenuItem icon={Icons.CalendarMonth} label="Date">
+          <div className="p-4 text-sm text-muted-foreground">
+            Date range filter (to be implemented)
+          </div>
+        </FilterMenuItem>
+
+        <FilterMenuItem icon={Icons.Currency} label="Amount">
+          <div className="p-4 text-sm text-muted-foreground">
+            Amount range filter (to be implemented)
+          </div>
+        </FilterMenuItem>
+
+        <FilterMenuItem icon={Icons.Status} label="Status">
+          {['completed', 'uncompleted', 'archived', 'excluded'].map((status) => (
+            <FilterCheckboxItem
+              key={status}
+              id={status}
+              name={status.charAt(0).toUpperCase() + status.slice(1)}
+              checked={current.statuses?.includes(status)}
+              onCheckedChange={() => {
+                const currentStatuses = current.statuses || [];
+                const newStatuses = currentStatuses.includes(status)
+                  ? currentStatuses.filter((s) => s !== status)
+                  : [...currentStatuses, status];
+                patch({ statuses: newStatuses.length > 0 ? newStatuses : null });
+              }}
+            />
+          ))}
+        </FilterMenuItem>
+
+        <FilterMenuItem icon={Icons.Attachments} label="Attachments">
+          <FilterCheckboxItem
+            id="has-attachments"
+            name="Has attachments"
+            checked={current.hasAttachments === true}
+            onCheckedChange={() => 
+              patch({ hasAttachments: current.hasAttachments === true ? null : true })
+            }
+          />
+          <FilterCheckboxItem
+            id="no-attachments"  
+            name="No attachments"
+            checked={current.hasAttachments === false}
+            onCheckedChange={() =>
+              patch({ hasAttachments: current.hasAttachments === false ? null : false })
+            }
+          />
+        </FilterMenuItem>
+
+        <FilterMenuItem icon={Icons.Category} label="Categories">
+          <div className="p-4 text-sm text-muted-foreground">
+            Categories filter (to be implemented)
+          </div>
+        </FilterMenuItem>
+
+        <FilterMenuItem icon={Icons.Status} label="Tags">
+          <div className="p-4 text-sm text-muted-foreground">
+            Tags filter (to be implemented) 
+          </div>
+        </FilterMenuItem>
+
+        <FilterMenuItem icon={Icons.Accounts} label="Accounts">
+          <div className="p-4 text-sm text-muted-foreground">
+            Accounts filter (to be implemented)
+          </div>
+        </FilterMenuItem>
+
+        <FilterMenuItem icon={Icons.Repeat} label="Recurring">
+          <FilterCheckboxItem
+            id="recurring-all"
+            name="All recurring"
+            checked={current.isRecurring === true}
+            onCheckedChange={() =>
+              patch({ isRecurring: current.isRecurring === true ? null : true })
+            }
+          />
+        </FilterMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
 

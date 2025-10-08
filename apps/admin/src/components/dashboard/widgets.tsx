@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { formatDateUTC } from "@/lib/date";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { MeasurementWithClient, OrderWithClient } from "@/lib/supabase-queries";
 
@@ -178,10 +179,10 @@ export function Widgets({
                             {measurement.client?.name || "Unknown Client"}
                           </p>
                           <p className="text-xs text-muted-foreground">
-                            {new Date(
+                            {formatDateUTC(
                               ((measurement as any).taken_at ||
                                 (measurement as any).created_at) as any,
-                            ).toLocaleDateString()}
+                            )}
                           </p>
                         </div>
                         <Badge variant="secondary" className="text-xs">
