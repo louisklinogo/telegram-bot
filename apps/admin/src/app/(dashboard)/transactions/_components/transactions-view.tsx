@@ -67,6 +67,8 @@ import { BulkActions } from "@/components/bulk-actions";
 import { AddTransactions } from "@/components/add-transactions";
 import { TransactionsColumnVisibility } from "@/components/transactions-column-visibility";
 import { createTransactionColumns, type TransactionRow } from "./transactions-columns";
+import TransactionsSearchFilter from "./transactions-search-filter";
+import type { FilterState } from "./types";
 
 type FilterType = "all" | "payment" | "expense" | "refund" | "adjustment";
 
@@ -93,7 +95,9 @@ export function TransactionsView({
   const [categories, setCategories] = useState<string[]>([]);
   const [tags, setTags] = useState<string[]>([]);
   const [accounts, setAccounts] = useState<string[]>([]);
+  const [assignees, setAssignees] = useState<string[]>([]);
   const [hasAttachments, setHasAttachments] = useState<"any" | "with" | "without">("any");
+  const [isRecurring, setIsRecurring] = useState<boolean | undefined>(undefined);
   const [amountMin, setAmountMin] = useState<string>("");
   const [amountMax, setAmountMax] = useState<string>("");
   const [startDate, setStartDate] = useState<string>("");
@@ -123,6 +127,8 @@ export function TransactionsView({
       categories: categories.length ? categories : undefined,
       tags: tags.length ? tags : undefined,
       accounts: accounts.length ? accounts : undefined,
+      assignees: assignees.length ? assignees : undefined,
+      isRecurring: isRecurring,
       search: search || undefined,
       startDate: startDate ? new Date(startDate + "T00:00:00Z").toISOString() : undefined,
       endDate: endDate ? new Date(endDate + "T23:59:59Z").toISOString() : undefined,
@@ -132,7 +138,7 @@ export function TransactionsView({
       limit: 50,
     };
     return input;
-  }, [filterType, statuses, categories, tags, accounts, search, startDate, endDate, hasAttachments, amountMin, amountMax]);
+  }, [filterType, statuses, categories, tags, accounts, assignees, isRecurring, search, startDate, endDate, hasAttachments, amountMin, amountMax]);
 
   // Enriched list (regular query instead of infinite to debug)
   const { data: trxData } = trpc.transactions.enrichedList.useQuery(enrichedInput, {
@@ -153,13 +159,15 @@ export function TransactionsView({
       categories.length > 0 ||
       tags.length > 0 ||
       accounts.length > 0 ||
+      assignees.length > 0 ||
+      isRecurring != null ||
       hasAttachments !== "any" ||
       Boolean(amountMin) ||
       Boolean(amountMax) ||
       Boolean(startDate) ||
       Boolean(endDate)
     );
-  }, [filterType, search, statuses, categories, tags, accounts, hasAttachments, amountMin, amountMax, startDate, endDate]);
+  }, [filterType, search, statuses, categories, tags, accounts, assignees, isRecurring, hasAttachments, amountMin, amountMax, startDate, endDate]);
 
   const clearAllFilters = () => {
     setFilterType("all");
@@ -180,6 +188,7 @@ export function TransactionsView({
     initialData: initialStats,
     staleTime: 30000,
   });
+  const aiParse = trpc.transactions.aiParse.useMutation();
 
   const [allocateOpen, setAllocateOpen] = useState(false);
   const [selectedTrx, setSelectedTrx] = useState<any | null>(null);
@@ -459,10 +468,16 @@ export function TransactionsView({
         {accounts.length > 0 && (
           <Badge variant="secondary" className="cursor-pointer" onClick={() => setAccounts([])}>accounts:{accounts.length} ×</Badge>
         )}
+        {assignees.length > 0 && (
+          <Badge variant="secondary" className="cursor-pointer" onClick={() => setAssignees([])}>assignees:{assignees.length} ×</Badge>
+        )}
         {hasAttachments !== "any" && (
           <Badge variant="secondary" className="cursor-pointer" onClick={() => setHasAttachments("any")}>
             {hasAttachments === "with" ? "with attachments" : "without attachments"} ×
           </Badge>
+        )}
+        {isRecurring != null && (
+          <Badge variant="secondary" className="cursor-pointer" onClick={() => setIsRecurring(undefined)}>recurring ×</Badge>
         )}
         {(amountMin || amountMax) && (
           <Badge variant="secondary" className="cursor-pointer" onClick={() => { setAmountMin(""); setAmountMax(""); }}>
@@ -550,32 +565,52 @@ export function TransactionsView({
       </div>
 
       <div>
-        <div className="mb-4">
-          <div className="flex items-center justify-between gap-4">
-            <div className="hidden items-center gap-2 rounded-md border px-3 py-2 text-sm md:flex">
-              <Search className="h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search transactions by description, client, or reference..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="h-6 w-[360px] border-none bg-transparent p-0 text-sm focus-visible:ring-0"
-              />
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-6 w-6 hover:bg-transparent"
-                onClick={() => setFiltersOpen(true)}
-              >
-                <Filter className="h-4 w-4 text-muted-foreground" />
-              </Button>
-            </div>
-            <div className="ml-auto flex items-center gap-2">
-              <TransactionsColumnVisibility columns={table.getAllColumns()} />
-              <Button variant="outline" size="sm" className="gap-2" onClick={exportSelected} disabled={selectedCount === 0}>
-                <Download className="h-4 w-4" /> Export {selectedCount > 0 ? `(${selectedCount})` : ""}
-              </Button>
-              <AddTransactions />
-            </div>
+        <div className="mb-4 flex flex-col gap-3">
+          <TransactionsSearchFilter
+            value={{
+              type: filterType === 'all' ? undefined : (filterType as any),
+              search,
+              statuses: statuses as any,
+              categories,
+              tags,
+              accounts,
+              assignees,
+              isRecurring,
+              startDate: startDate ? new Date(startDate + 'T00:00:00Z').toISOString() : undefined,
+              endDate: endDate ? new Date(endDate + 'T23:59:59Z').toISOString() : undefined,
+              hasAttachments: hasAttachments === 'any' ? undefined : hasAttachments === 'with',
+              amountMin: amountMin ? Number(amountMin) : undefined,
+              amountMax: amountMax ? Number(amountMax) : undefined,
+              limit: 50,
+            }}
+            onChange={(p: Partial<FilterState>) => {
+              if (p.type !== undefined) setFilterType((p.type as any) || 'all');
+              if (p.search !== undefined) setSearch(p.search || '');
+              if (p.statuses) setStatuses(p.statuses as any);
+              if (p.categories) setCategories(p.categories);
+              if (p.tags) setTags(p.tags);
+              if (p.accounts) setAccounts(p.accounts);
+              if (p.assignees) setAssignees(p.assignees);
+              if (p.isRecurring !== undefined) setIsRecurring(p.isRecurring);
+              if (p.hasAttachments !== undefined) setHasAttachments(p.hasAttachments ? 'with' : 'without');
+              if (p.amountMin !== undefined) setAmountMin(p.amountMin != null ? String(p.amountMin) : '');
+              if (p.amountMax !== undefined) setAmountMax(p.amountMax != null ? String(p.amountMax) : '');
+              if (p.startDate !== undefined) setStartDate(p.startDate ? new Date(p.startDate).toISOString().slice(0,10) : '');
+              if (p.endDate !== undefined) setEndDate(p.endDate ? new Date(p.endDate).toISOString().slice(0,10) : '');
+            }}
+            onClear={() => clearAllFilters()}
+            onApply={() => setFiltersOpen(false)}
+            onAskAI={async (q) => {
+              const res = await aiParse.mutateAsync({ query: q });
+              return res as any;
+            }}
+          />
+          <div className="ml-auto flex items-center gap-2">
+            <TransactionsColumnVisibility columns={table.getAllColumns()} />
+            <Button variant="outline" size="sm" className="gap-2" onClick={exportSelected} disabled={selectedCount === 0}>
+              <Download className="h-4 w-4" /> Export {selectedCount > 0 ? `(${selectedCount})` : ""}
+            </Button>
+            <AddTransactions />
           </div>
           {/* Removed top-left filter tabs; Type moved into Filters sheet */}
         </div>

@@ -291,6 +291,8 @@ export const transactionsRouter = createTRPCRouter({
           categories: z.array(z.string()).optional(),
           tags: z.array(z.string().uuid()).optional(),
           assignedId: z.string().uuid().optional(),
+          assignees: z.array(z.string().uuid()).optional(),
+          isRecurring: z.boolean().optional(),
           search: z.string().min(1).optional(),
           startDate: z.string().datetime().optional(),
           endDate: z.string().datetime().optional(),
@@ -313,6 +315,8 @@ export const transactionsRouter = createTRPCRouter({
         categories: input?.categories,
         tags: input?.tags,
         assignedId: input?.assignedId,
+        assignees: input?.assignees,
+        isRecurring: input?.isRecurring,
         search: input?.search,
         startDate: input?.startDate ? new Date(input.startDate) : undefined,
         endDate: input?.endDate ? new Date(input.endDate) : undefined,
@@ -334,6 +338,93 @@ export const transactionsRouter = createTRPCRouter({
         ? { date: last.transaction.date ? new Date(last.transaction.date).toISOString() : null, id: last.transaction.id }
         : null;
       return { items: rows, nextCursor };
+    }),
+
+  // AI-like NL to filters parser (rule-based MVP)
+  aiParse: teamProcedure
+    .input(z.object({ query: z.string().min(1) }))
+    .mutation(async ({ input }) => {
+      const q = input.query.toLowerCase();
+      const out: any = {};
+
+      // type
+      if (/\bpayment\b/.test(q)) out.type = "payment";
+      else if (/\bexpense\b/.test(q)) out.type = "expense";
+      else if (/\brefund\b/.test(q)) out.type = "refund";
+      else if (/\badjustment\b/.test(q)) out.type = "adjustment";
+
+      // status[]
+      const statuses: string[] = [];
+      if (/\bpending\b/.test(q)) statuses.push("pending");
+      if (/\bcompleted\b/.test(q)) statuses.push("completed");
+      if (/\bfailed\b/.test(q)) statuses.push("failed");
+      if (/\bcancelled\b/.test(q)) statuses.push("cancelled");
+      if (statuses.length) out.status = statuses as any;
+
+      // attachments
+      if (/with attachments?/.test(q)) out.hasAttachments = true;
+      if (/without attachments?/.test(q)) out.hasAttachments = false;
+
+      // recurring
+      if (/\brecurring\b/.test(q)) out.isRecurring = true;
+
+      // amount range
+      const between = q.match(/between\s+(\d+(?:\.\d+)?)\s+and\s+(\d+(?:\.\d+)?)/);
+      if (between) {
+        out.amountMin = Number(between[1]);
+        out.amountMax = Number(between[2]);
+      } else {
+        const gt = q.match(/(?:>|over|>=|at\s+least)\s+(\d+(?:\.\d+)?)/);
+        const lt = q.match(/(?:<|under|<=|at\s+most)\s+(\d+(?:\.\d+)?)/);
+        if (gt) out.amountMin = Number(gt[1]);
+        if (lt) out.amountMax = Number(lt[1]);
+      }
+
+      // date phrases
+      const toISO = (d: Date) => d.toISOString();
+      const startOfDay = (d: Date) => new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate(), 0, 0, 0));
+      const endOfDay = (d: Date) => new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate(), 23, 59, 59));
+      const now = new Date();
+      if (/today/.test(q)) {
+        out.startDate = toISO(startOfDay(now));
+        out.endDate = toISO(endOfDay(now));
+      } else if (/yesterday/.test(q)) {
+        const y = new Date(now.getTime() - 86400000);
+        out.startDate = toISO(startOfDay(y));
+        out.endDate = toISO(endOfDay(y));
+      } else if (/last\s+7\s+days/.test(q)) {
+        const s = new Date(now.getTime() - 86400000 * 6);
+        out.startDate = toISO(startOfDay(s));
+        out.endDate = toISO(endOfDay(now));
+      } else if (/last\s+30\s+days/.test(q)) {
+        const s = new Date(now.getTime() - 86400000 * 29);
+        out.startDate = toISO(startOfDay(s));
+        out.endDate = toISO(endOfDay(now));
+      } else if (/last\s+week/.test(q)) {
+        const s = new Date(now.getTime() - 86400000 * 7);
+        out.startDate = toISO(startOfDay(s));
+        out.endDate = toISO(endOfDay(now));
+      } else if (/this\s+month/.test(q)) {
+        const s = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
+        out.startDate = toISO(s);
+        out.endDate = toISO(endOfDay(now));
+      } else if (/last\s+month/.test(q)) {
+        const s = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 1));
+        const e = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 0, 23, 59, 59));
+        out.startDate = toISO(s);
+        out.endDate = toISO(e);
+      }
+
+      // explicit ISO dates: from YYYY-MM-DD to YYYY-MM-DD
+      const range = q.match(/(\d{4}-\d{2}-\d{2})\s*(?:to|-)\s*(\d{4}-\d{2}-\d{2})/);
+      if (range) {
+        const s = new Date(range[1] + 'T00:00:00Z');
+        const e = new Date(range[2] + 'T23:59:59Z');
+        out.startDate = toISO(s);
+        out.endDate = toISO(e);
+      }
+
+      return out;
     }),
 
   // Get single transaction with full details

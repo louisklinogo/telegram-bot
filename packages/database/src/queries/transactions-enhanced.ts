@@ -33,6 +33,7 @@ export async function getTransactionsEnriched(
     categories?: string[];
     tags?: string[];
     assignedId?: string;
+    assignees?: string[];
     search?: string;
     startDate?: Date;
     endDate?: Date;
@@ -40,6 +41,7 @@ export async function getTransactionsEnriched(
     accounts?: string[];
     amountMin?: number;
     amountMax?: number;
+    isRecurring?: boolean;
     limit?: number;
     cursor?: { date: Date | null; id: string } | null;
   }
@@ -51,6 +53,7 @@ export async function getTransactionsEnriched(
     categories,
     tags: tagIds,
     assignedId,
+    assignees,
     search,
     startDate,
     endDate,
@@ -58,6 +61,7 @@ export async function getTransactionsEnriched(
     accounts,
     amountMin,
     amountMax,
+    isRecurring,
     limit = 50,
     cursor,
   } = params;
@@ -72,7 +76,9 @@ export async function getTransactionsEnriched(
       ? inArray(transactions.categorySlug, categories)
       : sql`true`,
     assignedId ? eq(transactions.assignedId, assignedId) : sql`true`,
+    assignees && assignees.length > 0 ? inArray(transactions.assignedId, assignees as any) : sql`true`,
     accounts && accounts.length > 0 ? inArray(transactions.accountId, accounts as any) : sql`true`,
+    isRecurring != null ? eq(transactions.recurring, isRecurring) : sql`true`,
     search
       ? or(
           ilike(transactions.name, `%${search}%`),
