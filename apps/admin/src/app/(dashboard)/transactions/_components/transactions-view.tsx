@@ -62,11 +62,13 @@ import { useTransactionParams } from "@/hooks/use-transaction-params";
 import { EmptyState } from "@/components/empty-state";
 import { CreateAccountDialog } from "@/components/create-account-dialog";
 import { useToast } from "@/components/ui/use-toast";
-import MultipleSelector, { type Option as MSOption } from "@/components/ui/multiple-selector";
+// MultipleSelector retained elsewhere; not used here for filters UI
 import { BulkActions } from "@/components/bulk-actions";
 import { AddTransactions } from "@/components/add-transactions";
 import { TransactionsColumnVisibility } from "@/components/transactions-column-visibility";
 import { createTransactionColumns, type TransactionRow } from "./transactions-columns";
+import TransactionsSearchFilter from "./transactions-search-filter";
+import type { FilterState } from "./types";
 
 type FilterType = "all" | "payment" | "expense" | "refund" | "adjustment";
 
@@ -88,7 +90,6 @@ export function TransactionsView({
   const selectedCount = selected.size;
 
   // Advanced filter state
-  const [filtersOpen, setFiltersOpen] = useState(false);
   const [statuses, setStatuses] = useState<string[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
   const [tags, setTags] = useState<string[]>([]);
@@ -104,19 +105,7 @@ export function TransactionsView({
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
-  // Lazy-load categories for multi-select when Filters sheet is opened
-  const { data: categoriesTree } = trpc.transactionCategories.list.useQuery(undefined, {
-    enabled: filtersOpen,
-  });
-  const categoryOptions: MSOption[] = useMemo(() => {
-    const flat = flattenCategories((categoriesTree as any) || []);
-    return flat.map((c) => ({
-      value: c.slug as string,
-      label: c.name as string,
-      depth: String(c.depth),
-      color: (c.color as string | undefined) ?? undefined,
-    }));
-  }, [categoriesTree]);
+  // Categories are set via AI parse or elsewhere; no lazy load UI here (Midday parity)
 
   const enrichedInput = useMemo(() => {
     const input: any = {
@@ -590,28 +579,19 @@ export function TransactionsView({
           <div className="flex items-center justify-between gap-4">
             <div className="hidden items-center gap-2 rounded-md border px-3 py-2 text-sm md:flex">
               <Search className="h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search transactions by description, client, or reference..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                onKeyDown={async (e) => {
-                  if (e.key === 'Enter' && search.trim()) {
-                    try {
-                      const parsed = await aiParse.mutateAsync({ query: search.trim() });
-                      if (parsed && Object.keys(parsed).length > 0) applyParsedFilters(parsed);
-                    } catch {}
-                  }
+              <TransactionsSearchFilter
+                value={{
+                  search,
                 }}
-                className="h-6 w-[360px] border-none bg-transparent p-0 text-sm focus-visible:ring-0"
+                onChange={(p: Partial<FilterState>) => {
+                  if (p.search !== undefined) setSearch(p.search || "");
+                }}
+                onAskAI={async (q) => {
+                  const parsed = await aiParse.mutateAsync({ query: q });
+                  applyParsedFilters(parsed);
+                  return parsed as any;
+                }}
               />
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-6 w-6 hover:bg-transparent"
-                onClick={() => setFiltersOpen(true)}
-              >
-                <Filter className="h-4 w-4 text-muted-foreground" />
-              </Button>
             </div>
             <div className="ml-auto flex items-center gap-2">
               <TransactionsColumnVisibility columns={table.getAllColumns()} />
@@ -759,104 +739,7 @@ export function TransactionsView({
           {/* Infinite scroll removed for debugging */}
       </div>
 
-      {/* Filters Sheet */}
-      <Sheet open={filtersOpen} onOpenChange={setFiltersOpen}>
-        <SheetContent>
-          <SheetHeader>
-            <SheetTitle>Filters</SheetTitle>
-          </SheetHeader>
-          <div className="space-y-4 py-4 text-sm">
-            <div>
-              <label className="mb-1 block text-xs text-muted-foreground">Type</label>
-              <div className="flex flex-wrap gap-2">
-                {(["all","payment","expense","refund","adjustment"] as const).map((t) => (
-                  <Button
-                    key={t}
-                    type="button"
-                    size="sm"
-                    variant={filterType === t ? "default" : "outline"}
-                    onClick={() => setFilterType(t)}
-                    className="capitalize"
-                  >
-                    {t}
-                  </Button>
-                ))}
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="mb-1 block text-xs text-muted-foreground">From</label>
-                <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
-              </div>
-              <div>
-                <label className="mb-1 block text-xs text-muted-foreground">To</label>
-                <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
-              </div>
-            </div>
-            <div>
-              <label className="mb-1 block text-xs text-muted-foreground">Status</label>
-              <div className="flex flex-wrap gap-3">
-                {(["pending","completed","failed","cancelled"] as const).map((s) => (
-                  <label key={s} className="flex items-center gap-2">
-                    <Checkbox checked={statuses.includes(s)} onCheckedChange={(v) => setStatuses((prev) => v ? [...prev, s] : prev.filter((x) => x !== s))} />
-                    <span className="capitalize">{s}</span>
-                  </label>
-                ))}
-              </div>
-            </div>
-            <div>
-              <label className="mb-1 block text-xs text-muted-foreground">Categories</label>
-              <MultipleSelector
-                options={categoryOptions}
-                value={categoryOptions.filter((o) => categories.includes(o.value))}
-                onChange={(opts) => setCategories(opts.map((o) => o.value))}
-                placeholder="Select categories"
-                commandProps={{ className: "border rounded" }}
-                renderOption={(opt) => (
-                  <div className="flex items-center gap-2">
-                    <span style={{ paddingLeft: `${parseInt((opt as any).depth || "0") * 12}px` }} />
-                    <span
-                      className="inline-block h-3 w-3 rounded-sm border"
-                      style={{ backgroundColor: ((opt as any).color as string) || "transparent" }}
-                    />
-                    <span>{opt.label}</span>
-                  </div>
-                )}
-              />
-            </div>
-            <div>
-              <label className="mb-1 block text-xs text-muted-foreground">Tags (comma separated UUIDs)</label>
-              <Input value={tags.join(",")} onChange={(e) => setTags(e.target.value.split(",").map((s) => s.trim()).filter(Boolean))} placeholder="id1,id2" />
-            </div>
-            <div>
-              <label className="mb-1 block text-xs text-muted-foreground">Accounts (comma separated UUIDs)</label>
-              <Input value={accounts.join(",")} onChange={(e) => setAccounts(e.target.value.split(",").map((s) => s.trim()).filter(Boolean))} placeholder="accountId1,accountId2" />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="mb-1 block text-xs text-muted-foreground">Min Amount</label>
-                <Input type="number" value={amountMin} onChange={(e) => setAmountMin(e.target.value)} />
-              </div>
-              <div>
-                <label className="mb-1 block text-xs text-muted-foreground">Max Amount</label>
-                <Input type="number" value={amountMax} onChange={(e) => setAmountMax(e.target.value)} />
-              </div>
-            </div>
-            <div>
-              <label className="mb-1 block text-xs text-muted-foreground">Attachments</label>
-              <div className="flex items-center gap-3">
-                <label className="flex items-center gap-2"><Checkbox checked={hasAttachments === "any"} onCheckedChange={() => setHasAttachments("any")} />Any</label>
-                <label className="flex items-center gap-2"><Checkbox checked={hasAttachments === "with"} onCheckedChange={() => setHasAttachments("with")} />With</label>
-                <label className="flex items-center gap-2"><Checkbox checked={hasAttachments === "without"} onCheckedChange={() => setHasAttachments("without")} />Without</label>
-              </div>
-            </div>
-          </div>
-          <SheetFooter>
-            <Button variant="outline" onClick={() => { setStatuses([]); setCategories([]); setTags([]); setAccounts([]); setHasAttachments("any"); setAmountMin(""); setAmountMax(""); setStartDate(""); setEndDate(""); }}>Clear</Button>
-            <Button onClick={() => setFiltersOpen(false)}>Apply</Button>
-          </SheetFooter>
-        </SheetContent>
-      </Sheet>
+      {/* Filters popover/sheet removed — Midday uses AI-first search without separate filter surface */}
 
       {/* Allocate Sheet */}
       <Sheet open={allocateOpen} onOpenChange={setAllocateOpen}>
@@ -919,12 +802,4 @@ export function TransactionsView({
   );
 }
 
-type CategoryNode = { id: string; name: string; slug: string; color?: string | null; children?: CategoryNode[] };
-function flattenCategories(nodes: CategoryNode[], depth = 0): Array<CategoryNode & { depth: number }> {
-  const out: Array<CategoryNode & { depth: number }> = [];
-  for (const n of nodes) {
-    out.push({ ...n, depth });
-    if (n.children && n.children.length) out.push(...flattenCategories(n.children, depth + 1));
-  }
-  return out;
-}
+// Filter sheet helpers removed; AI search drives filters directly
