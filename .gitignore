@@ -124,7 +124,7 @@ apps/worker/.sessions/
 .sessions/
 
 # Embedded git repositories
-evolution-api/
+evolution-api
 midday
 
 # Secret files with tokens/keys
