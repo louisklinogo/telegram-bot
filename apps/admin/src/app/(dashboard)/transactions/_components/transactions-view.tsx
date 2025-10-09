@@ -655,38 +655,36 @@ export function TransactionsView({
       </div>
 
       <div>
-        <div className="mb-4">
-          <div className="flex items-center justify-between gap-4">
-            <div className="hidden items-center gap-2 rounded-md border px-3 py-2 text-sm md:flex">
-              <Search className="h-4 w-4 text-muted-foreground" />
-              <TransactionsSearchFilter
-                value={{
-                  search,
-                }}
-                onChange={(p: Partial<FilterState>) => {
-                  if (p.search !== undefined) setSearch(p.search || "");
-                }}
-                onAskAI={async (q) => {
-                  const parsed = await aiParse.mutateAsync({ query: q });
-                  applyParsedFilters(parsed);
-                  return parsed as any;
-                }}
-              />
-            </div>
-            <div className="ml-auto flex items-center gap-2">
-              <TransactionsColumnVisibility columns={table.getAllColumns()} />
-              <Button
-                variant="outline"
-                size="sm"
-                className="gap-2"
-                onClick={exportSelected}
-                disabled={selectedCount === 0}
-              >
-                <Download className="h-4 w-4" /> Export{" "}
-                {selectedCount > 0 ? `(${selectedCount})` : ""}
-              </Button>
-              <AddTransactions />
-            </div>
+        <div className="mb-4 space-y-4">
+          {/* Search and Filter Section */}
+          <TransactionsSearchFilter
+            value={{
+              search,
+            }}
+            onChange={(p: Partial<FilterState>) => {
+              if (p.search !== undefined) setSearch(p.search || "");
+            }}
+            onAskAI={async (q) => {
+              const parsed = await aiParse.mutateAsync({ query: q });
+              applyParsedFilters(parsed);
+              return parsed as any;
+            }}
+          />
+          
+          {/* Table Controls Island */}
+          <div className="flex items-center justify-end gap-2">
+            <TransactionsColumnVisibility columns={table.getAllColumns()} />
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-2"
+              onClick={exportSelected}
+              disabled={selectedCount === 0}
+            >
+              <Download className="h-4 w-4" /> Export{" "}
+              {selectedCount > 0 ? `(${selectedCount})` : ""}
+            </Button>
+            <AddTransactions />
           </div>
           {/* Removed top-left filter tabs; Type moved into Filters sheet */}
         </div>

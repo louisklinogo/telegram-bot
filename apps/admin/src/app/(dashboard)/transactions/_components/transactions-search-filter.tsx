@@ -243,10 +243,10 @@ export function TransactionsSearchFilter({ value, onChange, onAskAI }: Props) {
       {/* Expandable Filter Section */}
       {isOpen && (
         <div className="border rounded-lg p-6 bg-card animate-in slide-in-from-top-1 duration-200">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="flex flex-wrap gap-8 items-start">
             
             <FilterSection title="Date Range" icon={Icons.CalendarMonth}>
-              <div className="w-full max-w-[280px]">
+              <div className="w-[280px]">
                 <Calendar
                   mode="range"
                   initialFocus
@@ -274,7 +274,7 @@ export function TransactionsSearchFilter({ value, onChange, onAskAI }: Props) {
             </FilterSection>
 
             <FilterSection title="Amount Range" icon={Icons.Currency}>
-              <div className="space-y-4">
+              <div className="w-[200px] space-y-4">
                 <div className="flex items-center justify-between text-sm">
                   <span>Range</span>
                   <span className="text-muted-foreground">
@@ -302,7 +302,7 @@ export function TransactionsSearchFilter({ value, onChange, onAskAI }: Props) {
             </FilterSection>
 
             <FilterSection title="Status" icon={Icons.Status}>
-              <div className="space-y-2">
+              <div className="w-[140px] space-y-2">
                 {(["completed", "pending", "failed", "cancelled"] as const).map((status) => (
                   <FilterCheckbox
                     key={status}
@@ -322,7 +322,7 @@ export function TransactionsSearchFilter({ value, onChange, onAskAI }: Props) {
             </FilterSection>
 
             <FilterSection title="Attachments" icon={Icons.Attachments}>
-              <div className="space-y-2">
+              <div className="w-[140px] space-y-2">
                 <FilterCheckbox
                   id="has-attachments"
                   label="Has attachments"
@@ -343,7 +343,7 @@ export function TransactionsSearchFilter({ value, onChange, onAskAI }: Props) {
             </FilterSection>
 
             <FilterSection title="Categories" icon={Icons.Category}>
-              <div className="max-h-[200px] overflow-y-auto space-y-2">
+              <div className="w-[180px] max-h-[200px] overflow-y-auto space-y-2">
                 {categories && categories.length > 0 ? (
                   categories.map((category: any) => (
                     <FilterCheckbox
@@ -367,7 +367,7 @@ export function TransactionsSearchFilter({ value, onChange, onAskAI }: Props) {
             </FilterSection>
 
             <FilterSection title="Tags" icon={Icons.Status}>
-              <div className="max-h-[200px] overflow-y-auto space-y-2">
+              <div className="w-[160px] max-h-[200px] overflow-y-auto space-y-2">
                 {tags && tags.length > 0 ? (
                   tags.map((tag: any) => (
                     <FilterCheckbox
@@ -391,7 +391,7 @@ export function TransactionsSearchFilter({ value, onChange, onAskAI }: Props) {
             </FilterSection>
 
             <FilterSection title="Accounts" icon={Icons.Accounts}>
-              <div className="max-h-[200px] overflow-y-auto space-y-2">
+              <div className="w-[180px] max-h-[200px] overflow-y-auto space-y-2">
                 {financialAccounts && financialAccounts.length > 0 ? (
                   financialAccounts.map((account: any) => (
                     <FilterCheckbox
@@ -415,7 +415,7 @@ export function TransactionsSearchFilter({ value, onChange, onAskAI }: Props) {
             </FilterSection>
 
             <FilterSection title="Assignees" icon={Icons.AccountCircle}>
-              <div className="max-h-[200px] overflow-y-auto space-y-2">
+              <div className="w-[160px] max-h-[200px] overflow-y-auto space-y-2">
                 {teamMembers && teamMembers.length > 0 ? (
                   teamMembers.map((member: any) => (
                     <FilterCheckbox
@@ -439,7 +439,7 @@ export function TransactionsSearchFilter({ value, onChange, onAskAI }: Props) {
             </FilterSection>
 
             <FilterSection title="Recurring" icon={Icons.Repeat}>
-              <div className="space-y-2">
+              <div className="w-[120px] space-y-2">
                 <FilterCheckbox
                   id="recurring-all"
                   label="All recurring"
