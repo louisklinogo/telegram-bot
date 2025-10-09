@@ -76,7 +76,13 @@ export function OTPSignIn() {
           />
         </div>
         <div className="text-sm text-muted-foreground">Enter the 6-digit code sent to {email}</div>
-        <Button variant="ghost" size="sm" type="button" onClick={() => setSent(false)} disabled={verifying}>
+        <Button
+          variant="ghost"
+          size="sm"
+          type="button"
+          onClick={() => setSent(false)}
+          disabled={verifying}
+        >
           Resend code
         </Button>
       </form>

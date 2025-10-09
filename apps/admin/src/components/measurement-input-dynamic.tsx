@@ -144,7 +144,8 @@ export function DynamicMeasurementInput({
           </Button>
         </div>
         <p className="text-xs text-muted-foreground">
-          Select a measurement from the dropdown and enter the value. Supports dual values (e.g., "42/44")
+          Select a measurement from the dropdown and enter the value. Supports dual values (e.g.,
+          "42/44")
         </p>
       </div>
     </div>

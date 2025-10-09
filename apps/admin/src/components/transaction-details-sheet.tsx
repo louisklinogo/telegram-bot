@@ -12,7 +12,7 @@ export function TransactionDetailsSheet() {
   const enabled = Boolean(transactionId);
   const { data, isLoading } = trpc.transactions.byId.useQuery(
     { id: transactionId as string },
-    { enabled }
+    { enabled },
   );
 
   if (!transactionId) return null;
@@ -43,7 +43,8 @@ export function TransactionDetailsSheet() {
                 <div>
                   <div className="text-xs text-muted-foreground">Amount</div>
                   <div>
-                    {(data as any).transaction.currency} {Number((data as any).transaction.amount).toLocaleString()}
+                    {(data as any).transaction.currency}{" "}
+                    {Number((data as any).transaction.amount).toLocaleString()}
                   </div>
                 </div>
                 <div>
@@ -66,7 +67,9 @@ export function TransactionDetailsSheet() {
                 </div>
                 <div>
                   <div className="text-xs text-muted-foreground">Category</div>
-                  <div>{(data as any).category?.name || (data as any).transaction.categorySlug || "-"}</div>
+                  <div>
+                    {(data as any).category?.name || (data as any).transaction.categorySlug || "-"}
+                  </div>
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">

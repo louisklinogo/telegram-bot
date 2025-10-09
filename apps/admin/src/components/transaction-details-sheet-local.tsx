@@ -15,7 +15,7 @@ export function TransactionDetailsSheetLocal({ open, transactionId, onOpenChange
   const enabled = open && !!transactionId;
   const { data, isLoading } = trpc.transactions.byId.useQuery(
     { id: transactionId as string },
-    { enabled }
+    { enabled },
   );
 
   if (!open) return null;
@@ -46,7 +46,8 @@ export function TransactionDetailsSheetLocal({ open, transactionId, onOpenChange
                 <div>
                   <div className="text-xs text-muted-foreground">Amount</div>
                   <div>
-                    {(data as any).transaction.currency} {Number((data as any).transaction.amount).toLocaleString()}
+                    {(data as any).transaction.currency}{" "}
+                    {Number((data as any).transaction.amount).toLocaleString()}
                   </div>
                 </div>
                 <div>
@@ -69,7 +70,9 @@ export function TransactionDetailsSheetLocal({ open, transactionId, onOpenChange
                 </div>
                 <div>
                   <div className="text-xs text-muted-foreground">Category</div>
-                  <div>{(data as any).category?.name || (data as any).transaction.categorySlug || "-"}</div>
+                  <div>
+                    {(data as any).category?.name || (data as any).transaction.categorySlug || "-"}
+                  </div>
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">

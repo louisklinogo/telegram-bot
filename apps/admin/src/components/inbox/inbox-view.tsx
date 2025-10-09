@@ -16,18 +16,20 @@ type InboxViewProps = {
 export function InboxView({ initialThreads = [] }: InboxViewProps) {
   const [status] = useState<"open" | "pending" | "resolved" | "snoozed">("open");
   // ✅ CORRECT: Use initialData from server for infinite query
-  const [pages, { fetchNextPage, hasNextPage, isFetchingNextPage }] = trpc.communications.threadsByStatus.useSuspenseInfiniteQuery(
-    { status, limit: 50 },
-    {
-      getNextPageParam: (lastPage) => lastPage?.nextCursor ?? null,
-      initialData: initialThreads.length > 0
-        ? {
-            pages: [{ status, items: initialThreads, nextCursor: null }],
-            pageParams: [null],
-          }
-        : undefined,
-    }
-  );
+  const [pages, { fetchNextPage, hasNextPage, isFetchingNextPage }] =
+    trpc.communications.threadsByStatus.useSuspenseInfiniteQuery(
+      { status, limit: 50 },
+      {
+        getNextPageParam: (lastPage) => lastPage?.nextCursor ?? null,
+        initialData:
+          initialThreads.length > 0
+            ? {
+                pages: [{ status, items: initialThreads, nextCursor: null }],
+                pageParams: [null],
+              }
+            : undefined,
+      },
+    );
   const rawThreads = useMemo(
     () => (pages?.pages || []).flatMap((p: any) => p?.items || []),
     [pages],

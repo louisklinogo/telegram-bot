@@ -5,7 +5,6 @@ import { upsertCommunicationAccount } from "@cimantikos/supabase/mutations";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@cimantikos/supabase/types";
 
-
 // Simple in-memory rate limiter (per-process). For production behind a single instance.
 const rlStore = new Map<string, { count: number; ts: number }>();
 function rateLimit(key: string, limit: number, windowMs: number) {

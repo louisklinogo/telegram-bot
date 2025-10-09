@@ -18,17 +18,12 @@ interface WhatsAppModalProps {
   inboxId: string;
 }
 
-export function WhatsAppModal({
-  isOpen,
-  onClose,
-  inboxId,
-}: WhatsAppModalProps) {
+export function WhatsAppModal({ isOpen, onClose, inboxId }: WhatsAppModalProps) {
   const [qrCodeUrl, setQrCodeUrl] = useState<string>("");
   const [isGenerating, setIsGenerating] = useState(false);
 
   // WhatsApp number - this should be configured in environment variables
-  const whatsappNumber =
-    process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "1234567890";
+  const whatsappNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "1234567890";
 
   const message = `Hello! I'd like to connect my WhatsApp to Midday for document processing. My inbox ID is: ${inboxId}`;
   const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
@@ -92,11 +87,7 @@ export function WhatsAppModal({
               <Icons.WhatsApp className="mr-2 h-4 w-4" />
               Open WhatsApp
             </Button>
-            <Button
-              onClick={copyToClipboard}
-              variant="outline"
-              className="flex-1"
-            >
+            <Button onClick={copyToClipboard} variant="outline" className="flex-1">
               <Icons.Copy className="mr-2 h-4 w-4" />
               Copy Link
             </Button>

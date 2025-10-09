@@ -78,12 +78,13 @@ export function InvoicesView({ initialInvoices = [] }: InvoicesViewProps) {
     { limit: 50 },
     {
       getNextPageParam: (last) => (last as any)?.nextCursor ?? null,
-      initialData: initialInvoices.length > 0
-        ? {
-            pages: [{ items: initialInvoices, nextCursor: null }],
-            pageParams: [null],
-          }
-        : undefined,
+      initialData:
+        initialInvoices.length > 0
+          ? {
+              pages: [{ items: initialInvoices, nextCursor: null }],
+              pageParams: [null],
+            }
+          : undefined,
     },
   );
   const data = useMemo(() => (pages?.pages || []).flatMap((p: any) => p?.items || []), [pages]);
@@ -188,7 +189,9 @@ export function InvoicesView({ initialInvoices = [] }: InvoicesViewProps) {
                 <div>Outstanding</div>
                 <div className="text-sm text-muted-foreground">
                   {invoices.filter((i) => i.status === "overdue").length}{" "}
-                  {invoices.filter((i) => i.status === "overdue").length === 1 ? "invoice" : "invoices"}
+                  {invoices.filter((i) => i.status === "overdue").length === 1
+                    ? "invoice"
+                    : "invoices"}
                 </div>
               </div>
             </CardContent>
@@ -215,7 +218,9 @@ export function InvoicesView({ initialInvoices = [] }: InvoicesViewProps) {
                 <div>Paid</div>
                 <div className="text-sm text-muted-foreground">
                   {invoices.filter((i) => i.status === "paid").length}{" "}
-                  {invoices.filter((i) => i.status === "paid").length === 1 ? "invoice" : "invoices"}
+                  {invoices.filter((i) => i.status === "paid").length === 1
+                    ? "invoice"
+                    : "invoices"}
                 </div>
               </div>
             </CardContent>
@@ -234,15 +239,16 @@ export function InvoicesView({ initialInvoices = [] }: InvoicesViewProps) {
           <Card className="cursor-pointer transition-colors hover:bg-muted/50">
             <CardHeader className="pb-2 flex flex-row items-center">
               <CardTitle className="font-medium text-2xl">
-                {invoices.filter((i) => ["draft", "sent", "partially_paid"].includes(i.status)).length}
+                {
+                  invoices.filter((i) => ["draft", "sent", "partially_paid"].includes(i.status))
+                    .length
+                }
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="flex flex-col gap-2">
                 <div>Open</div>
-                <div className="text-sm text-muted-foreground">
-                  Draft + Sent + Partial
-                </div>
+                <div className="text-sm text-muted-foreground">Draft + Sent + Partial</div>
               </div>
             </CardContent>
           </Card>
@@ -297,9 +303,7 @@ export function InvoicesView({ initialInvoices = [] }: InvoicesViewProps) {
           <div className="flex flex-col items-center mt-40">
             <div className="text-center mb-6 space-y-2">
               <h2 className="font-medium text-lg">No results</h2>
-              <p className="text-[#606060] text-sm">
-                Try another search, or adjusting the filters
-              </p>
+              <p className="text-[#606060] text-sm">Try another search, or adjusting the filters</p>
             </div>
             <Button
               variant="outline"
@@ -339,106 +343,106 @@ export function InvoicesView({ initialInvoices = [] }: InvoicesViewProps) {
           </CardHeader>
           <CardContent>
             {filtered.length > 0 && (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Invoice Number</TableHead>
-                  <TableHead>Client</TableHead>
-                  <TableHead>Order</TableHead>
-                  <TableHead>Amount</TableHead>
-                  <TableHead>Paid</TableHead>
-                  <TableHead>Outstanding</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Due Date</TableHead>
-                  <TableHead>Paid Date</TableHead>
-                  <TableHead className="w-[50px]"></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filtered.map((invoice) => (
-                  <TableRow key={invoice.id} className="cursor-pointer hover:bg-muted/50">
-                    <TableCell>
-                      <div className="space-y-1">
-                        <p className="font-medium">{invoice.invoice_number}</p>
-                        {invoice.notes && (
-                          <p className="line-clamp-1 text-xs text-muted-foreground">
-                            {invoice.notes}
-                          </p>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <span className="text-sm">{invoice.order?.client?.name || "Unknown"}</span>
-                    </TableCell>
-                    <TableCell>
-                      <span className="text-sm text-muted-foreground">
-                        {invoice.order?.order_number || "-"}
-                      </span>
-                    </TableCell>
-                    <TableCell>
-                      <span className="font-semibold">₵{invoice.amount.toLocaleString()}</span>
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      ₵{(invoice.paid_amount || 0).toLocaleString()}
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      ₵{Math.max(0, invoice.amount - (invoice.paid_amount || 0)).toLocaleString()}
-                    </TableCell>
-                    <TableCell>
-                      <Badge
-                        variant={(STATUS_COLORS as any)[invoice.status] || "secondary"}
-                        className="capitalize"
-                      >
-                        {invoice.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <span className="text-sm text-muted-foreground">
-                        {invoice.due_date
-                          ? new Date(invoice.due_date as any).toLocaleDateString("en-US", {
-                              month: "short",
-                              day: "numeric",
-                            })
-                          : "-"}
-                      </span>
-                    </TableCell>
-                    <TableCell>
-                      <span className="text-sm text-muted-foreground">
-                        {invoice.paid_at
-                          ? new Date(invoice.paid_at as any).toLocaleDateString("en-US", {
-                              month: "short",
-                              day: "numeric",
-                            })
-                          : "-"}
-                      </span>
-                    </TableCell>
-                    <TableCell>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                            <MoreVertical className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                          <DropdownMenuItem
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleSendWhatsApp(invoice);
-                            }}
-                          >
-                            <Send className="mr-2 h-4 w-4" />
-                            Send via WhatsApp
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem className="text-destructive">Delete</DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Invoice Number</TableHead>
+                    <TableHead>Client</TableHead>
+                    <TableHead>Order</TableHead>
+                    <TableHead>Amount</TableHead>
+                    <TableHead>Paid</TableHead>
+                    <TableHead>Outstanding</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Due Date</TableHead>
+                    <TableHead>Paid Date</TableHead>
+                    <TableHead className="w-[50px]"></TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {filtered.map((invoice) => (
+                    <TableRow key={invoice.id} className="cursor-pointer hover:bg-muted/50">
+                      <TableCell>
+                        <div className="space-y-1">
+                          <p className="font-medium">{invoice.invoice_number}</p>
+                          {invoice.notes && (
+                            <p className="line-clamp-1 text-xs text-muted-foreground">
+                              {invoice.notes}
+                            </p>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <span className="text-sm">{invoice.order?.client?.name || "Unknown"}</span>
+                      </TableCell>
+                      <TableCell>
+                        <span className="text-sm text-muted-foreground">
+                          {invoice.order?.order_number || "-"}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <span className="font-semibold">₵{invoice.amount.toLocaleString()}</span>
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">
+                        ₵{(invoice.paid_amount || 0).toLocaleString()}
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">
+                        ₵{Math.max(0, invoice.amount - (invoice.paid_amount || 0)).toLocaleString()}
+                      </TableCell>
+                      <TableCell>
+                        <Badge
+                          variant={(STATUS_COLORS as any)[invoice.status] || "secondary"}
+                          className="capitalize"
+                        >
+                          {invoice.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <span className="text-sm text-muted-foreground">
+                          {invoice.due_date
+                            ? new Date(invoice.due_date as any).toLocaleDateString("en-US", {
+                                month: "short",
+                                day: "numeric",
+                              })
+                            : "-"}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <span className="text-sm text-muted-foreground">
+                          {invoice.paid_at
+                            ? new Date(invoice.paid_at as any).toLocaleDateString("en-US", {
+                                month: "short",
+                                day: "numeric",
+                              })
+                            : "-"}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                              <MoreVertical className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                            <DropdownMenuItem
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleSendWhatsApp(invoice);
+                              }}
+                            >
+                              <Send className="mr-2 h-4 w-4" />
+                              Send via WhatsApp
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem className="text-destructive">Delete</DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
             )}
             {hasNextPage && (
               <div className="pt-4">

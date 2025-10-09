@@ -8,7 +8,16 @@ import {
   type RowSelectionState,
   type VisibilityState,
 } from "@tanstack/react-table";
-import { ChevronDown, Download, Filter, MoreHorizontal, Plus, Search, SlidersHorizontal, Trash2 } from "lucide-react";
+import {
+  ChevronDown,
+  Download,
+  Filter,
+  MoreHorizontal,
+  Plus,
+  Search,
+  SlidersHorizontal,
+  Trash2,
+} from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Badge } from "@/components/ui/badge";
@@ -29,13 +38,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Sheet,
-  SheetContent,
-  SheetFooter,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   AlertDialog,
@@ -125,19 +128,40 @@ export function TransactionsView({
       limit: 50,
     };
     return input;
-  }, [filterType, statuses, categories, tags, accounts, assignees, isRecurring, search, startDate, endDate, hasAttachments, amountMin, amountMax]);
+  }, [
+    filterType,
+    statuses,
+    categories,
+    tags,
+    accounts,
+    assignees,
+    isRecurring,
+    search,
+    startDate,
+    endDate,
+    hasAttachments,
+    amountMin,
+    amountMax,
+  ]);
 
   // Enriched list (regular query instead of infinite to debug)
   const { data: trxData } = trpc.transactions.enrichedList.useQuery(enrichedInput, {
-    initialData: initialTransactions.length > 0 ? { items: initialTransactions, nextCursor: null } : undefined,
+    initialData:
+      initialTransactions.length > 0 ? { items: initialTransactions, nextCursor: null } : undefined,
   });
   const transactions = trxData?.items || [];
-  const byId = useMemo(() => new Map<string, any>(transactions.map((r: any) => [r.transaction.id, r])), [transactions]);
+  const byId = useMemo(
+    () => new Map<string, any>(transactions.map((r: any) => [r.transaction.id, r])),
+    [transactions],
+  );
   const { data: membersData } = trpc.transactions.members.useQuery(undefined, {
     staleTime: 30000,
   });
   const members = (membersData as any[]) ?? [];
-  const currencyCode = useMemo(() => (transactions?.[0]?.transaction?.currency ?? "GHS") as string, [transactions]);
+  const currencyCode = useMemo(
+    () => (transactions?.[0]?.transaction?.currency ?? "GHS") as string,
+    [transactions],
+  );
   const hasActiveFilters = useMemo(() => {
     return (
       filterType !== "all" ||
@@ -154,7 +178,21 @@ export function TransactionsView({
       Boolean(startDate) ||
       Boolean(endDate)
     );
-  }, [filterType, search, statuses, categories, tags, accounts, assignees, isRecurring, hasAttachments, amountMin, amountMax, startDate, endDate]);
+  }, [
+    filterType,
+    search,
+    statuses,
+    categories,
+    tags,
+    accounts,
+    assignees,
+    isRecurring,
+    hasAttachments,
+    amountMin,
+    amountMax,
+    startDate,
+    endDate,
+  ]);
 
   const clearAllFilters = () => {
     setFilterType("all");
@@ -169,7 +207,7 @@ export function TransactionsView({
     setStartDate("");
     setEndDate("");
   };
-  
+
   // Stats (regular query instead of suspense to debug)
   const { data: stats } = trpc.transactions.stats.useQuery(undefined, {
     initialData: initialStats,
@@ -194,12 +232,9 @@ export function TransactionsView({
     if (p.accounts) setAccounts(p.accounts as string[]);
     if (p.assignees) setAssignees(p.assignees as string[]);
     if (p.isRecurring !== undefined) setIsRecurring(p.isRecurring as boolean);
-    if (p.hasAttachments !== undefined)
-      setHasAttachments(p.hasAttachments ? "with" : "without");
-    if (p.amountMin !== undefined)
-      setAmountMin(p.amountMin != null ? String(p.amountMin) : "");
-    if (p.amountMax !== undefined)
-      setAmountMax(p.amountMax != null ? String(p.amountMax) : "");
+    if (p.hasAttachments !== undefined) setHasAttachments(p.hasAttachments ? "with" : "without");
+    if (p.amountMin !== undefined) setAmountMin(p.amountMin != null ? String(p.amountMin) : "");
+    if (p.amountMax !== undefined) setAmountMax(p.amountMax != null ? String(p.amountMax) : "");
     if (p.startDate !== undefined)
       setStartDate(p.startDate ? new Date(p.startDate).toISOString().slice(0, 10) : "");
     if (p.endDate !== undefined)
@@ -212,7 +247,7 @@ export function TransactionsView({
     {
       initialData: initialInvoices as any,
       staleTime: 30000, // Don't refetch for 30 seconds
-    }
+    },
   );
   const invoices = (invoicesResult as any)?.items ?? invoicesResult ?? [];
 
@@ -301,7 +336,10 @@ export function TransactionsView({
         transaction_number: row.transaction.transactionNumber,
       }));
     const headers = Object.keys(rows[0] || {});
-    const csv = [headers.join(","), ...rows.map((r) => headers.map((h) => JSON.stringify((r as any)[h] ?? "")).join(","))].join("\n");
+    const csv = [
+      headers.join(","),
+      ...rows.map((r) => headers.map((h) => JSON.stringify((r as any)[h] ?? "")).join(",")),
+    ].join("\n");
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -375,54 +413,51 @@ export function TransactionsView({
         client: row.client,
         category: row.category,
       })),
-    [rows]
+    [rows],
   );
 
   // TanStack Table setup
-  const columns = useMemo(
-    () => {
-      return createTransactionColumns({
-        currencyCode,
-        onToggleSelection: (id: string) => {
-          // Let TanStack Table handle selection, we'll sync via useEffect
-        },
-        onViewDetails: (row) => {
-          openParams({ transactionId: row.transaction.id });
-        },
-        onToggleStatus: async (id, status) => {
-          try {
-            await bulkUpdate.mutateAsync({
-              transactionIds: [id],
-              updates: { status: status as any },
-            });
-            toast({ description: "Transaction updated" });
-          } catch {
-            toast({ description: "Failed to update transaction", variant: "destructive" });
-          }
-        },
-        onToggleExclude: async (id, exclude) => {
-          try {
-            await bulkUpdate.mutateAsync({
-              transactionIds: [id],
-              updates: { excludeFromAnalytics: exclude },
-            });
-            toast({ description: exclude ? "Excluded from analytics" : "Included in analytics" });
-          } catch {
-            toast({ description: "Failed to update transaction", variant: "destructive" });
-          }
-        },
-        onDelete: async (id) => {
-          try {
-            await bulkDelete.mutateAsync({ transactionIds: [id] });
-            toast({ description: "Transaction deleted" });
-          } catch {
-            toast({ description: "Failed to delete transaction", variant: "destructive" });
-          }
-        },
-      });
-    },
-    [currencyCode, bulkUpdate, bulkDelete, toast, openParams]
-  );
+  const columns = useMemo(() => {
+    return createTransactionColumns({
+      currencyCode,
+      onToggleSelection: (id: string) => {
+        // Let TanStack Table handle selection, we'll sync via useEffect
+      },
+      onViewDetails: (row) => {
+        openParams({ transactionId: row.transaction.id });
+      },
+      onToggleStatus: async (id, status) => {
+        try {
+          await bulkUpdate.mutateAsync({
+            transactionIds: [id],
+            updates: { status: status as any },
+          });
+          toast({ description: "Transaction updated" });
+        } catch {
+          toast({ description: "Failed to update transaction", variant: "destructive" });
+        }
+      },
+      onToggleExclude: async (id, exclude) => {
+        try {
+          await bulkUpdate.mutateAsync({
+            transactionIds: [id],
+            updates: { excludeFromAnalytics: exclude },
+          });
+          toast({ description: exclude ? "Excluded from analytics" : "Included in analytics" });
+        } catch {
+          toast({ description: "Failed to update transaction", variant: "destructive" });
+        }
+      },
+      onDelete: async (id) => {
+        try {
+          await bulkDelete.mutateAsync({ transactionIds: [id] });
+          toast({ description: "Transaction deleted" });
+        } catch {
+          toast({ description: "Failed to delete transaction", variant: "destructive" });
+        }
+      },
+    });
+  }, [currencyCode, bulkUpdate, bulkDelete, toast, openParams]);
 
   const table = useReactTable({
     data: tableData,
@@ -441,7 +476,7 @@ export function TransactionsView({
   // Sync TanStack Table selection with local selected state
   useEffect(() => {
     const selectedIds = new Set(
-      table.getSelectedRowModel().rows.map((row) => row.original.transaction.id)
+      table.getSelectedRowModel().rows.map((row) => row.original.transaction.id),
     );
     setSelected(selectedIds);
   }, [rowSelection, table]);
@@ -450,47 +485,95 @@ export function TransactionsView({
     <div className="flex flex-col gap-6 px-6">
       <TransactionSheet />
       <TransactionDetailsSheet />
-      
 
       {/* Active filter chips */}
       <div className="flex flex-wrap gap-2">
         {filterType !== "all" && (
-          <Badge variant="secondary" className="cursor-pointer" onClick={() => setFilterType("all")}>type:{filterType} ×</Badge>
+          <Badge
+            variant="secondary"
+            className="cursor-pointer"
+            onClick={() => setFilterType("all")}
+          >
+            type:{filterType} ×
+          </Badge>
         )}
         {search && (
-          <Badge variant="secondary" className="cursor-pointer" onClick={() => setSearch("")}>search:"{search}" ×</Badge>
+          <Badge variant="secondary" className="cursor-pointer" onClick={() => setSearch("")}>
+            search:"{search}" ×
+          </Badge>
         )}
         {startDate && (
-          <Badge variant="secondary" className="cursor-pointer" onClick={() => setStartDate("")}>from:{startDate} ×</Badge>
+          <Badge variant="secondary" className="cursor-pointer" onClick={() => setStartDate("")}>
+            from:{startDate} ×
+          </Badge>
         )}
         {endDate && (
-          <Badge variant="secondary" className="cursor-pointer" onClick={() => setEndDate("")}>to:{endDate} ×</Badge>
+          <Badge variant="secondary" className="cursor-pointer" onClick={() => setEndDate("")}>
+            to:{endDate} ×
+          </Badge>
         )}
         {statuses.map((s) => (
-          <Badge key={s} variant="secondary" className="cursor-pointer" onClick={() => setStatuses((prev) => prev.filter((x) => x !== s))}>status:{s} ×</Badge>
+          <Badge
+            key={s}
+            variant="secondary"
+            className="cursor-pointer"
+            onClick={() => setStatuses((prev) => prev.filter((x) => x !== s))}
+          >
+            status:{s} ×
+          </Badge>
         ))}
         {categories.map((c) => (
-          <Badge key={c} variant="secondary" className="cursor-pointer" onClick={() => setCategories((prev) => prev.filter((x) => x !== c))}>cat:{c} ×</Badge>
+          <Badge
+            key={c}
+            variant="secondary"
+            className="cursor-pointer"
+            onClick={() => setCategories((prev) => prev.filter((x) => x !== c))}
+          >
+            cat:{c} ×
+          </Badge>
         ))}
         {tags.length > 0 && (
-          <Badge variant="secondary" className="cursor-pointer" onClick={() => setTags([])}>tags:{tags.length} ×</Badge>
+          <Badge variant="secondary" className="cursor-pointer" onClick={() => setTags([])}>
+            tags:{tags.length} ×
+          </Badge>
         )}
         {accounts.length > 0 && (
-          <Badge variant="secondary" className="cursor-pointer" onClick={() => setAccounts([])}>accounts:{accounts.length} ×</Badge>
+          <Badge variant="secondary" className="cursor-pointer" onClick={() => setAccounts([])}>
+            accounts:{accounts.length} ×
+          </Badge>
         )}
         {assignees.length > 0 && (
-          <Badge variant="secondary" className="cursor-pointer" onClick={() => setAssignees([])}>assignees:{assignees.length} ×</Badge>
+          <Badge variant="secondary" className="cursor-pointer" onClick={() => setAssignees([])}>
+            assignees:{assignees.length} ×
+          </Badge>
         )}
         {hasAttachments !== "any" && (
-          <Badge variant="secondary" className="cursor-pointer" onClick={() => setHasAttachments("any")}>
+          <Badge
+            variant="secondary"
+            className="cursor-pointer"
+            onClick={() => setHasAttachments("any")}
+          >
             {hasAttachments === "with" ? "with attachments" : "without attachments"} ×
           </Badge>
         )}
         {isRecurring != null && (
-          <Badge variant="secondary" className="cursor-pointer" onClick={() => setIsRecurring(undefined)}>recurring ×</Badge>
+          <Badge
+            variant="secondary"
+            className="cursor-pointer"
+            onClick={() => setIsRecurring(undefined)}
+          >
+            recurring ×
+          </Badge>
         )}
         {(amountMin || amountMax) && (
-          <Badge variant="secondary" className="cursor-pointer" onClick={() => { setAmountMin(""); setAmountMax(""); }}>
+          <Badge
+            variant="secondary"
+            className="cursor-pointer"
+            onClick={() => {
+              setAmountMin("");
+              setAmountMax("");
+            }}
+          >
             amount:{amountMin || 0}-{amountMax || "∞"} ×
           </Badge>
         )}
@@ -505,13 +588,10 @@ export function TransactionsView({
             <span className="text-sm text-muted-foreground">{selectedCount} selected</span>
           </div>
           <div className="flex items-center gap-2">
-            <BulkActions
-              ids={Array.from(selected)}
-              onComplete={() => setSelected(new Set())}
-            />
-            <Button 
-              size="sm" 
-              variant="ghost" 
+            <BulkActions ids={Array.from(selected)} onComplete={() => setSelected(new Set())} />
+            <Button
+              size="sm"
+              variant="ghost"
               onClick={() => setDeleteDialogOpen(true)}
               className="gap-1"
             >
@@ -595,8 +675,15 @@ export function TransactionsView({
             </div>
             <div className="ml-auto flex items-center gap-2">
               <TransactionsColumnVisibility columns={table.getAllColumns()} />
-              <Button variant="outline" size="sm" className="gap-2" onClick={exportSelected} disabled={selectedCount === 0}>
-                <Download className="h-4 w-4" /> Export {selectedCount > 0 ? `(${selectedCount})` : ""}
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-2"
+                onClick={exportSelected}
+                disabled={selectedCount === 0}
+              >
+                <Download className="h-4 w-4" /> Export{" "}
+                {selectedCount > 0 ? `(${selectedCount})` : ""}
               </Button>
               <AddTransactions />
             </div>
@@ -605,61 +692,65 @@ export function TransactionsView({
         </div>
 
         {!rows.length ? (
-            hasActiveFilters ? (
-              <EmptyState
-                title="No results"
-                description="Try another search, or adjusting the filters"
-                action={{ label: "Clear filters", onClick: clearAllFilters }}
-              />
-            ) : (
-              <EmptyState
-                title="No transactions"
-                description={
-                  <div className="flex flex-col items-center gap-3">
-                    <div className="text-[#606060] text-sm">
-                      You haven't recorded any transactions yet.
-                    </div>
-                    <div className="flex gap-2">
-                      <Button size="sm" className="gap-2" onClick={() => openParams()}>
-                        <Plus className="h-4 w-4" /> Record transaction
-                      </Button>
-                      <Button variant="outline" size="sm" className="gap-2" onClick={() => setCreateAccountOpen(true)}>
-                        Create account
-                      </Button>
-                      <Button asChild variant="outline" size="sm" className="gap-2">
-                        <Link href="/settings/accounts">Manage accounts</Link>
-                      </Button>
-                    </div>
-                  </div>
-                }
-              />
-            )
+          hasActiveFilters ? (
+            <EmptyState
+              title="No results"
+              description="Try another search, or adjusting the filters"
+              action={{ label: "Clear filters", onClick: clearAllFilters }}
+            />
           ) : (
-            <div
-              className="overflow-x-auto"
-              tabIndex={0}
-              onKeyDown={(e) => {
-                if (!rows.length) return;
-                if (e.key === "ArrowDown") {
-                  e.preventDefault();
-                  setFocusedIndex((i) => Math.min(i + 1, rows.length - 1));
-                } else if (e.key === "ArrowUp") {
-                  e.preventDefault();
-                  setFocusedIndex((i) => Math.max(i - 1, 0));
-                } else if (e.key === " " || e.key === "Enter") {
-                  e.preventDefault();
-                  const id = rows[focusedIndex]?.transaction?.id;
-                  if (id) toggleRow(id, !selected.has(id));
-                }
-              }}
-            >
+            <EmptyState
+              title="No transactions"
+              description={
+                <div className="flex flex-col items-center gap-3">
+                  <div className="text-[#606060] text-sm">
+                    You haven't recorded any transactions yet.
+                  </div>
+                  <div className="flex gap-2">
+                    <Button size="sm" className="gap-2" onClick={() => openParams()}>
+                      <Plus className="h-4 w-4" /> Record transaction
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="gap-2"
+                      onClick={() => setCreateAccountOpen(true)}
+                    >
+                      Create account
+                    </Button>
+                    <Button asChild variant="outline" size="sm" className="gap-2">
+                      <Link href="/settings/accounts">Manage accounts</Link>
+                    </Button>
+                  </div>
+                </div>
+              }
+            />
+          )
+        ) : (
+          <div
+            className="overflow-x-auto"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (!rows.length) return;
+              if (e.key === "ArrowDown") {
+                e.preventDefault();
+                setFocusedIndex((i) => Math.min(i + 1, rows.length - 1));
+              } else if (e.key === "ArrowUp") {
+                e.preventDefault();
+                setFocusedIndex((i) => Math.max(i - 1, 0));
+              } else if (e.key === " " || e.key === "Enter") {
+                e.preventDefault();
+                const id = rows[focusedIndex]?.transaction?.id;
+                if (id) toggleRow(id, !selected.has(id));
+              }
+            }}
+          >
             <Table className="min-w-[1200px]">
               <TableHeader>
                 {table.getHeaderGroups().map((headerGroup) => (
                   <TableRow key={headerGroup.id}>
                     {headerGroup.headers.map((header) => {
-                      const isSticky =
-                        header.id === "select" || header.id === "date";
+                      const isSticky = header.id === "select" || header.id === "date";
                       return (
                         <TableHead
                           key={header.id}
@@ -675,10 +766,7 @@ export function TransactionsView({
                         >
                           {header.isPlaceholder
                             ? null
-                            : flexRender(
-                                header.column.columnDef.header,
-                                header.getContext()
-                              )}
+                            : flexRender(header.column.columnDef.header, header.getContext())}
                         </TableHead>
                       );
                     })}
@@ -698,8 +786,7 @@ export function TransactionsView({
                       onClick={() => setFocusedIndex(idx)}
                     >
                       {row.getVisibleCells().map((cell) => {
-                        const isSticky =
-                          cell.column.id === "select" || cell.column.id === "date";
+                        const isSticky = cell.column.id === "select" || cell.column.id === "date";
                         return (
                           <TableCell
                             key={cell.id}
@@ -713,10 +800,7 @@ export function TransactionsView({
                                     : ""
                             }
                           >
-                            {flexRender(
-                              cell.column.columnDef.cell,
-                              cell.getContext()
-                            )}
+                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
                           </TableCell>
                         );
                       })}
@@ -724,19 +808,16 @@ export function TransactionsView({
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell
-                      colSpan={table.getAllColumns().length}
-                      className="h-24 text-center"
-                    >
+                    <TableCell colSpan={table.getAllColumns().length} className="h-24 text-center">
                       No results.
                     </TableCell>
                   </TableRow>
                 )}
               </TableBody>
             </Table>
-            </div>
-          )}
-          {/* Infinite scroll removed for debugging */}
+          </div>
+        )}
+        {/* Infinite scroll removed for debugging */}
       </div>
 
       {/* Filters popover/sheet removed — Midday uses AI-first search without separate filter surface */}
@@ -763,7 +844,8 @@ export function TransactionsView({
                 <option value="">Select invoice…</option>
                 {invoices.map((r: any) => (
                   <option key={r.invoice.id} value={r.invoice.id}>
-                    {(r.invoice as any).invoiceNumber} · {r.client?.name || "-"} · {(r.invoice as any).currency ?? ""} {Number(r.invoice.amount || 0)}
+                    {(r.invoice as any).invoiceNumber} · {r.client?.name || "-"} ·{" "}
+                    {(r.invoice as any).currency ?? ""} {Number(r.invoice.amount || 0)}
                   </option>
                 ))}
               </select>

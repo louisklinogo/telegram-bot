@@ -18,7 +18,8 @@ type TableCheck = {
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-let TOKEN = process.env.RLS_VERIFY_TOKEN || process.argv.find((a) => a.startsWith("--token="))?.split("=")[1];
+let TOKEN =
+  process.env.RLS_VERIFY_TOKEN || process.argv.find((a) => a.startsWith("--token="))?.split("=")[1];
 const TEAM_ID = process.env.RLS_VERIFY_TEAM_ID;
 
 async function main() {
@@ -36,7 +37,11 @@ async function main() {
         // Accept JSON or key:value or bare token
         try {
           const obj = JSON.parse(raw);
-          fromFile = (obj as any)?.token || (obj as any)?.access_token || (obj as any)?.currentSession?.access_token || null;
+          fromFile =
+            (obj as any)?.token ||
+            (obj as any)?.access_token ||
+            (obj as any)?.currentSession?.access_token ||
+            null;
         } catch {
           const m = raw.match(/"token"\s*:\s*"([^"]+)"/);
           fromFile = m?.[1] || (raw.startsWith("eyJ") ? raw : null);
@@ -50,7 +55,9 @@ async function main() {
   }
 
   if (!TOKEN) {
-    console.error("Missing RLS_VERIFY_TOKEN. Provide a user access token via env, --token=..., or token.txt file.");
+    console.error(
+      "Missing RLS_VERIFY_TOKEN. Provide a user access token via env, --token=..., or token.txt file.",
+    );
     process.exit(1);
   }
 

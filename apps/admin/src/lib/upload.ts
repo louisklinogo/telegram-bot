@@ -15,12 +15,10 @@ export async function resumableUpload(
   const filePath = [...path, filename].join("/");
 
   // Upload file to Supabase Storage
-  const { data, error } = await (supabase as any).storage
-    .from(bucket)
-    .upload(filePath, file, {
-      cacheControl: "3600",
-      upsert: false,
-    });
+  const { data, error } = await (supabase as any).storage.from(bucket).upload(filePath, file, {
+    cacheControl: "3600",
+    upsert: false,
+  });
 
   if (error) {
     throw new Error(`Upload failed: ${error.message}`);
@@ -43,5 +41,5 @@ export function formatFileSize(bytes?: number | null): string {
   const sizes = ["Bytes", "KB", "MB", "GB"];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
 
-  return `${Math.round(bytes / Math.pow(k, i) * 100) / 100} ${sizes[i]}`;
+  return `${Math.round((bytes / Math.pow(k, i)) * 100) / 100} ${sizes[i]}`;
 }

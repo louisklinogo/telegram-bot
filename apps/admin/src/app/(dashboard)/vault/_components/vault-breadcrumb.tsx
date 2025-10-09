@@ -11,12 +11,7 @@ type VaultBreadcrumbProps = {
 export function VaultBreadcrumb({ path, onNavigate }: VaultBreadcrumbProps) {
   return (
     <div className="flex items-center gap-1 text-sm text-muted-foreground">
-      <Button
-        variant="ghost"
-        size="sm"
-        className="h-7 gap-1 px-2"
-        onClick={() => onNavigate([])}
-      >
+      <Button variant="ghost" size="sm" className="h-7 gap-1 px-2" onClick={() => onNavigate([])}>
         <Home className="h-3.5 w-3.5" />
         <span>Vault</span>
       </Button>

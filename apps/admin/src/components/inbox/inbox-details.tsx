@@ -132,7 +132,11 @@ export function InboxDetails({ message }: InboxDetailsProps) {
         const err = await upRes.json().catch(() => ({}));
         throw new Error(err?.error || `Upload failed (${upRes.status})`);
       }
-      const upJson = (await upRes.json()) as { path: string; contentType?: string; filename?: string };
+      const upJson = (await upRes.json()) as {
+        path: string;
+        contentType?: string;
+        filename?: string;
+      };
       const path = upJson.path;
       const safeName = upJson.filename || file.name;
       const clientMessageId =

@@ -51,13 +51,13 @@ export function MeasurementsView({ initialMeasurements = [] }: MeasurementsViewP
   const [search, setSearch] = useQueryState("q", { defaultValue: "" });
   const [tagFilter, setTagFilter] = useQueryState("tag", { defaultValue: "" });
   const [showActiveOnly, setShowActiveOnly] = useState(false);
-  
+
   // ✅ CORRECT: Use initialData from server
   const [data = []] = trpc.measurements.list.useSuspenseQuery(
     {},
     {
       initialData: initialMeasurements,
-    }
+    },
   );
 
   const rows = useMemo<MeasurementRow[]>(
@@ -85,11 +85,11 @@ export function MeasurementsView({ initialMeasurements = [] }: MeasurementsViewP
     const matchesSearch =
       m.client?.name?.toLowerCase().includes(search.toLowerCase()) ||
       (m.record_name || "").toLowerCase().includes(search.toLowerCase());
-    
+
     const matchesTag = !tagFilter || (m.tags && m.tags.includes(tagFilter));
-    
+
     const matchesActive = !showActiveOnly || m.is_active === true;
-    
+
     return matchesSearch && matchesTag && matchesActive;
   });
 
@@ -142,9 +142,9 @@ export function MeasurementsView({ initialMeasurements = [] }: MeasurementsViewP
             />
           </div>
           <div className="ml-auto flex items-center gap-2">
-            <Button 
-              variant={showActiveOnly ? "default" : "outline"} 
-              size="sm" 
+            <Button
+              variant={showActiveOnly ? "default" : "outline"}
+              size="sm"
               onClick={() => setShowActiveOnly(!showActiveOnly)}
             >
               {showActiveOnly ? "Active Only" : "All Versions"}
@@ -243,8 +243,8 @@ export function MeasurementsView({ initialMeasurements = [] }: MeasurementsViewP
           <div>
             <CardTitle>All Measurements</CardTitle>
             <p className="mt-1 text-sm text-muted-foreground">
-              {showActiveOnly 
-                ? "Showing only active measurement versions" 
+              {showActiveOnly
+                ? "Showing only active measurement versions"
                 : "Complete measurement records for all clients"}
             </p>
           </div>

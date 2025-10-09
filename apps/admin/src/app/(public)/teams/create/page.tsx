@@ -60,7 +60,11 @@ export default function CreateTeamPage() {
 
             {error && <p className="text-sm text-red-600">{error}</p>}
 
-            <Button type="submit" className="w-full" disabled={isPending || !teamName || !authReady}>
+            <Button
+              type="submit"
+              className="w-full"
+              disabled={isPending || !teamName || !authReady}
+            >
               {isPending ? "Creating..." : "Create Team"}
             </Button>
           </form>

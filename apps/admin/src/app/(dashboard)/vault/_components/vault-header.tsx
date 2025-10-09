@@ -7,10 +7,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useVaultParams } from "@/hooks/use-vault-params";
 import { useVaultStore } from "@/stores/vault-store";
 import { useTransition } from "react";
-import {
-  ToggleGroup,
-  ToggleGroupItem,
-} from "@/components/ui/toggle-group";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { VaultSearchFilter } from "./vault-search-filter";
 import { FilterList } from "@/components/filter-list";
 import { UploadDocumentDialog } from "./upload-document-dialog";
@@ -26,8 +23,8 @@ export function VaultHeader({ documents = [], teamId }: VaultHeaderProps) {
   const { selectedDocuments, selectAll, clearSelection } = useVaultStore();
 
   const allDocumentIds = documents.map((doc) => doc.id);
-  const allSelected = allDocumentIds.length > 0 && 
-    allDocumentIds.every((id) => selectedDocuments.has(id));
+  const allSelected =
+    allDocumentIds.length > 0 && allDocumentIds.every((id) => selectedDocuments.has(id));
   const someSelected = selectedDocuments.size > 0 && !allSelected;
 
   const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
@@ -86,7 +83,7 @@ export function VaultHeader({ documents = [], teamId }: VaultHeaderProps) {
             spellCheck="false"
             defaultValue={params.q || ""}
           />
-          
+
           {/* Filter Icon inside search */}
           <div className="absolute right-3 top-[11px]">
             <VaultSearchFilter />
@@ -94,11 +91,7 @@ export function VaultHeader({ documents = [], teamId }: VaultHeaderProps) {
         </form>
 
         {/* Active filters */}
-        <FilterList
-          filters={validFilters}
-          loading={isPending}
-          onRemove={setParams}
-        />
+        <FilterList filters={validFilters} loading={isPending} onRemove={setParams} />
       </div>
 
       <div className="space-x-2 flex items-center">

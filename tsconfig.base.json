@@ -27,10 +27,7 @@
       "@cimantikos/database/schema": ["packages/database/src/schema.ts"],
 
       "@cimantikos/ui": ["packages/ui/src/index.ts"],
-      "@cimantikos/ui/*": [
-        "packages/ui/src/*",
-        "packages/ui/src/components/*"
-      ],
+      "@cimantikos/ui/*": ["packages/ui/src/*", "packages/ui/src/components/*"],
 
       "@cimantikos/api/*": ["apps/api/src/*"],
       "@cimantikos/api/trpc/*": ["apps/api/src/trpc/*"],

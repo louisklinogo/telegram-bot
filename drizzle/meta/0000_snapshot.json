@@ -110,9 +110,7 @@
         "clients_notion_page_id_unique": {
           "name": "clients_notion_page_id_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "notion_page_id"
-          ]
+          "columns": ["notion_page_id"]
         }
       },
       "policies": {},
@@ -237,12 +235,8 @@
           "name": "invoices_order_id_orders_id_fk",
           "tableFrom": "invoices",
           "tableTo": "orders",
-          "columnsFrom": [
-            "order_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["order_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -252,16 +246,12 @@
         "invoices_notion_page_id_unique": {
           "name": "invoices_notion_page_id_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "notion_page_id"
-          ]
+          "columns": ["notion_page_id"]
         },
         "invoices_invoice_number_unique": {
           "name": "invoices_invoice_number_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "invoice_number"
-          ]
+          "columns": ["invoice_number"]
         }
       },
       "policies": {},
@@ -353,12 +343,8 @@
           "name": "measurements_client_id_clients_id_fk",
           "tableFrom": "measurements",
           "tableTo": "clients",
-          "columnsFrom": [
-            "client_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["client_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -368,9 +354,7 @@
         "measurements_notion_page_id_unique": {
           "name": "measurements_notion_page_id_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "notion_page_id"
-          ]
+          "columns": ["notion_page_id"]
         }
       },
       "policies": {},
@@ -520,12 +504,8 @@
           "name": "orders_client_id_clients_id_fk",
           "tableFrom": "orders",
           "tableTo": "clients",
-          "columnsFrom": [
-            "client_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["client_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -535,16 +515,12 @@
         "orders_notion_page_id_unique": {
           "name": "orders_notion_page_id_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "notion_page_id"
-          ]
+          "columns": ["notion_page_id"]
         },
         "orders_order_number_unique": {
           "name": "orders_order_number_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "order_number"
-          ]
+          "columns": ["order_number"]
         }
       },
       "policies": {},

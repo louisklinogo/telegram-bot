@@ -17,11 +17,11 @@ export function VaultEmptyState({ teamId }: VaultEmptyStateProps) {
           </div>
 
           <p className="pb-6 text-sm text-muted-foreground">
-            Drag & drop or upload your documents. We'll automatically organize them with tags
-            based on content, making them easy and secure to find.
+            Drag & drop or upload your documents. We'll automatically organize them with tags based
+            on content, making them easy and secure to find.
           </p>
 
-          <UploadDocumentDialog 
+          <UploadDocumentDialog
             teamId={teamId}
             trigger={
               <button className="inline-flex items-center justify-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm font-medium shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground">

@@ -36,7 +36,10 @@ export const teamsRouter = createTRPCRouter({
       if (!membership.length) {
         throw new TRPCError({ code: "FORBIDDEN", message: "Not a member of this team" });
       }
-      await ctx.db.update(users).set({ currentTeamId: input.teamId }).where(eq(users.id, ctx.userId!));
+      await ctx.db
+        .update(users)
+        .set({ currentTeamId: input.teamId })
+        .where(eq(users.id, ctx.userId!));
       return { success: true };
     }),
 
@@ -68,7 +71,10 @@ export const teamsRouter = createTRPCRouter({
           .upsert({ id: ctx.userId!, email: ctx.session?.email || null }, { onConflict: "id" });
         if (userUpsertErr) {
           console.error("Upsert user failed:", userUpsertErr.message);
-          throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to create user profile" });
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Failed to create user profile",
+          });
         }
       }
 

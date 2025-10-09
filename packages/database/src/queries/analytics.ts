@@ -21,8 +21,8 @@ export async function getMostActiveClient(db: DbClient, teamId: string) {
       and(
         eq(orders.teamId, teamId),
         isNull(orders.deletedAt),
-        gte(orders.createdAt, thirtyDaysAgo)
-      )
+        gte(orders.createdAt, thirtyDaysAgo),
+      ),
     )
     .groupBy(orders.clientId, clients.name)
     .orderBy(desc(sql`count(${orders.id})`))
@@ -52,8 +52,8 @@ export async function getInactiveClientsCount(db: DbClient, teamId: string) {
       and(
         eq(orders.teamId, teamId),
         isNull(orders.deletedAt),
-        gte(orders.createdAt, thirtyDaysAgo)
-      )
+        gte(orders.createdAt, thirtyDaysAgo),
+      ),
     )
     .groupBy(orders.clientId);
 
@@ -83,8 +83,8 @@ export async function getTopRevenueClient(db: DbClient, teamId: string) {
       and(
         eq(orders.teamId, teamId),
         isNull(orders.deletedAt),
-        gte(orders.createdAt, thirtyDaysAgo)
-      )
+        gte(orders.createdAt, thirtyDaysAgo),
+      ),
     )
     .groupBy(orders.clientId, clients.name)
     .orderBy(desc(sql`sum(${orders.totalPrice})`))
@@ -109,8 +109,8 @@ export async function getNewClientsThisMonth(db: DbClient, teamId: string) {
       and(
         eq(clients.teamId, teamId),
         isNull(clients.deletedAt),
-        gte(clients.createdAt, startOfMonth)
-      )
+        gte(clients.createdAt, startOfMonth),
+      ),
     );
 
   return result[0]?.count || 0;

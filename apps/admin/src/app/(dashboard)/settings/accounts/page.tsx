@@ -8,7 +8,13 @@ export default async function AccountsSettingsPage() {
   if (!teamId) return null;
 
   const rows = await db
-    .select({ id: financialAccounts.id, name: financialAccounts.name, currency: financialAccounts.currency, type: financialAccounts.type, status: financialAccounts.status })
+    .select({
+      id: financialAccounts.id,
+      name: financialAccounts.name,
+      currency: financialAccounts.currency,
+      type: financialAccounts.type,
+      status: financialAccounts.status,
+    })
     .from(financialAccounts)
     .where(eq(financialAccounts.teamId, teamId));
 

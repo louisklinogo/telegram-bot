@@ -17,7 +17,9 @@ export async function POST(req: NextRequest) {
 
   const { error } = await supabase.auth.verifyOtp({ email, token, type: "email" });
   if (error) {
-    return NextResponse.redirect(new URL(`/login?error=otp_failed&reason=${encodeURIComponent(error.message)}`, req.url));
+    return NextResponse.redirect(
+      new URL(`/login?error=otp_failed&reason=${encodeURIComponent(error.message)}`, req.url),
+    );
   }
 
   // After verification, mirror callback logic: route to teams if needed

@@ -4,7 +4,13 @@ import { useState } from "react";
 import { Sheet, SheetContent, SheetHeader } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { trpc } from "@/lib/trpc/client";
 import { Icons } from "@/components/ui/icons";
@@ -25,7 +31,12 @@ type Props = {
   categories?: CategoryNode[];
 };
 
-export function CategoryCreateSheet({ open, onOpenChange, parentId = null, categories = [] }: Props) {
+export function CategoryCreateSheet({
+  open,
+  onOpenChange,
+  parentId = null,
+  categories = [],
+}: Props) {
   const utils = trpc.useUtils();
   const router = useRouter();
   const [name, setName] = useState("");
@@ -67,7 +78,12 @@ export function CategoryCreateSheet({ open, onOpenChange, parentId = null, categ
       <SheetContent>
         <SheetHeader className="mb-6 flex items-center justify-between flex-row">
           <h2 className="text-xl">Create Category</h2>
-          <Button size="icon" variant="ghost" onClick={() => onOpenChange(false)} className="p-0 m-0 size-auto hover:bg-transparent">
+          <Button
+            size="icon"
+            variant="ghost"
+            onClick={() => onOpenChange(false)}
+            className="p-0 m-0 size-auto hover:bg-transparent"
+          >
             <Icons.Close className="size-5" />
           </Button>
         </SheetHeader>
@@ -83,13 +99,20 @@ export function CategoryCreateSheet({ open, onOpenChange, parentId = null, categ
                 className="h-9 w-9 rounded border p-0"
                 aria-label="Pick color"
               />
-              <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Utilities, Sales" />
+              <Input
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="e.g. Utilities, Sales"
+              />
             </div>
           </div>
 
           <div className="space-y-1">
             <label className="text-xs text-muted-foreground">Parent (optional)</label>
-            <Select value={selectedParent ?? ""} onValueChange={(v) => setSelectedParent(v || undefined)}>
+            <Select
+              value={selectedParent ?? ""}
+              onValueChange={(v) => setSelectedParent(v || undefined)}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="No parent" />
               </SelectTrigger>
@@ -107,7 +130,11 @@ export function CategoryCreateSheet({ open, onOpenChange, parentId = null, categ
 
           <div className="space-y-1">
             <label className="text-xs text-muted-foreground">Description</label>
-            <Input value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Optional" />
+            <Input
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Optional"
+            />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
@@ -127,19 +154,29 @@ export function CategoryCreateSheet({ open, onOpenChange, parentId = null, categ
             </div>
             <div className="space-y-1">
               <label className="text-xs text-muted-foreground">Tax Rate (%)</label>
-              <Input value={taxRate} onChange={(e) => setTaxRate(e.target.value)} placeholder="e.g. 25" />
+              <Input
+                value={taxRate}
+                onChange={(e) => setTaxRate(e.target.value)}
+                placeholder="e.g. 25"
+              />
             </div>
           </div>
 
           <div className="space-y-1">
             <label className="text-xs text-muted-foreground">Report Code</label>
-            <Input value={taxReportingCode} onChange={(e) => setTaxReportingCode(e.target.value)} placeholder="Optional" />
+            <Input
+              value={taxReportingCode}
+              onChange={(e) => setTaxReportingCode(e.target.value)}
+              placeholder="Optional"
+            />
           </div>
 
           <div className="flex items-center justify-between border p-3 mt-2">
             <div>
               <div className="text-xs text-muted-foreground">Exclude from reports</div>
-              <div className="text-xs text-muted-foreground">Transactions in this category won't appear in reports</div>
+              <div className="text-xs text-muted-foreground">
+                Transactions in this category won't appear in reports
+              </div>
             </div>
             <Switch checked={excluded} onCheckedChange={setExcluded} />
           </div>

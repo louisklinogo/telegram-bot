@@ -27,7 +27,7 @@ export function InvoiceDetailsDrawer({
 }) {
   const { data: allocations = [], isLoading } = trpc.transactions.allocationsByInvoice.useQuery(
     { invoiceId: invoice?.id || "" },
-    { enabled: !!invoice?.id && open }
+    { enabled: !!invoice?.id && open },
   );
 
   const deleteM = trpc.transactions.deleteAllocation.useMutation({
@@ -94,11 +94,11 @@ export function InvoiceDetailsDrawer({
         <DrawerFooter className="flex-row gap-2 justify-between">
           <div className="flex gap-2">
             {outstanding > 0 && (
-              <Button 
+              <Button
                 onClick={() => {
-                  openTransactionSheet({ 
+                  openTransactionSheet({
                     invoiceId: invoice?.id,
-                    clientId: invoice?.order?.client?.id 
+                    clientId: invoice?.order?.client?.id,
                   });
                   onOpenChange(false);
                 }}

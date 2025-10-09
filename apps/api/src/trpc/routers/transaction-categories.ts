@@ -70,19 +70,21 @@ export const transactionCategoriesRouter = createTRPCRouter({
     return row;
   }),
 
-  delete: teamProcedure.input(z.object({ id: z.string().uuid() })).mutation(async ({ ctx, input }) => {
-    const row = await deleteCategory(ctx.db, ctx.teamId, input.id);
-    // Activity log
-    await ctx.db.insert(activities).values({
-      teamId: ctx.teamId,
-      userId: ctx.userId,
-      type: "category.delete",
-      metadata: {
-        id: row?.id,
-        name: row?.name,
-        slug: row?.slug,
-      } as any,
-    });
-    return row;
-  }),
+  delete: teamProcedure
+    .input(z.object({ id: z.string().uuid() }))
+    .mutation(async ({ ctx, input }) => {
+      const row = await deleteCategory(ctx.db, ctx.teamId, input.id);
+      // Activity log
+      await ctx.db.insert(activities).values({
+        teamId: ctx.teamId,
+        userId: ctx.userId,
+        type: "category.delete",
+        metadata: {
+          id: row?.id,
+          name: row?.name,
+          slug: row?.slug,
+        } as any,
+      });
+      return row;
+    }),
 });

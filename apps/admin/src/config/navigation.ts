@@ -101,9 +101,7 @@ export const NAV_SECTIONS: NavSection[] = [
         href: "/settings",
         icon: Settings,
         description: "App configuration",
-        children: [
-          { title: "Accounts", href: "/settings/accounts" },
-        ],
+        children: [{ title: "Accounts", href: "/settings/accounts" }],
       },
     ],
   },

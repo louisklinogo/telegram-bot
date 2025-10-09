@@ -2,7 +2,12 @@
 
 import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { useReactTable, getCoreRowModel, flexRender, type VisibilityState } from "@tanstack/react-table";
+import {
+  useReactTable,
+  getCoreRowModel,
+  flexRender,
+  type VisibilityState,
+} from "@tanstack/react-table";
 import { Search, Filter, Download, Plus, Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -19,7 +24,16 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Sheet, SheetContent, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import MultipleSelector, { type Option as MSOption } from "@/components/ui/multiple-selector";
 
 import { trpc } from "@/lib/trpc/client";
@@ -41,7 +55,11 @@ type Props = {
   initialInvoices?: any[];
 };
 
-export function TransactionsView({ initialTransactions = [], initialStats, initialInvoices = [] }: Props) {
+export function TransactionsView({
+  initialTransactions = [],
+  initialStats,
+  initialInvoices = [],
+}: Props) {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
@@ -70,10 +88,17 @@ export function TransactionsView({ initialTransactions = [], initialStats, initi
   const [detailsId, setDetailsId] = useState<string | undefined>(undefined);
 
   // Categories for filter
-  const { data: categoriesTree } = trpc.transactionCategories.list.useQuery(undefined, { enabled: filtersOpen });
+  const { data: categoriesTree } = trpc.transactionCategories.list.useQuery(undefined, {
+    enabled: filtersOpen,
+  });
   const categoryOptions: MSOption[] = useMemo(() => {
     const flat = flattenCategories((categoriesTree as any) || []);
-    return flat.map((c) => ({ value: c.slug as string, label: c.name as string, depth: String(c.depth), color: (c.color as string | undefined) ?? undefined }));
+    return flat.map((c) => ({
+      value: c.slug as string,
+      label: c.name as string,
+      depth: String(c.depth),
+      color: (c.color as string | undefined) ?? undefined,
+    }));
   }, [categoriesTree]);
 
   // Inputs for enriched list
@@ -93,24 +118,70 @@ export function TransactionsView({ initialTransactions = [], initialStats, initi
       limit: 50,
     };
     return input;
-  }, [filterType, statuses, categories, tags, accounts, search, startDate, endDate, hasAttachments, amountMin, amountMax]);
+  }, [
+    filterType,
+    statuses,
+    categories,
+    tags,
+    accounts,
+    search,
+    startDate,
+    endDate,
+    hasAttachments,
+    amountMin,
+    amountMax,
+  ]);
 
   // Enriched list (regular query instead of infinite to debug)
   const { data: trxData } = trpc.transactions.enrichedList.useQuery(enrichedInput, {
-    initialData: initialTransactions.length > 0 ? { items: initialTransactions, nextCursor: null } : undefined,
+    initialData:
+      initialTransactions.length > 0 ? { items: initialTransactions, nextCursor: null } : undefined,
   });
   const transactions = trxData?.items || [];
 
   // Stats
-  const [stats] = trpc.transactions.stats.useSuspenseQuery(undefined, { initialData: initialStats, staleTime: 30000 });
+  const [stats] = trpc.transactions.stats.useSuspenseQuery(undefined, {
+    initialData: initialStats,
+    staleTime: 30000,
+  });
 
-  const currencyCode = useMemo(() => (transactions?.[0]?.transaction?.currency ?? "GHS") as string, [transactions]);
+  const currencyCode = useMemo(
+    () => (transactions?.[0]?.transaction?.currency ?? "GHS") as string,
+    [transactions],
+  );
   const rows = transactions;
-  const byId = useMemo(() => new Map<string, any>(rows.map((r: any) => [r.transaction.id, r])), [rows]);
+  const byId = useMemo(
+    () => new Map<string, any>(rows.map((r: any) => [r.transaction.id, r])),
+    [rows],
+  );
 
-  const hasActiveFilters = useMemo(() => (
-    filterType !== "all" || Boolean(search) || statuses.length > 0 || categories.length > 0 || tags.length > 0 || accounts.length > 0 || hasAttachments !== "any" || Boolean(amountMin) || Boolean(amountMax) || Boolean(startDate) || Boolean(endDate)
-  ), [filterType, search, statuses, categories, tags, accounts, hasAttachments, amountMin, amountMax, startDate, endDate]);
+  const hasActiveFilters = useMemo(
+    () =>
+      filterType !== "all" ||
+      Boolean(search) ||
+      statuses.length > 0 ||
+      categories.length > 0 ||
+      tags.length > 0 ||
+      accounts.length > 0 ||
+      hasAttachments !== "any" ||
+      Boolean(amountMin) ||
+      Boolean(amountMax) ||
+      Boolean(startDate) ||
+      Boolean(endDate),
+    [
+      filterType,
+      search,
+      statuses,
+      categories,
+      tags,
+      accounts,
+      hasAttachments,
+      amountMin,
+      amountMax,
+      startDate,
+      endDate,
+    ],
+  );
 
   const clearAllFilters = () => {
     setFilterType("all");
@@ -150,7 +221,8 @@ export function TransactionsView({ initialTransactions = [], initialStats, initi
   const toggleSelectedId = useCallback((id: string) => {
     setSelected((prev) => {
       const next = new Set(prev);
-      if (next.has(id)) next.delete(id); else next.add(id);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
       return next;
     });
   }, []);
@@ -168,50 +240,77 @@ export function TransactionsView({ initialTransactions = [], initialStats, initi
     setDetailsId(row.transaction.id);
   }, []);
 
-  const onToggleStatus = useCallback(async (id: string, status: TransactionRow["transaction"]["status"]) => {
-    try {
-      await bulkUpdate.mutateAsync({ transactionIds: [id], updates: { status } as any });
-      toast({ description: "Transaction updated" });
-    } catch {
-      toast({ description: "Failed to update transaction", variant: "destructive" });
-    }
-  }, [bulkUpdate, toast]);
+  const onToggleStatus = useCallback(
+    async (id: string, status: TransactionRow["transaction"]["status"]) => {
+      try {
+        await bulkUpdate.mutateAsync({ transactionIds: [id], updates: { status } as any });
+        toast({ description: "Transaction updated" });
+      } catch {
+        toast({ description: "Failed to update transaction", variant: "destructive" });
+      }
+    },
+    [bulkUpdate, toast],
+  );
 
-  const onToggleExclude = useCallback(async (id: string, exclude: boolean) => {
-    try {
-      await bulkUpdate.mutateAsync({ transactionIds: [id], updates: { excludeFromAnalytics: exclude } });
-      toast({ description: exclude ? "Excluded from analytics" : "Included in analytics" });
-    } catch {
-      toast({ description: "Failed to update transaction", variant: "destructive" });
-    }
-  }, [bulkUpdate, toast]);
+  const onToggleExclude = useCallback(
+    async (id: string, exclude: boolean) => {
+      try {
+        await bulkUpdate.mutateAsync({
+          transactionIds: [id],
+          updates: { excludeFromAnalytics: exclude },
+        });
+        toast({ description: exclude ? "Excluded from analytics" : "Included in analytics" });
+      } catch {
+        toast({ description: "Failed to update transaction", variant: "destructive" });
+      }
+    },
+    [bulkUpdate, toast],
+  );
 
-  const onDelete = useCallback(async (id: string) => {
-    try {
-      await bulkDelete.mutateAsync({ transactionIds: [id] });
-      toast({ description: "Transaction deleted" });
-    } catch {
-      toast({ description: "Failed to delete transaction", variant: "destructive" });
-    }
-  }, [bulkDelete, toast]);
+  const onDelete = useCallback(
+    async (id: string) => {
+      try {
+        await bulkDelete.mutateAsync({ transactionIds: [id] });
+        toast({ description: "Transaction deleted" });
+      } catch {
+        toast({ description: "Failed to delete transaction", variant: "destructive" });
+      }
+    },
+    [bulkDelete, toast],
+  );
 
   // Table meta (selection + actions)
-  const tableMeta = useMemo(() => ({
-    isSelected: (id: string) => selected.has(id),
-    toggleSelectedId,
-    toggleAllOnPage,
-    onViewDetails,
-    onToggleStatus,
-    onToggleExclude,
-    onDelete,
-  }), [selected, toggleSelectedId, toggleAllOnPage, onViewDetails, onToggleStatus, onToggleExclude, onDelete]);
+  const tableMeta = useMemo(
+    () => ({
+      isSelected: (id: string) => selected.has(id),
+      toggleSelectedId,
+      toggleAllOnPage,
+      onViewDetails,
+      onToggleStatus,
+      onToggleExclude,
+      onDelete,
+    }),
+    [
+      selected,
+      toggleSelectedId,
+      toggleAllOnPage,
+      onViewDetails,
+      onToggleStatus,
+      onToggleExclude,
+      onDelete,
+    ],
+  );
 
   // Prepare data for table
-  const tableData: TransactionRow[] = useMemo(() => rows.map((row: any) => ({
-    transaction: row.transaction,
-    client: row.client,
-    category: row.category,
-  })), [rows]);
+  const tableData: TransactionRow[] = useMemo(
+    () =>
+      rows.map((row: any) => ({
+        transaction: row.transaction,
+        client: row.client,
+        category: row.category,
+      })),
+    [rows],
+  );
 
   const table = useReactTable({
     data: tableData,
@@ -242,7 +341,10 @@ export function TransactionsView({ initialTransactions = [], initialStats, initi
         transaction_number: row.transaction.transactionNumber,
       }));
     const headers = Object.keys(items[0] || {});
-    const csv = [headers.join(","), ...items.map((r) => headers.map((h) => JSON.stringify((r as any)[h] ?? "")).join(","))].join("\n");
+    const csv = [
+      headers.join(","),
+      ...items.map((r) => headers.map((h) => JSON.stringify((r as any)[h] ?? "")).join(",")),
+    ].join("\n");
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -270,41 +372,86 @@ export function TransactionsView({ initialTransactions = [], initialStats, initi
     <div className="flex flex-col gap-6 px-6">
       {/* Local sheets (no URL coupling) */}
       <TransactionCreateSheetLocal open={createOpen} onOpenChange={setCreateOpen} />
-      <TransactionDetailsSheetLocal open={!!detailsId} transactionId={detailsId} onOpenChange={(open) => !open && setDetailsId(undefined)} />
+      <TransactionDetailsSheetLocal
+        open={!!detailsId}
+        transactionId={detailsId}
+        onOpenChange={(open) => !open && setDetailsId(undefined)}
+      />
 
       {/* Active filter chips */}
       <div className="flex flex-wrap gap-2">
         {filterType !== "all" && (
-          <Badge variant="secondary" className="cursor-pointer" onClick={() => setFilterType("all")}>type:{filterType} ×</Badge>
+          <Badge
+            variant="secondary"
+            className="cursor-pointer"
+            onClick={() => setFilterType("all")}
+          >
+            type:{filterType} ×
+          </Badge>
         )}
         {search && (
-          <Badge variant="secondary" className="cursor-pointer" onClick={() => setSearch("")}>search:"{search}" ×</Badge>
+          <Badge variant="secondary" className="cursor-pointer" onClick={() => setSearch("")}>
+            search:"{search}" ×
+          </Badge>
         )}
         {startDate && (
-          <Badge variant="secondary" className="cursor-pointer" onClick={() => setStartDate("")}>from:{startDate} ×</Badge>
+          <Badge variant="secondary" className="cursor-pointer" onClick={() => setStartDate("")}>
+            from:{startDate} ×
+          </Badge>
         )}
         {endDate && (
-          <Badge variant="secondary" className="cursor-pointer" onClick={() => setEndDate("")}>to:{endDate} ×</Badge>
+          <Badge variant="secondary" className="cursor-pointer" onClick={() => setEndDate("")}>
+            to:{endDate} ×
+          </Badge>
         )}
         {statuses.map((s) => (
-          <Badge key={s} variant="secondary" className="cursor-pointer" onClick={() => setStatuses((prev) => prev.filter((x) => x !== s))}>status:{s} ×</Badge>
+          <Badge
+            key={s}
+            variant="secondary"
+            className="cursor-pointer"
+            onClick={() => setStatuses((prev) => prev.filter((x) => x !== s))}
+          >
+            status:{s} ×
+          </Badge>
         ))}
         {categories.map((c) => (
-          <Badge key={c} variant="secondary" className="cursor-pointer" onClick={() => setCategories((prev) => prev.filter((x) => x !== c))}>cat:{c} ×</Badge>
+          <Badge
+            key={c}
+            variant="secondary"
+            className="cursor-pointer"
+            onClick={() => setCategories((prev) => prev.filter((x) => x !== c))}
+          >
+            cat:{c} ×
+          </Badge>
         ))}
         {tags.length > 0 && (
-          <Badge variant="secondary" className="cursor-pointer" onClick={() => setTags([])}>tags:{tags.length} ×</Badge>
+          <Badge variant="secondary" className="cursor-pointer" onClick={() => setTags([])}>
+            tags:{tags.length} ×
+          </Badge>
         )}
         {accounts.length > 0 && (
-          <Badge variant="secondary" className="cursor-pointer" onClick={() => setAccounts([])}>accounts:{accounts.length} ×</Badge>
+          <Badge variant="secondary" className="cursor-pointer" onClick={() => setAccounts([])}>
+            accounts:{accounts.length} ×
+          </Badge>
         )}
         {hasAttachments !== "any" && (
-          <Badge variant="secondary" className="cursor-pointer" onClick={() => setHasAttachments("any")}>
+          <Badge
+            variant="secondary"
+            className="cursor-pointer"
+            onClick={() => setHasAttachments("any")}
+          >
             {hasAttachments === "with" ? "with attachments" : "without attachments"} ×
           </Badge>
         )}
         {(amountMin || amountMax) && (
-          <Badge variant="secondary" className="cursor-pointer" onClick={() => { setAmountMin(""); setAmountMax(""); }}>
+          <Badge
+            variant="secondary"
+            className="cursor-pointer"
+            onClick={() => {
+              setAmountMin("");
+              setAmountMax("");
+            }}
+          >
             amount:{amountMin || 0}-{amountMax || "∞"} ×
           </Badge>
         )}
@@ -320,7 +467,12 @@ export function TransactionsView({ initialTransactions = [], initialStats, initi
           </div>
           <div className="flex items-center gap-2">
             <BulkActions ids={Array.from(selected)} onComplete={() => setSelected(new Set())} />
-            <Button size="sm" variant="ghost" onClick={() => setDeleteDialogOpen(true)} className="gap-1">
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => setDeleteDialogOpen(true)}
+              className="gap-1"
+            >
               <Trash2 className="h-4 w-4" />
             </Button>
           </div>
@@ -331,19 +483,27 @@ export function TransactionsView({ initialTransactions = [], initialStats, initi
       <div className="grid gap-4 md:grid-cols-4">
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Total Income</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Total Income
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{currencyCode} {(stats as any)?.totalIncome?.toLocaleString?.() || 0}</div>
+            <div className="text-2xl font-bold">
+              {currencyCode} {(stats as any)?.totalIncome?.toLocaleString?.() || 0}
+            </div>
             <p className="mt-1 text-xs text-muted-foreground">All time payments</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Total Expenses</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Total Expenses
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{currencyCode} {(stats as any)?.totalExpenses?.toLocaleString?.() || 0}</div>
+            <div className="text-2xl font-bold">
+              {currencyCode} {(stats as any)?.totalExpenses?.toLocaleString?.() || 0}
+            </div>
             <p className="mt-1 text-xs text-muted-foreground">All time expenses</p>
           </CardContent>
         </Card>
@@ -352,16 +512,22 @@ export function TransactionsView({ initialTransactions = [], initialStats, initi
             <CardTitle className="text-sm font-medium text-muted-foreground">Net Profit</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{currencyCode} {(stats as any)?.netProfit?.toLocaleString?.() || 0}</div>
+            <div className="text-2xl font-bold">
+              {currencyCode} {(stats as any)?.netProfit?.toLocaleString?.() || 0}
+            </div>
             <p className="mt-1 text-xs text-muted-foreground">Income minus expenses</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Pending Payments</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Pending Payments
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{currencyCode} {(stats as any)?.pendingPayments?.toLocaleString?.() || 0}</div>
+            <div className="text-2xl font-bold">
+              {currencyCode} {(stats as any)?.pendingPayments?.toLocaleString?.() || 0}
+            </div>
             <p className="mt-1 text-xs text-muted-foreground">Awaiting collection</p>
           </CardContent>
         </Card>
@@ -379,14 +545,26 @@ export function TransactionsView({ initialTransactions = [], initialStats, initi
                 onChange={(e) => setSearch(e.target.value)}
                 className="h-6 w-[360px] border-none bg-transparent p-0 text-sm focus-visible:ring-0"
               />
-              <Button variant="ghost" size="icon" className="h-6 w-6 hover:bg-transparent" onClick={() => setFiltersOpen(true)}>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-6 w-6 hover:bg-transparent"
+                onClick={() => setFiltersOpen(true)}
+              >
                 <Filter className="h-4 w-4 text-muted-foreground" />
               </Button>
             </div>
             <div className="ml-auto flex items-center gap-2">
               <TransactionsColumnVisibility columns={table.getAllColumns()} />
-              <Button variant="outline" size="sm" className="gap-2" onClick={exportSelected} disabled={selectedCount === 0}>
-                <Download className="h-4 w-4" /> Export {selectedCount > 0 ? `(${selectedCount})` : ""}
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-2"
+                onClick={exportSelected}
+                disabled={selectedCount === 0}
+              >
+                <Download className="h-4 w-4" /> Export{" "}
+                {selectedCount > 0 ? `(${selectedCount})` : ""}
               </Button>
               <AddTransactions onCreate={() => setCreateOpen(true)} />
             </div>
@@ -396,18 +574,27 @@ export function TransactionsView({ initialTransactions = [], initialStats, initi
         {/* Table */}
         {!rows.length ? (
           hasActiveFilters ? (
-            <EmptyState title="No results" description="Try another search, or adjusting the filters" action={{ label: "Clear filters", onClick: clearAllFilters }} />
+            <EmptyState
+              title="No results"
+              description="Try another search, or adjusting the filters"
+              action={{ label: "Clear filters", onClick: clearAllFilters }}
+            />
           ) : (
-            <EmptyState title="No transactions" description={
-              <div className="flex flex-col items-center gap-3">
-                <div className="text-[#606060] text-sm">You haven't recorded any transactions yet.</div>
-                <div className="flex gap-2">
-                  <Button size="sm" className="gap-2" onClick={() => setCreateOpen(true)}>
-                    <Plus className="h-4 w-4" /> Record transaction
-                  </Button>
+            <EmptyState
+              title="No transactions"
+              description={
+                <div className="flex flex-col items-center gap-3">
+                  <div className="text-[#606060] text-sm">
+                    You haven't recorded any transactions yet.
+                  </div>
+                  <div className="flex gap-2">
+                    <Button size="sm" className="gap-2" onClick={() => setCreateOpen(true)}>
+                      <Plus className="h-4 w-4" /> Record transaction
+                    </Button>
+                  </div>
                 </div>
-              </div>
-            } />
+              }
+            />
           )
         ) : (
           <div className="overflow-x-auto">
@@ -428,7 +615,9 @@ export function TransactionsView({ initialTransactions = [], initialStats, initi
                                 : ""
                         }
                       >
-                        {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
+                        {header.isPlaceholder
+                          ? null
+                          : flexRender(header.column.columnDef.header, header.getContext())}
                       </TableHead>
                     ))}
                   </TableRow>
@@ -437,7 +626,15 @@ export function TransactionsView({ initialTransactions = [], initialStats, initi
               <TableBody>
                 {table.getRowModel().rows.length > 0 ? (
                   table.getRowModel().rows.map((row) => (
-                    <TableRow key={row.id} className={"hover:bg-muted/50 " + (selected.has((row.original as TransactionRow).transaction.id) ? "data-[state=selected]:bg-muted" : "") }>
+                    <TableRow
+                      key={row.id}
+                      className={
+                        "hover:bg-muted/50 " +
+                        (selected.has((row.original as TransactionRow).transaction.id)
+                          ? "data-[state=selected]:bg-muted"
+                          : "")
+                      }
+                    >
                       {row.getVisibleCells().map((cell) => (
                         <TableCell
                           key={cell.id}
@@ -458,7 +655,9 @@ export function TransactionsView({ initialTransactions = [], initialStats, initi
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={table.getAllColumns().length} className="h-24 text-center">No results.</TableCell>
+                    <TableCell colSpan={table.getAllColumns().length} className="h-24 text-center">
+                      No results.
+                    </TableCell>
                   </TableRow>
                 )}
               </TableBody>
@@ -479,8 +678,15 @@ export function TransactionsView({ initialTransactions = [], initialStats, initi
             <div>
               <label className="mb-1 block text-xs text-muted-foreground">Type</label>
               <div className="flex flex-wrap gap-2">
-                {(["all","payment","expense","refund","adjustment"] as const).map((t) => (
-                  <Button key={t} type="button" size="sm" variant={filterType === t ? "default" : "outline"} onClick={() => setFilterType(t)} className="capitalize">
+                {(["all", "payment", "expense", "refund", "adjustment"] as const).map((t) => (
+                  <Button
+                    key={t}
+                    type="button"
+                    size="sm"
+                    variant={filterType === t ? "default" : "outline"}
+                    onClick={() => setFilterType(t)}
+                    className="capitalize"
+                  >
                     {t}
                   </Button>
                 ))}
@@ -489,7 +695,11 @@ export function TransactionsView({ initialTransactions = [], initialStats, initi
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="mb-1 block text-xs text-muted-foreground">From</label>
-                <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+                <Input
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                />
               </div>
               <div>
                 <label className="mb-1 block text-xs text-muted-foreground">To</label>
@@ -499,9 +709,14 @@ export function TransactionsView({ initialTransactions = [], initialStats, initi
             <div>
               <label className="mb-1 block text-xs text-muted-foreground">Status</label>
               <div className="flex flex-wrap gap-3">
-                {(["pending","completed","failed","cancelled"] as const).map((s) => (
+                {(["pending", "completed", "failed", "cancelled"] as const).map((s) => (
                   <label key={s} className="flex items-center gap-2">
-                    <Checkbox checked={statuses.includes(s)} onCheckedChange={(v) => setStatuses((prev) => v ? [...prev, s] : prev.filter((x) => x !== s))} />
+                    <Checkbox
+                      checked={statuses.includes(s)}
+                      onCheckedChange={(v) =>
+                        setStatuses((prev) => (v ? [...prev, s] : prev.filter((x) => x !== s)))
+                      }
+                    />
                     <span className="capitalize">{s}</span>
                   </label>
                 ))}
@@ -517,42 +732,114 @@ export function TransactionsView({ initialTransactions = [], initialStats, initi
                 commandProps={{ className: "border rounded" }}
                 renderOption={(opt) => (
                   <div className="flex items-center gap-2">
-                    <span style={{ paddingLeft: `${parseInt((opt as any).depth || "0") * 12}px` }} />
-                    <span className="inline-block h-3 w-3 rounded-sm border" style={{ backgroundColor: ((opt as any).color as string) || "transparent" }} />
+                    <span
+                      style={{ paddingLeft: `${parseInt((opt as any).depth || "0") * 12}px` }}
+                    />
+                    <span
+                      className="inline-block h-3 w-3 rounded-sm border"
+                      style={{ backgroundColor: ((opt as any).color as string) || "transparent" }}
+                    />
                     <span>{opt.label}</span>
                   </div>
                 )}
               />
             </div>
             <div>
-              <label className="mb-1 block text-xs text-muted-foreground">Tags (comma separated UUIDs)</label>
-              <Input value={tags.join(",")} onChange={(e) => setTags(e.target.value.split(",").map((s) => s.trim()).filter(Boolean))} placeholder="id1,id2" />
+              <label className="mb-1 block text-xs text-muted-foreground">
+                Tags (comma separated UUIDs)
+              </label>
+              <Input
+                value={tags.join(",")}
+                onChange={(e) =>
+                  setTags(
+                    e.target.value
+                      .split(",")
+                      .map((s) => s.trim())
+                      .filter(Boolean),
+                  )
+                }
+                placeholder="id1,id2"
+              />
             </div>
             <div>
-              <label className="mb-1 block text-xs text-muted-foreground">Accounts (comma separated UUIDs)</label>
-              <Input value={accounts.join(",")} onChange={(e) => setAccounts(e.target.value.split(",").map((s) => s.trim()).filter(Boolean))} placeholder="accountId1,accountId2" />
+              <label className="mb-1 block text-xs text-muted-foreground">
+                Accounts (comma separated UUIDs)
+              </label>
+              <Input
+                value={accounts.join(",")}
+                onChange={(e) =>
+                  setAccounts(
+                    e.target.value
+                      .split(",")
+                      .map((s) => s.trim())
+                      .filter(Boolean),
+                  )
+                }
+                placeholder="accountId1,accountId2"
+              />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="mb-1 block text-xs text-muted-foreground">Min Amount</label>
-                <Input type="number" value={amountMin} onChange={(e) => setAmountMin(e.target.value)} />
+                <Input
+                  type="number"
+                  value={amountMin}
+                  onChange={(e) => setAmountMin(e.target.value)}
+                />
               </div>
               <div>
                 <label className="mb-1 block text-xs text-muted-foreground">Max Amount</label>
-                <Input type="number" value={amountMax} onChange={(e) => setAmountMax(e.target.value)} />
+                <Input
+                  type="number"
+                  value={amountMax}
+                  onChange={(e) => setAmountMax(e.target.value)}
+                />
               </div>
             </div>
             <div>
               <label className="mb-1 block text-xs text-muted-foreground">Attachments</label>
               <div className="flex items-center gap-3">
-                <label className="flex items-center gap-2"><Checkbox checked={hasAttachments === "any"} onCheckedChange={() => setHasAttachments("any")} />Any</label>
-                <label className="flex items-center gap-2"><Checkbox checked={hasAttachments === "with"} onCheckedChange={() => setHasAttachments("with")} />With</label>
-                <label className="flex items-center gap-2"><Checkbox checked={hasAttachments === "without"} onCheckedChange={() => setHasAttachments("without")} />Without</label>
+                <label className="flex items-center gap-2">
+                  <Checkbox
+                    checked={hasAttachments === "any"}
+                    onCheckedChange={() => setHasAttachments("any")}
+                  />
+                  Any
+                </label>
+                <label className="flex items-center gap-2">
+                  <Checkbox
+                    checked={hasAttachments === "with"}
+                    onCheckedChange={() => setHasAttachments("with")}
+                  />
+                  With
+                </label>
+                <label className="flex items-center gap-2">
+                  <Checkbox
+                    checked={hasAttachments === "without"}
+                    onCheckedChange={() => setHasAttachments("without")}
+                  />
+                  Without
+                </label>
               </div>
             </div>
           </div>
           <SheetFooter>
-            <Button variant="outline" onClick={() => { setStatuses([]); setCategories([]); setTags([]); setAccounts([]); setHasAttachments("any"); setAmountMin(""); setAmountMax(""); setStartDate(""); setEndDate(""); }}>Clear</Button>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setStatuses([]);
+                setCategories([]);
+                setTags([]);
+                setAccounts([]);
+                setHasAttachments("any");
+                setAmountMin("");
+                setAmountMax("");
+                setStartDate("");
+                setEndDate("");
+              }}
+            >
+              Clear
+            </Button>
             <Button onClick={() => setFiltersOpen(false)}>Apply</Button>
           </SheetFooter>
         </SheetContent>
@@ -562,12 +849,19 @@ export function TransactionsView({ initialTransactions = [], initialStats, initi
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete {selectedCount} transaction{selectedCount > 1 ? "s" : ""}?</AlertDialogTitle>
+            <AlertDialogTitle>
+              Delete {selectedCount} transaction{selectedCount > 1 ? "s" : ""}?
+            </AlertDialogTitle>
             <AlertDialogDescription>This action cannot be undone.</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleConfirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Delete</AlertDialogAction>
+            <AlertDialogAction
+              onClick={handleConfirmDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -575,8 +869,17 @@ export function TransactionsView({ initialTransactions = [], initialStats, initi
   );
 }
 
-type CategoryNode = { id: string; name: string; slug: string; color?: string | null; children?: CategoryNode[] };
-function flattenCategories(nodes: CategoryNode[], depth = 0): Array<CategoryNode & { depth: number }> {
+type CategoryNode = {
+  id: string;
+  name: string;
+  slug: string;
+  color?: string | null;
+  children?: CategoryNode[];
+};
+function flattenCategories(
+  nodes: CategoryNode[],
+  depth = 0,
+): Array<CategoryNode & { depth: number }> {
   const out: Array<CategoryNode & { depth: number }> = [];
   for (const n of nodes) {
     out.push({ ...n, depth });

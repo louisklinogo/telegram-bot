@@ -1,8 +1,16 @@
 import type { Hono } from "hono";
 import type { ApiEnv } from "../types/hono-env";
 import type { Database, TablesUpdate } from "@cimantikos/supabase/types";
-import { enqueueCommunicationOutbox, createClientBasic, updateCommunicationThread } from "@cimantikos/supabase/mutations";
-import { SendMessageSchema, SendThreadMediaSchema, SendThreadTextSchema } from "@cimantikos/schemas";
+import {
+  enqueueCommunicationOutbox,
+  createClientBasic,
+  updateCommunicationThread,
+} from "@cimantikos/supabase/mutations";
+import {
+  SendMessageSchema,
+  SendThreadMediaSchema,
+  SendThreadTextSchema,
+} from "@cimantikos/schemas";
 
 export function registerCommunicationsRoutes(app: Hono<ApiEnv>) {
   // Upload media to storage (server-side) and return storage path
@@ -23,12 +31,10 @@ export function registerCommunicationsRoutes(app: Hono<ApiEnv>) {
       const day = new Date().toISOString().slice(0, 10);
       const path = `uploads/${day}/${id}_${safeName}`;
 
-      const { error: upErr } = await supabase.storage
-        .from("vault")
-        .upload(path, file, {
-          contentType: file.type || "application/octet-stream",
-          upsert: true,
-        });
+      const { error: upErr } = await supabase.storage.from("vault").upload(path, file, {
+        contentType: file.type || "application/octet-stream",
+        upsert: true,
+      });
       if (upErr) return c.json({ error: upErr.message }, 500);
       return c.json({ path, contentType: file.type || null, filename: safeName });
     } catch (e: any) {
@@ -210,7 +216,12 @@ export function registerCommunicationsRoutes(app: Hono<ApiEnv>) {
         .select("id, account_id, team_id, external_contact_id")
         .eq("id", id)
         .eq("team_id", teamId)
-        .maybeSingle<{ id: string; account_id: string; team_id: string; external_contact_id: string }>();
+        .maybeSingle<{
+          id: string;
+          account_id: string;
+          team_id: string;
+          external_contact_id: string;
+        }>();
       if (tErr || !thread) return c.json({ error: "thread not found" }, 404);
       const { error: insErr } = await enqueueCommunicationOutbox(supabase, {
         team_id: thread.team_id,
@@ -242,7 +253,12 @@ export function registerCommunicationsRoutes(app: Hono<ApiEnv>) {
         .select("id, account_id, team_id, external_contact_id")
         .eq("id", id)
         .eq("team_id", teamId)
-        .maybeSingle<{ id: string; account_id: string; team_id: string; external_contact_id: string }>();
+        .maybeSingle<{
+          id: string;
+          account_id: string;
+          team_id: string;
+          external_contact_id: string;
+        }>();
       if (tErr || !thread) return c.json({ error: "thread not found" }, 404);
       const { error: insErr } = await enqueueCommunicationOutbox(supabase, {
         team_id: thread.team_id,
@@ -318,11 +334,11 @@ export function registerCommunicationsRoutes(app: Hono<ApiEnv>) {
       if (tErr || !thread) return c.json({ error: "thread not found" }, 404);
       let finalClientId = clientId || null;
       if (!finalClientId) {
-      const { data: created, error: cErr } = await createClientBasic(supabase, {
-        team_id: thread.team_id,
-        name: name || thread.external_contact_id,
-        whatsapp: thread.external_contact_id,
-      });
+        const { data: created, error: cErr } = await createClientBasic(supabase, {
+          team_id: thread.team_id,
+          name: name || thread.external_contact_id,
+          whatsapp: thread.external_contact_id,
+        });
         if (cErr) return c.json({ error: cErr.message }, 500);
         finalClientId = created.id as string;
       }

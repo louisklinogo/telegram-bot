@@ -28,7 +28,7 @@ export const LoadMore = React.forwardRef<HTMLDivElement, LoadMoreProps>(
         )}
       </div>
     );
-  }
+  },
 );
 
 LoadMore.displayName = "LoadMore";

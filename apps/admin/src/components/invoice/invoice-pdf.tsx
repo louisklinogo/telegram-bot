@@ -1,12 +1,4 @@
-import {
-  Document,
-  Page,
-  Text,
-  View,
-  StyleSheet,
-  Image,
-  Font,
-} from "@react-pdf/renderer";
+import { Document, Page, Text, View, StyleSheet, Image, Font } from "@react-pdf/renderer";
 
 // Register fonts (optional - for better typography)
 Font.register({
@@ -218,11 +210,7 @@ export function InvoicePDF({ invoice, items, from, to }: InvoicePDFProps) {
       <Page size="A4" style={styles.page}>
         {/* Header */}
         <View style={styles.header}>
-          <View>
-            {invoice.logoUrl && (
-              <Image style={styles.logo} src={invoice.logoUrl} />
-            )}
-          </View>
+          <View>{invoice.logoUrl && <Image style={styles.logo} src={invoice.logoUrl} />}</View>
           <View style={styles.invoiceInfo}>
             <Text style={styles.title}>INVOICE</Text>
             <Text style={styles.invoiceNumber}>{invoice.invoiceNumber}</Text>
@@ -261,27 +249,17 @@ export function InvoicePDF({ invoice, items, from, to }: InvoicePDFProps) {
         <View style={styles.table}>
           {/* Table Header */}
           <View style={styles.tableHeader}>
-            <Text style={[styles.tableHeaderText, styles.tableColDesc]}>
-              Description
-            </Text>
+            <Text style={[styles.tableHeaderText, styles.tableColDesc]}>Description</Text>
             <Text style={[styles.tableHeaderText, styles.tableColQty]}>Qty</Text>
-            <Text style={[styles.tableHeaderText, styles.tableColPrice]}>
-              Unit Price
-            </Text>
-            <Text style={[styles.tableHeaderText, styles.tableColAmount]}>
-              Amount
-            </Text>
+            <Text style={[styles.tableHeaderText, styles.tableColPrice]}>Unit Price</Text>
+            <Text style={[styles.tableHeaderText, styles.tableColAmount]}>Amount</Text>
           </View>
 
           {/* Table Rows */}
           {items.map((item, index) => (
             <View key={index} style={styles.tableRow}>
-              <Text style={[styles.tableCellText, styles.tableColDesc]}>
-                {item.name}
-              </Text>
-              <Text style={[styles.tableCellText, styles.tableColQty]}>
-                {item.quantity}
-              </Text>
+              <Text style={[styles.tableCellText, styles.tableColDesc]}>{item.name}</Text>
+              <Text style={[styles.tableCellText, styles.tableColQty]}>{item.quantity}</Text>
               <Text style={[styles.tableCellText, styles.tableColPrice]}>
                 ₵{item.unitPrice.toFixed(2)}
               </Text>
@@ -315,9 +293,7 @@ export function InvoicePDF({ invoice, items, from, to }: InvoicePDFProps) {
 
           <View style={styles.grandTotal}>
             <Text style={styles.grandTotalLabel}>Total</Text>
-            <Text style={styles.grandTotalValue}>
-              ₵{invoice.amount.toFixed(2)}
-            </Text>
+            <Text style={styles.grandTotalValue}>₵{invoice.amount.toFixed(2)}</Text>
           </View>
         </View>
 

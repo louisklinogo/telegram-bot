@@ -21,7 +21,7 @@ export function VaultGrid({ documents, folders = [], onOpenFolder }: VaultGridPr
           onClick={() => onOpenFolder?.(folder.name)}
         />
       ))}
-      
+
       {/* Then files */}
       {documents.map((document) => (
         <VaultCard key={document.id} document={document} />

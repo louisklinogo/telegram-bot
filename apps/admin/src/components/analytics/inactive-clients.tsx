@@ -16,9 +16,7 @@ export function InactiveClients() {
       <CardContent className="pb-[34px]">
         <div className="flex flex-col gap-2">
           <div>Inactive Clients</div>
-          <div className="text-sm text-muted-foreground">
-            No orders past 30 days
-          </div>
+          <div className="text-sm text-muted-foreground">No orders past 30 days</div>
         </div>
       </CardContent>
     </Card>

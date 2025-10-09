@@ -44,7 +44,10 @@ export default function InboxLoading() {
 
                 <div className="space-y-4">
                   {Array.from({ length: 5 }).map((_, i) => (
-                    <div key={i} className={`flex ${i % 2 === 0 ? "justify-start" : "justify-end"}`}>
+                    <div
+                      key={i}
+                      className={`flex ${i % 2 === 0 ? "justify-start" : "justify-end"}`}
+                    >
                       <div className="max-w-[70%]">
                         <Skeleton className={`h-16 ${i % 2 === 0 ? "w-64" : "w-48"}`} />
                       </div>

@@ -14,7 +14,12 @@ interface GeneratePDFButtonProps {
   size?: "default" | "sm" | "lg";
 }
 
-export function GeneratePDFButton({ invoice, items, variant = "outline", size = "sm" }: GeneratePDFButtonProps) {
+export function GeneratePDFButton({
+  invoice,
+  items,
+  variant = "outline",
+  size = "sm",
+}: GeneratePDFButtonProps) {
   const [generating, setGenerating] = useState(false);
   const { toast } = useToast();
 

@@ -46,8 +46,7 @@ export const columns: ColumnDef<TransactionRow>[] = [
     header: ({ table }) => (
       <Checkbox
         checked={
-          table.getIsAllPageRowsSelected() ||
-          (table.getIsSomePageRowsSelected() && "indeterminate")
+          table.getIsAllPageRowsSelected() || (table.getIsSomePageRowsSelected() && "indeterminate")
         }
         onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
         aria-label="Select all"
@@ -121,10 +120,7 @@ export const columns: ColumnDef<TransactionRow>[] = [
       return category ? (
         <div className="flex items-center gap-2">
           {category.color && (
-            <div
-              className="h-3 w-3 rounded-full"
-              style={{ backgroundColor: category.color }}
-            />
+            <div className="h-3 w-3 rounded-full" style={{ backgroundColor: category.color }} />
           )}
           <span>{category.name}</span>
         </div>
@@ -139,7 +135,11 @@ export const columns: ColumnDef<TransactionRow>[] = [
     header: "Method",
     cell: ({ row }) => {
       const method = row.original.transaction.paymentMethod;
-      return method ? <span className="capitalize">{method}</span> : <span className="text-muted-foreground">—</span>;
+      return method ? (
+        <span className="capitalize">{method}</span>
+      ) : (
+        <span className="text-muted-foreground">—</span>
+      );
     },
   },
   {
@@ -168,7 +168,7 @@ export const columns: ColumnDef<TransactionRow>[] = [
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
       }).format(amount);
-      
+
       return (
         <div className="text-right font-medium">
           {currency} {formatted}
@@ -181,7 +181,7 @@ export const columns: ColumnDef<TransactionRow>[] = [
     cell: ({ row, table }) => {
       const transaction = row.original.transaction;
       const meta = table.options.meta as any;
-      
+
       return (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -198,7 +198,7 @@ export const columns: ColumnDef<TransactionRow>[] = [
               onClick={() =>
                 meta?.onToggleStatus?.(
                   transaction.id,
-                  transaction.status === "completed" ? "pending" : "completed"
+                  transaction.status === "completed" ? "pending" : "completed",
                 )
               }
             >
@@ -206,10 +206,7 @@ export const columns: ColumnDef<TransactionRow>[] = [
             </DropdownMenuItem>
             <DropdownMenuItem
               onClick={() =>
-                meta?.onToggleExclude?.(
-                  transaction.id,
-                  !transaction.excludeFromAnalytics
-                )
+                meta?.onToggleExclude?.(transaction.id, !transaction.excludeFromAnalytics)
               }
             >
               {transaction.excludeFromAnalytics ? "Include" : "Exclude"} from analytics

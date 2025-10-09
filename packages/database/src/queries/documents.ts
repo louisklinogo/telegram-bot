@@ -23,23 +23,9 @@ export async function getDocuments(
   db: PostgresJsDatabase<Record<string, unknown>>,
   params: GetDocumentsParams,
 ) {
-  const {
-    teamId,
-    q,
-    tags,
-    orderId,
-    invoiceId,
-    clientId,
-    start,
-    end,
-    limit = 20,
-    cursor,
-  } = params;
+  const { teamId, q, tags, orderId, invoiceId, clientId, start, end, limit = 20, cursor } = params;
 
-  const conditions = [
-    eq(documents.teamId, teamId),
-    isNull(documents.deletedAt),
-  ];
+  const conditions = [eq(documents.teamId, teamId), isNull(documents.deletedAt)];
 
   // Search by name
   if (q) {
@@ -75,7 +61,9 @@ export async function getDocuments(
 
   // Cursor-based pagination
   if (cursor) {
-    conditions.push(sql`${documents.createdAt} < (SELECT created_at FROM ${documents} WHERE id = ${cursor})`);
+    conditions.push(
+      sql`${documents.createdAt} < (SELECT created_at FROM ${documents} WHERE id = ${cursor})`,
+    );
   }
 
   const results = await db
@@ -110,13 +98,7 @@ export async function getDocumentById(
   const [document] = await db
     .select()
     .from(documents)
-    .where(
-      and(
-        eq(documents.id, id),
-        eq(documents.teamId, teamId),
-        isNull(documents.deletedAt),
-      ),
-    )
+    .where(and(eq(documents.id, id), eq(documents.teamId, teamId), isNull(documents.deletedAt)))
     .limit(1);
 
   return document;
@@ -182,13 +164,7 @@ export async function updateDocument(
       ...updates,
       updatedAt: new Date(),
     })
-    .where(
-      and(
-        eq(documents.id, id),
-        eq(documents.teamId, teamId),
-        isNull(documents.deletedAt),
-      ),
-    )
+    .where(and(eq(documents.id, id), eq(documents.teamId, teamId), isNull(documents.deletedAt)))
     .returning();
 
   return document;
@@ -209,13 +185,7 @@ export async function deleteDocument(
   const [document] = await db
     .update(documents)
     .set({ deletedAt: new Date() })
-    .where(
-      and(
-        eq(documents.id, id),
-        eq(documents.teamId, teamId),
-        isNull(documents.deletedAt),
-      ),
-    )
+    .where(and(eq(documents.id, id), eq(documents.teamId, teamId), isNull(documents.deletedAt)))
     .returning();
 
   return document;
@@ -237,12 +207,7 @@ export async function getDocumentStats(
       totalSize: sql<number>`coalesce(sum(${documents.size}), 0)::bigint`,
     })
     .from(documents)
-    .where(
-      and(
-        eq(documents.teamId, teamId),
-        isNull(documents.deletedAt),
-      ),
-    );
+    .where(and(eq(documents.teamId, teamId), isNull(documents.deletedAt)));
 
   return stats;
 }
@@ -265,12 +230,7 @@ export async function getAllDocumentTags(
       count: sql<number>`count(*)::int`,
     })
     .from(documents)
-    .where(
-      and(
-        eq(documents.teamId, teamId),
-        isNull(documents.deletedAt),
-      ),
-    )
+    .where(and(eq(documents.teamId, teamId), isNull(documents.deletedAt)))
     .groupBy(sql`unnest(${documents.tags})`)
     .orderBy(desc(sql`count(*)`));
 

@@ -30,7 +30,9 @@ const invoiceCreateSchema = z.object({
   tax: z.number().min(0).default(0),
   discount: z.number().min(0).default(0),
   amount: z.number().min(0),
-  status: z.enum(["draft", "sent", "partially_paid", "paid", "overdue", "cancelled"]).default("draft"),
+  status: z
+    .enum(["draft", "sent", "partially_paid", "paid", "overdue", "cancelled"])
+    .default("draft"),
   dueDate: z.string().datetime().nullable().optional(),
   notes: z.string().nullable().optional(),
   items: z.array(invoiceItemSchema).min(1, "At least one item is required"),
@@ -188,51 +190,47 @@ export const invoicesRouter = createTRPCRouter({
     }),
 
   // Create invoice with line items
-  create: teamProcedure
-    .input(invoiceCreateSchema)
-    .mutation(async ({ ctx, input }) => {
-      const { items, ...invoiceData } = input;
+  create: teamProcedure.input(invoiceCreateSchema).mutation(async ({ ctx, input }) => {
+    const { items, ...invoiceData } = input;
 
-      const invoice = await createInvoiceWithItems(
-        ctx.db,
-        {
-          ...invoiceData,
-          teamId: ctx.teamId,
-          dueDate: invoiceData.dueDate ? new Date(invoiceData.dueDate).toISOString() : null,
-        } as any,
-        items.map((item) => ({
-          ...item,
-          unitPrice: String(item.unitPrice),
-          total: String(item.total),
-        })),
-      );
+    const invoice = await createInvoiceWithItems(
+      ctx.db,
+      {
+        ...invoiceData,
+        teamId: ctx.teamId,
+        dueDate: invoiceData.dueDate ? new Date(invoiceData.dueDate).toISOString() : null,
+      } as any,
+      items.map((item) => ({
+        ...item,
+        unitPrice: String(item.unitPrice),
+        total: String(item.total),
+      })),
+    );
 
-      return invoice;
-    }),
+    return invoice;
+  }),
 
   // Update draft invoice (only if status is draft)
-  updateDraft: teamProcedure
-    .input(invoiceUpdateSchema)
-    .mutation(async ({ ctx, input }) => {
-      const { id, items, ...invoiceData } = input;
+  updateDraft: teamProcedure.input(invoiceUpdateSchema).mutation(async ({ ctx, input }) => {
+    const { id, items, ...invoiceData } = input;
 
-      const updated = await updateInvoiceWithItems(
-        ctx.db,
-        id,
-        ctx.teamId,
-        {
-          ...invoiceData,
-          dueDate: invoiceData.dueDate ? new Date(invoiceData.dueDate).toISOString() : undefined,
-        } as any,
-        items?.map((item) => ({
-          ...item,
-          unitPrice: String(item.unitPrice),
-          total: String(item.total),
-        })),
-      );
+    const updated = await updateInvoiceWithItems(
+      ctx.db,
+      id,
+      ctx.teamId,
+      {
+        ...invoiceData,
+        dueDate: invoiceData.dueDate ? new Date(invoiceData.dueDate).toISOString() : undefined,
+      } as any,
+      items?.map((item) => ({
+        ...item,
+        unitPrice: String(item.unitPrice),
+        total: String(item.total),
+      })),
+    );
 
-      return updated;
-    }),
+    return updated;
+  }),
 
   // Send invoice (mark as sent, makes it immutable)
   send: teamProcedure

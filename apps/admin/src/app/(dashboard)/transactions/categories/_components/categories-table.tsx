@@ -2,7 +2,14 @@
 
 import { useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Icons } from "@/components/ui/icons";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -64,18 +71,33 @@ export function CategoriesTable({ initialCategories }: Props) {
                     <TableHead className="sticky top-0 bg-background">Name</TableHead>
                     <TableHead className="w-[120px] sticky top-0 bg-background">Tax Type</TableHead>
                     <TableHead className="w-[100px] sticky top-0 bg-background">Tax Rate</TableHead>
-                    <TableHead className="w-[160px] sticky top-0 bg-background">Report Code</TableHead>
-                    <TableHead className="w-[120px] text-right sticky top-0 bg-background">Actions</TableHead>
+                    <TableHead className="w-[160px] sticky top-0 bg-background">
+                      Report Code
+                    </TableHead>
+                    <TableHead className="w-[120px] text-right sticky top-0 bg-background">
+                      Actions
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {visible.map((r) => (
                     <TableRow key={r.id}>
                       <TableCell>
-                        <div style={{ paddingLeft: `${r.depth * 16}px` }} className="flex items-center gap-2 text-sm font-medium">
+                        <div
+                          style={{ paddingLeft: `${r.depth * 16}px` }}
+                          className="flex items-center gap-2 text-sm font-medium"
+                        >
                           {r.hasChildren ? (
-                            <button className="p-1 -ml-1" onClick={() => toggle(r.id)} aria-label={expanded.has(r.id) ? "Collapse" : "Expand"}>
-                              {expanded.has(r.id) ? <Icons.ChevronDown size={18} /> : <Icons.ChevronRight size={18} />}
+                            <button
+                              className="p-1 -ml-1"
+                              onClick={() => toggle(r.id)}
+                              aria-label={expanded.has(r.id) ? "Collapse" : "Expand"}
+                            >
+                              {expanded.has(r.id) ? (
+                                <Icons.ChevronDown size={18} />
+                              ) : (
+                                <Icons.ChevronRight size={18} />
+                              )}
                             </button>
                           ) : (
                             <span className="inline-block w-[18px]" />
@@ -89,12 +111,23 @@ export function CategoriesTable({ initialCategories }: Props) {
                           {r.system ? <Badge variant="tag">SYSTEM</Badge> : null}
                         </div>
                       </TableCell>
-                      <TableCell className="text-sm text-muted-foreground">{r.taxType || "-"}</TableCell>
-                      <TableCell className="text-sm text-muted-foreground">{r.taxRate ?? "-"}</TableCell>
-                      <TableCell className="text-sm text-muted-foreground">{r.taxReportingCode || "-"}</TableCell>
+                      <TableCell className="text-sm text-muted-foreground">
+                        {r.taxType || "-"}
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">
+                        {r.taxRate ?? "-"}
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">
+                        {r.taxReportingCode || "-"}
+                      </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
-                          <Button size="icon" variant="ghost" onClick={() => setEditId(r.id)} title="Edit">
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            onClick={() => setEditId(r.id)}
+                            title="Edit"
+                          >
                             <Icons.Edit className="size-5" />
                           </Button>
                           <Button
@@ -120,7 +153,12 @@ export function CategoriesTable({ initialCategories }: Props) {
           </div>
         )}
       </CardContent>
-      <CategoryEditSheet open={!!editId} onOpenChange={(o) => !o && setEditId(null)} id={editId} categories={initialCategories} />
+      <CategoryEditSheet
+        open={!!editId}
+        onOpenChange={(o) => !o && setEditId(null)}
+        id={editId}
+        categories={initialCategories}
+      />
     </Card>
   );
 }
@@ -136,9 +174,8 @@ function flatten(
     ancestors: string[];
   }
 > {
-  const out: Array<
-    CategoryNode & { depth: number; hasChildren: boolean; ancestors: string[] }
-  > = [];
+  const out: Array<CategoryNode & { depth: number; hasChildren: boolean; ancestors: string[] }> =
+    [];
   for (const n of nodes) {
     const children = n.children || [];
     out.push({ ...n, depth, hasChildren: children.length > 0, ancestors });

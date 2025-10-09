@@ -11,11 +11,7 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { trpc } from "@/lib/trpc/client";
 import { cn } from "@/lib/utils";
 
@@ -28,13 +24,15 @@ export function CustomerSelect({ value, onSelect }: CustomerSelectProps) {
   const [open, setOpen] = useState(false);
 
   const { data: rawClients = [] } = trpc.clients.list.useQuery({ limit: 100 });
-  
-  const clients = Array.isArray(rawClients) ? rawClients.map((client: any) => ({
-    id: client.id,
-    name: client.name,
-    email: client.email,
-    phone: client.phone,
-  })) : [];
+
+  const clients = Array.isArray(rawClients)
+    ? rawClients.map((client: any) => ({
+        id: client.id,
+        name: client.name,
+        email: client.email,
+        phone: client.phone,
+      }))
+    : [];
 
   const selectedClient = clients.find((client: any) => client.id === value);
 
@@ -69,7 +67,7 @@ export function CustomerSelect({ value, onSelect }: CustomerSelectProps) {
                   <Check
                     className={cn(
                       "mr-2 h-4 w-4",
-                      value === client.id ? "opacity-100" : "opacity-0"
+                      value === client.id ? "opacity-100" : "opacity-0",
                     )}
                   />
                   <div className="flex flex-col">

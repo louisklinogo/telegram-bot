@@ -73,7 +73,7 @@ export function CSVUpload({ onUpload }: CSVUploadProps) {
     a.download = "clients-template.csv";
     a.click();
     window.URL.revokeObjectURL(url);
-    
+
     toast.success("Template downloaded");
   };
 
@@ -86,7 +86,7 @@ export function CSVUpload({ onUpload }: CSVUploadProps) {
         onChange={handleFileSelect}
         className="hidden"
       />
-      
+
       <Button
         variant="outline"
         size="sm"
@@ -96,13 +96,8 @@ export function CSVUpload({ onUpload }: CSVUploadProps) {
         <Upload className="h-4 w-4" />
         Import CSV
       </Button>
-      
-      <Button
-        variant="outline"
-        size="sm"
-        className="gap-2"
-        onClick={downloadTemplate}
-      >
+
+      <Button variant="outline" size="sm" className="gap-2" onClick={downloadTemplate}>
         <Download className="h-4 w-4" />
         Template
       </Button>

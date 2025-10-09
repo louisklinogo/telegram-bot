@@ -60,7 +60,8 @@ export async function middleware(request: NextRequest) {
   if (session) {
     try {
       const { data: mfaData } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
-      const requiresAal2 = mfaData?.nextLevel === "aal2" && mfaData?.nextLevel !== mfaData?.currentLevel;
+      const requiresAal2 =
+        mfaData?.nextLevel === "aal2" && mfaData?.nextLevel !== mfaData?.currentLevel;
       const onMfaPage = pathname === "/mfa/verify" || pathname === "/mfa/setup";
       if (requiresAal2 && !onMfaPage) {
         const loginUrl = new URL("/mfa/verify", url.origin);

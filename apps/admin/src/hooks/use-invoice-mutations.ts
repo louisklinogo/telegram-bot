@@ -48,7 +48,7 @@ export function useRecordInvoicePayment() {
       const paidAmount = (invoice as any).paid_amount || 0;
       const outstanding = Math.max(0, invoice.amount - paidAmount);
       if (outstanding <= 0) return;
-      
+
       createPayment.mutate({
         amount: outstanding,
         currency: ((invoice as any).currency as string) || "GHS",

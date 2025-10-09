@@ -287,7 +287,9 @@ export const measurements = pgTable(
     // Versioning System
     version: integer("version").default(1).notNull(), // Version number (1, 2, 3...)
     measurementGroupId: uuid("measurement_group_id"), // Groups all versions together
-    previousVersionId: uuid("previous_version_id").references((): any => measurements.id, { onDelete: "set null" }), // Links to parent version
+    previousVersionId: uuid("previous_version_id").references((): any => measurements.id, {
+      onDelete: "set null",
+    }), // Links to parent version
     isActive: boolean("is_active").default(true).notNull(), // Current active version for client
     tags: text("tags").array().default(sql`ARRAY[]::text[]`), // Flexible tags (replaces garment_type)
     // Additional Info
@@ -549,20 +551,20 @@ export const transactions = pgTable(
     teamId: uuid("team_id")
       .notNull()
       .references(() => teams.id, { onDelete: "cascade" }),
-    
+
     // Core fields
     date: date("date").notNull(), // Accounting date (separate from createdAt)
     name: text("name").notNull(), // Transaction name/title
     description: text("description"), // Longer details (nullable in live DB)
     internalId: text("internal_id").notNull(), // For deduplication
-    
+
     // Financial
     amount: numeric("amount", { precision: 10, scale: 2 }).notNull(),
     currency: varchar("currency", { length: 3 }).default("GHS").notNull(),
     balance: numeric("balance", { precision: 10, scale: 2 }), // Running balance (NEW)
     baseAmount: numeric("base_amount", { precision: 10, scale: 2 }), // Converted to base currency (NEW)
     baseCurrency: varchar("base_currency", { length: 3 }), // Team's base currency (NEW)
-    
+
     // Classification
     type: transactionTypeEnum("type").notNull(),
     category: varchar("category", { length: 100 }), // DEPRECATED: Keep for migration
@@ -570,14 +572,14 @@ export const transactions = pgTable(
     // Live DB uses varchar(50) for payment_method
     paymentMethod: varchar("payment_method", { length: 50 }),
     status: transactionStatusEnum("status").default("completed"),
-    
+
     // Relationships
     clientId: uuid("client_id").references(() => clients.id, { onDelete: "set null" }),
     orderId: uuid("order_id").references(() => orders.id, { onDelete: "set null" }),
     invoiceId: uuid("invoice_id").references(() => invoices.id, { onDelete: "set null" }),
     assignedId: uuid("assigned_id").references(() => users.id, { onDelete: "set null" }), // Who owns/manages (NEW)
     accountId: uuid("account_id").references(() => financialAccounts.id, { onDelete: "set null" }),
-    
+
     // Metadata
     transactionNumber: varchar("transaction_number", { length: 50 }).notNull(),
     counterpartyName: text("counterparty_name"), // Who paid/received (NEW)
@@ -585,15 +587,15 @@ export const transactions = pgTable(
     paymentReference: varchar("payment_reference", { length: 100 }),
     notes: text("notes"),
     manual: boolean("manual").default(false), // User-created vs bank-imported (NEW)
-    
+
     // Recurring transactions (NEW)
     recurring: boolean("recurring").default(false),
     frequency: transactionFrequencyEnum("frequency"),
-    
+
     // AI enrichment (NEW)
     enrichmentCompleted: boolean("enrichment_completed").default(false),
     excludeFromAnalytics: boolean("exclude_from_analytics").default(false).notNull(),
-    
+
     // Timestamps
     transactionDate: timestamp("transaction_date", { withTimezone: true }).defaultNow().notNull(),
     dueDate: timestamp("due_date", { withTimezone: true }),
@@ -612,16 +614,12 @@ export const transactions = pgTable(
     teamStatusDateIdx: index("idx_transactions_team_status_date").on(
       table.teamId,
       table.status,
-      table.date
+      table.date,
     ),
-    teamTypeIdx: index("idx_transactions_team_type_date").on(
-      table.teamId,
-      table.type,
-      table.date
-    ),
+    teamTypeIdx: index("idx_transactions_team_type_date").on(table.teamId, table.type, table.date),
     internalIdIdx: index("idx_transactions_internal_id").on(table.internalId),
     accountIdx: index("idx_transactions_account_id").on(table.accountId),
-  })
+  }),
 );
 
 export const transactionAllocations = pgTable("transaction_allocations", {
@@ -665,7 +663,7 @@ export const transactionCategories = pgTable(
     parentIdIdx: index("idx_transaction_categories_parent_id").on(table.parentId),
     slugIdx: index("idx_transaction_categories_slug").on(table.slug),
     uniqueSlugPerTeam: index("unique_category_slug_per_team").on(table.teamId, table.slug),
-  })
+  }),
 );
 
 // Transaction Tags (many-to-many with tags table)
@@ -689,7 +687,7 @@ export const transactionTags = pgTable(
     tagIdx: index("idx_transaction_tags_tag_id").on(table.tagId),
     teamIdx: index("idx_transaction_tags_team_id").on(table.teamId),
     uniqueTag: index("unique_transaction_tag").on(table.transactionId, table.tagId),
-  })
+  }),
 );
 
 // Transaction Attachments (receipts, invoices, documents)
@@ -713,13 +711,11 @@ export const transactionAttachments = pgTable(
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   },
   (table) => ({
-    transactionIdx: index("idx_transaction_attachments_transaction_id").on(
-      table.transactionId
-    ),
+    transactionIdx: index("idx_transaction_attachments_transaction_id").on(table.transactionId),
     teamIdx: index("idx_transaction_attachments_team_id").on(table.teamId),
     typeIdx: index("idx_transaction_attachments_type").on(table.type),
     checksumIdx: index("idx_transaction_attachments_checksum").on(table.checksum),
-  })
+  }),
 );
 
 // Tags table (if not already exists - shared across transactions, clients, etc.)
@@ -737,7 +733,7 @@ export const tags = pgTable(
   (table) => ({
     teamIdIdx: index("idx_tags_team_id").on(table.teamId),
     uniqueNamePerTeam: index("unique_tag_name_per_team").on(table.teamId, table.name),
-  })
+  }),
 );
 
 // Order items (row-per-item)
@@ -946,7 +942,7 @@ export const appointments = pgTable(
     clientIdx: index("idx_appointments_client").on(table.clientId),
     staffIdx: index("idx_appointments_staff").on(table.staffUserId),
     startIdx: index("idx_appointments_start_at").on(table.startAt),
-  })
+  }),
 );
 
 export const documentsRelations = relations(documents, ({ one }) => ({
@@ -1010,24 +1006,21 @@ export const transactionsRelations = relations(transactions, ({ one, many }) => 
   allocations: many(transactionAllocations),
 }));
 
-export const transactionCategoriesRelations = relations(
-  transactionCategories,
-  ({ one, many }) => ({
-    team: one(teams, {
-      fields: [transactionCategories.teamId],
-      references: [teams.id],
-    }),
-    parent: one(transactionCategories, {
-      fields: [transactionCategories.parentId],
-      references: [transactionCategories.id],
-      relationName: "parent_child",
-    }),
-    children: many(transactionCategories, {
-      relationName: "parent_child",
-    }),
-    transactions: many(transactions),
-  })
-);
+export const transactionCategoriesRelations = relations(transactionCategories, ({ one, many }) => ({
+  team: one(teams, {
+    fields: [transactionCategories.teamId],
+    references: [teams.id],
+  }),
+  parent: one(transactionCategories, {
+    fields: [transactionCategories.parentId],
+    references: [transactionCategories.id],
+    relationName: "parent_child",
+  }),
+  children: many(transactionCategories, {
+    relationName: "parent_child",
+  }),
+  transactions: many(transactions),
+}));
 
 export const transactionTagsRelations = relations(transactionTags, ({ one }) => ({
   team: one(teams, {
@@ -1044,23 +1037,20 @@ export const transactionTagsRelations = relations(transactionTags, ({ one }) => 
   }),
 }));
 
-export const transactionAttachmentsRelations = relations(
-  transactionAttachments,
-  ({ one }) => ({
-    team: one(teams, {
-      fields: [transactionAttachments.teamId],
-      references: [teams.id],
-    }),
-    transaction: one(transactions, {
-      fields: [transactionAttachments.transactionId],
-      references: [transactions.id],
-    }),
-    uploader: one(users, {
-      fields: [transactionAttachments.uploadedBy],
-      references: [users.id],
-    }),
-  })
-);
+export const transactionAttachmentsRelations = relations(transactionAttachments, ({ one }) => ({
+  team: one(teams, {
+    fields: [transactionAttachments.teamId],
+    references: [teams.id],
+  }),
+  transaction: one(transactions, {
+    fields: [transactionAttachments.transactionId],
+    references: [transactions.id],
+  }),
+  uploader: one(users, {
+    fields: [transactionAttachments.uploadedBy],
+    references: [users.id],
+  }),
+}));
 
 export const tagsRelations = relations(tags, ({ one, many }) => ({
   team: one(teams, {

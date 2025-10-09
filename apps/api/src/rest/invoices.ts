@@ -50,7 +50,9 @@ export function registerInvoicesRoutes(app: Hono<ApiEnv>) {
         invoice_id: id,
         payment_method: parsed.data.paymentMethod ?? null,
         payment_reference: parsed.data.paymentReference ?? null,
-        transaction_date: parsed.data.transactionDate ? new Date(parsed.data.transactionDate).toISOString() : now.toISOString(),
+        transaction_date: parsed.data.transactionDate
+          ? new Date(parsed.data.transactionDate).toISOString()
+          : now.toISOString(),
       };
 
       const { data: createdTrx, error: tErr } = await supabase
@@ -58,9 +60,14 @@ export function registerInvoicesRoutes(app: Hono<ApiEnv>) {
         .insert(insertTrx)
         .select("id")
         .maybeSingle<{ id: string }>();
-      if (tErr || !createdTrx) return c.json({ error: tErr?.message || "failed to create transaction" }, 500);
+      if (tErr || !createdTrx)
+        return c.json({ error: tErr?.message || "failed to create transaction" }, 500);
 
-      const allocation = { transaction_id: createdTrx.id, invoice_id: id, amount: parsed.data.amount } satisfies TablesInsert<"transaction_allocations">;
+      const allocation = {
+        transaction_id: createdTrx.id,
+        invoice_id: id,
+        amount: parsed.data.amount,
+      } satisfies TablesInsert<"transaction_allocations">;
       const { error: aErr } = await supabase.from("transaction_allocations").insert(allocation);
       if (aErr) return c.json({ error: aErr.message }, 500);
 

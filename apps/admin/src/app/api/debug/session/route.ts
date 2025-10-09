@@ -26,6 +26,9 @@ export async function GET(_req: NextRequest) {
 
     return NextResponse.json(body, { status: 200 });
   } catch (e: any) {
-    return NextResponse.json({ loggedIn: false, error: e?.message || "Unknown error" }, { status: 500 });
+    return NextResponse.json(
+      { loggedIn: false, error: e?.message || "Unknown error" },
+      { status: 500 },
+    );
   }
 }

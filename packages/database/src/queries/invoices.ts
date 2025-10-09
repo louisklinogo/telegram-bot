@@ -1,6 +1,13 @@
 import { and, desc, eq, isNull, lt, or, sql } from "drizzle-orm";
 import type { DbClient } from "../client";
-import { invoices, invoiceItems, orders, clients, orderItems, transactionAllocations } from "../schema";
+import {
+  invoices,
+  invoiceItems,
+  orders,
+  clients,
+  orderItems,
+  transactionAllocations,
+} from "../schema";
 
 export async function getInvoicesWithOrder(
   db: DbClient,
@@ -95,7 +102,7 @@ export async function getNextInvoiceNumber(db: DbClient, teamId: string): Promis
   // Extract number from invoice number (e.g., "INV-001" -> 1)
   const lastNumber = result[0].invoiceNumber;
   const match = lastNumber.match(/(\d+)$/);
-  
+
   if (match) {
     const num = Number.parseInt(match[1], 10) + 1;
     return `INV-${String(num).padStart(3, "0")}`;

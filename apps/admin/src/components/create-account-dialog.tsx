@@ -1,7 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { trpc } from "@/lib/trpc/client";
@@ -43,7 +49,11 @@ export function CreateAccountDialog({ open, onOpenChange, onCreated }: Props) {
         <div className="space-y-3 py-2">
           <div className="space-y-1">
             <label className="text-xs text-muted-foreground">Name</label>
-            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Cash till, Bank - GTBank" />
+            <Input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="e.g. Cash till, Bank - GTBank"
+            />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
@@ -62,7 +72,11 @@ export function CreateAccountDialog({ open, onOpenChange, onCreated }: Props) {
             </div>
             <div className="space-y-1">
               <label className="text-xs text-muted-foreground">Currency</label>
-              <Input value={currency} onChange={(e) => setCurrency(e.target.value.toUpperCase())} placeholder="GHS" />
+              <Input
+                value={currency}
+                onChange={(e) => setCurrency(e.target.value.toUpperCase())}
+                placeholder="GHS"
+              />
             </div>
           </div>
         </div>

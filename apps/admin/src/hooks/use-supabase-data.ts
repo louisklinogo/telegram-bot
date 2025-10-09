@@ -4,7 +4,6 @@
 
 import { trpc } from "@/lib/trpc/client";
 
-
 export const queryKeys = {
   clients: ["clients"] as const,
   client: (id: string) => ["clients", id] as const,
@@ -19,7 +18,7 @@ export const queryKeys = {
 
 export function useClients() {
   const query = trpc.clients.list.useQuery({});
-  
+
   // Transform new API shape { items, nextCursor } to just items array
   return {
     ...query,

@@ -2,16 +2,16 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
-  
+
   experimental: {
     // PPR disabled - requires Next.js canary, we're on stable 15.5.4
     // Will enable when PPR is stable in Next.js 16+
     // ppr: 'incremental',
-    
+
     // Optimize package imports for smaller bundles
     optimizePackageImports: [
       "lucide-react",
-      "@radix-ui/react-icons", 
+      "@radix-ui/react-icons",
       "recharts",
       "framer-motion",
       "@tanstack/react-query",

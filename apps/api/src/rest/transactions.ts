@@ -19,14 +19,17 @@ export function registerTransactionsRoutes(app: Hono<ApiEnv>) {
       const day = new Date().toISOString().slice(0, 10);
       const path = `transactions/${day}/${id}_${safeName}`;
 
-      const { error: upErr } = await supabase.storage
-        .from("vault")
-        .upload(path, file, {
-          contentType: file.type || "application/octet-stream",
-          upsert: true,
-        });
+      const { error: upErr } = await supabase.storage.from("vault").upload(path, file, {
+        contentType: file.type || "application/octet-stream",
+        upsert: true,
+      });
       if (upErr) return c.json({ error: upErr.message }, 500);
-      return c.json({ path, contentType: file.type || null, filename: safeName, size: file.size ?? null });
+      return c.json({
+        path,
+        contentType: file.type || null,
+        filename: safeName,
+        size: file.size ?? null,
+      });
     } catch (e: any) {
       return c.json({ error: String(e?.message || e) }, 500);
     }

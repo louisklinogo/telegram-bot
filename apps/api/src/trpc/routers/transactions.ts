@@ -10,7 +10,16 @@ import {
   updateTransactionsBulk,
   softDeleteTransactionsBulk,
 } from "@cimantikos/database/queries";
-import { invoices, transactions, transactionAllocations, financialAccounts, transactionCategories, transactionAttachments, usersOnTeam, users } from "@cimantikos/database/schema";
+import {
+  invoices,
+  transactions,
+  transactionAllocations,
+  financialAccounts,
+  transactionCategories,
+  transactionAttachments,
+  usersOnTeam,
+  users,
+} from "@cimantikos/database/schema";
 import { and, eq } from "drizzle-orm";
 
 export const transactionsRouter = createTRPCRouter({
@@ -39,7 +48,7 @@ export const transactionsRouter = createTRPCRouter({
                 size: z.number().nullable().optional(),
                 type: z.string().optional(),
                 checksum: z.string().optional(),
-              })
+              }),
             )
             .optional(),
         }),
@@ -68,11 +77,11 @@ export const transactionsRouter = createTRPCRouter({
                 size: z.number().nullable().optional(),
                 type: z.string().optional(),
                 checksum: z.string().optional(),
-              })
+              }),
             )
             .optional(),
         }),
-      ])
+      ]),
     )
     .mutation(async ({ ctx, input }) => {
       if (input.kind === "payment") {
@@ -184,7 +193,11 @@ export const transactionsRouter = createTRPCRouter({
   // List financial accounts for selection in UI
   accounts: teamProcedure.query(async ({ ctx }) => {
     const rows = await ctx.db
-      .select({ id: financialAccounts.id, name: financialAccounts.name, currency: financialAccounts.currency })
+      .select({
+        id: financialAccounts.id,
+        name: financialAccounts.name,
+        currency: financialAccounts.currency,
+      })
       .from(financialAccounts)
       .where(eq(financialAccounts.teamId, ctx.teamId));
     return rows;
@@ -197,7 +210,7 @@ export const transactionsRouter = createTRPCRouter({
         name: z.string().min(1),
         type: z.enum(["cash", "bank", "mobile_money", "card", "other"]).default("cash"),
         currency: z.string().min(3).max(3).default("GHS"),
-      })
+      }),
     )
     .mutation(async ({ ctx, input }) => {
       const [created] = await ctx.db
@@ -209,7 +222,11 @@ export const transactionsRouter = createTRPCRouter({
           currency: input.currency,
           status: "active",
         })
-        .returning({ id: financialAccounts.id, name: financialAccounts.name, currency: financialAccounts.currency });
+        .returning({
+          id: financialAccounts.id,
+          name: financialAccounts.name,
+          currency: financialAccounts.currency,
+        });
       return created;
     }),
 
@@ -218,9 +235,12 @@ export const transactionsRouter = createTRPCRouter({
     .input(
       z.object({
         name: z.string().min(1),
-        color: z.string().regex(/^#([0-9a-fA-F]{3}){1,2}$/).optional(),
+        color: z
+          .string()
+          .regex(/^#([0-9a-fA-F]{3}){1,2}$/)
+          .optional(),
         parentId: z.string().uuid().optional(),
-      })
+      }),
     )
     .mutation(async ({ ctx, input }) => {
       const toSlug = (s: string) =>
@@ -242,7 +262,9 @@ export const transactionsRouter = createTRPCRouter({
         const existing = await ctx.db
           .select({ id: transactionCategories.id })
           .from(transactionCategories)
-          .where(and(eq(transactionCategories.teamId, ctx.teamId), eq(transactionCategories.slug, slug)))
+          .where(
+            and(eq(transactionCategories.teamId, ctx.teamId), eq(transactionCategories.slug, slug)),
+          )
           .limit(1);
         if (!existing[0]) break;
         slug = `${base}-${i++}`;
@@ -258,7 +280,12 @@ export const transactionsRouter = createTRPCRouter({
           parentId: input.parentId ?? null,
           system: false,
         })
-        .returning({ id: transactionCategories.id, name: transactionCategories.name, slug: transactionCategories.slug, color: transactionCategories.color });
+        .returning({
+          id: transactionCategories.id,
+          name: transactionCategories.name,
+          slug: transactionCategories.slug,
+          color: transactionCategories.color,
+        });
 
       return created;
     }),
@@ -266,7 +293,11 @@ export const transactionsRouter = createTRPCRouter({
   // List categories (flat) for selection in UI
   categories: teamProcedure.query(async ({ ctx }) => {
     const rows = await ctx.db
-      .select({ slug: transactionCategories.slug, name: transactionCategories.name, color: transactionCategories.color })
+      .select({
+        slug: transactionCategories.slug,
+        name: transactionCategories.name,
+        color: transactionCategories.color,
+      })
       .from(transactionCategories)
       .where(eq(transactionCategories.teamId, ctx.teamId));
     return rows;
@@ -287,7 +318,7 @@ export const transactionsRouter = createTRPCRouter({
       z
         .object({
           type: z.enum(["payment", "expense", "refund", "adjustment"]).optional(),
-          status: z.array(z.enum(["pending", "completed", "failed", "cancelled"]) ).optional(),
+          status: z.array(z.enum(["pending", "completed", "failed", "cancelled"])).optional(),
           categories: z.array(z.string()).optional(),
           tags: z.array(z.string().uuid()).optional(),
           assignedId: z.string().uuid().optional(),
@@ -301,11 +332,9 @@ export const transactionsRouter = createTRPCRouter({
           amountMin: z.number().optional(),
           amountMax: z.number().optional(),
           limit: z.number().min(1).max(100).default(50),
-          cursor: z
-            .object({ date: z.string().nullable(), id: z.string() })
-            .nullish(),
+          cursor: z.object({ date: z.string().nullable(), id: z.string() }).nullish(),
         })
-        .optional()
+        .optional(),
     )
     .query(async ({ ctx, input }) => {
       const rows = await getTransactionsEnriched(ctx.db, {
@@ -335,7 +364,10 @@ export const transactionsRouter = createTRPCRouter({
 
       const last = rows.at(-1);
       const nextCursor = last
-        ? { date: last.transaction.date ? new Date(last.transaction.date).toISOString() : null, id: last.transaction.id }
+        ? {
+            date: last.transaction.date ? new Date(last.transaction.date).toISOString() : null,
+            id: last.transaction.id,
+          }
         : null;
       return { items: rows, nextCursor };
     }),
@@ -382,8 +414,10 @@ export const transactionsRouter = createTRPCRouter({
 
       // date phrases
       const toISO = (d: Date) => d.toISOString();
-      const startOfDay = (d: Date) => new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate(), 0, 0, 0));
-      const endOfDay = (d: Date) => new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate(), 23, 59, 59));
+      const startOfDay = (d: Date) =>
+        new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate(), 0, 0, 0));
+      const endOfDay = (d: Date) =>
+        new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate(), 23, 59, 59));
       const now = new Date();
       if (/today/.test(q)) {
         out.startDate = toISO(startOfDay(now));
@@ -418,8 +452,8 @@ export const transactionsRouter = createTRPCRouter({
       // explicit ISO dates: from YYYY-MM-DD to YYYY-MM-DD
       const range = q.match(/(\d{4}-\d{2}-\d{2})\s*(?:to|-)\s*(\d{4}-\d{2}-\d{2})/);
       if (range) {
-        const s = new Date(range[1] + 'T00:00:00Z');
-        const e = new Date(range[2] + 'T23:59:59Z');
+        const s = new Date(range[1] + "T00:00:00Z");
+        const e = new Date(range[2] + "T23:59:59Z");
         out.startDate = toISO(s);
         out.endDate = toISO(e);
       }
@@ -428,18 +462,20 @@ export const transactionsRouter = createTRPCRouter({
     }),
 
   // Get single transaction with full details
-  byId: teamProcedure
-    .input(z.object({ id: z.string().uuid() }))
-    .query(async ({ ctx, input }) => {
-      const row = await getTransactionById(ctx.db, { teamId: ctx.teamId, transactionId: input.id });
-      return row;
-    }),
+  byId: teamProcedure.input(z.object({ id: z.string().uuid() })).query(async ({ ctx, input }) => {
+    const row = await getTransactionById(ctx.db, { teamId: ctx.teamId, transactionId: input.id });
+    return row;
+  }),
 
   // FTS search using fts_vector
   search: teamProcedure
     .input(z.object({ query: z.string().min(1), limit: z.number().min(1).max(100).default(20) }))
     .query(async ({ ctx, input }) => {
-      const rows = await searchTransactions(ctx.db, { teamId: ctx.teamId, query: input.query, limit: input.limit });
+      const rows = await searchTransactions(ctx.db, {
+        teamId: ctx.teamId,
+        query: input.query,
+        limit: input.limit,
+      });
       return rows;
     }),
 
@@ -459,7 +495,7 @@ export const transactionsRouter = createTRPCRouter({
             .optional(),
           excludeFromAnalytics: z.boolean().optional(),
         }),
-      })
+      }),
     )
     .mutation(async ({ ctx, input }) => {
       const updated = await updateTransactionsBulk(ctx.db, {
@@ -503,7 +539,7 @@ export const transactionsRouter = createTRPCRouter({
               size: z.number().nullable().optional(),
               type: z.string().optional(),
               checksum: z.string().optional(),
-            })
+            }),
           )
           .optional(),
       }),
@@ -597,10 +633,10 @@ export const transactionsRouter = createTRPCRouter({
               size: z.number().nullable().optional(),
               type: z.string().optional(),
               checksum: z.string().optional(),
-            })
+            }),
           )
           .optional(),
-      })
+      }),
     )
     .mutation(async ({ ctx, input }) => {
       const trxNumber = `TX-${Date.now()}`;
@@ -707,7 +743,12 @@ export const transactionsRouter = createTRPCRouter({
         })
         .from(transactionAllocations)
         .leftJoin(transactions, eq(transactionAllocations.transactionId, transactions.id))
-        .where(and(eq(transactionAllocations.invoiceId, input.invoiceId), eq(transactions.teamId, ctx.teamId)));
+        .where(
+          and(
+            eq(transactionAllocations.invoiceId, input.invoiceId),
+            eq(transactions.teamId, ctx.teamId),
+          ),
+        );
 
       return rows.map((r) => ({
         id: r.id,

@@ -26,15 +26,17 @@ const invoiceFormSchema = z.object({
   amount: z.number().min(0),
   dueDate: z.string().optional(),
   notes: z.string().optional(),
-  items: z.array(
-    z.object({
-      name: z.string().min(1),
-      quantity: z.number().int().min(1),
-      unitPrice: z.number().min(0),
-      total: z.number().min(0),
-      orderItemId: z.string().optional(),
-    }),
-  ).min(1),
+  items: z
+    .array(
+      z.object({
+        name: z.string().min(1),
+        quantity: z.number().int().min(1),
+        unitPrice: z.number().min(0),
+        total: z.number().min(0),
+        orderItemId: z.string().optional(),
+      }),
+    )
+    .min(1),
 });
 
 // Use z.infer directly instead of creating an alias
@@ -52,10 +54,11 @@ export function InvoiceForm({ invoiceId, orderId, onSuccess }: InvoiceFormProps)
   const autoSaveTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
 
   // Load default settings
-  const { data: defaultSettings, isLoading: loadingDefaults } = trpc.invoices.defaultSettings.useQuery(
-    orderId ? { orderId } : undefined,
-    { enabled: !invoiceId }, // Only load for new invoices
-  );
+  const { data: defaultSettings, isLoading: loadingDefaults } =
+    trpc.invoices.defaultSettings.useQuery(
+      orderId ? { orderId } : undefined,
+      { enabled: !invoiceId }, // Only load for new invoices
+    );
 
   // Load existing invoice for edit
   const { data: existingInvoice, isLoading: loadingInvoice } = trpc.invoices.getWithItems.useQuery(
@@ -81,7 +84,12 @@ export function InvoiceForm({ invoiceId, orderId, onSuccess }: InvoiceFormProps)
     },
   });
 
-  const { watch, setValue, handleSubmit, formState: { errors } } = form;
+  const {
+    watch,
+    setValue,
+    handleSubmit,
+    formState: { errors },
+  } = form;
   const items = watch("items");
   const subtotal = watch("subtotal");
   const tax = watch("tax");
@@ -105,7 +113,10 @@ export function InvoiceForm({ invoiceId, orderId, onSuccess }: InvoiceFormProps)
         amount: defaultSettings.amount,
         dueDate: defaultSettings.dueDate || "",
         notes: defaultSettings.notes || "",
-        items: defaultSettings.items.length > 0 ? defaultSettings.items : [{ name: "", quantity: 1, unitPrice: 0, total: 0 }],
+        items:
+          defaultSettings.items.length > 0
+            ? defaultSettings.items
+            : [{ name: "", quantity: 1, unitPrice: 0, total: 0 }],
       });
     }
   }, [defaultSettings, invoiceId, form]);
@@ -142,7 +153,11 @@ export function InvoiceForm({ invoiceId, orderId, onSuccess }: InvoiceFormProps)
       onSuccess?.();
     },
     onError: (error) => {
-      toast({ title: "Failed to create invoice", description: error.message, variant: "destructive" });
+      toast({
+        title: "Failed to create invoice",
+        description: error.message,
+        variant: "destructive",
+      });
     },
   });
 
@@ -154,7 +169,7 @@ export function InvoiceForm({ invoiceId, orderId, onSuccess }: InvoiceFormProps)
       }
       utils.invoices.list.invalidate();
       utils.invoices.getWithItems.invalidate({ id: invoiceId! });
-      
+
       // For auto-save, show saved status briefly
       if ((variables as any).isAutoSave) {
         setAutoSaveStatus("saved");
@@ -164,7 +179,11 @@ export function InvoiceForm({ invoiceId, orderId, onSuccess }: InvoiceFormProps)
       }
     },
     onError: (error) => {
-      toast({ title: "Failed to update invoice", description: error.message, variant: "destructive" });
+      toast({
+        title: "Failed to update invoice",
+        description: error.message,
+        variant: "destructive",
+      });
       setAutoSaveStatus("idle");
     },
   });
@@ -177,7 +196,11 @@ export function InvoiceForm({ invoiceId, orderId, onSuccess }: InvoiceFormProps)
       onSuccess?.();
     },
     onError: (error) => {
-      toast({ title: "Failed to send invoice", description: error.message, variant: "destructive" });
+      toast({
+        title: "Failed to send invoice",
+        description: error.message,
+        variant: "destructive",
+      });
     },
   });
 
@@ -187,7 +210,7 @@ export function InvoiceForm({ invoiceId, orderId, onSuccess }: InvoiceFormProps)
     if (item) {
       const total = item.quantity * item.unitPrice;
       setValue(`items.${index}.total`, total);
-      
+
       // Recalculate subtotal
       const newSubtotal = items.reduce((sum, it, idx) => {
         if (idx === index) return sum + total;
@@ -207,7 +230,7 @@ export function InvoiceForm({ invoiceId, orderId, onSuccess }: InvoiceFormProps)
     if (currentItems.length > 1) {
       const newItems = currentItems.filter((_, i) => i !== index);
       form.setValue("items", newItems);
-      
+
       // Recalculate subtotal
       const newSubtotal = newItems.reduce((sum, item) => sum + item.total, 0);
       setValue("subtotal", newSubtotal);
@@ -215,24 +238,27 @@ export function InvoiceForm({ invoiceId, orderId, onSuccess }: InvoiceFormProps)
   };
 
   // Auto-save function (debounced)
-  const autoSave = useCallback((data: z.infer<typeof invoiceFormSchema>) => {
-    // Only auto-save draft invoices
-    if (!invoiceId || existingInvoice?.invoice?.status !== "draft") return;
-    
-    setAutoSaveStatus("saving");
-    const payload = {
-      id: invoiceId,
-      subtotal: data.subtotal,
-      tax: data.tax,
-      discount: data.discount,
-      amount: data.amount,
-      dueDate: data.dueDate ? new Date(data.dueDate).toISOString() : null,
-      notes: data.notes || null,
-      items: data.items,
-    };
-    
-    updateMutation.mutate(payload as any);
-  }, [invoiceId, existingInvoice, updateMutation]);
+  const autoSave = useCallback(
+    (data: z.infer<typeof invoiceFormSchema>) => {
+      // Only auto-save draft invoices
+      if (!invoiceId || existingInvoice?.invoice?.status !== "draft") return;
+
+      setAutoSaveStatus("saving");
+      const payload = {
+        id: invoiceId,
+        subtotal: data.subtotal,
+        tax: data.tax,
+        discount: data.discount,
+        amount: data.amount,
+        dueDate: data.dueDate ? new Date(data.dueDate).toISOString() : null,
+        notes: data.notes || null,
+        items: data.items,
+      };
+
+      updateMutation.mutate(payload as any);
+    },
+    [invoiceId, existingInvoice, updateMutation],
+  );
 
   // Watch form changes for auto-save
   useEffect(() => {
@@ -268,7 +294,7 @@ export function InvoiceForm({ invoiceId, orderId, onSuccess }: InvoiceFormProps)
     if (autoSaveTimeoutRef.current) {
       clearTimeout(autoSaveTimeoutRef.current);
     }
-    
+
     const payload = {
       invoiceNumber: data.invoiceNumber,
       orderId: data.orderId,
@@ -311,7 +337,7 @@ export function InvoiceForm({ invoiceId, orderId, onSuccess }: InvoiceFormProps)
             onUpload={(url) => setValue("logoUrl", url)}
             onRemove={() => setValue("logoUrl", undefined)}
           />
-          
+
           <div className="text-right space-y-2">
             <div>
               <Label className="text-xs text-muted-foreground">Invoice Number</Label>
@@ -323,11 +349,7 @@ export function InvoiceForm({ invoiceId, orderId, onSuccess }: InvoiceFormProps)
             </div>
             <div>
               <Label className="text-xs text-muted-foreground">Due Date</Label>
-              <Input
-                type="date"
-                {...form.register("dueDate")}
-                className="text-right"
-              />
+              <Input type="date" {...form.register("dueDate")} className="text-right" />
             </div>
           </div>
         </div>
@@ -388,7 +410,10 @@ export function InvoiceForm({ invoiceId, orderId, onSuccess }: InvoiceFormProps)
 
           {/* Items */}
           {items.map((item, index) => (
-            <div key={index} className="grid grid-cols-[2fr_80px_100px_100px_40px] gap-3 items-center">
+            <div
+              key={index}
+              className="grid grid-cols-[2fr_80px_100px_100px_40px] gap-3 items-center"
+            >
               <Input
                 placeholder="Item name"
                 {...form.register(`items.${index}.name`)}
@@ -420,9 +445,7 @@ export function InvoiceForm({ invoiceId, orderId, onSuccess }: InvoiceFormProps)
                 className="h-9 text-right font-mono"
               />
 
-              <div className="text-right font-mono text-sm">
-                ₵{item.total.toFixed(2)}
-              </div>
+              <div className="text-right font-mono text-sm">₵{item.total.toFixed(2)}</div>
 
               <Button
                 type="button"
@@ -438,9 +461,7 @@ export function InvoiceForm({ invoiceId, orderId, onSuccess }: InvoiceFormProps)
           ))}
         </div>
 
-        {errors.items && (
-          <p className="text-sm text-destructive mt-2">{errors.items.message}</p>
-        )}
+        {errors.items && <p className="text-sm text-destructive mt-2">{errors.items.message}</p>}
       </div>
 
       {/* Totals */}
@@ -453,7 +474,9 @@ export function InvoiceForm({ invoiceId, orderId, onSuccess }: InvoiceFormProps)
             </div>
 
             <div className="flex justify-between items-center gap-4">
-              <Label htmlFor="tax" className="text-sm text-muted-foreground">Tax</Label>
+              <Label htmlFor="tax" className="text-sm text-muted-foreground">
+                Tax
+              </Label>
               <Input
                 id="tax"
                 type="number"
@@ -466,7 +489,9 @@ export function InvoiceForm({ invoiceId, orderId, onSuccess }: InvoiceFormProps)
             </div>
 
             <div className="flex justify-between items-center gap-4">
-              <Label htmlFor="discount" className="text-sm text-muted-foreground">Discount</Label>
+              <Label htmlFor="discount" className="text-sm text-muted-foreground">
+                Discount
+              </Label>
               <Input
                 id="discount"
                 type="number"
@@ -488,7 +513,9 @@ export function InvoiceForm({ invoiceId, orderId, onSuccess }: InvoiceFormProps)
 
       {/* Notes */}
       <div className="border-t pt-6">
-        <Label htmlFor="notes" className="text-sm font-semibold mb-2 block">Notes</Label>
+        <Label htmlFor="notes" className="text-sm font-semibold mb-2 block">
+          Notes
+        </Label>
         <Textarea
           id="notes"
           rows={4}
@@ -539,7 +566,7 @@ export function InvoiceForm({ invoiceId, orderId, onSuccess }: InvoiceFormProps)
             </div>
           )}
         </div>
-        
+
         <div className="flex gap-3 ml-auto">
           <Button type="submit" disabled={isSaving} size="lg" className="min-w-[150px]">
             {isSaving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}

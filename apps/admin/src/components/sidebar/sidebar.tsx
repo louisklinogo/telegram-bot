@@ -85,7 +85,9 @@ export function Sidebar({ teams = [], currentTeamId }: SidebarProps) {
                         active={isLinkActive(item.href, pathname)}
                         expanded={isExpanded}
                         expandedItemHref={expandedItemHref}
-                        onToggle={(href) => setExpandedItemHref((prev) => (prev === href ? null : href))}
+                        onToggle={(href) =>
+                          setExpandedItemHref((prev) => (prev === href ? null : href))
+                        }
                       />
                     ))}
                   </div>
@@ -169,7 +171,7 @@ function SidebarLink({ item, active, expanded, expandedItemHref, onToggle }: Sid
                   }}
                   className={cn(
                     "w-6 h-6 flex items-center justify-center text-[#888] hover:text-primary transition-transform",
-                    isItemExpanded && "rotate-180"
+                    isItemExpanded && "rotate-180",
                   )}
                 >
                   <ChevronDown className="h-4 w-4" />
@@ -195,7 +197,7 @@ function SidebarLink({ item, active, expanded, expandedItemHref, onToggle }: Sid
                   prefetch={false}
                   href={child.href}
                   className={cn(
-                    "text-xs text-[#888] hover:text-primary transition-colors whitespace-nowrap overflow-hidden"
+                    "text-xs text-[#888] hover:text-primary transition-colors whitespace-nowrap overflow-hidden",
                   )}
                 >
                   {child.title}

@@ -5,17 +5,13 @@ import { Folder, FolderPlus, X } from "lucide-react";
 import { Label } from "@cimantikos/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Badge } from "@/components/ui/badge";
 
 // Common folder presets
 const PRESET_FOLDERS = [
   "Receipts",
-  "Invoices", 
+  "Invoices",
   "Contracts",
   "Legal",
   "Tax Documents",
@@ -57,7 +53,7 @@ export function FolderSelector({ value, onChange }: FolderSelectorProps) {
   return (
     <div className="space-y-3">
       <Label>Folder (Optional)</Label>
-      
+
       <div className="flex items-center gap-2">
         <Popover>
           <PopoverTrigger asChild>
@@ -113,11 +109,7 @@ export function FolderSelector({ value, onChange }: FolderSelectorProps) {
                       }}
                       autoFocus
                     />
-                    <Button
-                      size="sm"
-                      onClick={() => addFolder(newFolder)}
-                      disabled={!newFolder}
-                    >
+                    <Button size="sm" onClick={() => addFolder(newFolder)} disabled={!newFolder}>
                       Add
                     </Button>
                   </div>
@@ -128,11 +120,7 @@ export function FolderSelector({ value, onChange }: FolderSelectorProps) {
         </Popover>
 
         {value.length > 0 && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => onChange([])}
-          >
+          <Button variant="ghost" size="sm" onClick={() => onChange([])}>
             <X className="h-4 w-4" />
           </Button>
         )}

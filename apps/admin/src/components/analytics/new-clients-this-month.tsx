@@ -16,9 +16,7 @@ export function NewClientsThisMonth() {
       <CardContent className="pb-[34px]">
         <div className="flex flex-col gap-2">
           <div>New Clients</div>
-          <div className="text-sm text-muted-foreground">
-            Added this month
-          </div>
+          <div className="text-sm text-muted-foreground">Added this month</div>
         </div>
       </CardContent>
     </Card>

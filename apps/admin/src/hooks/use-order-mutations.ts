@@ -26,20 +26,21 @@ export function useCreateOrder() {
   const utils = trpc.useUtils();
   const m = trpc.orders.create.useMutation({
     onSuccess: async () => {
-      await Promise.all([
-        utils.orders.list.invalidate(),
-        utils.invoices.list.invalidate(),
-      ]);
+      await Promise.all([utils.orders.list.invalidate(), utils.invoices.list.invalidate()]);
       toast.success("Order created successfully");
     },
     onError: (error: any) => toast.error(`Failed to create order: ${error?.message}`),
   });
 
-  function normalizeCreateInput(payload: CreateOrderInput | Record<string, unknown>): CreateOrderInput {
+  function normalizeCreateInput(
+    payload: CreateOrderInput | Record<string, unknown>,
+  ): CreateOrderInput {
     const p = payload as any;
     const clientId = ("clientId" in p ? p.clientId : p.client_id) ?? null;
     const orderNumber = ("orderNumber" in p ? p.orderNumber : p.order_number) as string;
-    const status = String(("status" in p ? p.status : "generated")).toLowerCase() as CreateOrderInput["status"];
+    const status = String(
+      "status" in p ? p.status : "generated",
+    ).toLowerCase() as CreateOrderInput["status"];
     const items = (p.items ?? []) as OrderItemInput[];
     const totalPrice = Number(("totalPrice" in p ? p.totalPrice : p.total_price) ?? 0);
     const depositAmount = Number(("depositAmount" in p ? p.depositAmount : p.deposit_amount) ?? 0);
@@ -47,7 +48,17 @@ export function useCreateOrder() {
     const notes = ("notes" in p ? p.notes : null) as string | null;
     const due = ("dueDate" in p ? p.dueDate : p.due_date) as string | null | undefined;
     const dueDate = due ? new Date(due).toISOString() : null;
-    return { clientId, orderNumber, status, items, totalPrice, depositAmount, balanceAmount, notes, dueDate };
+    return {
+      clientId,
+      orderNumber,
+      status,
+      items,
+      totalPrice,
+      depositAmount,
+      balanceAmount,
+      notes,
+      dueDate,
+    };
   }
 
   return {
@@ -69,10 +80,17 @@ export function useUpdateOrder() {
     onError: (error: any) => toast.error(`Failed to update order: ${error?.message}`),
   });
 
-  function normalizeUpdateInput({ id, data }: { id: string; data: Partial<CreateOrderInput> | Record<string, unknown> }) {
+  function normalizeUpdateInput({
+    id,
+    data,
+  }: {
+    id: string;
+    data: Partial<CreateOrderInput> | Record<string, unknown>;
+  }) {
     const d = data as any;
     const out: any = { id };
-    if (d.clientId !== undefined || d.client_id !== undefined) out.clientId = d.clientId ?? d.client_id ?? null;
+    if (d.clientId !== undefined || d.client_id !== undefined)
+      out.clientId = d.clientId ?? d.client_id ?? null;
     if (d.orderNumber !== undefined || d.order_number !== undefined)
       out.orderNumber = d.orderNumber ?? d.order_number;
     if (d.status !== undefined) out.status = String(d.status).toLowerCase();
@@ -93,10 +111,14 @@ export function useUpdateOrder() {
 
   return {
     ...m,
-    mutate: (payload: { id: string; data: Partial<CreateOrderInput> | Record<string, unknown> }, opts?: any) =>
-      (m as any).mutate(normalizeUpdateInput(payload), opts),
-    mutateAsync: (payload: { id: string; data: Partial<CreateOrderInput> | Record<string, unknown> }, opts?: any) =>
-      (m as any).mutateAsync(normalizeUpdateInput(payload), opts),
+    mutate: (
+      payload: { id: string; data: Partial<CreateOrderInput> | Record<string, unknown> },
+      opts?: any,
+    ) => (m as any).mutate(normalizeUpdateInput(payload), opts),
+    mutateAsync: (
+      payload: { id: string; data: Partial<CreateOrderInput> | Record<string, unknown> },
+      opts?: any,
+    ) => (m as any).mutateAsync(normalizeUpdateInput(payload), opts),
   } as typeof m;
 }
 
@@ -104,10 +126,7 @@ export function useDeleteOrder() {
   const utils = trpc.useUtils();
   return trpc.orders.delete.useMutation({
     onSuccess: async () => {
-      await Promise.all([
-        utils.orders.list.invalidate(),
-        utils.invoices.list.invalidate(),
-      ]);
+      await Promise.all([utils.orders.list.invalidate(), utils.invoices.list.invalidate()]);
       toast.success("Order deleted successfully");
     },
     onError: (error: any) => toast.error(`Failed to delete order: ${error?.message}`),

@@ -5,11 +5,7 @@ import { X, Plus, Check } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { trpc } from "@/lib/trpc/client";
 import { useToast } from "@/components/ui/use-toast";
 
@@ -102,11 +98,7 @@ export function TagEditor({ documentId, initialTags = [], onUpdate }: TagEditorP
           )}
         </button>
       </PopoverTrigger>
-      <PopoverContent
-        className="w-80"
-        align="start"
-        onClick={(e) => e.stopPropagation()}
-      >
+      <PopoverContent className="w-80" align="start" onClick={(e) => e.stopPropagation()}>
         <div className="space-y-4">
           <div>
             <h4 className="font-medium text-sm mb-2">Edit Tags</h4>
@@ -138,12 +130,7 @@ export function TagEditor({ documentId, initialTags = [], onUpdate }: TagEditorP
               className="h-8 text-sm"
               autoFocus
             />
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={handleAddTag}
-              disabled={!newTag.trim()}
-            >
+            <Button size="sm" variant="outline" onClick={handleAddTag} disabled={!newTag.trim()}>
               <Plus className="h-4 w-4" />
             </Button>
           </div>
@@ -159,11 +146,7 @@ export function TagEditor({ documentId, initialTags = [], onUpdate }: TagEditorP
             >
               Cancel
             </Button>
-            <Button
-              size="sm"
-              onClick={handleSave}
-              disabled={updateMutation.isPending}
-            >
+            <Button size="sm" onClick={handleSave} disabled={updateMutation.isPending}>
               {updateMutation.isPending ? (
                 "Saving..."
               ) : (

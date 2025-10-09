@@ -15,26 +15,30 @@ type Props = {
   onSelect: (selected: User) => void;
 };
 
-function AssignedUser({ 
-  avatarUrl, 
-  fullName, 
-  email 
-}: { 
-  avatarUrl?: string | null; 
+function AssignedUser({
+  avatarUrl,
+  fullName,
+  email,
+}: {
+  avatarUrl?: string | null;
   fullName?: string | null;
   email?: string;
 }) {
   const initials = fullName
-    ? fullName.split(' ').map(n => n[0]).join('').toUpperCase()
-    : email?.[0]?.toUpperCase() ?? '?';
+    ? fullName
+        .split(" ")
+        .map((n) => n[0])
+        .join("")
+        .toUpperCase()
+    : (email?.[0]?.toUpperCase() ?? "?");
 
   return (
     <div className="flex items-center space-x-2">
       <Avatar className="h-6 w-6">
-        <AvatarImage src={avatarUrl ?? undefined} alt={fullName ?? email ?? ''} />
+        <AvatarImage src={avatarUrl ?? undefined} alt={fullName ?? email ?? ""} />
         <AvatarFallback className="text-xs">{initials}</AvatarFallback>
       </Avatar>
-      <span className="text-sm">{fullName ?? email ?? 'Unknown'}</span>
+      <span className="text-sm">{fullName ?? email ?? "Unknown"}</span>
     </div>
   );
 }
@@ -66,8 +70,8 @@ export function SelectUser({ onSelect }: Props) {
             });
           }}
         >
-          <AssignedUser 
-            avatarUrl={member.avatarUrl} 
+          <AssignedUser
+            avatarUrl={member.avatarUrl}
             fullName={member.fullName}
             email={member.email}
           />

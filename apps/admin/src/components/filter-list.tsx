@@ -67,12 +67,7 @@ export function FilterList({ filters, loading, onRemove }: Props) {
   };
 
   return (
-    <motion.ul
-      variants={listVariant}
-      initial="hidden"
-      animate="show"
-      className="flex space-x-2"
-    >
+    <motion.ul variants={listVariant} initial="hidden" animate="show" className="flex space-x-2">
       {loading && (
         <div className="flex space-x-2">
           <motion.li key="1" variants={itemVariant}>
@@ -90,9 +85,9 @@ export function FilterList({ filters, loading, onRemove }: Props) {
           .map(([key, value]) => {
             const filterKey = key as FilterKey;
             const renderedValue = renderFilter(filterKey, value);
-            
+
             if (!renderedValue) return null;
-            
+
             return (
               <motion.li key={key} variants={itemVariant}>
                 <Button

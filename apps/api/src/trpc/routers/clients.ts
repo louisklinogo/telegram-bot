@@ -44,7 +44,7 @@ export const clientsRouter = createTRPCRouter({
     )
     .query(async ({ ctx, input }) => {
       const limit = input?.limit ?? 50;
-      
+
       const clients = await getEnrichedClients(ctx.db, {
         teamId: ctx.teamId,
         search: input?.search,

@@ -1,6 +1,4 @@
-export function formatDateUTC(
-  dateLike: string | number | Date | null | undefined,
-): string {
+export function formatDateUTC(dateLike: string | number | Date | null | undefined): string {
   if (dateLike == null) return "";
   const d = new Date(dateLike);
   if (Number.isNaN(d.getTime())) return "";

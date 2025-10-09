@@ -1,7 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { trpc } from "@/lib/trpc/client";
@@ -41,7 +47,11 @@ export function CreateCategoryDialog({ open, onOpenChange, onCreated, parentId =
         <div className="space-y-3 py-2">
           <div className="space-y-1">
             <label className="text-xs text-muted-foreground">Name</label>
-            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Utilities, Sales" />
+            <Input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="e.g. Utilities, Sales"
+            />
           </div>
           <div className="space-y-1">
             <label className="text-xs text-muted-foreground">Color</label>

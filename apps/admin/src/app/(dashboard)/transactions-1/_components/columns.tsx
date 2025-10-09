@@ -37,7 +37,10 @@ type TableMeta = {
   toggleSelectedId?: (id: string) => void;
   toggleAllOnPage?: (checked: boolean, ids: string[]) => void;
   onViewDetails?: (row: TransactionRow) => void;
-  onToggleStatus?: (id: string, status: TransactionRow["transaction"]["status"]) => Promise<void> | void;
+  onToggleStatus?: (
+    id: string,
+    status: TransactionRow["transaction"]["status"],
+  ) => Promise<void> | void;
   onToggleExclude?: (id: string, exclude: boolean) => Promise<void> | void;
   onDelete?: (id: string) => Promise<void> | void;
 };
@@ -152,7 +155,11 @@ export const columns: ColumnDef<TransactionRow, any>[] = [
     header: "Method",
     cell: ({ row }) => {
       const method = (row.original as TransactionRow).transaction.paymentMethod;
-      return method ? <span className="capitalize">{method}</span> : <span className="text-muted-foreground">—</span>;
+      return method ? (
+        <span className="capitalize">{method}</span>
+      ) : (
+        <span className="text-muted-foreground">—</span>
+      );
     },
   },
   {
@@ -208,14 +215,16 @@ export const columns: ColumnDef<TransactionRow, any>[] = [
               onClick={() =>
                 meta?.onToggleStatus?.(
                   transaction.id,
-                  transaction.status === "completed" ? "pending" : "completed"
+                  transaction.status === "completed" ? "pending" : "completed",
                 )
               }
             >
               Mark {transaction.status === "completed" ? "uncompleted" : "completed"}
             </DropdownMenuItem>
             <DropdownMenuItem
-              onClick={() => meta?.onToggleExclude?.(transaction.id, !transaction.excludeFromAnalytics)}
+              onClick={() =>
+                meta?.onToggleExclude?.(transaction.id, !transaction.excludeFromAnalytics)
+              }
             >
               {transaction.excludeFromAnalytics ? "Include" : "Exclude"} from analytics
             </DropdownMenuItem>

@@ -25,7 +25,13 @@ export function VaultView({ initialData = [], teamId }: VaultViewProps) {
   const { ref, inView } = useInView();
   const supabase = createBrowserClient();
 
-  const { data: pages, fetchNextPage, hasNextPage, isFetching, refetch } = useSuspenseInfiniteQuery({
+  const {
+    data: pages,
+    fetchNextPage,
+    hasNextPage,
+    isFetching,
+    refetch,
+  } = useSuspenseInfiniteQuery({
     ...t.documents.list.infiniteQueryOptions(
       {
         q: params.q || undefined,
@@ -61,10 +67,10 @@ export function VaultView({ initialData = [], teamId }: VaultViewProps) {
 
     for (const doc of documents) {
       const pathTokens = doc.pathTokens || [];
-      
+
       // Check if document is in current path or subfolders
       const isInCurrentPath = currentPath.every((folder, i) => pathTokens[i] === folder);
-      
+
       if (!isInCurrentPath) continue;
 
       // If document is directly in current folder
@@ -132,14 +138,14 @@ export function VaultView({ initialData = [], teamId }: VaultViewProps) {
   return (
     <>
       <VaultHeader documents={files} teamId={teamId} />
-      
+
       {/* Breadcrumb */}
       {currentPath.length > 0 && (
         <div className="mb-4">
           <VaultBreadcrumb path={currentPath} onNavigate={handleNavigateFolder} />
         </div>
       )}
-      
+
       <div>
         {params.view === "list" ? (
           <VaultTable documents={files} />

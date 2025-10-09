@@ -49,7 +49,7 @@ export function OrderSheet({ open, onOpenChange, order }: OrderSheetProps) {
     { id: order?.id || "" },
     {
       enabled: !!order?.id && open,
-    }
+    },
   );
 
   const [formData, setFormData] = useState({
@@ -122,21 +122,21 @@ export function OrderSheet({ open, onOpenChange, order }: OrderSheetProps) {
       return;
     }
 
-  const orderData = {
+    const orderData = {
       clientId: formData.client_id || null,
       orderNumber: isEdit ? order.order_number : generateOrderNumber(),
-    status: String(formData.status || "generated"),
-    items: validItems.map((it) => ({
-      name: it.name,
-      quantity: Number(it.quantity || 0),
-      unit_cost: Number(it.unit_cost || 0),
-      total_cost: Number(it.total_cost || 0),
-    })),
+      status: String(formData.status || "generated"),
+      items: validItems.map((it) => ({
+        name: it.name,
+        quantity: Number(it.quantity || 0),
+        unit_cost: Number(it.unit_cost || 0),
+        total_cost: Number(it.total_cost || 0),
+      })),
       totalPrice: Number(totalPrice),
       depositAmount: Number(formData.deposit_amount),
       balanceAmount: Number(balanceAmount),
       notes: formData.notes || null,
-    dueDate: formData.due_date ? new Date(formData.due_date).toISOString() : null,
+      dueDate: formData.due_date ? new Date(formData.due_date).toISOString() : null,
     } as const;
 
     if (isEdit) {

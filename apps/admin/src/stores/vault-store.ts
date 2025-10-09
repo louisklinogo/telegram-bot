@@ -10,10 +10,9 @@ interface VaultState {
 
 export const useVaultStore = create<VaultState>()((set) => ({
   selectedDocuments: new Set(),
-  
-  setSelectedDocuments: (documents) =>
-    set({ selectedDocuments: documents }),
-  
+
+  setSelectedDocuments: (documents) => set({ selectedDocuments: documents }),
+
   toggleDocument: (documentId) =>
     set((state) => {
       const newSelection = new Set(state.selectedDocuments);
@@ -24,10 +23,8 @@ export const useVaultStore = create<VaultState>()((set) => ({
       }
       return { selectedDocuments: newSelection };
     }),
-  
-  clearSelection: () =>
-    set({ selectedDocuments: new Set() }),
-  
-  selectAll: (documentIds) =>
-    set({ selectedDocuments: new Set(documentIds) }),
+
+  clearSelection: () => set({ selectedDocuments: new Set() }),
+
+  selectAll: (documentIds) => set({ selectedDocuments: new Set(documentIds) }),
 }));

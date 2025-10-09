@@ -1,9 +1,12 @@
-'use client';
+"use client";
 
-import { useEffect, useRef, useState, useMemo } from 'react';
-import { useHotkeys } from 'react-hotkeys-hook';
-import { cn } from '@/lib/utils';
-import { Input } from '@/components/ui/input';
+import { useEffect, useRef, useState, useMemo } from "react";
+import { useHotkeys } from "react-hotkeys-hook";
+import { formatISO } from "date-fns";
+import { cn } from "@/lib/utils";
+import { Input } from "@/components/ui/input";
+import { Calendar } from "@/components/ui/calendar";
+import { Slider } from "@/components/ui/slider";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,9 +17,10 @@ import {
   DropdownMenuSubContent,
   DropdownMenuPortal,
   DropdownMenuCheckboxItem,
-} from '@/components/ui/dropdown-menu';
-import { Icons } from '@/components/ui/icons';
-import type { FilterState } from './types';
+} from "@/components/ui/dropdown-menu";
+import { Icons } from "@/components/ui/icons";
+import { FilterList } from "./filter-list";
+import type { FilterState } from "./types";
 
 type Props = {
   value?: FilterState;
@@ -25,12 +29,12 @@ type Props = {
 };
 
 const PLACEHOLDERS = [
-  'Software and taxes last month',
-  'Income last year', 
-  'Software last Q4',
-  'From Google without receipt',
-  'Search or filter',
-  'Without receipts this month',
+  "Software and taxes last month",
+  "Income last year",
+  "Software last Q4",
+  "From Google without receipt",
+  "Search or filter",
+  "Without receipts this month",
 ];
 
 interface FilterMenuItemProps {
@@ -64,51 +68,80 @@ function FilterMenuItem({ icon: Icon, label, children }: FilterMenuItemProps) {
   );
 }
 
-function FilterCheckboxItem({ id, name, checked = false, onCheckedChange }: FilterCheckboxItemProps) {
+function FilterCheckboxItem({
+  id,
+  name,
+  checked = false,
+  onCheckedChange,
+}: FilterCheckboxItemProps) {
   return (
-    <DropdownMenuCheckboxItem
-      key={id}
-      checked={checked}
-      onCheckedChange={onCheckedChange}
-    >
+    <DropdownMenuCheckboxItem key={id} checked={checked} onCheckedChange={onCheckedChange}>
       {name}
     </DropdownMenuCheckboxItem>
   );
 }
 
 export function TransactionsSearchFilter({ value, onChange, onAskAI }: Props) {
-  const [placeholder, setPlaceholder] = useState('');
+  const [placeholder, setPlaceholder] = useState("");
   const [streaming, setStreaming] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
-  
+
   const current = useMemo<FilterState>(() => ({ limit: 50, ...(value || {}) }), [value]);
-  const [prompt, setPrompt] = useState(current.search || '');
+  const [prompt, setPrompt] = useState(current.search || "");
 
   const patch = (p: Partial<FilterState>) => onChange({ ...current, ...p });
 
+  // Handle filter removal
+  const handleRemoveFilter = (key: string, value?: string) => {
+    if (key === 'statuses' && value) {
+      const newStatuses = current.statuses?.filter(s => s !== value);
+      patch({ statuses: newStatuses?.length ? newStatuses : undefined });
+    } else if (key === 'categories' && value) {
+      const newCategories = current.categories?.filter(c => c !== value);
+      patch({ categories: newCategories?.length ? newCategories : undefined });
+    } else if (key === 'tags' && value) {
+      const newTags = current.tags?.filter(t => t !== value);
+      patch({ tags: newTags?.length ? newTags : undefined });
+    } else if (key === 'accounts' && value) {
+      const newAccounts = current.accounts?.filter(a => a !== value);
+      patch({ accounts: newAccounts?.length ? newAccounts : undefined });
+    } else if (key === 'assignees' && value) {
+      const newAssignees = current.assignees?.filter(a => a !== value);
+      patch({ assignees: newAssignees?.length ? newAssignees : undefined });
+    } else {
+      patch({ [key]: undefined });
+    }
+  };
+
+  const handleClearAll = () => {
+    onChange({ limit: 50 });
+    setPrompt('');
+  };
+
   // Random placeholder
   useEffect(() => {
-    const randomPlaceholder = PLACEHOLDERS[Math.floor(Math.random() * PLACEHOLDERS.length)] ?? 'Search or filter';
+    const randomPlaceholder =
+      PLACEHOLDERS[Math.floor(Math.random() * PLACEHOLDERS.length)] ?? "Search or filter";
     setPlaceholder(randomPlaceholder);
   }, []);
 
   // Keyboard shortcuts
   useHotkeys(
-    'esc',
+    "esc",
     () => {
-      setPrompt('');
+      setPrompt("");
       onChange({ limit: 50 });
       setIsOpen(false);
     },
     {
       enableOnFormTags: true,
       enabled: Boolean(prompt) && isFocused,
-    }
+    },
   );
 
-  useHotkeys('meta+s', (evt) => {
+  useHotkeys("meta+s", (evt) => {
     evt.preventDefault();
     inputRef.current?.focus();
   });
@@ -122,10 +155,10 @@ export function TransactionsSearchFilter({ value, onChange, onAskAI }: Props) {
   };
 
   const handleSubmit = async () => {
-    if (prompt.split(' ').length > 1) {
+    if (prompt.split(" ").length > 1) {
       // Multi-word: AI processing
       setStreaming(true);
-      
+
       try {
         if (onAskAI) {
           const parsed = await onAskAI(prompt.trim());
@@ -134,7 +167,7 @@ export function TransactionsSearchFilter({ value, onChange, onAskAI }: Props) {
           }
         }
       } catch (error) {
-        console.error('AI parsing failed:', error);
+        console.error("AI parsing failed:", error);
       } finally {
         setStreaming(false);
       }
@@ -146,11 +179,11 @@ export function TransactionsSearchFilter({ value, onChange, onAskAI }: Props) {
 
   // Check if we have active filters (excluding search and limit)
   const validFilters = Object.fromEntries(
-    Object.entries(current).filter(([key]) => key !== 'search' && key !== 'limit')
+    Object.entries(current).filter(([key]) => key !== "search" && key !== "limit"),
   );
   const hasValidFilters = Object.values(validFilters).some(
-    (value) => value !== null && value !== undefined && 
-    (Array.isArray(value) ? value.length > 0 : true)
+    (value) =>
+      value !== null && value !== undefined && (Array.isArray(value) ? value.length > 0 : true),
   );
 
   return (
@@ -183,17 +216,27 @@ export function TransactionsSearchFilter({ value, onChange, onAskAI }: Props) {
               onClick={() => setIsOpen((prev) => !prev)}
               type="button"
               className={cn(
-                'absolute z-10 right-3 top-[10px] opacity-50 transition-opacity duration-300 hover:opacity-100',
-                hasValidFilters && 'opacity-100',
-                isOpen && 'opacity-100'
+                "absolute z-10 right-3 top-[10px] opacity-50 transition-opacity duration-300 hover:opacity-100",
+                hasValidFilters && "opacity-100",
+                isOpen && "opacity-100",
               )}
             >
-              {streaming ? <Icons.Refresh className="h-4 w-4 animate-spin" /> : <Icons.Filter className="h-4 w-4" />}
+              {streaming ? (
+                <Icons.Refresh className="h-4 w-4 animate-spin" />
+              ) : (
+                <Icons.Filter className="h-4 w-4" />
+              )}
             </button>
           </DropdownMenuTrigger>
         </form>
 
-        {/* Applied filters would go here */}
+        {/* Applied filters */}
+        <FilterList
+          filters={current}
+          onRemoveFilter={handleRemoveFilter}
+          onClearAll={handleClearAll}
+          loading={streaming}
+        />
       </div>
 
       <DropdownMenuContent
@@ -204,19 +247,65 @@ export function TransactionsSearchFilter({ value, onChange, onAskAI }: Props) {
         side="top"
       >
         <FilterMenuItem icon={Icons.CalendarMonth} label="Date">
-          <div className="p-4 text-sm text-muted-foreground">
-            Date range filter (to be implemented)
+          <div className="w-[280px] p-4">
+            <Calendar
+              mode="range"
+              initialFocus
+              toDate={new Date()}
+              selected={{
+                from: current.startDate ? new Date(current.startDate) : undefined,
+                to: current.endDate ? new Date(current.endDate) : undefined,
+              }}
+              onSelect={(range) => {
+                if (!range) return;
+
+                const newRange = {
+                  startDate: range.from
+                    ? formatISO(range.from, { representation: "date" })
+                    : undefined,
+                  endDate: range.to
+                    ? formatISO(range.to, { representation: "date" })
+                    : undefined,
+                };
+
+                patch(newRange);
+              }}
+            />
           </div>
         </FilterMenuItem>
 
         <FilterMenuItem icon={Icons.Currency} label="Amount">
-          <div className="p-4 text-sm text-muted-foreground">
-            Amount range filter (to be implemented)
+          <div className="w-[280px] p-4 space-y-4">
+            <div className="space-y-2">
+              <div className="flex items-center justify-between text-sm">
+                <span>Amount Range</span>
+                <span className="text-muted-foreground">
+                  ${current.amountMin || 0} - ${current.amountMax || 10000}
+                </span>
+              </div>
+              <Slider
+                value={[current.amountMin || 0, current.amountMax || 10000]}
+                onValueChange={([min, max]) => {
+                  patch({
+                    amountMin: min > 0 ? min : undefined,
+                    amountMax: max < 10000 ? max : undefined,
+                  });
+                }}
+                max={10000}
+                min={0}
+                step={50}
+                className="w-full"
+              />
+              <div className="flex justify-between text-xs text-muted-foreground">
+                <span>$0</span>
+                <span>$10,000</span>
+              </div>
+            </div>
           </div>
         </FilterMenuItem>
 
         <FilterMenuItem icon={Icons.Status} label="Status">
-          {(['completed', 'pending', 'failed', 'cancelled'] as const).map((status) => (
+          {(["completed", "pending", "failed", "cancelled"] as const).map((status) => (
             <FilterCheckboxItem
               key={status}
               id={status}
@@ -238,12 +327,12 @@ export function TransactionsSearchFilter({ value, onChange, onAskAI }: Props) {
             id="has-attachments"
             name="Has attachments"
             checked={current.hasAttachments === true}
-            onCheckedChange={() => 
+            onCheckedChange={() =>
               patch({ hasAttachments: current.hasAttachments === true ? undefined : true })
             }
           />
           <FilterCheckboxItem
-            id="no-attachments"  
+            id="no-attachments"
             name="No attachments"
             checked={current.hasAttachments === false}
             onCheckedChange={() =>
@@ -259,9 +348,7 @@ export function TransactionsSearchFilter({ value, onChange, onAskAI }: Props) {
         </FilterMenuItem>
 
         <FilterMenuItem icon={Icons.Status} label="Tags">
-          <div className="p-4 text-sm text-muted-foreground">
-            Tags filter (to be implemented) 
-          </div>
+          <div className="p-4 text-sm text-muted-foreground">Tags filter (to be implemented)</div>
         </FilterMenuItem>
 
         <FilterMenuItem icon={Icons.Accounts} label="Accounts">

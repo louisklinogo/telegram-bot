@@ -39,7 +39,11 @@ const MEASUREMENTS = [
   { key: "burst", label: "Burst", description: "Across bust" },
   { key: "under_burst", label: "Under Burst", description: "Under bust" },
   { key: "shoulder_to_nipple", label: "Shoulder to Nipple", description: "Vertical measurement" },
-  { key: "shoulder_to_under_burst", label: "Shoulder to Under Burst", description: "Vertical measurement" },
+  {
+    key: "shoulder_to_under_burst",
+    label: "Shoulder to Under Burst",
+    description: "Vertical measurement",
+  },
   { key: "nipple_to_nipple", label: "Nipple to Nipple", description: "Horizontal measurement" },
   { key: "crotch", label: "Crotch", description: "Rise measurement" },
   { key: "rise", label: "Rise", description: "Front rise" },
@@ -54,20 +58,18 @@ type Props = {
   placeholder?: string;
 };
 
-export function MeasurementSelector({ 
-  value, 
-  onSelect, 
+export function MeasurementSelector({
+  value,
+  onSelect,
   usedMeasurements = [],
-  placeholder = "Select measurement" 
+  placeholder = "Select measurement",
 }: Props) {
   const [open, setOpen] = React.useState(false);
 
   const selected = MEASUREMENTS.find((m) => m.key === value);
-  
+
   // Filter out already used measurements
-  const availableMeasurements = MEASUREMENTS.filter(
-    (m) => !usedMeasurements.includes(m.key)
-  );
+  const availableMeasurements = MEASUREMENTS.filter((m) => !usedMeasurements.includes(m.key));
 
   return (
     <Popover open={open} onOpenChange={setOpen}>

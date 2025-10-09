@@ -11,17 +11,13 @@ export function MostActiveClient() {
     return (
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="font-medium text-2xl">
-            No Active Client
-          </CardTitle>
+          <CardTitle className="font-medium text-2xl">No Active Client</CardTitle>
         </CardHeader>
 
         <CardContent className="pb-[34px]">
           <div className="flex flex-col gap-2">
             <div>Most Active Client</div>
-            <div className="text-sm text-muted-foreground">
-              No client activity past 30 days
-            </div>
+            <div className="text-sm text-muted-foreground">No client activity past 30 days</div>
           </div>
         </CardContent>
       </Card>
@@ -31,9 +27,7 @@ export function MostActiveClient() {
   return (
     <Card>
       <CardHeader className="pb-3">
-        <CardTitle className="font-medium text-2xl">
-          {data.clientName}
-        </CardTitle>
+        <CardTitle className="font-medium text-2xl">{data.clientName}</CardTitle>
       </CardHeader>
 
       <CardContent className="pb-[34px]">

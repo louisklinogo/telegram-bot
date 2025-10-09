@@ -44,9 +44,7 @@ export async function createServerClient(options?: CreateClientOptions) {
 
 // Suppress noisy Supabase warnings about getSession authenticity in server logs
 // We use middleware cookie refresh and tRPC token validation; this message is expected
-const IGNORE_WARNINGS = [
-  "Using the user object as returned from supabase.auth.getSession()",
-];
+const IGNORE_WARNINGS = ["Using the user object as returned from supabase.auth.getSession()"];
 const originalWarn = console.warn;
 const originalLog = console.log;
 console.warn = (...args: any[]) => {

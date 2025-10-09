@@ -12,22 +12,25 @@ export function useTransactionParams() {
     {
       // Prevent full rerenders/navigations; keep client-side state only
       shallow: true,
-    }
+    },
   );
 
   const isOpen = params.type === "create" || !!params.transactionId;
 
-  const open = useCallback((options?: { transactionId?: string; invoiceId?: string; clientId?: string }) => {
-    if (options?.transactionId) {
-      setParams({ type: "edit", transactionId: options.transactionId });
-    } else {
-      setParams({ 
-        type: "create", 
-        invoiceId: options?.invoiceId || null,
-        clientId: options?.clientId || null,
-      });
-    }
-  }, [setParams]);
+  const open = useCallback(
+    (options?: { transactionId?: string; invoiceId?: string; clientId?: string }) => {
+      if (options?.transactionId) {
+        setParams({ type: "edit", transactionId: options.transactionId });
+      } else {
+        setParams({
+          type: "create",
+          invoiceId: options?.invoiceId || null,
+          clientId: options?.clientId || null,
+        });
+      }
+    },
+    [setParams],
+  );
 
   const close = useCallback(() => {
     setParams({ type: null, transactionId: null, invoiceId: null, clientId: null });

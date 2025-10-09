@@ -2,7 +2,12 @@ import { cookies, headers } from "next/headers";
 import { OTPSignIn } from "@/components/otp-sign-in";
 import { GoogleSignIn } from "@/components/google-sign-in";
 import { CookiePreferredSignInProvider } from "@/lib/cookies";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import Link from "next/link";
 import { Icons } from "@/components/ui/icons";
 
@@ -19,7 +24,7 @@ function GithubSignInPlaceholder() {
   return (
     <div className="opacity-60">
       {/* TODO: Implement GitHub OAuth if desired */}
-      <div className="flex items-center justify-center gap-2 border rounded h-10"> 
+      <div className="flex items-center justify-center gap-2 border rounded h-10">
         <Icons.Github /> <span>Continue with GitHub (coming soon)</span>
       </div>
     </div>
@@ -69,7 +74,9 @@ export default async function LoginPage() {
               </div>
               <Accordion type="single" collapsible className="w-full">
                 <AccordionItem value="more" className="border-0">
-                  <AccordionTrigger className="justify-center text-sm">Other options</AccordionTrigger>
+                  <AccordionTrigger className="justify-center text-sm">
+                    Other options
+                  </AccordionTrigger>
                   <AccordionContent className="space-y-3 pt-2">
                     <Secondary />
                     <AppleSignInPlaceholder />
@@ -79,9 +86,14 @@ export default async function LoginPage() {
               </Accordion>
             </div>
             <div className="text-center text-xs text-muted-foreground">
-              By signing in you agree to our {" "}
-              <Link href="#" className="underline">Terms of service</Link> & {" "}
-              <Link href="#" className="underline">Privacy policy</Link>
+              By signing in you agree to our{" "}
+              <Link href="#" className="underline">
+                Terms of service
+              </Link>{" "}
+              &{" "}
+              <Link href="#" className="underline">
+                Privacy policy
+              </Link>
             </div>
           </div>
         </div>

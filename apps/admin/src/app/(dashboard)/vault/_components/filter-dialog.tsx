@@ -64,11 +64,7 @@ export function FilterDialog({ trigger }: FilterDialogProps) {
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
         {trigger || (
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-9 gap-2"
-          >
+          <Button variant="ghost" size="sm" className="h-9 gap-2">
             <Filter className="h-4 w-4" />
             {hasActiveFilters && (
               <Badge variant="secondary" className="h-5 px-1 text-xs">
@@ -81,9 +77,7 @@ export function FilterDialog({ trigger }: FilterDialogProps) {
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>Filter Documents</DialogTitle>
-          <DialogDescription>
-            Refine your document search with these filters
-          </DialogDescription>
+          <DialogDescription>Refine your document search with these filters</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-6 py-4">
@@ -102,10 +96,7 @@ export function FilterDialog({ trigger }: FilterDialogProps) {
                       className="cursor-pointer hover:bg-accent transition-colors"
                       onClick={() => toggleTag(tag)}
                     >
-                      {tag} ({tagData.count})
-                      {isSelected && (
-                        <X className="h-3 w-3 ml-1" />
-                      )}
+                      {tag} ({tagData.count}){isSelected && <X className="h-3 w-3 ml-1" />}
                     </Badge>
                   );
                 })}
@@ -122,11 +113,7 @@ export function FilterDialog({ trigger }: FilterDialogProps) {
             <div className="space-y-2">
               <Label>Active Filters</Label>
               <div className="flex flex-wrap gap-2">
-                {params.q && (
-                  <Badge variant="secondary">
-                    Search: {params.q}
-                  </Badge>
-                )}
+                {params.q && <Badge variant="secondary">Search: {params.q}</Badge>}
                 {params.tags?.map((tag) => (
                   <Badge key={tag} variant="secondary">
                     Tag: {tag}
@@ -139,11 +126,7 @@ export function FilterDialog({ trigger }: FilterDialogProps) {
 
         <DialogFooter className="gap-2 sm:gap-0">
           {hasActiveFilters && (
-            <Button
-              variant="ghost"
-              onClick={handleClearFilters}
-              disabled={isPending}
-            >
+            <Button variant="ghost" onClick={handleClearFilters} disabled={isPending}>
               Clear All
             </Button>
           )}

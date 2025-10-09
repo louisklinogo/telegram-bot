@@ -7,9 +7,7 @@
   },
   "files": {
     "ignoreUnknown": true,
-    "experimentalScannerIgnores": [
-      "midday-assistant-v2/**"
-    ]
+    "experimentalScannerIgnores": ["midday-assistant-v2/**"]
   },
   "formatter": {
     "enabled": true,

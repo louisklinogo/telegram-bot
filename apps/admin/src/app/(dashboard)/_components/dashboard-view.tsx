@@ -19,25 +19,29 @@ type DashboardViewProps = {
   initialMeasurements: any[];
 };
 
-export function DashboardView({ initialOrders, initialInvoices, initialMeasurements }: DashboardViewProps) {
+export function DashboardView({
+  initialOrders,
+  initialInvoices,
+  initialMeasurements,
+}: DashboardViewProps) {
   // ✅ CORRECT: Use initialData from server, no refetch on mount
   const [ordersResult] = trpc.orders.list.useSuspenseQuery(
     {},
     {
       initialData: { items: initialOrders, nextCursor: null },
-    }
+    },
   );
   const [invoicesResult] = trpc.invoices.list.useSuspenseQuery(
     { limit: 50 },
     {
       initialData: { items: initialInvoices, nextCursor: null },
-    }
+    },
   );
   const [measurementsResult] = trpc.measurements.list.useSuspenseQuery(
     { limit: 50 },
     {
       initialData: initialMeasurements,
-    }
+    },
   );
   const ordersData = (ordersResult as any)?.items ?? ordersResult ?? [];
   const invoicesData = (invoicesResult as any)?.items ?? invoicesResult ?? [];

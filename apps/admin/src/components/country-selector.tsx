@@ -50,11 +50,7 @@ export function CountrySelector({ defaultValue, onSelect }: Props) {
       </PopoverTrigger>
       <PopoverContent className="w-[225px] p-0" align="start">
         <Command loop>
-          <CommandInput
-            placeholder="Search country..."
-            className="h-9 px-2"
-            autoComplete="off"
-          />
+          <CommandInput placeholder="Search country..." className="h-9 px-2" autoComplete="off" />
           <CommandEmpty>No country found.</CommandEmpty>
           <CommandGroup>
             <CommandList className="overflow-y-auto max-h-[230px] pt-2">

@@ -97,11 +97,7 @@ export function BulkActionsBar() {
                 Delete
               </Button>
 
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={clearSelection}
-              >
+              <Button variant="ghost" size="sm" onClick={clearSelection}>
                 <X className="h-4 w-4 mr-2" />
                 Clear
               </Button>
@@ -113,9 +109,12 @@ export function BulkActionsBar() {
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete {selectedCount} document{selectedCount > 1 ? "s" : ""}?</AlertDialogTitle>
+            <AlertDialogTitle>
+              Delete {selectedCount} document{selectedCount > 1 ? "s" : ""}?
+            </AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently delete {selectedCount} document{selectedCount > 1 ? "s" : ""} from your vault. This action cannot be undone.
+              This will permanently delete {selectedCount} document{selectedCount > 1 ? "s" : ""}{" "}
+              from your vault. This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

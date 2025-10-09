@@ -20,8 +20,16 @@ type Props = {
 
 function getColorFromName(name: string): string {
   const colors = [
-    "#FF6B6B", "#4ECDC4", "#45B7D1", "#FFA07A", "#98D8C8",
-    "#F7DC6F", "#BB8FCE", "#85C1E2", "#F8B739", "#52C4AB"
+    "#FF6B6B",
+    "#4ECDC4",
+    "#45B7D1",
+    "#FFA07A",
+    "#98D8C8",
+    "#F7DC6F",
+    "#BB8FCE",
+    "#85C1E2",
+    "#F8B739",
+    "#52C4AB",
   ];
   let hash = 0;
   for (let i = 0; i < name.length; i++) {
@@ -66,20 +74,15 @@ function flattenCategories(categories: any[]): any[] {
   return flattened;
 }
 
-export function SelectCategory({
-  selected,
-  onChange,
-  headless,
-  hideLoading,
-}: Props) {
+export function SelectCategory({ selected, onChange, headless, hideLoading }: Props) {
   const queryClient = useQueryClient();
-  
+
   const { data, isLoading } = trpc.transactionCategories.list.useQuery();
-  
+
   const createMutation = trpc.transactionCategories.create.useMutation({
     onSuccess: (data: any) => {
       queryClient.invalidateQueries({
-        queryKey: [['transactionCategories', 'list']],
+        queryKey: [["transactionCategories", "list"]],
       });
 
       if (data) {
@@ -94,11 +97,13 @@ export function SelectCategory({
 
   const categories = data ? flattenCategories(data) : [];
 
-  const selectedValue = selected ? {
-    id: selected.id,
-    label: selected.name,
-    color: selected.color ?? getColorFromName(selected.name),
-  } : undefined;
+  const selectedValue = selected
+    ? {
+        id: selected.id,
+        label: selected.name,
+        color: selected.color ?? getColorFromName(selected.name),
+      }
+    : undefined;
 
   if (!selected && isLoading && !hideLoading) {
     return (
@@ -134,9 +139,7 @@ export function SelectCategory({
       renderSelectedItem={(selectedItem) => (
         <div className="flex items-center space-x-2">
           <CategoryColor color={selectedItem.color} />
-          <span className="text-left truncate max-w-[90%]">
-            {selectedItem.label}
-          </span>
+          <span className="text-left truncate max-w-[90%]">{selectedItem.label}</span>
         </div>
       )}
       renderOnCreate={(value) => {

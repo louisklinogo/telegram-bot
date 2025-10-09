@@ -44,7 +44,7 @@ export async function getTransactionsEnriched(
     isRecurring?: boolean;
     limit?: number;
     cursor?: { date: Date | null; id: string } | null;
-  }
+  },
 ) {
   const {
     teamId,
@@ -76,14 +76,16 @@ export async function getTransactionsEnriched(
       ? inArray(transactions.categorySlug, categories)
       : sql`true`,
     assignedId ? eq(transactions.assignedId, assignedId) : sql`true`,
-    assignees && assignees.length > 0 ? inArray(transactions.assignedId, assignees as any) : sql`true`,
+    assignees && assignees.length > 0
+      ? inArray(transactions.assignedId, assignees as any)
+      : sql`true`,
     accounts && accounts.length > 0 ? inArray(transactions.accountId, accounts as any) : sql`true`,
     isRecurring != null ? eq(transactions.recurring, isRecurring) : sql`true`,
     search
       ? or(
           ilike(transactions.name, `%${search}%`),
           ilike(transactions.description, `%${search}%`),
-          ilike(transactions.counterpartyName, `%${search}%`)
+          ilike(transactions.counterpartyName, `%${search}%`),
         )
       : sql`true`,
     amountMin != null ? gte(transactions.amount, amountMin as any) : sql`true`,
@@ -93,9 +95,12 @@ export async function getTransactionsEnriched(
     cursor?.date
       ? or(
           lt(transactions.date, cursor.date.toISOString().slice(0, 10)),
-          and(eq(transactions.date, cursor.date.toISOString().slice(0, 10)), lt(transactions.id, cursor.id))
+          and(
+            eq(transactions.date, cursor.date.toISOString().slice(0, 10)),
+            lt(transactions.id, cursor.id),
+          ),
         )
-      : sql`true`
+      : sql`true`,
   );
 
   // Base query with aggregations
@@ -129,20 +134,15 @@ export async function getTransactionsEnriched(
       transactionCategories,
       and(
         eq(transactions.teamId, transactionCategories.teamId),
-        eq(transactions.categorySlug, transactionCategories.slug)
-      )
+        eq(transactions.categorySlug, transactionCategories.slug),
+      ),
     )
     .leftJoin(users, eq(transactions.assignedId, users.id))
     .leftJoin(transactionTags, eq(transactions.id, transactionTags.transactionId))
     .leftJoin(tags, eq(transactionTags.tagId, tags.id))
     .leftJoin(transactionAttachments, eq(transactions.id, transactionAttachments.transactionId))
     .where(whereConditions)
-    .groupBy(
-      transactions.id,
-      clients.id,
-      transactionCategories.id,
-      users.id
-    )
+    .groupBy(transactions.id, clients.id, transactionCategories.id, users.id)
     .orderBy(desc(transactions.date), desc(transactions.id))
     .limit(limit);
 
@@ -151,7 +151,7 @@ export async function getTransactionsEnriched(
   // Apply attachment filter if specified
   if (hasAttachments !== undefined) {
     return results.filter((r) =>
-      hasAttachments ? r.attachmentCount > 0 : r.attachmentCount === 0
+      hasAttachments ? r.attachmentCount > 0 : r.attachmentCount === 0,
     );
   }
 
@@ -175,7 +175,7 @@ export async function searchTransactions(
     teamId: string;
     query: string;
     limit?: number;
-  }
+  },
 ) {
   const { teamId, query, limit = 20 } = params;
 
@@ -194,15 +194,15 @@ export async function searchTransactions(
       transactionCategories,
       and(
         eq(transactions.teamId, transactionCategories.teamId),
-        eq(transactions.categorySlug, transactionCategories.slug)
-      )
+        eq(transactions.categorySlug, transactionCategories.slug),
+      ),
     )
     .where(
       and(
         eq(transactions.teamId, teamId),
         isNull(transactions.deletedAt),
-        sql`fts_vector @@ websearch_to_tsquery('english', ${query})`
-      )
+        sql`fts_vector @@ websearch_to_tsquery('english', ${query})`,
+      ),
     )
     .orderBy(sql`rank DESC`, desc(transactions.date), desc(transactions.id))
     .limit(limit);
@@ -223,10 +223,17 @@ export async function updateTransactionsBulk(
       status?: "pending" | "completed" | "failed" | "cancelled";
       assignedId?: string | null;
       recurring?: boolean;
-      frequency?: "weekly" | "biweekly" | "monthly" | "semi_monthly" | "annually" | "irregular" | null;
+      frequency?:
+        | "weekly"
+        | "biweekly"
+        | "monthly"
+        | "semi_monthly"
+        | "annually"
+        | "irregular"
+        | null;
       excludeFromAnalytics?: boolean;
     };
-  }
+  },
 ) {
   const { teamId, transactionIds, updates } = params;
 
@@ -240,8 +247,8 @@ export async function updateTransactionsBulk(
       and(
         eq(transactions.teamId, teamId),
         inArray(transactions.id, transactionIds),
-        isNull(transactions.deletedAt)
-      )
+        isNull(transactions.deletedAt),
+      ),
     )
     .returning();
 }
@@ -254,7 +261,7 @@ export async function softDeleteTransactionsBulk(
   params: {
     teamId: string;
     transactionIds: string[];
-  }
+  },
 ) {
   const { teamId, transactionIds } = params;
 
@@ -266,8 +273,8 @@ export async function softDeleteTransactionsBulk(
         eq(transactions.teamId, teamId),
         inArray(transactions.id, transactionIds),
         isNull(transactions.deletedAt),
-        eq(transactions.manual, true)
-      )
+        eq(transactions.manual, true),
+      ),
     )
     .returning({ id: transactions.id });
 
@@ -282,7 +289,7 @@ export async function getTransactionById(
   params: {
     teamId: string;
     transactionId: string;
-  }
+  },
 ) {
   const { teamId, transactionId } = params;
 
@@ -326,8 +333,8 @@ export async function getTransactionById(
       transactionCategories,
       and(
         eq(transactions.teamId, transactionCategories.teamId),
-        eq(transactions.categorySlug, transactionCategories.slug)
-      )
+        eq(transactions.categorySlug, transactionCategories.slug),
+      ),
     )
     .leftJoin(users, eq(transactions.assignedId, users.id))
     .leftJoin(transactionTags, eq(transactions.id, transactionTags.transactionId))
@@ -337,8 +344,8 @@ export async function getTransactionById(
       and(
         eq(transactions.teamId, teamId),
         eq(transactions.id, transactionId),
-        isNull(transactions.deletedAt)
-      )
+        isNull(transactions.deletedAt),
+      ),
     )
     .groupBy(transactions.id, clients.id, transactionCategories.id, users.id)
     .limit(1);
@@ -353,7 +360,7 @@ export async function getTransactionCategories(
   db: DbClient,
   params: {
     teamId: string;
-  }
+  },
 ) {
   const { teamId } = params;
 
@@ -393,7 +400,7 @@ export async function getTransactionTags(
   db: DbClient,
   params: {
     teamId: string;
-  }
+  },
 ) {
   const { teamId } = params;
 

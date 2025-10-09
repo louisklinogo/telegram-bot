@@ -46,9 +46,7 @@ type ColumnContext = {
   onDelete: (id: string) => void;
 };
 
-export function createTransactionColumns(
-  context: ColumnContext
-): ColumnDef<TransactionRow>[] {
+export function createTransactionColumns(context: ColumnContext): ColumnDef<TransactionRow>[] {
   return [
     {
       id: "select",
@@ -98,9 +96,7 @@ export function createTransactionColumns(
       header: "Description",
       cell: ({ row }) => (
         <div className="space-y-1">
-          <p className="text-sm font-medium">
-            {row.original.transaction.description}
-          </p>
+          <p className="text-sm font-medium">{row.original.transaction.description}</p>
           {row.original.transaction.paymentReference && (
             <p className="text-xs text-muted-foreground">
               Ref: {row.original.transaction.paymentReference}
@@ -141,9 +137,7 @@ export function createTransactionColumns(
       header: "Category",
       cell: ({ row }) => (
         <span className="text-sm text-muted-foreground">
-          {row.original.category?.name ||
-            row.original.transaction.categorySlug ||
-            "-"}
+          {row.original.category?.name || row.original.transaction.categorySlug || "-"}
         </span>
       ),
     },
@@ -186,11 +180,7 @@ export function createTransactionColumns(
           <div className="text-right font-semibold">
             <span
               className={
-                type === "payment"
-                  ? "text-green-600"
-                  : type === "expense"
-                    ? "text-red-600"
-                    : ""
+                type === "payment" ? "text-green-600" : type === "expense" ? "text-red-600" : ""
               }
             >
               {context.currencyCode} {amount.toLocaleString()}
@@ -221,10 +211,7 @@ export function createTransactionColumns(
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 onClick={() =>
-                  context.onToggleStatus(
-                    transaction.id,
-                    isCompleted ? "pending" : "completed"
-                  )
+                  context.onToggleStatus(transaction.id, isCompleted ? "pending" : "completed")
                 }
               >
                 Mark as {isCompleted ? "uncompleted" : "completed"}

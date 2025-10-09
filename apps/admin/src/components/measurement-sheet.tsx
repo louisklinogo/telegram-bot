@@ -177,9 +177,7 @@ export function MeasurementSheet({ open, onOpenChange, measurement }: Measuremen
       <SheetContent className="sm:max-w-[650px]">
         <SheetHeader className="mb-6 flex justify-between items-center flex-row">
           <div className="flex items-center gap-2">
-            <h2 className="text-xl">
-              {isEdit ? "Edit Measurement" : "New Measurement"}
-            </h2>
+            <h2 className="text-xl">{isEdit ? "Edit Measurement" : "New Measurement"}</h2>
             {isEdit && (measurement as any)?.version && (
               <Badge variant="outline" className="text-xs">
                 v{(measurement as any).version}
@@ -224,11 +222,7 @@ export function MeasurementSheet({ open, onOpenChange, measurement }: Measuremen
                       <FormLabel className="text-xs text-[#878787] font-normal">
                         Client <span className="text-destructive">*</span>
                       </FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        value={field.value}
-                        disabled={isEdit}
-                      >
+                      <Select onValueChange={field.onChange} value={field.value} disabled={isEdit}>
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Select client" />
@@ -248,12 +242,7 @@ export function MeasurementSheet({ open, onOpenChange, measurement }: Measuremen
                 />
               </div>
 
-              <Accordion
-                type="multiple"
-                defaultValue={["measurements"]}
-                className="space-y-6"
-              >
-
+              <Accordion type="multiple" defaultValue={["measurements"]} className="space-y-6">
                 {/* Measurements Section */}
                 <AccordionItem value="measurements">
                   <AccordionTrigger>Measurements</AccordionTrigger>
@@ -290,7 +279,7 @@ export function MeasurementSheet({ open, onOpenChange, measurement }: Measuremen
                                 Record Name
                               </FormLabel>
                               <FormControl>
-                                <Input 
+                                <Input
                                   {...field}
                                   value={field.value ?? ""}
                                   placeholder="e.g., Wedding Kaftan 2024"
@@ -417,8 +406,8 @@ export function MeasurementSheet({ open, onOpenChange, measurement }: Measuremen
                 >
                   Cancel
                 </Button>
-                <SubmitButton 
-                  type="submit" 
+                <SubmitButton
+                  type="submit"
                   isSubmitting={isLoading}
                   disabled={!form.formState.isDirty}
                 >

@@ -93,11 +93,7 @@ export function InvoiceLogo({ logoUrl, onUpload, onRemove }: InvoiceLogoProps) {
       <label htmlFor="logo-upload" className="block h-full w-full cursor-pointer">
         {logoUrl ? (
           <div className="relative h-full w-full">
-            <img
-              src={logoUrl}
-              alt="Invoice logo"
-              className="h-full w-full object-contain"
-            />
+            <img src={logoUrl} alt="Invoice logo" className="h-full w-full object-contain" />
             <button
               type="button"
               className="absolute inset-0 bg-black/50 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"

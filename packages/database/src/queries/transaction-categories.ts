@@ -78,7 +78,12 @@ async function validateParent(db: DbClient, teamId: string, parentId: string | n
   if (!parent) throw new Error("Parent category not found");
 }
 
-async function assertNoCycle(db: DbClient, teamId: string, selfId: string, newParentId: string | null | undefined) {
+async function assertNoCycle(
+  db: DbClient,
+  teamId: string,
+  selfId: string,
+  newParentId: string | null | undefined,
+) {
   if (!newParentId) return;
   if (newParentId === selfId) throw new Error("Cannot set category as its own parent");
   let cursor: string | null | undefined = newParentId;
@@ -92,7 +97,17 @@ async function assertNoCycle(db: DbClient, teamId: string, selfId: string, newPa
 }
 
 export async function createCategory(db: DbClient, params: CreateCategoryParams) {
-  const { teamId, name, color, description, parentId, taxRate, taxType, taxReportingCode, excluded } = params;
+  const {
+    teamId,
+    name,
+    color,
+    description,
+    parentId,
+    taxRate,
+    taxType,
+    taxReportingCode,
+    excluded,
+  } = params;
   await validateParent(db, teamId, parentId ?? null);
 
   const slug = await generateUniqueSlug(db, teamId, name);
@@ -116,7 +131,8 @@ export async function createCategory(db: DbClient, params: CreateCategoryParams)
 }
 
 export async function updateCategory(db: DbClient, teamId: string, params: UpdateCategoryParams) {
-  const { id, name, color, description, parentId, taxRate, taxType, taxReportingCode, excluded } = params;
+  const { id, name, color, description, parentId, taxRate, taxType, taxReportingCode, excluded } =
+    params;
   const current = await getCategoryById(db, teamId, id);
   if (!current) throw new Error("Category not found");
 

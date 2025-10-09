@@ -19,11 +19,7 @@ type DocumentRelationsProps = {
     invoiceId?: string;
     clientId?: string;
   };
-  onChange: (value: {
-    orderId?: string;
-    invoiceId?: string;
-    clientId?: string;
-  }) => void;
+  onChange: (value: { orderId?: string; invoiceId?: string; clientId?: string }) => void;
 };
 
 export function DocumentRelationsSelector({ value, onChange }: DocumentRelationsProps) {
@@ -54,9 +50,7 @@ export function DocumentRelationsSelector({ value, onChange }: DocumentRelations
         </div>
         <Select
           value={value.orderId || "none"}
-          onValueChange={(val) =>
-            onChange({ ...value, orderId: val === "none" ? undefined : val })
-          }
+          onValueChange={(val) => onChange({ ...value, orderId: val === "none" ? undefined : val })}
         >
           <SelectTrigger>
             <SelectValue placeholder="Select an order..." />

@@ -18,7 +18,9 @@ export function CreateCategoryLauncher({ categories = [] }: { categories?: Categ
   const router = useRouter();
   return (
     <>
-      <Button size="sm" onClick={() => setOpen(true)}>Add category</Button>
+      <Button size="sm" onClick={() => setOpen(true)}>
+        Add category
+      </Button>
       <CategoryCreateSheet
         open={open}
         onOpenChange={(v) => {

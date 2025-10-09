@@ -60,18 +60,20 @@ export function OrdersView({ initialOrders = [] }: OrdersViewProps) {
   const [statusFilter, setStatusFilter] = useState<(typeof ORDER_STATUSES)[number]>("all");
 
   // ✅ CORRECT: Use initialData from server for infinite query
-  const [pages, { fetchNextPage, hasNextPage, isFetchingNextPage }] = trpc.orders.list.useSuspenseInfiniteQuery(
-    { limit: 50 },
-    {
-      getNextPageParam: (last) => last?.nextCursor ?? null,
-      initialData: initialOrders.length > 0 
-        ? {
-            pages: [{ items: initialOrders, nextCursor: null }],
-            pageParams: [null],
-          }
-        : undefined,
-    }
-  );
+  const [pages, { fetchNextPage, hasNextPage, isFetchingNextPage }] =
+    trpc.orders.list.useSuspenseInfiniteQuery(
+      { limit: 50 },
+      {
+        getNextPageParam: (last) => last?.nextCursor ?? null,
+        initialData:
+          initialOrders.length > 0
+            ? {
+                pages: [{ items: initialOrders, nextCursor: null }],
+                pageParams: [null],
+              }
+            : undefined,
+      },
+    );
   const data = useMemo(() => (pages?.pages || []).flatMap((p: any) => p?.items || []), [pages]);
 
   const orders: OrderRow[] = useMemo(

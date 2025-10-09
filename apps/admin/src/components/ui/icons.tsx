@@ -221,9 +221,7 @@ export const Icons = {
     // Uses public asset; size via className/width/height
     <img src="/faworra-black.svg" alt="Faworra" {...props} />
   ),
-  FaworraWhite: (props: any) => (
-    <img src="/faworra-white.svg" alt="Faworra" {...props} />
-  ),
+  FaworraWhite: (props: any) => <img src="/faworra-white.svg" alt="Faworra" {...props} />,
   Google: (props: any) => (
     <svg width="20" height="20" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
       <g clipPath="url(#a)">

@@ -28,7 +28,10 @@ app.get("/health", (c) => c.json({ status: "ok" }));
 
 app.use(
   "/trpc/*",
-  trpcServer({ router: appRouter, createContext: createTRPCContext }) as unknown as MiddlewareHandler<ApiEnv>,
+  trpcServer({
+    router: appRouter,
+    createContext: createTRPCContext,
+  }) as unknown as MiddlewareHandler<ApiEnv>,
 );
 
 registerWebhookRoutes(app);

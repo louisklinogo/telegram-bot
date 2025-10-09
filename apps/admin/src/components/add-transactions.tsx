@@ -35,10 +35,7 @@ export function AddTransactions({ onCreate }: Props) {
           <Plus className="h-4 w-4" />
           <span>Create transaction</span>
         </DropdownMenuItem>
-        <DropdownMenuItem
-          disabled
-          className="space-x-2 opacity-50"
-        >
+        <DropdownMenuItem disabled className="space-x-2 opacity-50">
           <FileUp className="h-4 w-4" />
           <span>Import/backfill</span>
         </DropdownMenuItem>

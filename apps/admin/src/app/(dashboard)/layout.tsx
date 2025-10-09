@@ -27,9 +27,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
       <Sidebar teams={userTeams} currentTeamId={teamId} />
       <div className="flex min-h-screen flex-1 flex-col md:ml-[70px]">
         <Header />
-        <div className="px-8 pb-4">
-          {children}
-        </div>
+        <div className="px-8 pb-4">{children}</div>
       </div>
     </div>
   );

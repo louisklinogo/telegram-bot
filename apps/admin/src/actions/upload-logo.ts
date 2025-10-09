@@ -5,7 +5,7 @@ import { cookies } from "next/headers";
 
 export async function uploadLogo(formData: FormData) {
   const file = formData.get("file") as File;
-  
+
   if (!file) {
     return { error: "No file provided" };
   }
@@ -22,9 +22,11 @@ export async function uploadLogo(formData: FormData) {
 
   try {
     const supabase = await createServerClient();
-    
+
     // Get user session
-    const { data: { session } } = await supabase.auth.getSession();
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
     if (!session) {
       return { error: "Not authenticated" };
     }
@@ -49,12 +51,10 @@ export async function uploadLogo(formData: FormData) {
     const buffer = Buffer.from(arrayBuffer);
 
     // Upload to Supabase Storage
-    const { data, error } = await supabase.storage
-      .from("invoice-logos")
-      .upload(fileName, buffer, {
-        contentType: file.type,
-        upsert: false,
-      });
+    const { data, error } = await supabase.storage.from("invoice-logos").upload(fileName, buffer, {
+      contentType: file.type,
+      upsert: false,
+    });
 
     if (error) {
       console.error("Upload error:", error);
@@ -62,9 +62,9 @@ export async function uploadLogo(formData: FormData) {
     }
 
     // Get public URL
-    const { data: { publicUrl } } = supabase.storage
-      .from("invoice-logos")
-      .getPublicUrl(data.path);
+    const {
+      data: { publicUrl },
+    } = supabase.storage.from("invoice-logos").getPublicUrl(data.path);
 
     return { url: publicUrl };
   } catch (error) {
@@ -76,9 +76,11 @@ export async function uploadLogo(formData: FormData) {
 export async function deleteLogo(url: string) {
   try {
     const supabase = await createServerClient();
-    
+
     // Get user session
-    const { data: { session } } = await supabase.auth.getSession();
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
     if (!session) {
       return { error: "Not authenticated" };
     }
@@ -89,9 +91,7 @@ export async function deleteLogo(url: string) {
     const filePath = pathParts.slice(pathParts.indexOf("invoice-logos") + 1).join("/");
 
     // Delete from storage
-    const { error } = await supabase.storage
-      .from("invoice-logos")
-      .remove([filePath]);
+    const { error } = await supabase.storage.from("invoice-logos").remove([filePath]);
 
     if (error) {
       console.error("Delete error:", error);

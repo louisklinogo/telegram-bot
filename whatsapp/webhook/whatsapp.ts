@@ -28,14 +28,11 @@ async function downloadWhatsAppMedia(mediaId: string): Promise<{
 } | null> {
   try {
     // First, get the media URL
-    const mediaResponse = await fetch(
-      `https://graph.facebook.com/v18.0/${mediaId}`,
-      {
-        headers: {
-          Authorization: `Bearer ${WHATSAPP_ACCESS_TOKEN}`,
-        },
+    const mediaResponse = await fetch(`https://graph.facebook.com/v18.0/${mediaId}`, {
+      headers: {
+        Authorization: `Bearer ${WHATSAPP_ACCESS_TOKEN}`,
       },
-    );
+    });
 
     if (!mediaResponse.ok) {
       logger.error("Failed to get media URL", {
@@ -62,13 +59,11 @@ async function downloadWhatsAppMedia(mediaId: string): Promise<{
     }
 
     const buffer = Buffer.from(await fileResponse.arrayBuffer());
-    const contentType =
-      fileResponse.headers.get("content-type") || "application/octet-stream";
+    const contentType = fileResponse.headers.get("content-type") || "application/octet-stream";
 
     // Generate filename based on media type and ID
     const extension = getExtensionFromMimeType(contentType);
-    const filename =
-      mediaInfo.filename || `whatsapp_media_${mediaId}${extension}`;
+    const filename = mediaInfo.filename || `whatsapp_media_${mediaId}${extension}`;
 
     return {
       data: buffer,
@@ -89,11 +84,9 @@ function getExtensionFromMimeType(mimeType: string): string {
     "image/webp": ".webp",
     "application/pdf": ".pdf",
     "application/msword": ".doc",
-    "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
-      ".docx",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document": ".docx",
     "application/vnd.ms-excel": ".xls",
-    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet":
-      ".xlsx",
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": ".xlsx",
   };
 
   return mimeToExt[mimeType] || "";
@@ -255,9 +248,7 @@ async function processWhatsAppMessage(
   if (message.text?.body) {
     // Look for inbox ID in the message text
     // Expected format: "inboxId: <id>" or just "<id>" if it looks like a valid inbox ID
-    const inboxMatch = message.text.body.match(
-      /(?:inbox[Ii]d:\s*)?([a-zA-Z0-9-_]+)/,
-    );
+    const inboxMatch = message.text.body.match(/(?:inbox[Ii]d:\s*)?([a-zA-Z0-9-_]+)/);
     if (inboxMatch) {
       inboxId = inboxMatch[1];
     }
@@ -323,10 +314,7 @@ async function processWhatsAppMessage(
     }
 
     // Add random suffix to filename to make it unique
-    const uniqueFileName = downloadedMedia.filename.replace(
-      /(\.[^.]+)?$/,
-      `_${nanoid(4)}$1`,
-    );
+    const uniqueFileName = downloadedMedia.filename.replace(/(\.[^.]+)?$/, `_${nanoid(4)}$1`);
 
     // Upload to Supabase storage
     const { data: uploadData, error: uploadError } = await supabase.storage

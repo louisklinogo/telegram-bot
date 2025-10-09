@@ -11,7 +11,7 @@ export function useInvoiceParams() {
     "type",
     parseAsStringEnum(["create", "edit", "view"]).withDefault("view"),
   );
-  
+
   const [invoiceId, setInvoiceId] = useQueryState("invoiceId", parseAsString);
   const [orderId, setOrderId] = useQueryState("orderId", parseAsString);
 

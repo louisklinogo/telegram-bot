@@ -39,7 +39,7 @@ export function VaultSearchFilter() {
           className={cn(
             "opacity-50 transition-opacity duration-300 hover:opacity-100",
             hasValidFilters && "opacity-100",
-            isOpen && "opacity-100"
+            isOpen && "opacity-100",
           )}
         >
           <Filter className="h-4 w-4" />
@@ -115,9 +115,7 @@ export function VaultSearchFilter() {
                   </DropdownMenuCheckboxItem>
                 ))}
 
-                {!allTags.length && (
-                  <DropdownMenuItem disabled>No tags found</DropdownMenuItem>
-                )}
+                {!allTags.length && <DropdownMenuItem disabled>No tags found</DropdownMenuItem>}
               </DropdownMenuSubContent>
             </DropdownMenuPortal>
           </DropdownMenuSub>

@@ -30,14 +30,14 @@ export function BulkActions({ ids, onComplete }: Props) {
 
   const updateMutation = trpc.transactions.bulkUpdate.useMutation({
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [['transactions', 'list']] });
+      queryClient.invalidateQueries({ queryKey: [["transactions", "list"]] });
       // Also invalidate enriched list used by new page
-      queryClient.invalidateQueries({ queryKey: [['transactions', 'enrichedList']] });
+      queryClient.invalidateQueries({ queryKey: [["transactions", "enrichedList"]] });
 
       onComplete?.();
 
       toast({
-        title: `Updated ${ids.length} transaction${ids.length > 1 ? 's' : ''}`,
+        title: `Updated ${ids.length} transaction${ids.length > 1 ? "s" : ""}`,
         variant: "default",
       });
     },
@@ -66,10 +66,7 @@ export function BulkActions({ ids, onComplete }: Props) {
               <span>Categories</span>
             </DropdownMenuSubTrigger>
             <DropdownMenuPortal>
-              <DropdownMenuSubContent
-                sideOffset={14}
-                className="p-0 w-[250px] h-[270px]"
-              >
+              <DropdownMenuSubContent sideOffset={14} className="p-0 w-[250px] h-[270px]">
                 <SelectCategory
                   onChange={(selected) => {
                     updateMutation.mutate({
@@ -124,10 +121,7 @@ export function BulkActions({ ids, onComplete }: Props) {
               <span>Assign</span>
             </DropdownMenuSubTrigger>
             <DropdownMenuPortal>
-              <DropdownMenuSubContent
-                sideOffset={14}
-                className="w-[230px] h-[170px] p-4 space-y-4"
-              >
+              <DropdownMenuSubContent sideOffset={14} className="w-[230px] h-[170px] p-4 space-y-4">
                 <SelectUser
                   onSelect={(selected) => {
                     updateMutation.mutate({

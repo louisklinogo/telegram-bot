@@ -13,7 +13,7 @@ import { makeQueryClient } from "./query-client";
 /**
  * Server-side data fetching utilities
  * Use these in Server Components for direct database access
- * 
+ *
  * ✅ IMPORTANT: These are cached using React.cache() to deduplicate
  * calls within the same request (layout + pages both need auth)
  */
@@ -73,15 +73,15 @@ export const trpc = createTRPCOptionsProxy<AppRouter>({
 
 /**
  * @deprecated Phase A complete - All pages now use initialData pattern
- * 
+ *
  * This function is kept for reference but should NOT be used in new code.
- * 
+ *
  * OLD PATTERN (wasteful):
  * ```typescript
  * await prefetch(trpc.resource.list.queryOptions({}));
  * return <HydrateClient><Component /></HydrateClient>
  * ```
- * 
+ *
  * NEW PATTERN (optimal):
  * ```typescript
  * const data = await getResource(db, { teamId });
@@ -99,7 +99,7 @@ export function HydrateClient(props: { children: React.ReactNode }) {
 
 /**
  * @deprecated Phase A complete - Use direct DB queries + initialData instead
- * 
+ *
  * This creates double-fetching: server prefetch + client query.
  * Use direct database queries in Server Components and pass as initialData.
  */

@@ -60,10 +60,7 @@ export function VaultUploadZone({ children, teamId }: Props) {
             onProgress: (bytesUploaded: number, bytesTotal: number) => {
               uploadProgress.current[idx] = (bytesUploaded / bytesTotal) * 100;
 
-              const totalProgress = uploadProgress.current.reduce(
-                (acc, val) => acc + val,
-                0,
-              );
+              const totalProgress = uploadProgress.current.reduce((acc, val) => acc + val, 0);
 
               setProgress(Math.round(totalProgress / files.length));
             },
@@ -145,10 +142,7 @@ export function VaultUploadZone({ children, teamId }: Props) {
   });
 
   return (
-    <div
-      className="relative h-full"
-      {...getRootProps({ onClick: (evt) => evt.stopPropagation() })}
-    >
+    <div className="relative h-full" {...getRootProps({ onClick: (evt) => evt.stopPropagation() })}>
       {/* Drag overlay */}
       <div className="absolute top-0 right-0 left-0 z-50 w-full pointer-events-none h-[calc(100vh-150px)]">
         <div
@@ -160,9 +154,7 @@ export function VaultUploadZone({ children, teamId }: Props) {
           <input {...getInputProps()} id="upload-files" />
 
           <div className="flex flex-col items-center justify-center gap-2">
-            <p className="text-sm font-medium">
-              Drop your documents and files here
-            </p>
+            <p className="text-sm font-medium">Drop your documents and files here</p>
             <span className="text-xs text-muted-foreground">
               Maximum of 25 files at a time • Max file size 5MB
             </span>

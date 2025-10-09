@@ -29,11 +29,11 @@ export default async function SharePage({ params }: Props) {
 
   // For now, shareId is the document ID (temporary until we implement short_links table)
   // In production, this would query the short_links table
-  
+
   try {
     // Decode the shareId (which contains teamId:documentId)
     const [teamId, documentId] = Buffer.from(shareId, "base64").toString().split(":");
-    
+
     if (!teamId || !documentId) {
       notFound();
     }
@@ -48,7 +48,7 @@ export default async function SharePage({ params }: Props) {
     }
 
     const supabase = await createServerClient();
-    
+
     // Generate signed URL for download
     const { data, error } = await supabase.storage
       .from("vault")
@@ -74,9 +74,7 @@ export default async function SharePage({ params }: Props) {
           <div className="w-full max-w-md space-y-8">
             <div className="text-center space-y-2">
               <h1 className="text-2xl font-semibold">Download File</h1>
-              <p className="text-muted-foreground">
-                A file has been shared with you
-              </p>
+              <p className="text-muted-foreground">A file has been shared with you</p>
             </div>
 
             {/* File Info Card */}
@@ -88,9 +86,7 @@ export default async function SharePage({ params }: Props) {
                   </div>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">
-                    {document.name}
-                  </p>
+                  <p className="text-sm font-medium truncate">{document.name}</p>
                   <p className="text-xs text-muted-foreground">
                     {formatFileSize(document.size ?? undefined)}
                     {document.mimeType && ` • ${document.mimeType.split("/")[1]?.toUpperCase()}`}

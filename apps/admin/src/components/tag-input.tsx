@@ -23,8 +23,7 @@ export function TagInput({
 
   const filteredSuggestions = suggestions.filter(
     (suggestion) =>
-      suggestion.toLowerCase().includes(inputValue.toLowerCase()) &&
-      !value.includes(suggestion)
+      suggestion.toLowerCase().includes(inputValue.toLowerCase()) && !value.includes(suggestion),
   );
 
   const addTag = (tag: string) => {
@@ -96,9 +95,7 @@ export function TagInput({
         </div>
       )}
 
-      <p className="text-xs text-muted-foreground mt-1">
-        Press Enter to add, Backspace to remove
-      </p>
+      <p className="text-xs text-muted-foreground mt-1">Press Enter to add, Backspace to remove</p>
     </div>
   );
 }

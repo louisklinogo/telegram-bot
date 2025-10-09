@@ -7,7 +7,7 @@ import { useQueryClient } from "@tanstack/react-query";
 export function useCreateClient() {
   const utils = trpc.useUtils();
   const queryClient = useQueryClient();
-  
+
   const m = trpc.clients.create.useMutation({
     onSuccess: async () => {
       // Invalidate tRPC cache
@@ -45,7 +45,7 @@ export function useCreateClient() {
 export function useUpdateClient() {
   const utils = trpc.useUtils();
   const queryClient = useQueryClient();
-  
+
   const m = trpc.clients.update.useMutation({
     onSuccess: async () => {
       // Invalidate tRPC cache
@@ -85,7 +85,7 @@ export function useUpdateClient() {
 export function useDeleteClient() {
   const utils = trpc.useUtils();
   const queryClient = useQueryClient();
-  
+
   return trpc.clients.delete.useMutation({
     onSuccess: async () => {
       // Invalidate tRPC cache

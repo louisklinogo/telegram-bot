@@ -79,11 +79,7 @@ export function RelatedDocuments({ orderId, invoiceId, clientId }: RelatedDocume
               </p>
             </div>
           </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => handleDownload(document)}
-          >
+          <Button variant="ghost" size="sm" onClick={() => handleDownload(document)}>
             <Download className="h-4 w-4" />
           </Button>
         </div>

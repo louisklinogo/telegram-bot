@@ -5,12 +5,7 @@ import { Button } from "@/components/ui/button";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@cimantikos/ui/label";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import {
   Accordion,
   AccordionContent,
@@ -144,18 +139,12 @@ export function ClientSheet({ open, onOpenChange, client }: ClientSheetProps) {
     <Sheet open={open} onOpenChange={handleOpenChange}>
       <SheetContent className="flex flex-col overflow-hidden">
         <SheetHeader className="flex-shrink-0">
-          <SheetTitle className="text-xl">
-            {isEdit ? "Edit Client" : "Create Client"}
-          </SheetTitle>
+          <SheetTitle className="text-xl">{isEdit ? "Edit Client" : "Create Client"}</SheetTitle>
         </SheetHeader>
 
         <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
           <div className="flex-1 overflow-y-auto scrollbar-hide px-1 -mx-1">
-            <Accordion
-              type="multiple"
-              defaultValue={["general", "details"]}
-              className="space-y-6"
-            >
+            <Accordion type="multiple" defaultValue={["general", "details"]} className="space-y-6">
               <AccordionItem value="general">
                 <AccordionTrigger>General</AccordionTrigger>
                 <AccordionContent>
@@ -280,22 +269,25 @@ export function ClientSheet({ open, onOpenChange, client }: ClientSheetProps) {
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="referral_source" className="text-xs text-[#878787] font-normal">
+                      <Label
+                        htmlFor="referral_source"
+                        className="text-xs text-[#878787] font-normal"
+                      >
                         Referral Source
                       </Label>
                       <Input
                         id="referral_source"
                         value={formData.referral_source}
-                        onChange={(e) => setFormData({ ...formData, referral_source: e.target.value })}
+                        onChange={(e) =>
+                          setFormData({ ...formData, referral_source: e.target.value })
+                        }
                         placeholder="Instagram, Word of mouth, Facebook"
                         autoComplete="off"
                       />
                     </div>
 
                     <div className="space-y-2">
-                      <Label className="text-xs text-[#878787] font-normal">
-                        Tags
-                      </Label>
+                      <Label className="text-xs text-[#878787] font-normal">Tags</Label>
                       <TagInput
                         value={formData.tags}
                         onChange={(tags) => setFormData({ ...formData, tags })}

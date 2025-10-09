@@ -3,13 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@cimantikos/ui/label";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetFooter,
-} from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from "@/components/ui/sheet";
 import {
   Select,
   SelectContent,
@@ -60,9 +54,7 @@ export function FilterSheet({ open, onOpenChange, onApplyFilters }: FilterSheetP
             <Label>Referral Source</Label>
             <Select
               value={filters.referralSource}
-              onValueChange={(value) =>
-                setFilters({ ...filters, referralSource: value })
-              }
+              onValueChange={(value) => setFilters({ ...filters, referralSource: value })}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select source..." />
@@ -80,9 +72,7 @@ export function FilterSheet({ open, onOpenChange, onApplyFilters }: FilterSheetP
             <Label>Has Orders</Label>
             <Select
               value={filters.hasOrders?.toString()}
-              onValueChange={(value) =>
-                setFilters({ ...filters, hasOrders: value === "true" })
-              }
+              onValueChange={(value) => setFilters({ ...filters, hasOrders: value === "true" })}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Any" />

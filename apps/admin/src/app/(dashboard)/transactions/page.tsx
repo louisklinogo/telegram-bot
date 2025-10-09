@@ -12,10 +12,5 @@ export default async function TransactionsPage() {
     getTransactionStats(db, teamId),
   ]);
 
-  return (
-    <TransactionsView
-      initialTransactions={transactions}
-      initialStats={stats}
-    />
-  );
+  return <TransactionsView initialTransactions={transactions} initialStats={stats} />;
 }

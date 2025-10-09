@@ -8,12 +8,12 @@ import { trpc } from "@/lib/trpc/client";
 import { ClientCard } from "./client-card";
 export function ClientsList() {
   const [search, setSearch] = useState("");
-  const [data] = trpc.clients.list.useSuspenseQuery({ 
-    search: search || undefined 
+  const [data] = trpc.clients.list.useSuspenseQuery({
+    search: search || undefined,
   });
 
   // Handle new API shape that returns { items, nextCursor }
-  const clients = Array.isArray(data) ? data : data?.items ?? [];
+  const clients = Array.isArray(data) ? data : (data?.items ?? []);
 
   const filteredClients = search
     ? clients.filter(

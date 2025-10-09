@@ -122,15 +122,19 @@ export function VaultCard({ document }: VaultCardProps) {
 
   return (
     <>
-      <div className={cn(
-        "h-72 border relative flex text-muted-foreground p-4 flex-col gap-3 hover:bg-accent dark:hover:bg-[#141414] transition-colors duration-200 group cursor-pointer",
-        isSelected && "ring-2 ring-primary"
-      )}>
+      <div
+        className={cn(
+          "h-72 border relative flex text-muted-foreground p-4 flex-col gap-3 hover:bg-accent dark:hover:bg-[#141414] transition-colors duration-200 group cursor-pointer",
+          isSelected && "ring-2 ring-primary",
+        )}
+      >
         {/* Checkbox for selection - top right, always visible when selected or on hover */}
-        <div className={cn(
-          "absolute top-2 left-2 transition-opacity duration-200 z-10",
-          isSelected ? "opacity-100" : "opacity-0 group-hover:opacity-100"
-        )}>
+        <div
+          className={cn(
+            "absolute top-2 left-2 transition-opacity duration-200 z-10",
+            isSelected ? "opacity-100" : "opacity-0 group-hover:opacity-100",
+          )}
+        >
           <Checkbox
             checked={isSelected}
             onCheckedChange={() => toggleDocument(document.id)}
@@ -141,11 +145,7 @@ export function VaultCard({ document }: VaultCardProps) {
         <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
           <DropdownMenu>
             <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-8 w-8 p-0"
-              >
+              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
                 <MoreVertical className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
@@ -180,10 +180,7 @@ export function VaultCard({ document }: VaultCardProps) {
           </DropdownMenu>
         </div>
 
-        <button
-          type="button"
-          className="w-[60px] h-[84px] flex items-center justify-center"
-        >
+        <button type="button" className="w-[60px] h-[84px] flex items-center justify-center">
           {isLoading ? (
             <Skeleton className="w-[60px] h-[84px]" />
           ) : (
@@ -193,11 +190,7 @@ export function VaultCard({ document }: VaultCardProps) {
 
         <div className="flex flex-col text-left">
           <h2 className="text-sm text-primary line-clamp-1 mb-2 mt-3">
-            {isLoading ? (
-              <Skeleton className="w-[80%] h-4" />
-            ) : (
-              document.name
-            )}
+            {isLoading ? <Skeleton className="w-[80%] h-4" /> : document.name}
           </h2>
 
           {isLoading ? (
@@ -219,12 +212,16 @@ export function VaultCard({ document }: VaultCardProps) {
           <AlertDialogHeader>
             <AlertDialogTitle>Delete document?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently delete "{document.name}" from your vault. This action cannot be undone.
+              This will permanently delete "{document.name}" from your vault. This action cannot be
+              undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground">
+            <AlertDialogAction
+              onClick={confirmDelete}
+              className="bg-destructive text-destructive-foreground"
+            >
               Delete
             </AlertDialogAction>
           </AlertDialogFooter>

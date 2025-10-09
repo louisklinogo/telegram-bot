@@ -8,25 +8,22 @@ import { measurements, clients } from "../schema";
  */
 export async function getMeasurementsWithClient(
   db: DbClient,
-  params: { 
-    teamId: string; 
-    limit?: number; 
+  params: {
+    teamId: string;
+    limit?: number;
     offset?: number;
     activeOnly?: boolean; // Filter to show only active versions
   },
 ) {
   const { teamId, limit = 50, offset = 0, activeOnly = false } = params;
-  
-  const conditions = [
-    eq(measurements.teamId, teamId), 
-    isNull(measurements.deletedAt)
-  ];
-  
+
+  const conditions = [eq(measurements.teamId, teamId), isNull(measurements.deletedAt)];
+
   // Optionally filter to active versions only
   if (activeOnly) {
     conditions.push(eq(measurements.isActive, true));
   }
-  
+
   return await db
     .select({ measurement: measurements, client: clients })
     .from(measurements)
@@ -56,7 +53,7 @@ export async function getMeasurementById(db: DbClient, id: string, teamId: strin
 export async function createMeasurement(db: DbClient, data: typeof measurements.$inferInsert) {
   const res = await db.insert(measurements).values(data).returning();
   const newMeasurement = res[0];
-  
+
   // Initialize versioning: set measurementGroupId to own ID if not provided
   if (newMeasurement && !data.measurementGroupId) {
     const updated = await db
@@ -66,7 +63,7 @@ export async function createMeasurement(db: DbClient, data: typeof measurements.
       .returning();
     return updated[0];
   }
-  
+
   return newMeasurement;
 }
 
@@ -102,13 +99,13 @@ export async function deleteMeasurement(db: DbClient, id: string, teamId: string
  */
 export async function getMeasurementVersions(
   db: DbClient,
-  params: { 
-    teamId: string; 
+  params: {
+    teamId: string;
     measurementGroupId: string;
   },
 ) {
   const { teamId, measurementGroupId } = params;
-  
+
   return await db
     .select({ measurement: measurements, client: clients })
     .from(measurements)
@@ -117,8 +114,8 @@ export async function getMeasurementVersions(
       and(
         eq(measurements.teamId, teamId),
         eq(measurements.measurementGroupId, measurementGroupId),
-        isNull(measurements.deletedAt)
-      )
+        isNull(measurements.deletedAt),
+      ),
     )
     .orderBy(desc(measurements.version));
 }
@@ -131,7 +128,7 @@ export async function getActiveMeasurement(
   params: { teamId: string; clientId: string },
 ) {
   const { teamId, clientId } = params;
-  
+
   const rows = await db
     .select({ measurement: measurements, client: clients })
     .from(measurements)
@@ -141,11 +138,11 @@ export async function getActiveMeasurement(
         eq(measurements.teamId, teamId),
         eq(measurements.clientId, clientId),
         eq(measurements.isActive, true),
-        isNull(measurements.deletedAt)
-      )
+        isNull(measurements.deletedAt),
+      ),
     )
     .limit(1);
-    
+
   return rows[0] || null;
 }
 
@@ -157,7 +154,7 @@ export async function getMeasurementHistory(
   params: { teamId: string; clientId: string },
 ) {
   const { teamId, clientId } = params;
-  
+
   return await db
     .select({ measurement: measurements, client: clients })
     .from(measurements)
@@ -166,8 +163,8 @@ export async function getMeasurementHistory(
       and(
         eq(measurements.teamId, teamId),
         eq(measurements.clientId, clientId),
-        isNull(measurements.deletedAt)
-      )
+        isNull(measurements.deletedAt),
+      ),
     )
     .orderBy(desc(measurements.createdAt));
 }
@@ -186,15 +183,15 @@ export async function createMeasurementVersion(
   },
 ) {
   const { existingMeasurementId, teamId, newData = {}, setAsActive = true } = params;
-  
+
   // Get existing measurement
   const existing = await getMeasurementById(db, existingMeasurementId, teamId);
   if (!existing?.measurement) {
     throw new Error("Measurement not found");
   }
-  
+
   const existingMeas = existing.measurement;
-  
+
   // If setting new version as active, deactivate all others in the group
   if (setAsActive && existingMeas.measurementGroupId) {
     await db
@@ -204,26 +201,31 @@ export async function createMeasurementVersion(
         and(
           eq(measurements.teamId, teamId),
           eq(measurements.measurementGroupId, existingMeas.measurementGroupId),
-          isNull(measurements.deletedAt)
-        )
+          isNull(measurements.deletedAt),
+        ),
       );
   }
-  
+
   // Create new version
-  const newVersion = await db.insert(measurements).values({
-    teamId: existingMeas.teamId,
-    clientId: existingMeas.clientId,
-    recordName: newData.recordName || `${existingMeas.recordName || 'Measurement'} - Version ${(existingMeas.version || 1) + 1}`,
-    measurements: newData.measurements || existingMeas.measurements,
-    notes: newData.notes !== undefined ? newData.notes : existingMeas.notes,
-    tags: newData.tags !== undefined ? newData.tags : existingMeas.tags,
-    takenAt: newData.takenAt || new Date(),
-    version: (existingMeas.version || 1) + 1,
-    measurementGroupId: existingMeas.measurementGroupId,
-    previousVersionId: existingMeas.id,
-    isActive: setAsActive,
-  }).returning();
-  
+  const newVersion = await db
+    .insert(measurements)
+    .values({
+      teamId: existingMeas.teamId,
+      clientId: existingMeas.clientId,
+      recordName:
+        newData.recordName ||
+        `${existingMeas.recordName || "Measurement"} - Version ${(existingMeas.version || 1) + 1}`,
+      measurements: newData.measurements || existingMeas.measurements,
+      notes: newData.notes !== undefined ? newData.notes : existingMeas.notes,
+      tags: newData.tags !== undefined ? newData.tags : existingMeas.tags,
+      takenAt: newData.takenAt || new Date(),
+      version: (existingMeas.version || 1) + 1,
+      measurementGroupId: existingMeas.measurementGroupId,
+      previousVersionId: existingMeas.id,
+      isActive: setAsActive,
+    })
+    .returning();
+
   return newVersion[0];
 }
 
@@ -235,18 +237,18 @@ export async function setActiveMeasurementVersion(
   params: { measurementId: string; teamId: string },
 ) {
   const { measurementId, teamId } = params;
-  
+
   // Get the measurement to find its group
   const measurement = await getMeasurementById(db, measurementId, teamId);
   if (!measurement?.measurement) {
     throw new Error("Measurement not found");
   }
-  
+
   const groupId = measurement.measurement.measurementGroupId;
   if (!groupId) {
     throw new Error("Measurement does not belong to a group");
   }
-  
+
   // Deactivate all in group
   await db
     .update(measurements)
@@ -255,22 +257,17 @@ export async function setActiveMeasurementVersion(
       and(
         eq(measurements.teamId, teamId),
         eq(measurements.measurementGroupId, groupId),
-        isNull(measurements.deletedAt)
-      )
+        isNull(measurements.deletedAt),
+      ),
     );
-  
+
   // Activate the specified one
   const res = await db
     .update(measurements)
     .set({ isActive: true, updatedAt: new Date() })
-    .where(
-      and(
-        eq(measurements.id, measurementId),
-        eq(measurements.teamId, teamId)
-      )
-    )
+    .where(and(eq(measurements.id, measurementId), eq(measurements.teamId, teamId)))
     .returning();
-    
+
   return res[0] || null;
 }
 
@@ -279,34 +276,34 @@ export async function setActiveMeasurementVersion(
  */
 export async function compareMeasurementVersions(
   db: DbClient,
-  params: { 
-    versionId1: string; 
-    versionId2: string; 
+  params: {
+    versionId1: string;
+    versionId2: string;
     teamId: string;
   },
 ) {
   const { versionId1, versionId2, teamId } = params;
-  
+
   const v1 = await getMeasurementById(db, versionId1, teamId);
   const v2 = await getMeasurementById(db, versionId2, teamId);
-  
+
   if (!v1?.measurement || !v2?.measurement) {
     throw new Error("One or both measurements not found");
   }
-  
+
   // Calculate differences in measurements
   const m1 = v1.measurement.measurements as Record<string, string>;
   const m2 = v2.measurement.measurements as Record<string, string>;
-  
+
   const allKeys = new Set([...Object.keys(m1 || {}), ...Object.keys(m2 || {})]);
-  
-  const diff = Array.from(allKeys).map(key => ({
+
+  const diff = Array.from(allKeys).map((key) => ({
     field: key,
     version1: m1?.[key] || null,
     version2: m2?.[key] || null,
     changed: m1?.[key] !== m2?.[key],
   }));
-  
+
   return {
     version1: v1.measurement,
     version2: v2.measurement,

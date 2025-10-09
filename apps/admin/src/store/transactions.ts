@@ -11,8 +11,7 @@ export const useTransactionsStore = create<TransactionsState>()((set) => ({
   rowSelection: {},
   setRowSelection: (updater: Updater<RowSelectionState>) =>
     set((state) => ({
-      rowSelection:
-        typeof updater === "function" ? updater(state.rowSelection) : updater,
+      rowSelection: typeof updater === "function" ? updater(state.rowSelection) : updater,
     })),
   clearSelection: () => set({ rowSelection: {} }),
 }));
