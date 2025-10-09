@@ -149,6 +149,18 @@ export function TransactionsView({
     initialData:
       initialTransactions.length > 0 ? { items: initialTransactions, nextCursor: null } : undefined,
   });
+
+  // Debug: Log the query parameters to see if filters are updating
+  console.log("🔍 Filter Debug:", {
+    enrichedInput,
+    filterCounts: {
+      statuses: statuses.length,
+      categories: categories.length,
+      tags: tags.length,
+      accounts: accounts.length,
+      assignees: assignees.length,
+    }
+  });
   const transactions = trxData?.items || [];
   const byId = useMemo(
     () => new Map<string, any>(transactions.map((r: any) => [r.transaction.id, r])),
