@@ -244,7 +244,7 @@ export function TransactionsSearchFilter({ value, onChange, onAskAI }: Props) {
         align="end"
         sideOffset={19}
         alignOffset={-11}
-        side="top"
+        side="bottom"
       >
         <FilterMenuItem icon={Icons.CalendarMonth} label="Date">
           <div className="w-[280px] p-4">
