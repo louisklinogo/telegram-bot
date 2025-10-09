@@ -117,7 +117,7 @@ export function TransactionsSearchFilter({ value, onChange, onAskAI }: Props) {
     const value = evt.target.value;
     setPrompt(value);
     if (!value) {
-      patch({ search: null });
+      patch({ search: undefined });
     }
   };
 
@@ -130,7 +130,7 @@ export function TransactionsSearchFilter({ value, onChange, onAskAI }: Props) {
         if (onAskAI) {
           const parsed = await onAskAI(prompt.trim());
           if (parsed && Object.keys(parsed).length > 0) {
-            patch({ search: null, ...parsed });
+            patch({ search: undefined, ...parsed });
           }
         }
       } catch (error) {
@@ -140,7 +140,7 @@ export function TransactionsSearchFilter({ value, onChange, onAskAI }: Props) {
       }
     } else {
       // Single word: direct search
-      patch({ search: prompt.length > 0 ? prompt : null });
+      patch({ search: prompt.length > 0 ? prompt : undefined });
     }
   };
 
@@ -216,7 +216,7 @@ export function TransactionsSearchFilter({ value, onChange, onAskAI }: Props) {
         </FilterMenuItem>
 
         <FilterMenuItem icon={Icons.Status} label="Status">
-          {['completed', 'uncompleted', 'archived', 'excluded'].map((status) => (
+          {(['completed', 'pending', 'failed', 'cancelled'] as const).map((status) => (
             <FilterCheckboxItem
               key={status}
               id={status}
@@ -227,7 +227,7 @@ export function TransactionsSearchFilter({ value, onChange, onAskAI }: Props) {
                 const newStatuses = currentStatuses.includes(status)
                   ? currentStatuses.filter((s) => s !== status)
                   : [...currentStatuses, status];
-                patch({ statuses: newStatuses.length > 0 ? newStatuses : null });
+                patch({ statuses: newStatuses.length > 0 ? newStatuses : undefined });
               }}
             />
           ))}
@@ -239,7 +239,7 @@ export function TransactionsSearchFilter({ value, onChange, onAskAI }: Props) {
             name="Has attachments"
             checked={current.hasAttachments === true}
             onCheckedChange={() => 
-              patch({ hasAttachments: current.hasAttachments === true ? null : true })
+              patch({ hasAttachments: current.hasAttachments === true ? undefined : true })
             }
           />
           <FilterCheckboxItem
@@ -247,7 +247,7 @@ export function TransactionsSearchFilter({ value, onChange, onAskAI }: Props) {
             name="No attachments"
             checked={current.hasAttachments === false}
             onCheckedChange={() =>
-              patch({ hasAttachments: current.hasAttachments === false ? null : false })
+              patch({ hasAttachments: current.hasAttachments === false ? undefined : false })
             }
           />
         </FilterMenuItem>
@@ -276,7 +276,7 @@ export function TransactionsSearchFilter({ value, onChange, onAskAI }: Props) {
             name="All recurring"
             checked={current.isRecurring === true}
             onCheckedChange={() =>
-              patch({ isRecurring: current.isRecurring === true ? null : true })
+              patch({ isRecurring: current.isRecurring === true ? undefined : true })
             }
           />
         </FilterMenuItem>
