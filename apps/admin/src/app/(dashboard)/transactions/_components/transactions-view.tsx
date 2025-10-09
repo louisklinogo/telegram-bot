@@ -497,86 +497,6 @@ export function TransactionsView({
             type:{filterType} ×
           </Badge>
         )}
-        {search && (
-          <Badge variant="secondary" className="cursor-pointer" onClick={() => setSearch("")}>
-            search:"{search}" ×
-          </Badge>
-        )}
-        {startDate && (
-          <Badge variant="secondary" className="cursor-pointer" onClick={() => setStartDate("")}>
-            from:{startDate} ×
-          </Badge>
-        )}
-        {endDate && (
-          <Badge variant="secondary" className="cursor-pointer" onClick={() => setEndDate("")}>
-            to:{endDate} ×
-          </Badge>
-        )}
-        {statuses.map((s) => (
-          <Badge
-            key={s}
-            variant="secondary"
-            className="cursor-pointer"
-            onClick={() => setStatuses((prev) => prev.filter((x) => x !== s))}
-          >
-            status:{s} ×
-          </Badge>
-        ))}
-        {categories.map((c) => (
-          <Badge
-            key={c}
-            variant="secondary"
-            className="cursor-pointer"
-            onClick={() => setCategories((prev) => prev.filter((x) => x !== c))}
-          >
-            cat:{c} ×
-          </Badge>
-        ))}
-        {tags.length > 0 && (
-          <Badge variant="secondary" className="cursor-pointer" onClick={() => setTags([])}>
-            tags:{tags.length} ×
-          </Badge>
-        )}
-        {accounts.length > 0 && (
-          <Badge variant="secondary" className="cursor-pointer" onClick={() => setAccounts([])}>
-            accounts:{accounts.length} ×
-          </Badge>
-        )}
-        {assignees.length > 0 && (
-          <Badge variant="secondary" className="cursor-pointer" onClick={() => setAssignees([])}>
-            assignees:{assignees.length} ×
-          </Badge>
-        )}
-        {hasAttachments !== "any" && (
-          <Badge
-            variant="secondary"
-            className="cursor-pointer"
-            onClick={() => setHasAttachments("any")}
-          >
-            {hasAttachments === "with" ? "with attachments" : "without attachments"} ×
-          </Badge>
-        )}
-        {isRecurring != null && (
-          <Badge
-            variant="secondary"
-            className="cursor-pointer"
-            onClick={() => setIsRecurring(undefined)}
-          >
-            recurring ×
-          </Badge>
-        )}
-        {(amountMin || amountMax) && (
-          <Badge
-            variant="secondary"
-            className="cursor-pointer"
-            onClick={() => {
-              setAmountMin("");
-              setAmountMax("");
-            }}
-          >
-            amount:{amountMin || 0}-{amountMax || "∞"} ×
-          </Badge>
-        )}
       </div>
 
       {/* Bulk selection bar - Midday style */}
@@ -660,9 +580,31 @@ export function TransactionsView({
           <TransactionsSearchFilter
             value={{
               search,
+              statuses: statuses as any,
+              categories,
+              tags,
+              accounts,
+              assignees,
+              startDate,
+              endDate,
+              amountMin: amountMin ? parseInt(amountMin) : undefined,
+              amountMax: amountMax ? parseInt(amountMax) : undefined,
+              hasAttachments: hasAttachments === "with" ? true : hasAttachments === "without" ? false : undefined,
+              isRecurring,
             }}
             onChange={(p: Partial<FilterState>) => {
               if (p.search !== undefined) setSearch(p.search || "");
+              if (p.statuses !== undefined) setStatuses(p.statuses || []);
+              if (p.categories !== undefined) setCategories(p.categories || []);
+              if (p.tags !== undefined) setTags(p.tags || []);
+              if (p.accounts !== undefined) setAccounts(p.accounts || []);
+              if (p.assignees !== undefined) setAssignees(p.assignees || []);
+              if (p.startDate !== undefined) setStartDate(p.startDate || "");
+              if (p.endDate !== undefined) setEndDate(p.endDate || "");
+              if (p.amountMin !== undefined) setAmountMin(p.amountMin ? String(p.amountMin) : "");
+              if (p.amountMax !== undefined) setAmountMax(p.amountMax ? String(p.amountMax) : "");
+              if (p.hasAttachments !== undefined) setHasAttachments(p.hasAttachments === true ? "with" : p.hasAttachments === false ? "without" : "any");
+              if (p.isRecurring !== undefined) setIsRecurring(p.isRecurring);
             }}
             onAskAI={async (q) => {
               const parsed = await aiParse.mutateAsync({ query: q });
