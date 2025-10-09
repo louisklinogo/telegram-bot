@@ -612,6 +612,7 @@ export function TransactionsView({
               hasAttachments: hasAttachments === "with" ? true : hasAttachments === "without" ? false : undefined,
               isRecurring,
             }}
+            currency={currencyCode}
             onChange={(p: Partial<FilterState>) => {
               if (p.search !== undefined) setSearch(p.search || "");
               if (p.statuses !== undefined) setStatuses(p.statuses || []);

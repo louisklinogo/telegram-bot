@@ -10,6 +10,7 @@ type Props = {
   onRemoveFilter: (key: string, value?: string) => void;
   onClearAll: () => void;
   loading?: boolean;
+  currency?: string;
 };
 
 interface FilterBadgeProps {
@@ -32,7 +33,7 @@ function FilterBadge({ label, onRemove, icon: Icon }: FilterBadgeProps) {
   );
 }
 
-export function FilterList({ filters, onRemoveFilter, onClearAll, loading = false }: Props) {
+export function FilterList({ filters, onRemoveFilter, onClearAll, loading = false, currency = "GHS" }: Props) {
   const filterBadges: React.ReactNode[] = [];
 
   // Date range
@@ -59,10 +60,10 @@ export function FilterList({ filters, onRemoveFilter, onClearAll, loading = fals
   // Amount range
   if (filters.amountMin !== undefined || filters.amountMax !== undefined) {
     const label = filters.amountMin !== undefined && filters.amountMax !== undefined
-      ? `$${filters.amountMin} - $${filters.amountMax}`
+      ? `${currency} ${filters.amountMin} - ${currency} ${filters.amountMax}`
       : filters.amountMin !== undefined
-        ? `From $${filters.amountMin}`
-        : `Up to $${filters.amountMax}`;
+        ? `From ${currency} ${filters.amountMin}`
+        : `Up to ${currency} ${filters.amountMax}`;
     
     filterBadges.push(
       <FilterBadge

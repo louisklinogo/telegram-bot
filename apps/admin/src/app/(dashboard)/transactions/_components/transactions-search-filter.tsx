@@ -76,7 +76,7 @@ function FilterCheckbox({ id, label, checked, onCheckedChange }: FilterCheckboxP
   );
 }
 
-export function TransactionsSearchFilter({ value, onChange, onAskAI }: Props) {
+export function TransactionsSearchFilter({ value, onChange, onAskAI, currency = "GHS" }: Props) {
   const [placeholder, setPlaceholder] = useState("");
   const [streaming, setStreaming] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
@@ -238,6 +238,7 @@ export function TransactionsSearchFilter({ value, onChange, onAskAI }: Props) {
         onRemoveFilter={handleRemoveFilter}
         onClearAll={handleClearAll}
         loading={streaming}
+        currency={currency}
       />
 
       {/* Expandable Filter Section */}
@@ -278,7 +279,7 @@ export function TransactionsSearchFilter({ value, onChange, onAskAI }: Props) {
                 <div className="flex items-center justify-between text-sm">
                   <span>Range</span>
                   <span className="text-muted-foreground">
-                    ${current.amountMin || 0} - ${current.amountMax || 10000}
+                    {currency} {current.amountMin || 0} - {currency} {current.amountMax || 10000}
                   </span>
                 </div>
                 <Slider
@@ -295,8 +296,8 @@ export function TransactionsSearchFilter({ value, onChange, onAskAI }: Props) {
                   className="w-full"
                 />
                 <div className="flex justify-between text-xs text-muted-foreground">
-                  <span>$0</span>
-                  <span>$10,000</span>
+                  <span>{currency} 0</span>
+                  <span>{currency} 10,000</span>
                 </div>
               </div>
             </FilterSection>
