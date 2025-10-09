@@ -120,13 +120,21 @@ export function TransactionsView({
       assignees: assignees.length ? assignees : undefined,
       isRecurring: isRecurring,
       search: search || undefined,
-      startDate: startDate ? new Date(startDate + "T00:00:00Z").toISOString() : undefined,
-      endDate: endDate ? new Date(endDate + "T23:59:59Z").toISOString() : undefined,
+      startDate: startDate ? new Date(startDate + "T00:00:00Z") : undefined,
+      endDate: endDate ? new Date(endDate + "T23:59:59Z") : undefined,
       hasAttachments: hasAttachments === "any" ? undefined : hasAttachments === "with",
       amountMin: amountMin ? Number(amountMin) : undefined,
       amountMax: amountMax ? Number(amountMax) : undefined,
       limit: 50,
     };
+    
+    // Remove undefined values to avoid issues
+    Object.keys(input).forEach(key => {
+      if (input[key] === undefined) {
+        delete input[key];
+      }
+    });
+    
     return input;
   }, [
     filterType,
