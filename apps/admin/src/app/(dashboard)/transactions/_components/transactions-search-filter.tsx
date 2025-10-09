@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useMemo } from "react";
+import { trpc } from '@/lib/trpc/client';
 import { useHotkeys } from "react-hotkeys-hook";
 import { formatISO } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -87,6 +88,12 @@ export function TransactionsSearchFilter({ value, onChange, onAskAI }: Props) {
   const [isOpen, setIsOpen] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  
+  // Fetch filter data
+  const { data: categories = [] } = trpc.transactionCategories.list.useQuery();
+  const { data: tags = [] } = trpc.tags.list.useQuery();
+  const { data: financialAccounts = [] } = trpc.financialAccounts.list.useQuery();
+  const { data: teamMembers = [] } = trpc.teams.members.useQuery();
 
   const current = useMemo<FilterState>(() => ({ limit: 50, ...(value || {}) }), [value]);
   const [prompt, setPrompt] = useState(current.search || "");
@@ -342,18 +349,98 @@ export function TransactionsSearchFilter({ value, onChange, onAskAI }: Props) {
         </FilterMenuItem>
 
         <FilterMenuItem icon={Icons.Category} label="Categories">
-          <div className="p-4 text-sm text-muted-foreground">
-            Categories filter (to be implemented)
+          <div className="max-h-[400px] overflow-y-auto">
+            {categories && categories.length > 0 ? (
+              categories.map((category) => (
+                <FilterCheckboxItem
+                  key={category.id}
+                  id={category.id}
+                  name={category.name}
+                  checked={current.categories?.includes(category.slug)}
+                  onCheckedChange={() => {
+                    const currentCategories = current.categories || [];
+                    const newCategories = currentCategories.includes(category.slug)
+                      ? currentCategories.filter((s) => s !== category.slug)
+                      : [...currentCategories, category.slug];
+                    patch({ categories: newCategories.length > 0 ? newCategories : undefined });
+                  }}
+                />
+              ))
+            ) : (
+              <p className="text-sm text-muted-foreground px-2">No categories found</p>
+            )}
           </div>
         </FilterMenuItem>
 
         <FilterMenuItem icon={Icons.Status} label="Tags">
-          <div className="p-4 text-sm text-muted-foreground">Tags filter (to be implemented)</div>
+          <div className="max-h-[400px] overflow-y-auto">
+            {tags && tags.length > 0 ? (
+              tags.map((tag: any) => (
+                <FilterCheckboxItem
+                  key={tag.id}
+                  id={tag.id}
+                  name={tag.name}
+                  checked={current.tags?.includes(tag.id)}
+                  onCheckedChange={() => {
+                    const currentTags = current.tags || [];
+                    const newTags = currentTags.includes(tag.id)
+                      ? currentTags.filter((t) => t !== tag.id)
+                      : [...currentTags, tag.id];
+                    patch({ tags: newTags.length > 0 ? newTags : undefined });
+                  }}
+                />
+              ))
+            ) : (
+              <p className="text-sm text-muted-foreground px-2">No tags found</p>
+            )}
+          </div>
         </FilterMenuItem>
 
         <FilterMenuItem icon={Icons.Accounts} label="Accounts">
-          <div className="p-4 text-sm text-muted-foreground">
-            Accounts filter (to be implemented)
+          <div className="max-h-[400px] overflow-y-auto">
+            {financialAccounts && financialAccounts.length > 0 ? (
+              financialAccounts.map((account: any) => (
+                <FilterCheckboxItem
+                  key={account.id}
+                  id={account.id}
+                  name={`${account.name} (${account.currency})`}
+                  checked={current.accounts?.includes(account.id)}
+                  onCheckedChange={() => {
+                    const currentAccounts = current.accounts || [];
+                    const newAccounts = currentAccounts.includes(account.id)
+                      ? currentAccounts.filter((a) => a !== account.id)
+                      : [...currentAccounts, account.id];
+                    patch({ accounts: newAccounts.length > 0 ? newAccounts : undefined });
+                  }}
+                />
+              ))
+            ) : (
+              <p className="text-sm text-muted-foreground px-2">No accounts found</p>
+            )}
+          </div>
+        </FilterMenuItem>
+
+        <FilterMenuItem icon={Icons.AccountCircle} label="Assignees">
+          <div className="max-h-[400px] overflow-y-auto">
+            {teamMembers && teamMembers.length > 0 ? (
+              teamMembers.map((member: any) => (
+                <FilterCheckboxItem
+                  key={member.id}
+                  id={member.id}
+                  name={member.fullName || member.email || "Unknown"}
+                  checked={current.assignees?.includes(member.id)}
+                  onCheckedChange={() => {
+                    const currentAssignees = current.assignees || [];
+                    const newAssignees = currentAssignees.includes(member.id)
+                      ? currentAssignees.filter((a) => a !== member.id)
+                      : [...currentAssignees, member.id];
+                    patch({ assignees: newAssignees.length > 0 ? newAssignees : undefined });
+                  }}
+                />
+              ))
+            ) : (
+              <p className="text-sm text-muted-foreground px-2">No team members found</p>
+            )}
           </div>
         </FilterMenuItem>
 

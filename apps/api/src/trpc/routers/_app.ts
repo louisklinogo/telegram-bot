@@ -11,6 +11,8 @@ import { transactionsRouter } from "./transactions";
 import { transactionCategoriesRouter } from "./transaction-categories";
 import { analyticsRouter } from "./analytics";
 import { documentsRouter } from "./documents";
+import { tagsRouter } from "./tags";
+import { financialAccountsRouter } from "./financial-accounts";
 
 export const appRouter = createTRPCRouter({
   health: healthRouter,
@@ -24,6 +26,8 @@ export const appRouter = createTRPCRouter({
   teams: teamsRouter,
   analytics: analyticsRouter,
   documents: documentsRouter,
+  tags: tagsRouter,
+  financialAccounts: financialAccountsRouter,
 });
 
 export type AppRouter = typeof appRouter;

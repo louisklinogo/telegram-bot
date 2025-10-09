@@ -4,6 +4,7 @@ import { TRPCError } from "@trpc/server";
 import { createClient } from "@supabase/supabase-js";
 import { and, eq } from "drizzle-orm";
 import { teams, users, usersOnTeam } from "@cimantikos/database/schema";
+import { getTeamMembers } from "@cimantikos/database/queries";
 
 export const teamsRouter = createTRPCRouter({
   // List teams for the authenticated user
@@ -42,6 +43,14 @@ export const teamsRouter = createTRPCRouter({
         .where(eq(users.id, ctx.userId!));
       return { success: true };
     }),
+
+  // Get team members for assignee filtering
+  members: protectedProcedure.query(async ({ ctx }) => {
+    if (!ctx.teamId) {
+      throw new TRPCError({ code: "BAD_REQUEST", message: "No current team" });
+    }
+    return getTeamMembers(ctx.db, { teamId: ctx.teamId });
+  }),
 
   create: protectedProcedure
     .input(
