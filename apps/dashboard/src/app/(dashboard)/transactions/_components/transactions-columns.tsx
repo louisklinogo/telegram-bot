@@ -42,6 +42,7 @@ type ColumnContext = {
   currencyCode: string;
   onToggleSelection: (id: string) => void;
   onViewDetails: (row: TransactionRow) => void;
+  onCopyUrl: (id: string) => void;
   onToggleStatus: (id: string, status: string) => void;
   onToggleExclude: (id: string, exclude: boolean) => void;
   onDelete: (id: string) => void;
@@ -208,6 +209,9 @@ export function createTransactionColumns(context: ColumnContext): ColumnDef<Tran
             <DropdownMenuContent align="end" className="w-[180px]">
               <DropdownMenuItem onClick={() => context.onViewDetails(row.original)}>
                 View details
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => context.onCopyUrl(transaction.id)}>
+                Copy share URL
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem

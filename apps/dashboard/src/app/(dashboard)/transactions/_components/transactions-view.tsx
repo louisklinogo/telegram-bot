@@ -108,7 +108,14 @@ export function TransactionsView({
   const [startDate, setStartDate] = useState<string>("");
   const [endDate, setEndDate] = useState<string>("");
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
-  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
+  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>(() => {
+    try {
+      const raw = typeof window !== "undefined" ? localStorage.getItem("transactionsColumns") : null;
+      return raw ? (JSON.parse(raw) as VisibilityState) : {};
+    } catch {
+      return {} as VisibilityState;
+    }
+  });
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   // Categories are set via AI parse or elsewhere; no lazy load UI here (Midday parity)
@@ -156,7 +163,7 @@ export function TransactionsView({
   ]);
 
   // Enriched list (regular query instead of infinite to debug)
-  const { data: trxData } = trpc.transactions.enrichedList.useQuery(enrichedInput, {
+  const { data: trxData, refetch } = trpc.transactions.enrichedList.useQuery(enrichedInput, {
     initialData:
       initialTransactions.length > 0 ? { items: initialTransactions, nextCursor: null } : undefined,
   });
@@ -302,6 +309,22 @@ export function TransactionsView({
   });
 
   const rows = transactions;
+  const shouldPollForEnrichment = useMemo(() => {
+    if (rows.length === 0) return false;
+    return !rows[0]?.transaction?.enrichmentCompleted;
+  }, [rows]);
+
+  useEffect(() => {
+    if (!shouldPollForEnrichment) return;
+    const interval = setInterval(() => {
+      refetch();
+    }, 3000);
+    const timeout = setTimeout(() => clearInterval(interval), 60_000);
+    return () => {
+      clearInterval(interval);
+      clearTimeout(timeout);
+    };
+  }, [shouldPollForEnrichment, refetch]);
   const [focusedIndex, setFocusedIndex] = useState<number>(0);
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
   useEffect(() => {
@@ -446,6 +469,16 @@ export function TransactionsView({
       onViewDetails: (row) => {
         openParams({ transactionId: row.transaction.id });
       },
+      onCopyUrl: (id) => {
+        try {
+          const base = typeof window !== "undefined" ? window.location.origin : "";
+          const url = `${base}/transactions/?transactionId=${id}`;
+          navigator.clipboard.writeText(url);
+          toast({ description: "Transaction URL copied" });
+        } catch {
+          toast({ description: "Failed to copy URL", variant: "destructive" });
+        }
+      },
       onToggleStatus: async (id, status) => {
         try {
           await bulkUpdate.mutateAsync({
@@ -500,6 +533,13 @@ export function TransactionsView({
     );
     setSelected(selectedIds);
   }, [rowSelection, table]);
+
+  // Persist column visibility
+  useEffect(() => {
+    try {
+      localStorage.setItem("transactionsColumns", JSON.stringify(columnVisibility));
+    } catch {}
+  }, [columnVisibility]);
 
   return (
     <div className="flex flex-col gap-6 px-6">
