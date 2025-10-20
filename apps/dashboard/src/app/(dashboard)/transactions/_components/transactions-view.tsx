@@ -55,7 +55,8 @@ export function TransactionsView({
   initialInvoices = [],
 }: TransactionsViewProps) {
   const currency = useTeamCurrency();
-  const queryClient = useQueryClient();
+  const _queryClient = useQueryClient();
+  const utils = trpc.useUtils();
   const [filterType, setFilterType] = useState<FilterType>("all");
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -250,9 +251,10 @@ export function TransactionsView({
   const allocateMutation = trpc.transactions.allocate.useMutation({
     onSuccess: async () => {
       await Promise.all([
-        queryClient.invalidateQueries({ queryKey: [["transactions", "list"]] }),
-        queryClient.invalidateQueries({ queryKey: [["transactions", "stats"]] }),
-        queryClient.invalidateQueries({ queryKey: [["invoices", "list"]] }),
+        utils.transactions.enrichedList.invalidate(),
+        utils.transactions.list.invalidate(),
+        utils.transactions.stats.invalidate(),
+        utils.invoices.list.invalidate(),
       ]);
       setAllocateOpen(false);
     },
@@ -261,17 +263,41 @@ export function TransactionsView({
   const bulkUpdate = trpc.transactions.bulkUpdate.useMutation({
     onSuccess: async () => {
       await Promise.all([
-        queryClient.invalidateQueries({ queryKey: [["transactions", "list"]] }),
-        queryClient.invalidateQueries({ queryKey: [["transactions", "stats"]] }),
+        utils.transactions.enrichedList.invalidate(),
+        utils.transactions.list.invalidate(),
+        utils.transactions.stats.invalidate(),
       ]);
       setSelected(new Set());
     },
   });
   const bulkDelete = trpc.transactions.bulkDelete.useMutation({
-    onSuccess: async () => {
+    async onMutate(variables) {
+      // Optimistically remove from current list
+      await utils.transactions.enrichedList.cancel(enrichedInput as any);
+      const previous = utils.transactions.enrichedList.getData(enrichedInput as any);
+      if (previous) {
+        utils.transactions.enrichedList.setData(
+          enrichedInput as any,
+          {
+            ...previous,
+            items: previous.items.filter(
+              (r: any) => !(variables.transactionIds ?? []).includes(r.transaction.id),
+            ),
+          } as any,
+        );
+      }
+      return { previous } as any;
+    },
+    onError: (_err, _vars, ctx) => {
+      if (ctx?.previous) {
+        utils.transactions.enrichedList.setData(enrichedInput as any, ctx.previous as any);
+      }
+    },
+    onSettled: async () => {
       await Promise.all([
-        queryClient.invalidateQueries({ queryKey: [["transactions", "list"]] }),
-        queryClient.invalidateQueries({ queryKey: [["transactions", "stats"]] }),
+        utils.transactions.enrichedList.invalidate(),
+        utils.transactions.list.invalidate(),
+        utils.transactions.stats.invalidate(),
       ]);
       setSelected(new Set());
     },
@@ -398,8 +424,15 @@ export function TransactionsView({
     const ids = Array.from(selected);
     if (!ids.length) return;
     try {
-      await bulkDelete.mutateAsync({ transactionIds: ids });
-      toast({ description: "Transactions deleted" });
+      const res = await bulkDelete.mutateAsync({ transactionIds: ids });
+      if (res && (res as any).deletedCount === 0) {
+        toast({
+          description: "Nothing deleted (only manual entries can be deleted)",
+          variant: "destructive",
+        });
+      } else {
+        toast({ description: "Transactions deleted" });
+      }
       setDeleteDialogOpen(false);
     } catch {
       toast({ description: "Failed to delete transactions" });
@@ -475,8 +508,15 @@ export function TransactionsView({
       },
       onDelete: async (id) => {
         try {
-          await bulkDelete.mutateAsync({ transactionIds: [id] });
-          toast({ description: "Transaction deleted" });
+          const res = await bulkDelete.mutateAsync({ transactionIds: [id] });
+          if (res && (res as any).deletedCount === 0) {
+            toast({
+              description: "Cannot delete this transaction (only manual entries)",
+              variant: "destructive",
+            });
+          } else {
+            toast({ description: "Transaction deleted" });
+          }
         } catch {
           toast({ description: "Failed to delete transaction", variant: "destructive" });
         }

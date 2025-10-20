@@ -28,6 +28,7 @@ export type TransactionRow = {
     paymentMethod?: string | null;
     excludeFromAnalytics?: boolean | null;
     enrichmentCompleted?: boolean | null;
+    manual?: boolean | null;
   };
   client?: {
     id: string;
@@ -292,6 +293,7 @@ export function createTransactionColumns(context: ColumnContext): ColumnDef<Tran
               <DropdownMenuItem
                 onClick={() => context.onDelete(transaction.id)}
                 className="text-destructive"
+                disabled={!transaction.manual}
               >
                 Delete
               </DropdownMenuItem>
