@@ -1,55 +1,29 @@
 "use client";
 
-import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   flexRender,
   getCoreRowModel,
-  useReactTable,
   type RowSelectionState,
+  useReactTable,
   type VisibilityState,
 } from "@tanstack/react-table";
-import {
-  ChevronDown,
-  Download,
-  Filter,
-  MoreHorizontal,
-  Plus,
-  Search,
-  SlidersHorizontal,
-  Trash2,
-} from "lucide-react";
+import { Download, Plus, Trash2 } from "lucide-react";
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { AddTransactions } from "@/components/add-transactions";
+// MultipleSelector retained elsewhere; not used here for filters UI
+import { BulkActions } from "@/components/bulk-actions";
+import { CreateAccountDialog } from "@/components/create-account-dialog";
+import { EmptyState } from "@/components/empty-state";
+import { TransactionDetailsSheet } from "@/components/transaction-details-sheet";
+import { TransactionSheet } from "@/components/transaction-sheet";
+import { TransactionsColumnVisibility } from "@/components/transactions-column-visibility";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuCheckboxItem,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuPortal,
-  DropdownMenuSeparator,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Sheet, SheetContent, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { Skeleton } from "@/components/ui/skeleton";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import {
   Table,
   TableBody,
@@ -58,22 +32,14 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { trpc } from "@/lib/trpc/client";
-import { TransactionSheet } from "@/components/transaction-sheet";
-import { TransactionDetailsSheet } from "@/components/transaction-details-sheet";
-import { useTransactionParams } from "@/hooks/use-transaction-params";
-import { EmptyState } from "@/components/empty-state";
-import { CreateAccountDialog } from "@/components/create-account-dialog";
 import { useToast } from "@/components/ui/use-toast";
-// MultipleSelector retained elsewhere; not used here for filters UI
-import { BulkActions } from "@/components/bulk-actions";
-import { AddTransactions } from "@/components/add-transactions";
-import { TransactionsColumnVisibility } from "@/components/transactions-column-visibility";
+import { useTeamCurrency } from "@/hooks/use-team-currency";
+import { useTransactionParams } from "@/hooks/use-transaction-params";
+import { formatAmount } from "@/lib/format-currency";
+import { trpc } from "@/lib/trpc/client";
 import { createTransactionColumns, type TransactionRow } from "./transactions-columns";
 import TransactionsSearchFilter from "./transactions-search-filter";
 import type { FilterState } from "./types";
-import { useTeamCurrency } from "@/hooks/use-team-currency";
-import { formatAmount } from "@/lib/format-currency";
 
 type FilterType = "all" | "payment" | "expense" | "refund" | "adjustment";
 
@@ -110,13 +76,14 @@ export function TransactionsView({
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>(() => {
     try {
-      const raw = typeof window !== "undefined" ? localStorage.getItem("transactionsColumns") : null;
+      const raw =
+        typeof window !== "undefined" ? localStorage.getItem("transactionsColumns") : null;
       return raw ? (JSON.parse(raw) as VisibilityState) : {};
     } catch {
       return {} as VisibilityState;
     }
   });
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [_deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   // Categories are set via AI parse or elsewhere; no lazy load UI here (Midday parity)
 
@@ -130,21 +97,21 @@ export function TransactionsView({
       assignees: assignees.length ? assignees : undefined,
       isRecurring: isRecurring,
       search: search || undefined,
-      startDate: startDate ? new Date(startDate + "T00:00:00Z") : undefined,
-      endDate: endDate ? new Date(endDate + "T23:59:59Z") : undefined,
+      startDate: startDate ? new Date(`${startDate}T00:00:00Z`) : undefined,
+      endDate: endDate ? new Date(`${endDate}T23:59:59Z`) : undefined,
       hasAttachments: hasAttachments === "any" ? undefined : hasAttachments === "with",
       amountMin: amountMin ? Number(amountMin) : undefined,
       amountMax: amountMax ? Number(amountMax) : undefined,
       limit: 50,
     };
-    
+
     // Remove undefined values to avoid issues
-    Object.keys(input).forEach(key => {
+    Object.keys(input).forEach((key) => {
       if (input[key] === undefined) {
         delete input[key];
       }
     });
-    
+
     return input;
   }, [
     filterType,
@@ -177,7 +144,7 @@ export function TransactionsView({
       tags: tags.length,
       accounts: accounts.length,
       assignees: assignees.length,
-    }
+    },
   });
   const transactions = trxData?.items || [];
   const byId = useMemo(
@@ -187,7 +154,7 @@ export function TransactionsView({
   const { data: membersData } = trpc.transactions.members.useQuery(undefined, {
     staleTime: 30000,
   });
-  const members = (membersData as any[]) ?? [];
+  const _members = (membersData as any[]) ?? [];
   const currencyCode = currency;
   const hasActiveFilters = useMemo(() => {
     return (
@@ -247,6 +214,8 @@ export function TransactionsView({
   const [allocAmount, setAllocAmount] = useState(0);
   const [createAccountOpen, setCreateAccountOpen] = useState(false);
   const aiParse = trpc.transactions.aiParse.useMutation();
+  const invoiceSelectId = useId();
+  const allocAmountId = useId();
 
   const applyParsedFilters = (p: any) => {
     if (!p || typeof p !== "object") return;
@@ -326,26 +295,27 @@ export function TransactionsView({
     };
   }, [shouldPollForEnrichment, refetch]);
   const [focusedIndex, setFocusedIndex] = useState<number>(0);
-  const loadMoreRef = useRef<HTMLDivElement | null>(null);
+  const _loadMoreRef = useRef<HTMLDivElement | null>(null);
   useEffect(() => {
     if (rows.length === 0) setFocusedIndex(0);
     else if (focusedIndex > rows.length - 1) setFocusedIndex(rows.length - 1);
-  }, [rows.length]);
+  }, [rows.length, focusedIndex]);
   // Infinite scroll removed for debugging
 
-  const openAllocate = (row: any) => {
+  const _openAllocate = (row: any) => {
     setSelectedTrx(row);
     setAllocAmount(Number(row.transaction.amount || 0));
     setSelectedInvoiceId("");
     setAllocateOpen(true);
   };
 
-  const toggleAll = (checked: boolean) => {
+  const _toggleAll = (checked: boolean) => {
     if (!checked) {
       setRowSelection({});
     } else {
       const ids = rows.map((r: any) => r.transaction.id);
-      const selection = ids.reduce((acc, id) => ({ ...acc, [id]: true }), {});
+      const selection: Record<string, boolean> = {};
+      for (const id of ids) selection[id] = true;
       setRowSelection(selection);
     }
   };
@@ -403,23 +373,23 @@ export function TransactionsView({
     }
   };
 
-  const handleBulkCategory = async (slug: string) => {
+  const _handleBulkCategory = async (slug: string) => {
     await runBulkUpdate({ categorySlug: slug });
   };
 
-  const handleBulkStatus = async (status: "pending" | "completed" | "failed" | "cancelled") => {
+  const _handleBulkStatus = async (status: "pending" | "completed" | "failed" | "cancelled") => {
     await runBulkUpdate({ status });
   };
 
-  const handleBulkExclude = async (exclude: boolean) => {
+  const _handleBulkExclude = async (exclude: boolean) => {
     await runBulkUpdate({ excludeFromAnalytics: exclude });
   };
 
-  const handleBulkAssign = async (assignedId: string | null) => {
+  const _handleBulkAssign = async (assignedId: string | null) => {
     await runBulkUpdate({ assignedId });
   };
 
-  const handleBulkExport = () => {
+  const _handleBulkExport = () => {
     exportSelected();
     toast({ description: `Exported ${selected.size} transactions` });
   };
@@ -455,6 +425,8 @@ export function TransactionsView({
         transaction: row.transaction,
         client: row.client,
         category: row.category,
+        assignedUser: row.assignedUser,
+        tags: row.tags,
       })),
     [rows],
   );
@@ -463,7 +435,7 @@ export function TransactionsView({
   const columns = useMemo(() => {
     return createTransactionColumns({
       currencyCode,
-      onToggleSelection: (id: string) => {
+      onToggleSelection: (_id: string) => {
         // Let TanStack Table handle selection, we'll sync via useEffect
       },
       onViewDetails: (row) => {
@@ -532,7 +504,7 @@ export function TransactionsView({
       table.getSelectedRowModel().rows.map((row) => row.original.transaction.id),
     );
     setSelected(selectedIds);
-  }, [rowSelection, table]);
+  }, [table]);
 
   // Persist column visibility
   useEffect(() => {
@@ -568,13 +540,11 @@ export function TransactionsView({
             <span className="text-sm text-muted-foreground">{selectedCount} selected</span>
           </div>
           <div className="flex items-center gap-2">
+            <Button size="sm" variant="outline" onClick={_handleBulkExport} className="gap-1">
+              <Download className="h-4 w-4" /> Export
+            </Button>
             <BulkActions ids={Array.from(selected)} onComplete={() => setSelected(new Set())} />
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={() => setDeleteDialogOpen(true)}
-              className="gap-1"
-            >
+            <Button size="sm" variant="ghost" onClick={handleConfirmDelete} className="gap-1">
               <Trash2 className="h-4 w-4" />
             </Button>
           </div>
@@ -627,7 +597,10 @@ export function TransactionsView({
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {formatAmount({ currency: currencyCode, amount: (stats as any)?.pendingPayments || 0 })}
+              {formatAmount({
+                currency: currencyCode,
+                amount: (stats as any)?.pendingPayments || 0,
+              })}
             </div>
             <p className="mt-1 text-xs text-muted-foreground">Awaiting collection</p>
           </CardContent>
@@ -647,9 +620,10 @@ export function TransactionsView({
               assignees,
               startDate,
               endDate,
-              amountMin: amountMin ? parseInt(amountMin) : undefined,
-              amountMax: amountMax ? parseInt(amountMax) : undefined,
-              hasAttachments: hasAttachments === "with" ? true : hasAttachments === "without" ? false : undefined,
+              amountMin: amountMin ? parseInt(amountMin, 10) : undefined,
+              amountMax: amountMax ? parseInt(amountMax, 10) : undefined,
+              hasAttachments:
+                hasAttachments === "with" ? true : hasAttachments === "without" ? false : undefined,
               isRecurring,
             }}
             currency={currencyCode}
@@ -664,7 +638,14 @@ export function TransactionsView({
               if (p.endDate !== undefined) setEndDate(p.endDate || "");
               if (p.amountMin !== undefined) setAmountMin(p.amountMin ? String(p.amountMin) : "");
               if (p.amountMax !== undefined) setAmountMax(p.amountMax ? String(p.amountMax) : "");
-              if (p.hasAttachments !== undefined) setHasAttachments(p.hasAttachments === true ? "with" : p.hasAttachments === false ? "without" : "any");
+              if (p.hasAttachments !== undefined)
+                setHasAttachments(
+                  p.hasAttachments === true
+                    ? "with"
+                    : p.hasAttachments === false
+                      ? "without"
+                      : "any",
+                );
               if (p.isRecurring !== undefined) setIsRecurring(p.isRecurring);
             }}
             onAskAI={async (q) => {
@@ -673,7 +654,7 @@ export function TransactionsView({
               return parsed as any;
             }}
           />
-          
+
           {/* Table Controls Island */}
           <div className="flex items-center justify-end gap-2">
             <TransactionsColumnVisibility columns={table.getAllColumns()} />
@@ -704,7 +685,7 @@ export function TransactionsView({
               title="No transactions"
               description={
                 <div className="flex flex-col items-center gap-3">
-                <div className="text-muted-foreground text-sm">
+                  <div className="text-muted-foreground text-sm">
                     You haven't recorded any transactions yet.
                   </div>
                   <div className="flex gap-2">
@@ -730,7 +711,8 @@ export function TransactionsView({
         ) : (
           <div
             className="overflow-x-auto"
-            tabIndex={0}
+            role="application"
+            aria-label="Transactions table keyboard navigation"
             onKeyDown={(e) => {
               if (!rows.length) return;
               if (e.key === "ArrowDown") {
@@ -751,7 +733,7 @@ export function TransactionsView({
                 {table.getHeaderGroups().map((headerGroup) => (
                   <TableRow key={headerGroup.id}>
                     {headerGroup.headers.map((header) => {
-                      const isSticky = header.id === "select" || header.id === "date";
+                      const _isSticky = header.id === "select" || header.id === "date";
                       return (
                         <TableHead
                           key={header.id}
@@ -787,7 +769,7 @@ export function TransactionsView({
                       onClick={() => setFocusedIndex(idx)}
                     >
                       {row.getVisibleCells().map((cell) => {
-                        const isSticky = cell.column.id === "select" || cell.column.id === "date";
+                        const _isSticky = cell.column.id === "select" || cell.column.id === "date";
                         return (
                           <TableCell
                             key={cell.id}
@@ -823,6 +805,18 @@ export function TransactionsView({
 
       {/* Filters popover/sheet removed — Midday uses AI-first search without separate filter surface */}
 
+      {/* BottomBar: show when filters are active */}
+      {hasActiveFilters && (
+        <div className="fixed bottom-4 left-1/2 z-50 -translate-x-1/2 rounded-lg border bg-background shadow-lg">
+          <div className="flex items-center gap-3 px-4 py-2">
+            <span className="text-sm">Filters active</span>
+            <Button size="sm" variant="ghost" onClick={clearAllFilters}>
+              Clear filters
+            </Button>
+          </div>
+        </div>
+      )}
+
       {/* Allocate Sheet */}
       <Sheet open={allocateOpen} onOpenChange={setAllocateOpen}>
         <SheetContent>
@@ -836,8 +830,11 @@ export function TransactionsView({
               {Number(selectedTrx?.transaction?.amount || 0).toLocaleString()}
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">Invoice</label>
+              <label className="text-sm font-medium" htmlFor={invoiceSelectId}>
+                Invoice
+              </label>
               <select
+                id={invoiceSelectId}
                 value={selectedInvoiceId}
                 onChange={(e) => setSelectedInvoiceId(e.target.value)}
                 className="w-full rounded border px-3 py-2 text-sm"
@@ -852,8 +849,11 @@ export function TransactionsView({
               </select>
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">Amount</label>
+              <label className="text-sm font-medium" htmlFor={allocAmountId}>
+                Amount
+              </label>
               <Input
+                id={allocAmountId}
                 type="number"
                 step="0.01"
                 value={allocAmount}
