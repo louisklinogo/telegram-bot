@@ -155,6 +155,8 @@ export function TransactionForm({ onSuccess, defaultInvoiceId, defaultClientId }
   const createTransaction = trpc.transactions.create.useMutation({
     onSuccess: (_result, variables) => {
       toast({ title: "Transaction recorded successfully!" });
+      // Invalidate all views that display transactions
+      utils.transactions.enrichedList.invalidate();
       utils.transactions.list.invalidate();
       utils.transactions.stats.invalidate();
       // If it was a payment, invoices might be affected
