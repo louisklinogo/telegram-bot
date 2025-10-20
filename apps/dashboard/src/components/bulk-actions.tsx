@@ -1,6 +1,7 @@
 "use client";
 
-import { trpc } from "@/lib/trpc/client";
+import { useQueryClient } from "@tanstack/react-query";
+import { Ban, ChevronDown, CircleDot, EyeOff, RotateCcw, Tag, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -14,8 +15,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/components/ui/use-toast";
-import { useQueryClient } from "@tanstack/react-query";
-import { ChevronDown, Tag, EyeOff, User, CircleDot } from "lucide-react";
+import { trpc } from "@/lib/trpc/client";
 import { SelectCategory } from "./select-category";
 import { SelectUser } from "./select-user";
 
@@ -26,13 +26,13 @@ type Props = {
 
 export function BulkActions({ ids, onComplete }: Props) {
   const { toast } = useToast();
-  const queryClient = useQueryClient();
+  const _queryClient = useQueryClient();
+  const utils = trpc.useUtils();
 
   const updateMutation = trpc.transactions.bulkUpdate.useMutation({
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [["transactions", "list"]] });
-      // Also invalidate enriched list used by new page
-      queryClient.invalidateQueries({ queryKey: [["transactions", "enrichedList"]] });
+      utils.transactions.enrichedList.invalidate();
+      utils.transactions.list.invalidate();
 
       onComplete?.();
 
@@ -59,6 +59,33 @@ export function BulkActions({ ids, onComplete }: Props) {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-[180px]" sideOffset={8}>
+        <DropdownMenuGroup>
+          <DropdownMenuItem
+            onClick={() => {
+              updateMutation.mutate({
+                transactionIds: ids,
+                updates: { status: "cancelled", excludeFromAnalytics: true },
+              });
+            }}
+          >
+            <Ban className="mr-2 h-4 w-4" />
+            Void
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={() => {
+              updateMutation.mutate({
+                transactionIds: ids,
+                updates: { status: "pending", excludeFromAnalytics: false },
+              });
+            }}
+          >
+            <RotateCcw className="mr-2 h-4 w-4" />
+            Unvoid
+          </DropdownMenuItem>
+        </DropdownMenuGroup>
+
+        <DropdownMenuSeparator />
+
         <DropdownMenuGroup>
           <DropdownMenuSub>
             <DropdownMenuSubTrigger>

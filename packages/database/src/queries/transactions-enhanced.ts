@@ -6,6 +6,7 @@ import {
   transactionCategories,
   transactionTags,
   transactionAttachments,
+  transactionAllocations,
   tags,
   users,
 } from "../schema";
@@ -120,6 +121,8 @@ export async function getTransactionsEnriched(
       client: clients,
       category: transactionCategories,
       assignedUser: users,
+      // Count allocations
+      allocationCount: sql<number>`COUNT(DISTINCT ${transactionAllocations.id})`,
       // Aggregate tags
       tags: sql<TransactionTagJson[]>`
         COALESCE(
@@ -151,6 +154,10 @@ export async function getTransactionsEnriched(
     .leftJoin(transactionTags, eq(transactions.id, transactionTags.transactionId))
     .leftJoin(tags, eq(transactionTags.tagId, tags.id))
     .leftJoin(transactionAttachments, eq(transactions.id, transactionAttachments.transactionId))
+    .leftJoin(
+      transactionAllocations,
+      eq(transactions.id, transactionAllocations.transactionId),
+    )
     .where(whereConditions)
     .groupBy(transactions.id, clients.id, transactionCategories.id, users.id)
     .orderBy(desc(transactions.date), desc(transactions.id))
@@ -284,6 +291,8 @@ export async function softDeleteTransactionsBulk(
         inArray(transactions.id, transactionIds),
         isNull(transactions.deletedAt),
         eq(transactions.manual, true),
+        // Ensure not allocated to any invoice
+        sql`NOT EXISTS (SELECT 1 FROM transaction_allocations ta WHERE ta.transaction_id = ${transactions.id})`,
       ),
     )
     .returning({ id: transactions.id });

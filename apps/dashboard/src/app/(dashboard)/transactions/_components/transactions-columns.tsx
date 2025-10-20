@@ -184,6 +184,16 @@ export function createTransactionColumns(context: ColumnContext): ColumnDef<Tran
       },
     },
     {
+      accessorKey: "transaction.manual",
+      id: "origin",
+      header: "Origin",
+      cell: ({ row }) => (
+        <Badge variant={row.original.transaction.manual ? "secondary" : "outline"}>
+          {row.original.transaction.manual ? "Manual" : "System"}
+        </Badge>
+      ),
+    },
+    {
       accessorKey: "assignedUser",
       id: "assigned",
       header: "Assigned",
@@ -283,6 +293,12 @@ export function createTransactionColumns(context: ColumnContext): ColumnDef<Tran
                 }
               >
                 Mark as {isCompleted ? "uncompleted" : "completed"}
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => context.onToggleStatus(transaction.id, "cancelled")}>
+                Void
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => context.onToggleStatus(transaction.id, "pending")}>
+                Unvoid
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => context.onToggleExclude(transaction.id, !isExcluded)}
