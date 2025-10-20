@@ -5,6 +5,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { useTransactionParams } from "@/hooks/use-transaction-params";
 import { trpc } from "@/lib/trpc/client";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Badge } from "@/components/ui/badge";
 
 export function TransactionDetailsSheet() {
   const { isOpen, transactionId, close } = useTransactionParams();
@@ -56,6 +57,20 @@ export function TransactionDetailsSheet() {
                   <div>{(data as any).transaction.status}</div>
                 </div>
               </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <div className="text-xs text-muted-foreground">Transaction #</div>
+                  <div>{(data as any).transaction.transactionNumber || "-"}</div>
+                </div>
+                <div>
+                  <div className="text-xs text-muted-foreground">Origin</div>
+                  <div>
+                    <Badge variant="outline" className="bg-slate-100 text-slate-700 border-slate-200">
+                      {(data as any).transaction.manual ? "Manual" : "System"}
+                    </Badge>
+                  </div>
+                </div>
+              </div>
               <div>
                 <div className="text-xs text-muted-foreground">Description</div>
                 <div>{(data as any).transaction.description || "-"}</div>
@@ -80,6 +95,34 @@ export function TransactionDetailsSheet() {
                 <div>
                   <div className="text-xs text-muted-foreground">Reference</div>
                   <div>{(data as any).transaction.paymentReference || "-"}</div>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <div className="text-xs text-muted-foreground">Assigned</div>
+                  <div>{(data as any).assignedUser?.fullName || (data as any).assignedUser?.email || "-"}</div>
+                </div>
+                <div>
+                  <div className="text-xs text-muted-foreground">Excluded from analytics</div>
+                  <div>{(data as any).transaction.excludeFromAnalytics ? "Yes" : "No"}</div>
+                </div>
+              </div>
+              <div>
+                <div className="text-xs text-muted-foreground">Tags</div>
+                <div className="flex flex-wrap gap-1">
+                  {Array.isArray((data as any).tags) && (data as any).tags.length > 0 ? (
+                    (data as any).tags.map((t: any) => (
+                      <span
+                        key={t.id}
+                        className="px-1.5 py-0.5 rounded text-[10px] border"
+                        style={t.color ? { backgroundColor: `${t.color}15`, borderColor: `${t.color}55` } : undefined}
+                      >
+                        {t.name}
+                      </span>
+                    ))
+                  ) : (
+                    <span>-</span>
+                  )}
                 </div>
               </div>
               <div>

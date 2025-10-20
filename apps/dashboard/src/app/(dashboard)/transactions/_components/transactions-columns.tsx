@@ -129,20 +129,23 @@ export function createTransactionColumns(context: ColumnContext): ColumnDef<Tran
       accessorKey: "transaction.type",
       id: "type",
       header: "Type",
-      cell: ({ row }) => (
-        <Badge
-          variant={
-            row.original.transaction.type === "payment"
-              ? "default"
-              : row.original.transaction.type === "expense"
-                ? "secondary"
-                : "outline"
-          }
-        >
-          {row.original.transaction.type}
-        </Badge>
-      ),
-      enableHiding: false,
+      cell: ({ row }) => {
+        const t = row.original.transaction.type;
+        const cls =
+          t === "payment"
+            ? "bg-green-100 text-green-700 border-green-200"
+            : t === "expense"
+              ? "bg-red-100 text-red-700 border-red-200"
+              : t === "refund"
+                ? "bg-purple-100 text-purple-700 border-purple-200"
+                : "bg-sky-100 text-sky-700 border-sky-200"; // adjustment
+        return (
+          <Badge variant="outline" className={cls}>
+            {t}
+          </Badge>
+        );
+      },
+      enableHiding: true,
     },
     {
       accessorKey: "category.name",
@@ -170,17 +173,27 @@ export function createTransactionColumns(context: ColumnContext): ColumnDef<Tran
       header: "Status",
       cell: ({ row }) => {
         const s = row.original.transaction.status;
-        const enriching = row.original.transaction.enrichmentCompleted === false;
+        const enriching = s === "pending" && row.original.transaction.enrichmentCompleted === false;
+        const cls =
+          s === "completed"
+            ? "bg-green-100 text-green-700 border-green-200"
+            : s === "pending"
+              ? "bg-amber-100 text-amber-700 border-amber-200"
+              : s === "failed"
+                ? "bg-red-100 text-red-700 border-red-200"
+                : "bg-slate-100 text-slate-700 border-slate-200"; // cancelled
         return (
           <div className="flex items-center gap-2">
-            <Badge
-              variant={
-                s === "completed" ? "default" : s === "pending" ? "secondary" : "destructive"
-              }
-            >
+            <Badge variant="outline" className={cls}>
               {s}
             </Badge>
-            {enriching && <span className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />}
+            {enriching && (
+              <span
+                aria-label="Enriching..."
+                title="Enriching..."
+                className="h-2 w-2 rounded-full bg-amber-500 animate-pulse"
+              />
+            )}
           </div>
         );
       },
@@ -189,11 +202,17 @@ export function createTransactionColumns(context: ColumnContext): ColumnDef<Tran
       accessorKey: "transaction.manual",
       id: "origin",
       header: "Origin",
-      cell: ({ row }) => (
-        <Badge variant={row.original.transaction.manual ? "secondary" : "outline"}>
-          {row.original.transaction.manual ? "Manual" : "System"}
-        </Badge>
-      ),
+      cell: ({ row }) => {
+        const isManual = !!row.original.transaction.manual;
+        const cls = isManual
+          ? "bg-slate-100 text-slate-700 border-slate-200"
+          : "bg-zinc-100 text-zinc-700 border-zinc-200";
+        return (
+          <Badge variant="outline" className={cls}>
+            {isManual ? "Manual" : "System"}
+          </Badge>
+        );
+      },
     },
     {
       accessorKey: "assignedUser",
