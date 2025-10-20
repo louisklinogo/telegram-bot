@@ -5,9 +5,11 @@ import { Ban, ChevronDown, CircleDot, EyeOff, RotateCcw, Tag, User } from "lucid
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
+  DropdownMenuItem,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuGroup,
+  DropdownMenuSeparator,
   DropdownMenuPortal,
   DropdownMenuSub,
   DropdownMenuSubContent,

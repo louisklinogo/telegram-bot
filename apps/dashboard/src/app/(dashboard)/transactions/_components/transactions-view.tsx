@@ -1,5 +1,4 @@
 "use client";
-
 import { useQueryClient } from "@tanstack/react-query";
 import {
   flexRender,
@@ -11,8 +10,8 @@ import {
 import { Download, Plus, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { useInView } from "react-intersection-observer";
 import { AddTransactions } from "@/components/add-transactions";
-// MultipleSelector retained elsewhere; not used here for filters UI
 import { BulkActions } from "@/components/bulk-actions";
 import { CreateAccountDialog } from "@/components/create-account-dialog";
 import { EmptyState } from "@/components/empty-state";
@@ -33,6 +32,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useToast } from "@/components/ui/use-toast";
+import { useStickyColumns } from "@/hooks/use-sticky-columns";
 import { useTeamCurrency } from "@/hooks/use-team-currency";
 import { useTransactionParams } from "@/hooks/use-transaction-params";
 import { formatAmount } from "@/lib/format-currency";
@@ -130,11 +130,24 @@ export function TransactionsView({
     amountMax,
   ]);
 
-  // Enriched list (regular query instead of infinite to debug)
-  const { data: trxData, refetch } = trpc.transactions.enrichedList.useQuery(enrichedInput, {
+  // Infinite enriched list
+  const { ref: loadMoreRef, inView: loadMoreInView } = useInView({ rootMargin: "200px" });
+  const {
+    data: infiniteData,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    refetch,
+  } = trpc.transactions.enrichedList.useInfiniteQuery(enrichedInput as any, {
+    getNextPageParam: (last) => (last as any)?.nextCursor ?? null,
     initialData:
-      initialTransactions.length > 0 ? { items: initialTransactions, nextCursor: null } : undefined,
+      initialTransactions.length > 0
+        ? { pages: [{ items: initialTransactions, nextCursor: null }], pageParams: [null] }
+        : undefined,
   });
+  useEffect(() => {
+    if (loadMoreInView && hasNextPage && !isFetchingNextPage) fetchNextPage();
+  }, [loadMoreInView, hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   // Debug: Log the query parameters to see if filters are updating
   console.log("🔍 Filter Debug:", {
@@ -147,7 +160,10 @@ export function TransactionsView({
       assignees: assignees.length,
     },
   });
-  const transactions = trxData?.items || [];
+  const transactions = useMemo(
+    () => (infiniteData?.pages || []).flatMap((p: any) => p.items || []),
+    [infiniteData],
+  );
   const byId = useMemo(
     () => new Map<string, any>(transactions.map((r: any) => [r.transaction.id, r])),
     [transactions],
@@ -321,12 +337,13 @@ export function TransactionsView({
     };
   }, [shouldPollForEnrichment, refetch]);
   const [focusedIndex, setFocusedIndex] = useState<number>(0);
-  const _loadMoreRef = useRef<HTMLDivElement | null>(null);
+  const lastAnchorIndex = useRef<number | null>(null);
   useEffect(() => {
     if (rows.length === 0) setFocusedIndex(0);
     else if (focusedIndex > rows.length - 1) setFocusedIndex(rows.length - 1);
   }, [rows.length, focusedIndex]);
-  // Infinite scroll removed for debugging
+  // Sticky columns offsets
+  const { leftDate } = useStickyColumns();
 
   const _openAllocate = (row: any) => {
     setSelectedTrx(row);
@@ -783,10 +800,28 @@ export function TransactionsView({
               } else if (e.key === "ArrowUp") {
                 e.preventDefault();
                 setFocusedIndex((i) => Math.max(i - 1, 0));
+            } else if (e.key === "Home") {
+              e.preventDefault();
+              setFocusedIndex(0);
+            } else if (e.key === "End") {
+              e.preventDefault();
+              setFocusedIndex(rows.length - 1);
+            } else if (e.key === " " && e.shiftKey) {
+              e.preventDefault();
+              const anchor = lastAnchorIndex.current ?? focusedIndex;
+              const start = Math.min(anchor, focusedIndex);
+              const end = Math.max(anchor, focusedIndex);
+              const rangeIds = rows.slice(start, end + 1).map((r: any) => r.transaction.id);
+              setRowSelection((prev) => {
+                const next = { ...prev } as Record<string, boolean>;
+                for (const id of rangeIds) next[id] = true;
+                return next;
+              });
               } else if (e.key === " " || e.key === "Enter") {
                 e.preventDefault();
                 const id = rows[focusedIndex]?.transaction?.id;
                 if (id) toggleRow(id, !selected.has(id));
+              lastAnchorIndex.current = focusedIndex;
               }
             }}
           >
@@ -803,11 +838,13 @@ export function TransactionsView({
                             header.id === "select"
                               ? "w-10 sticky left-0 z-10 bg-background"
                               : header.id === "date"
-                                ? "w-36 sticky left-10 z-10 bg-background"
+                                ? `w-36 sticky z-10 bg-background`
                                 : header.id === "actions"
                                   ? "w-[100px]"
                                   : ""
                           }
+                          data-col-id={header.id === "select" ? "select" : undefined}
+                          style={header.id === "date" ? { left: leftDate } : undefined}
                         >
                           {header.isPlaceholder
                             ? null
@@ -824,11 +861,11 @@ export function TransactionsView({
                     <TableRow
                       key={row.id}
                       data-state={row.getIsSelected() && "selected"}
-                      className={
-                        "hover:bg-muted/50 " +
-                        (idx === focusedIndex ? "ring-1 ring-primary/40" : "")
-                      }
-                      onClick={() => setFocusedIndex(idx)}
+                      className={"hover:bg-muted/50 " + (idx === focusedIndex ? "bg-muted/40" : "")}
+                      onClick={() => {
+                        setFocusedIndex(idx);
+                        lastAnchorIndex.current = idx;
+                      }}
                     >
                       {row.getVisibleCells().map((cell) => {
                         const _isSticky = cell.column.id === "select" || cell.column.id === "date";
@@ -839,11 +876,12 @@ export function TransactionsView({
                               cell.column.id === "select"
                                 ? "sticky left-0 z-10 bg-background"
                                 : cell.column.id === "date"
-                                  ? "font-medium sticky left-10 z-10 bg-background w-36"
+                                  ? "font-medium sticky z-10 bg-background w-36"
                                   : cell.column.id === "actions"
                                     ? "pr-2"
                                     : ""
                             }
+                            style={cell.column.id === "date" ? { left: leftDate } : undefined}
                           >
                             {flexRender(cell.column.columnDef.cell, cell.getContext())}
                           </TableCell>
@@ -862,7 +900,8 @@ export function TransactionsView({
             </Table>
           </div>
         )}
-        {/* Infinite scroll removed for debugging */}
+        {/* Infinite scroll sentinel */}
+        <div ref={loadMoreRef} />
       </div>
 
       {/* Filters popover/sheet removed — Midday uses AI-first search without separate filter surface */}
