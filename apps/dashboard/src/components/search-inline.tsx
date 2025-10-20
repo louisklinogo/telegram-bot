@@ -25,9 +25,12 @@ export function SearchInline({ placeholder = "Search…", className }: Props) {
     }
   }, [open]);
 
-  const commit = () => {
-    setQ(value || "");
-  };
+  // Auto-commit with debounce
+  useEffect(() => {
+    if (!open) return;
+    const id = setTimeout(() => setQ(value || ""), 250);
+    return () => clearTimeout(id);
+  }, [value, open, setQ]);
 
   return (
     <div className={cn("flex items-center gap-2", className)}>
@@ -44,9 +47,9 @@ export function SearchInline({ placeholder = "Search…", className }: Props) {
               value={value}
               onChange={(e) => setValue(e.target.value)}
               onKeyDown={(e) => {
-                if (e.key === "Enter") commit();
                 if (e.key === "Escape") setOpen(false);
               }}
+              onBlur={() => setQ(value || "")}
               placeholder={placeholder}
               className="w-[0px] sm:w-[300px] pl-9 transition-[width] duration-200"
             />
@@ -56,14 +59,6 @@ export function SearchInline({ placeholder = "Search…", className }: Props) {
               <Icons.Close className="h-4 w-4" />
             </Button>
           )}
-          <Button
-            variant="ghost"
-            size="icon"
-            aria-label="Apply search"
-            onClick={() => commit()}
-          >
-            <Icons.Check className="h-4 w-4" />
-          </Button>
           <Button variant="ghost" size="icon" aria-label="Close" onClick={() => setOpen(false)}>
             <Icons.Close className="h-4 w-4" />
           </Button>

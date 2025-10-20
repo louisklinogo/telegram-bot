@@ -143,6 +143,13 @@ export function TransactionsSearchFilter({ value, onChange, onAskAI, currency = 
     inputRef.current?.focus();
   });
 
+  // Allow external toggle (from toolbar button)
+  useEffect(() => {
+    const handler = () => setIsOpen((v) => !v);
+    document.addEventListener("transactions:toggle-filters", handler as any);
+    return () => document.removeEventListener("transactions:toggle-filters", handler as any);
+  }, []);
+
   const handleSearch = (evt: React.ChangeEvent<HTMLInputElement>) => {
     const value = evt.target.value;
     setPrompt(value);

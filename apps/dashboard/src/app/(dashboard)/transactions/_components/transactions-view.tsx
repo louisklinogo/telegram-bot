@@ -7,7 +7,7 @@ import {
   useReactTable,
   type VisibilityState,
 } from "@tanstack/react-table";
-import { Download, Plus, Trash2 } from "lucide-react";
+import { Download, Plus, Trash2, Filter } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { useInView } from "react-intersection-observer";
@@ -735,10 +735,22 @@ export function TransactionsView({
             }}
           />
 
-          {/* Notion-like right-aligned toolbar: inline search + controls */}
+          {/* Notion-like right-aligned toolbar: inline search + filter + controls */}
           <div className="flex items-center justify-end gap-2">
-            <div className="hidden sm:block">
+            <div className="hidden sm:flex items-center gap-1">
               <SearchInline />
+              <Button
+                variant={hasActiveFilters ? "default" : "outline"}
+                size="icon"
+                aria-label="Filters"
+                onClick={() => {
+                  // Open filter sheet inside TransactionsSearchFilter via URL param trigger
+                  // Simpler: toggle a small local event by setting a custom DOM event
+                  document.dispatchEvent(new CustomEvent("transactions:toggle-filters"));
+                }}
+              >
+                <Filter className="h-4 w-4" />
+              </Button>
             </div>
             <TransactionsColumnVisibility columns={table.getAllColumns()} />
             <Button
