@@ -12,6 +12,7 @@ import Link from "next/link";
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { useInView } from "react-intersection-observer";
 import { AddTransactions } from "@/components/add-transactions";
+import { SearchInline } from "@/components/search-inline";
 import { BulkActions } from "@/components/bulk-actions";
 import { CreateAccountDialog } from "@/components/create-account-dialog";
 import { EmptyState } from "@/components/empty-state";
@@ -734,8 +735,11 @@ export function TransactionsView({
             }}
           />
 
-          {/* Table Controls Island */}
+          {/* Notion-like right-aligned toolbar: inline search + controls */}
           <div className="flex items-center justify-end gap-2">
+            <div className="hidden sm:block">
+              <SearchInline />
+            </div>
             <TransactionsColumnVisibility columns={table.getAllColumns()} />
             <Button
               variant="outline"

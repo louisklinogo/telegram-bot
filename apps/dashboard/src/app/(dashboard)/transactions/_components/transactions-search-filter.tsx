@@ -16,7 +16,7 @@ import { Icons } from "@/components/ui/icons";
 import { FilterList } from "./filter-list";
 import type { TransactionsSearchFilterProps, FilterState } from "./types";
 
-type Props = TransactionsSearchFilterProps;
+type Props = TransactionsSearchFilterProps & { showSearchInput?: boolean };
 
 const PLACEHOLDERS = [
   "Software and taxes last month",
@@ -72,7 +72,7 @@ function FilterCheckbox({ id, label, checked, onCheckedChange }: FilterCheckboxP
   );
 }
 
-export function TransactionsSearchFilter({ value, onChange, onAskAI, currency = "GHS" }: Props) {
+export function TransactionsSearchFilter({ value, onChange, onAskAI, currency = "GHS", showSearchInput = true }: Props) {
   const [placeholder, setPlaceholder] = useState("");
   const [streaming, setStreaming] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
@@ -187,29 +187,31 @@ export function TransactionsSearchFilter({ value, onChange, onAskAI, currency = 
     <div className="space-y-4">
       {/* Search Bar with Filter Toggle */}
       <div className="flex items-center gap-4">
-        <form
-          className="relative flex-1"
-          onSubmit={(e) => {
-            e.preventDefault();
-            handleSubmit();
-          }}
-        >
-          <Icons.Search className="absolute pointer-events-none left-3 top-[11px] h-4 w-4" />
-          <Input
-            ref={inputRef}
-            placeholder={placeholder}
-            className="pl-9 pr-4"
-            value={prompt}
-            onChange={handleSearch}
-            onFocus={() => setIsFocused(true)}
-            onBlur={() => setIsFocused(false)}
-            autoComplete="off"
-            autoCapitalize="none"
-            autoCorrect="off"
-            spellCheck="false"
-          />
-        </form>
-        
+        {showSearchInput && (
+          <form
+            className="relative flex-1"
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleSubmit();
+            }}
+          >
+            <Icons.Search className="absolute pointer-events-none left-3 top-[11px] h-4 w-4" />
+            <Input
+              ref={inputRef}
+              placeholder={placeholder}
+              className="pl-9 pr-4"
+              value={prompt}
+              onChange={handleSearch}
+              onFocus={() => setIsFocused(true)}
+              onBlur={() => setIsFocused(false)}
+              autoComplete="off"
+              autoCapitalize="none"
+              autoCorrect="off"
+              spellCheck="false"
+            />
+          </form>
+        )}
+
         <Button
           variant={isOpen ? "default" : "outline"}
           size="sm"
