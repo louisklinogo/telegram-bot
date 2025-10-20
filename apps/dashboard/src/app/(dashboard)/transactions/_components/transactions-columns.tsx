@@ -54,6 +54,8 @@ type ColumnContext = {
   onCopyUrl: (id: string) => void;
   onToggleStatus: (id: string, status: string) => void;
   onToggleExclude: (id: string, exclude: boolean) => void;
+  onVoid: (id: string) => void;
+  onUnvoid: (id: string) => void;
   onDelete: (id: string) => void;
 };
 
@@ -294,10 +296,10 @@ export function createTransactionColumns(context: ColumnContext): ColumnDef<Tran
               >
                 Mark as {isCompleted ? "uncompleted" : "completed"}
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => context.onToggleStatus(transaction.id, "cancelled")}>
+              <DropdownMenuItem onClick={() => context.onVoid(transaction.id)}>
                 Void
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => context.onToggleStatus(transaction.id, "pending")}>
+              <DropdownMenuItem onClick={() => context.onUnvoid(transaction.id)}>
                 Unvoid
               </DropdownMenuItem>
               <DropdownMenuItem

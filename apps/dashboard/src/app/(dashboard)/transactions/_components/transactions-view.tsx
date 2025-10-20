@@ -495,6 +495,28 @@ export function TransactionsView({
           toast({ description: "Failed to update transaction", variant: "destructive" });
         }
       },
+      onVoid: async (id) => {
+        try {
+          await bulkUpdate.mutateAsync({
+            transactionIds: [id],
+            updates: { status: "cancelled" as any, excludeFromAnalytics: true },
+          });
+          toast({ description: "Transaction voided" });
+        } catch {
+          toast({ description: "Failed to void transaction", variant: "destructive" });
+        }
+      },
+      onUnvoid: async (id) => {
+        try {
+          await bulkUpdate.mutateAsync({
+            transactionIds: [id],
+            updates: { status: "pending" as any, excludeFromAnalytics: false },
+          });
+          toast({ description: "Transaction unvoided" });
+        } catch {
+          toast({ description: "Failed to unvoid transaction", variant: "destructive" });
+        }
+      },
       onToggleExclude: async (id, exclude) => {
         try {
           await bulkUpdate.mutateAsync({
