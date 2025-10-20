@@ -8,7 +8,7 @@ import {
   createClient,
   updateClient,
   deleteClient,
-} from "@cimantikos/database/queries";
+} from "@Faworra/database/queries";
 
 // Validation schemas
 const clientInsertSchema = z.object({

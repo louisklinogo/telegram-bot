@@ -3,7 +3,7 @@
 import "dotenv/config";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { getSupabaseServiceClient } from "@cimantikos/services";
+import { getSupabaseServiceClient } from "@Faworra/services";
 
 async function setupSchema() {
   console.log("🔧 Setting up Supabase schema...\n");

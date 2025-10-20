@@ -1,0 +1,15 @@
+{
+  "name": "@Faworra/analytics",
+  "version": "0.1.0",
+  "private": true,
+  "exports": {
+    "./auth-events": {
+      "types": "./src/auth-events.ts",
+      "default": "./src/auth-events.ts"
+    }
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "typescript": "^5.0.0"
+  }
+}

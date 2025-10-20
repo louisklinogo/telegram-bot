@@ -1,4 +1,4 @@
-import { getEnvConfig } from "@cimantikos/config";
+import { getEnvConfig } from "@Faworra/config";
 import { v2 as cloudinary } from "cloudinary";
 
 let isCloudinaryConfigured = false;
@@ -60,7 +60,7 @@ export async function uploadToCloudinary(
 
   const uploadOptions = {
     resource_type: "auto" as const,
-    folder: "cimantikos-invoices",
+    folder: "Faworra-invoices",
     use_filename: false,
     unique_filename: true,
     overwrite: false,

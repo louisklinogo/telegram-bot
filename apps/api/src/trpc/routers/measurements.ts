@@ -12,7 +12,7 @@ import {
   createMeasurementVersion,
   setActiveMeasurementVersion,
   compareMeasurementVersions,
-} from "@cimantikos/database/queries";
+} from "@Faworra/database/queries";
 
 export const measurementsRouter = createTRPCRouter({
   list: teamProcedure

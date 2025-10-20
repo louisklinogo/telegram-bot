@@ -1,8 +1,8 @@
 import type { Hono } from "hono";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { ApiEnv } from "../types/hono-env";
-import type { Database, TablesInsert } from "@cimantikos/supabase/types";
-import { enqueueCommunicationOutbox } from "@cimantikos/supabase/mutations";
+import type { Database, TablesInsert } from "@Faworra/supabase/types";
+import { enqueueCommunicationOutbox } from "@Faworra/supabase/mutations";
 import { z } from "zod";
 
 export function registerInvoicesRoutes(app: Hono<ApiEnv>) {

@@ -11,8 +11,8 @@ import {
   createInvoiceWithItems,
   updateInvoiceWithItems,
   deleteInvoice,
-} from "@cimantikos/database/queries";
-import { getOrderWithItemsById } from "@cimantikos/database/queries";
+} from "@Faworra/database/queries";
+import { getOrderWithItemsById } from "@Faworra/database/queries";
 
 // Validation schemas
 const invoiceItemSchema = z.object({

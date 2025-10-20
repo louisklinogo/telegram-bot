@@ -1,6 +1,6 @@
 /**
  * Simple Supabase mutations (INSERT, UPDATE, DELETE operations)
- * For complex transactions, use @cimantikos/database package with Drizzle
+ * For complex transactions, use @Faworra/database package with Drizzle
  */
 
 export * from "./clients";

@@ -1,6 +1,6 @@
 import { createServerClient as createSSRClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
-import type { Database } from "@cimantikos/supabase/types";
+import type { Database } from "@Faworra/supabase/types";
 
 type CreateClientOptions = {
   admin?: boolean;

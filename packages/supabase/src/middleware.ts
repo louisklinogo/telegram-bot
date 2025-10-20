@@ -1,7 +1,24 @@
 import { type CookieOptions, createServerClient } from "@supabase/ssr";
-import type { NextRequest, NextResponse } from "next/server";
 
-export async function updateSession(request: NextRequest, response: NextResponse) {
+type NextRequestLike = {
+  cookies: {
+    get(name: string): { value: string } | undefined;
+    set(init: { name: string; value: string } & CookieOptions): void;
+  };
+  url: string;
+  headers: Headers;
+};
+
+type NextResponseLike = {
+  cookies: {
+    set(init: { name: string; value: string } & CookieOptions): void;
+  };
+};
+
+export async function updateSession<T extends NextResponseLike>(
+  request: NextRequestLike,
+  response: T,
+): Promise<T> {
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,

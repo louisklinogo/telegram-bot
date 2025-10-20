@@ -1,7 +1,7 @@
 # 📥 Unified Social Media Inbox - Frontend Components Spec
 
 ## 🎯 Overview
-Design and build a unified communication inbox for Cimantikós that consolidates WhatsApp and Instagram messages into a single interface. Focus on **frontend components only** - no backend implementation yet.
+Design and build a unified communication inbox for Faworrathat consolidates WhatsApp and Instagram messages into a single interface. Focus on **frontend components only** - no backend implementation yet.
 
 ---
 

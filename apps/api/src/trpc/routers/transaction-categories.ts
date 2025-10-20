@@ -6,8 +6,8 @@ import {
   createCategory,
   updateCategory,
   deleteCategory,
-} from "@cimantikos/database/queries";
-import { activities } from "@cimantikos/database/schema";
+} from "@Faworra/database/queries";
+import { activities } from "@Faworra/database/schema";
 
 const createSchema = z.object({
   name: z.string().min(1),

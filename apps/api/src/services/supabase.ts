@@ -1,5 +1,5 @@
 import { createClient as createSupabaseClient, type SupabaseClient } from "@supabase/supabase-js";
-import type { Database } from "@cimantikos/supabase/types";
+import type { Database } from "@Faworra/supabase/types";
 
 // Create a Supabase client suitable for the API (Hono) runtime — no Next.js cookies.
 // Note: Don't use accessToken option here, pass token to getUser() instead

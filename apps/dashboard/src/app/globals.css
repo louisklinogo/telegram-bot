@@ -1,0 +1,271 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Light mode colors synced from v0-brillance (OKLch → HSL) */
+    --background: 224 0% 100%;
+    --foreground: 224 0% 4%;
+    --card: 224 0% 100%;
+    --card-foreground: 224 0% 4%;
+    --popover: 224 0% 100%;
+    --popover-foreground: 224 0% 4%;
+    --primary: 224 0% 9%;
+    --primary-foreground: 224 0% 98%;
+    --secondary: 224 0% 96%;
+    --secondary-foreground: 224 0% 9%;
+    --muted: 224 0% 96%;
+    --muted-foreground: 224 0% 45%;
+    --accent: 224 0% 96%;
+    --accent-foreground: 224 0% 9%;
+    --destructive: 352 100% 41%;
+    --destructive-foreground: 352 100% 41%;
+    --border: 224 0% 90%;
+    --input: 224 0% 90%;
+    --ring: 224 0% 63%;
+    --radius: 0.625rem;
+    
+    /* Border radius variants - for flexible component sizing */
+    --radius-sm: calc(var(--radius) - 4px);
+    --radius-md: calc(var(--radius) - 2px);
+    --radius-lg: var(--radius);
+    --radius-xl: calc(var(--radius) + 4px);
+    
+    /* Chart colors */
+    --chart-1: 24 100% 40%;
+    --chart-2: 176 100% 21%;
+    --chart-3: 196 72% 23%;
+    --chart-4: 47 100% 39%;
+    --chart-5: 41 100% 39%;
+    
+    /* Sidebar colors */
+    --sidebar: 224 0% 98%;
+    --sidebar-foreground: 224 0% 4%;
+    --sidebar-primary: 224 0% 9%;
+    --sidebar-primary-foreground: 224 0% 98%;
+    --sidebar-accent: 224 0% 96%;
+    --sidebar-accent-foreground: 224 0% 9%;
+    --sidebar-border: 224 0% 90%;
+    --sidebar-ring: 224 0% 63%;
+  }
+
+  .dark {
+    --background: 224 0% 4%;
+    --foreground: 224 0% 98%;
+    --card: 224 0% 4%;
+    --card-foreground: 224 0% 98%;
+    --popover: 224 0% 4%;
+    --popover-foreground: 224 0% 98%;
+    --primary: 224 0% 98%;
+    --primary-foreground: 224 0% 9%;
+    --secondary: 224 0% 15%;
+    --secondary-foreground: 224 0% 98%;
+    --muted: 224 0% 15%;
+    --muted-foreground: 224 0% 63%;
+    --accent: 224 0% 15%;
+    --accent-foreground: 224 0% 98%;
+    --destructive: 359 69% 30%;
+    --destructive-foreground: 357 96% 58%;
+    --border: 224 0% 15%;
+    --input: 224 0% 15%;
+    --ring: 224 0% 32%;
+    
+    /* Chart colors (dark) */
+    --chart-1: 225 84% 49%;
+    --chart-2: 164 100% 26%;
+    --chart-3: 41 100% 39%;
+    --chart-4: 272 100% 65%;
+    --chart-5: 345 100% 56%;
+    
+    /* Sidebar dark mode */
+    --sidebar: 224 0% 9%;
+    --sidebar-foreground: 224 0% 98%;
+    --sidebar-primary: 225 84% 49%;
+    --sidebar-primary-foreground: 224 0% 98%;
+    --sidebar-accent: 224 0% 15%;
+    --sidebar-accent-foreground: 224 0% 98%;
+    --sidebar-border: 224 0% 15%;
+    --sidebar-ring: 224 0% 32%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    font-family: var(--font-sans), system-ui, sans-serif;
+    @apply bg-background text-foreground;
+  }
+}
+
+/* Font utility classes from v0 */
+.font-inter {
+  font-family: var(--font-inter), ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.font-instrument-serif {
+  font-family: var(--font-instrument-serif);
+  font-display: swap;
+}
+
+/* Font display optimization - prioritize readability */
+@supports (font-display: swap) {
+  @font-face {
+    font-family: "Inter";
+    font-display: swap;
+  }
+  
+  @font-face {
+    font-family: "Instrument Serif";
+    font-display: swap;
+  }
+}
+
+/* Text wrapping utilities from v0 */
+.text-balance {
+  text-wrap: balance;
+}
+
+.text-pretty {
+  text-wrap: pretty;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+[type="search"]::-webkit-search-cancel-button,
+[type="search"]::-webkit-search-decoration {
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+@keyframes dialog-overlay-show {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes dialog-overlay-hide {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes dialog-content-show {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+@keyframes dialog-content-hide {
+  from {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.97);
+  }
+}
+
+.loading-ellipsis:after {
+  overflow: hidden;
+  display: inline-block;
+  vertical-align: bottom;
+  -webkit-animation: ellipsis steps(4, end) 900ms infinite;
+  animation: ellipsis steps(4, end) 900ms infinite;
+  content: "\2026"; /* ascii code for the ellipsis character */
+  width: 0px;
+}
+
+@keyframes ellipsis {
+  to {
+    width: 1.25em;
+  }
+}
+
+@-webkit-keyframes ellipsis {
+  to {
+    width: 1.25em;
+  }
+}
+
+/* Date picker */
+.rdp-tbody .rdp-button {
+  border-radius: 100%;
+}
+
+.aria-selected\:text-accent-foreground[aria-selected="true"] {
+  border-radius: 0px;
+}
+
+:root {
+  --sidebar: hsl(0 0% 98%);
+  --sidebar-foreground: hsl(240 5.3% 26.1%);
+  --sidebar-primary: hsl(240 5.9% 10%);
+  --sidebar-primary-foreground: hsl(0 0% 98%);
+  --sidebar-accent: hsl(240 4.8% 95.9%);
+  --sidebar-accent-foreground: hsl(240 5.9% 10%);
+  --sidebar-border: hsl(220 13% 91%);
+  --sidebar-ring: hsl(217.2 91.2% 59.8%);
+}
+
+.dark {
+  --sidebar: hsl(240 5.9% 10%);
+  --sidebar-foreground: hsl(240 4.8% 95.9%);
+  --sidebar-primary: hsl(224.3 76.3% 48%);
+  --sidebar-primary-foreground: hsl(0 0% 100%);
+  --sidebar-accent: hsl(240 3.7% 15.9%);
+  --sidebar-accent-foreground: hsl(240 4.8% 95.9%);
+  --sidebar-border: hsl(240 3.7% 15.9%);
+  --sidebar-ring: hsl(217.2 91.2% 59.8%);
+}
+
+@theme inline {
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* Blend mode utilities from v0 */
+.mix-blend-multiply {
+  mix-blend-mode: multiply;
+}
+
+/* Backdrop blur utilities from v0 */
+.backdrop-blur-custom {
+  backdrop-filter: blur(8.25px);
+}

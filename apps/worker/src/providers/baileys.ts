@@ -7,7 +7,7 @@ import makeWASocket, {
   downloadContentFromMessage,
 } from "@whiskeysockets/baileys";
 import path from "path";
-import { createServerClient } from "@cimantikos/supabase";
+import { createServerClient } from "@Faworra/supabase";
 import { Registry } from "./registry";
 
 type AccountRow = { id: string; team_id: string; external_id: string; status: string };
@@ -26,7 +26,7 @@ export async function startBaileysForAccount(acc: AccountRow) {
       auth: state,
       version,
       printQRInTerminal: false,
-      browser: ["Cimantikos", "Desktop", "1.0.0"],
+      browser: ["Faworra", "Desktop", "1.0.0"],
     });
     Registry.set(acc.id, sock);
 

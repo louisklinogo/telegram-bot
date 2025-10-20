@@ -56,6 +56,126 @@ export type Database = {
           },
         ]
       }
+      api_key_usage: {
+        Row: {
+          api_key_id: string
+          created_at: string
+          endpoint: string
+          id: string
+          ip_address: unknown | null
+          method: string
+          request_size_bytes: number | null
+          response_size_bytes: number | null
+          response_time_ms: number | null
+          status_code: number
+          team_id: string
+          user_agent: string | null
+        }
+        Insert: {
+          api_key_id: string
+          created_at?: string
+          endpoint: string
+          id?: string
+          ip_address?: unknown | null
+          method: string
+          request_size_bytes?: number | null
+          response_size_bytes?: number | null
+          response_time_ms?: number | null
+          status_code: number
+          team_id: string
+          user_agent?: string | null
+        }
+        Update: {
+          api_key_id?: string
+          created_at?: string
+          endpoint?: string
+          id?: string
+          ip_address?: unknown | null
+          method?: string
+          request_size_bytes?: number | null
+          response_size_bytes?: number | null
+          response_time_ms?: number | null
+          status_code?: number
+          team_id?: string
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "api_key_usage_api_key_id_fkey"
+            columns: ["api_key_id"]
+            isOneToOne: false
+            referencedRelation: "api_keys"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "api_key_usage_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      api_keys: {
+        Row: {
+          created_at: string
+          expires_at: string | null
+          id: string
+          is_active: boolean
+          key_hash: string
+          key_prefix: string
+          last_used_at: string | null
+          name: string
+          scopes: Json
+          team_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          key_hash: string
+          key_prefix: string
+          last_used_at?: string | null
+          name: string
+          scopes?: Json
+          team_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          key_hash?: string
+          key_prefix?: string
+          last_used_at?: string | null
+          name?: string
+          scopes?: Json
+          team_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "api_keys_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "api_keys_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       appointments: {
         Row: {
           client_id: string | null
@@ -890,13 +1010,17 @@ export type Database = {
       invoices: {
         Row: {
           amount: number
+          conversation_id: string | null
           created_at: string
+          created_by_id: string | null
+          created_by_type: string | null
           currency: string
           deleted_at: string | null
           discount: number | null
           due_date: string | null
           exchange_rate: number | null
           id: string
+          idempotency_key: string | null
           invoice_number: string
           invoice_url: string | null
           notes: string | null
@@ -904,6 +1028,7 @@ export type Database = {
           paid_amount: number | null
           paid_at: string | null
           sent_at: string | null
+          source: string | null
           status: Database["public"]["Enums"]["invoice_status"]
           subtotal: number
           tax: number | null
@@ -914,13 +1039,17 @@ export type Database = {
         }
         Insert: {
           amount: number
+          conversation_id?: string | null
           created_at?: string
+          created_by_id?: string | null
+          created_by_type?: string | null
           currency?: string
           deleted_at?: string | null
           discount?: number | null
           due_date?: string | null
           exchange_rate?: number | null
           id?: string
+          idempotency_key?: string | null
           invoice_number: string
           invoice_url?: string | null
           notes?: string | null
@@ -928,6 +1057,7 @@ export type Database = {
           paid_amount?: number | null
           paid_at?: string | null
           sent_at?: string | null
+          source?: string | null
           status?: Database["public"]["Enums"]["invoice_status"]
           subtotal: number
           tax?: number | null
@@ -938,13 +1068,17 @@ export type Database = {
         }
         Update: {
           amount?: number
+          conversation_id?: string | null
           created_at?: string
+          created_by_id?: string | null
+          created_by_type?: string | null
           currency?: string
           deleted_at?: string | null
           discount?: number | null
           due_date?: string | null
           exchange_rate?: number | null
           id?: string
+          idempotency_key?: string | null
           invoice_number?: string
           invoice_url?: string | null
           notes?: string | null
@@ -952,6 +1086,7 @@ export type Database = {
           paid_amount?: number | null
           paid_at?: string | null
           sent_at?: string | null
+          source?: string | null
           status?: Database["public"]["Enums"]["invoice_status"]
           subtotal?: number
           tax?: number | null
@@ -1177,6 +1312,230 @@ export type Database = {
           },
         ]
       }
+      oauth_access_tokens: {
+        Row: {
+          application_id: string
+          created_at: string
+          expires_at: string
+          id: string
+          last_used_at: string | null
+          refresh_token: string | null
+          refresh_token_expires_at: string | null
+          revoked: boolean | null
+          revoked_at: string | null
+          scopes: string[]
+          team_id: string
+          token: string
+          user_id: string
+        }
+        Insert: {
+          application_id: string
+          created_at?: string
+          expires_at: string
+          id?: string
+          last_used_at?: string | null
+          refresh_token?: string | null
+          refresh_token_expires_at?: string | null
+          revoked?: boolean | null
+          revoked_at?: string | null
+          scopes: string[]
+          team_id: string
+          token: string
+          user_id: string
+        }
+        Update: {
+          application_id?: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          last_used_at?: string | null
+          refresh_token?: string | null
+          refresh_token_expires_at?: string | null
+          revoked?: boolean | null
+          revoked_at?: string | null
+          scopes?: string[]
+          team_id?: string
+          token?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "oauth_access_tokens_application_id_fkey"
+            columns: ["application_id"]
+            isOneToOne: false
+            referencedRelation: "oauth_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "oauth_access_tokens_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "oauth_access_tokens_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      oauth_applications: {
+        Row: {
+          active: boolean | null
+          client_id: string
+          client_secret: string
+          created_at: string
+          created_by: string
+          description: string | null
+          developer_name: string | null
+          id: string
+          install_url: string | null
+          is_public: boolean | null
+          logo_url: string | null
+          name: string
+          overview: string | null
+          redirect_uris: string[]
+          scopes: string[]
+          screenshots: string[] | null
+          slug: string
+          status: string | null
+          team_id: string
+          updated_at: string
+          website: string | null
+        }
+        Insert: {
+          active?: boolean | null
+          client_id: string
+          client_secret: string
+          created_at?: string
+          created_by: string
+          description?: string | null
+          developer_name?: string | null
+          id?: string
+          install_url?: string | null
+          is_public?: boolean | null
+          logo_url?: string | null
+          name: string
+          overview?: string | null
+          redirect_uris: string[]
+          scopes?: string[]
+          screenshots?: string[] | null
+          slug: string
+          status?: string | null
+          team_id: string
+          updated_at?: string
+          website?: string | null
+        }
+        Update: {
+          active?: boolean | null
+          client_id?: string
+          client_secret?: string
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          developer_name?: string | null
+          id?: string
+          install_url?: string | null
+          is_public?: boolean | null
+          logo_url?: string | null
+          name?: string
+          overview?: string | null
+          redirect_uris?: string[]
+          scopes?: string[]
+          screenshots?: string[] | null
+          slug?: string
+          status?: string | null
+          team_id?: string
+          updated_at?: string
+          website?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "oauth_applications_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "oauth_applications_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      oauth_authorization_codes: {
+        Row: {
+          application_id: string
+          code: string
+          code_challenge: string | null
+          code_challenge_method: string | null
+          created_at: string
+          expires_at: string
+          id: string
+          redirect_uri: string
+          scopes: string[]
+          team_id: string
+          used: boolean | null
+          user_id: string
+        }
+        Insert: {
+          application_id: string
+          code: string
+          code_challenge?: string | null
+          code_challenge_method?: string | null
+          created_at?: string
+          expires_at: string
+          id?: string
+          redirect_uri: string
+          scopes: string[]
+          team_id: string
+          used?: boolean | null
+          user_id: string
+        }
+        Update: {
+          application_id?: string
+          code?: string
+          code_challenge?: string | null
+          code_challenge_method?: string | null
+          created_at?: string
+          expires_at?: string
+          id?: string
+          redirect_uri?: string
+          scopes?: string[]
+          team_id?: string
+          used?: boolean | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "oauth_authorization_codes_application_id_fkey"
+            columns: ["application_id"]
+            isOneToOne: false
+            referencedRelation: "oauth_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "oauth_authorization_codes_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "oauth_authorization_codes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       order_items: {
         Row: {
           created_at: string
@@ -1221,13 +1580,18 @@ export type Database = {
           cancelled_at: string | null
           client_id: string | null
           completed_at: string | null
+          conversation_id: string | null
           created_at: string
+          created_by_id: string | null
+          created_by_type: string | null
           deleted_at: string | null
           deposit_amount: number
           due_date: string | null
           id: string
+          idempotency_key: string | null
           notes: string | null
           order_number: string
+          source: string | null
           status: Database["public"]["Enums"]["order_status"]
           team_id: string
           total_price: number
@@ -1238,13 +1602,18 @@ export type Database = {
           cancelled_at?: string | null
           client_id?: string | null
           completed_at?: string | null
+          conversation_id?: string | null
           created_at?: string
+          created_by_id?: string | null
+          created_by_type?: string | null
           deleted_at?: string | null
           deposit_amount?: number
           due_date?: string | null
           id?: string
+          idempotency_key?: string | null
           notes?: string | null
           order_number: string
+          source?: string | null
           status?: Database["public"]["Enums"]["order_status"]
           team_id: string
           total_price?: number
@@ -1255,13 +1624,18 @@ export type Database = {
           cancelled_at?: string | null
           client_id?: string | null
           completed_at?: string | null
+          conversation_id?: string | null
           created_at?: string
+          created_by_id?: string | null
+          created_by_type?: string | null
           deleted_at?: string | null
           deposit_amount?: number
           due_date?: string | null
           id?: string
+          idempotency_key?: string | null
           notes?: string | null
           order_number?: string
+          source?: string | null
           status?: Database["public"]["Enums"]["order_status"]
           team_id?: string
           total_price?: number
@@ -1315,6 +1689,60 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      team_daily_orders_summary: {
+        Row: {
+          completed_count: number
+          completed_value_sum: number
+          created_count: number
+          created_count_excl_cancelled: number
+          created_value_sum_excl_cancelled: number
+          day: string
+          team_id: string
+          updated_at: string
+        }
+        Insert: {
+          completed_count?: number
+          completed_value_sum?: number
+          created_count?: number
+          created_count_excl_cancelled?: number
+          created_value_sum_excl_cancelled?: number
+          day: string
+          team_id: string
+          updated_at?: string
+        }
+        Update: {
+          completed_count?: number
+          completed_value_sum?: number
+          created_count?: number
+          created_count_excl_cancelled?: number
+          created_value_sum_excl_cancelled?: number
+          day?: string
+          team_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      team_order_counters: {
+        Row: {
+          counter: number
+          team_id: string
+          updated_at: string
+          year: number
+        }
+        Insert: {
+          counter?: number
+          team_id: string
+          updated_at?: string
+          year: number
+        }
+        Update: {
+          counter?: number
+          team_id?: string
+          updated_at?: string
+          year?: number
+        }
+        Relationships: []
       }
       teams: {
         Row: {
@@ -2220,6 +2648,18 @@ export type Database = {
       }
     }
     Functions: {
+      add_daily_orders_delta: {
+        Args: {
+          p_completed: number
+          p_completed_val: number
+          p_created: number
+          p_created_nc: number
+          p_created_val: number
+          p_day: string
+          p_team_id: string
+        }
+        Returns: undefined
+      }
       fuzzy_search_transactions: {
         Args: {
           p_limit?: number
@@ -2255,6 +2695,10 @@ export type Database = {
       gtrgm_out: {
         Args: { "": unknown }
         Returns: unknown
+      }
+      next_order_number: {
+        Args: { p_team_id: string }
+        Returns: string
       }
       recalc_invoice_payments: {
         Args: { p_invoice_id: string }

@@ -1,35 +1,47 @@
 {
-  "name": "cimantikos-platform",
+  "name": "Faworra",
   "private": true,
   "packageManager": "bun@latest",
   "workspaces": [
-    "apps/admin",
+    "apps/dashboard",
     "apps/api",
     "apps/worker",
-    "packages/*"
+    "apps/website",
+    "packages/*",
+    "packages/cache"
   ],
   "scripts": {
-    "dev": "bun run dev:api & bun run dev:admin",
+    "dev": "concurrently \"bun run dev:api\" \"bun run dev:dashboard\"",
+    "dev:logged": "concurrently --raw \"bun run dev:api 2>&1 | tee logs/api.log\" \"bun run dev:dashboard 2>&1 | tee logs/admin.log\"",
     "dev:api": "bun --hot apps/api/src/index.ts",
     "dev:worker": "bun --hot apps/worker/src/index.ts",
-    "dev:admin": "cd apps/admin && bun run dev",
-    "build:admin": "cd apps/admin && bun run build",
+    "dev:dashboard": "cd apps/dashboard && bun run dev",
+    "dev:website": "cd apps/website && bun run dev",
+    "logs:tail": "tail -f logs/api.log logs/admin.log",
+    "build:dashboard": "cd apps/dashboard && bun run build",
     "build:api": "cd apps/api && bun run build",
+    "build:website": "cd apps/website && bun run build",
     "lint": "bunx --bun biome check apps packages scripts docs",
     "format": "bunx --bun biome format --write .",
-    "typecheck": "bun run typecheck:admin && bun run typecheck:api",
-    "typecheck:admin": "cd apps/admin && tsc --noEmit",
+    "typecheck": "bun run typecheck:dashboard && bun run typecheck:api && bun run typecheck:website",
+    "typecheck:dashboard": "cd apps/dashboard && bunx --bun tsc --noEmit",
     "typecheck:api": "cd apps/api && tsc --noEmit",
+    "typecheck:website": "cd apps/website && tsc --noEmit",
     "verify:rls": "bun scripts/verify-rls.ts",
     "db:types": "supabase gen types typescript --project-id zvatkstmsyuytbajzuvn > packages/supabase/src/types/database.generated.ts",
     "db:types:generated": "supabase gen types typescript --project-id zvatkstmsyuytbajzuvn > packages/supabase/src/types/database.generated.ts",
+    "db:pull": "bunx --bun drizzle-kit introspect --config=drizzle.config.ts",
+    "db:check": "bunx --bun drizzle-kit check --config=drizzle.config.ts",
     "prepare": "husky install"
   },
   "dependencies": {
+    "chroma-js": "^3.1.2",
+    "cookie": "^1.0.2",
     "date-fns": "^4.1.0",
     "dotenv": "^16.4.5",
     "drizzle-kit": "^0.31.5",
     "drizzle-orm": "^0.44.5",
+    "libphonenumber-js": "^1.12.24",
     "next-themes": "^0.4.6",
     "pg": "^8.16.3",
     "postgres": "^3.4.7",
@@ -39,9 +51,10 @@
   },
   "devDependencies": {
     "@biomejs/biome": "^2.2.5",
+    "concurrently": "^9.2.1",
+    "culori": "3.3.0",
     "husky": "^9.1.6",
     "supabase": "^2.48.3",
-    "next": "15.5.4",
     "ultracite": "^5.5.0"
   }
 }

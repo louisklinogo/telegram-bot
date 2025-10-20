@@ -1,16 +1,16 @@
 import type { Hono } from "hono";
 import type { ApiEnv } from "../types/hono-env";
-import type { Database, TablesUpdate } from "@cimantikos/supabase/types";
+import type { Database, TablesUpdate } from "@Faworra/supabase/types";
 import {
   enqueueCommunicationOutbox,
   createClientBasic,
   updateCommunicationThread,
-} from "@cimantikos/supabase/mutations";
+} from "@Faworra/supabase/mutations";
 import {
   SendMessageSchema,
   SendThreadMediaSchema,
   SendThreadTextSchema,
-} from "@cimantikos/schemas";
+} from "@Faworra/schemas";
 
 export function registerCommunicationsRoutes(app: Hono<ApiEnv>) {
   // Upload media to storage (server-side) and return storage path

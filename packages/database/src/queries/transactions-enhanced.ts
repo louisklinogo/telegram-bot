@@ -94,9 +94,19 @@ export async function getTransactionsEnriched(
     endDate ? lte(transactions.date, endDate.toISOString().slice(0, 10)) : sql`true`,
     cursor?.date
       ? or(
-          lt(transactions.date, cursor.date.toISOString().slice(0, 10)),
+          lt(
+            transactions.date,
+            typeof cursor.date === "string"
+              ? cursor.date
+              : cursor.date.toISOString().slice(0, 10),
+          ),
           and(
-            eq(transactions.date, cursor.date.toISOString().slice(0, 10)),
+            eq(
+              transactions.date,
+              typeof cursor.date === "string"
+                ? cursor.date
+                : cursor.date.toISOString().slice(0, 10),
+            ),
             lt(transactions.id, cursor.id),
           ),
         )

@@ -1,6 +1,6 @@
 -- ============================================================================
 -- SCHEMA V2 - Clean Database Structure
--- Cimantikós Clothing Company - Admin Dashboard
+-- FaworraClothing Company - Admin Dashboard
 -- ============================================================================
 -- Run this after running schema-v2-drop-tables.sql
 -- ============================================================================

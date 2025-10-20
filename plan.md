@@ -1,105 +1,71 @@
-# TransactionsSearchFilter — Implementation Plan (AI required, Midday parity)
+# Midday UI Adoption Plan
 
-## Summary
-- Build an AI-first TransactionsSearchFilter that mirrors Midday’s UX: top search + Filters sheet (date range, status, attachments, recurring, category, account, assignee, tags, amount range), removable chips, and apply/clear controls.
-- Server-first data flow, strict typing, team_id scoping, initialData pattern, and deterministic formatting.
+Goal
+- Adopt Midday’s proven dashboard UX (tables, bulk actions, sticky columns) in our apps/dashboard while preserving our server‑first initialData pattern and existing API/DB.
 
-## Branch & Scope
-- Branch: `feature/transactions-search-filter`
-- Pages touched: `apps/admin/(dashboard)/transactions/*` only; API/DB to support filters; no unrelated refactors.
+Scope (phased)
+- Phase 1 — Transactions (primary target)
+- Phase 2 — Invoices
+- Phase 3 — Vault (documents)
+- Phase 4 — Customers
+- Phase 5 — Orders
+- Phase 6 — Measurements (adapt Tracker pattern)
+- Phase 7 — Dashboard widgets
+- Optional later: Settings/Accounts polish
 
-## Deliverables
-- Reusable Client component: `apps/admin/src/app/(dashboard)/transactions/_components/transactions-search-filter.tsx`
-- Shared types: `apps/admin/src/app/(dashboard)/transactions/_components/types.ts` (FilterState)
-- Admin integration: wire into `transactions-view.tsx` replacing ad‑hoc filter UI; keep column visibility, bulk actions, and chips.
-- API: extend `transactions.enrichedList` input schema and query; add `ai.parseTransactionQuery` route.
-- DB: query builder and indexes guidance to keep filtering fast.
+Non‑Goals
+- No schema changes; no licensing/push decisions in this plan; no rewrite of API.
 
-## UI/UX (Midday parity)
-- Top bar: text input + AI field (“Ask AI”) → Parse → preview merged filters → Apply.
-- Filters sheet: 
-  - Type pills: all/payment/expense/refund/adjustment
-  - Date range (UTC bounds): from/to
-  - Status[] (pending/completed/failed/cancelled)
-  - Attachments: any/with/without
-  - Recurring: checkbox
-  - Categories[] (lazy tree; MultipleSelector)
-  - Accounts[]/Assignees[]/Tags[] (multi)
-  - Amount range: min/max (numeric)
-- Chips: reflect FilterState; removable; “Clear all”.
-- Performance: debounce search (300ms), apply-on-close for heavy filters, deterministic date/number formatting.
+Architecture guardrails
+- Keep server‑first initialData on page load, then use tRPC queries for interactivity.
+- Maintain team_id scoping, strict typing, no any, and our error/validation patterns.
 
-## Types (strict)
-```ts
-// apps/admin/.../types.ts
-export type FilterState = {
-  type?: "payment" | "expense" | "refund" | "adjustment";
-  search?: string;
-  startDate?: string; // ISO (00:00:00Z)
-  endDate?: string;   // ISO (23:59:59Z)
-  statuses?: Array<"pending" | "completed" | "failed" | "cancelled">;
-  hasAttachments?: boolean; // undefined=any
-  isRecurring?: boolean;
-  categories?: string[]; // slugs
-  accounts?: string[];   // ids
-  assignees?: string[];  // ids
-  tags?: string[];       // ids
-  amountMin?: number;
-  amountMax?: number;
-  limit?: number; // default 50
-};
-```
+Phase 1: Transactions (deliverables)
+- Table ergonomics: sticky columns + gradient (Midday pattern), smooth horizontal scroll.
+- Column visibility persistence (cookie/local storage), Export selected (CSV), Bottom bar when filters active.
+- Rich cells: Assigned user avatar/name, Transaction status pill (fulfilled/pending), Bank account w/ connection logo, Tag badges, income color treatment.
+- UX flows: keyboard navigation (↑/↓, space/enter), Copy share URL, “Analyzing” state with 3s polling until enrichment completes.
+- Pagination: infinite query with getNextPageParam; keep initialData for first render.
 
-## API (tRPC) changes
-- `apps/api/src/trpc/routers/transactions.ts`
-  - Extend `enrichedList` Zod input with fields in FilterState; `.returns<T>()` at end; minimal selects.
-  - Add `ai.parseTransactionQuery`:
-    - Input: `{ query: string }`
-    - Output: `FilterState` (validated; never executes DB search).
-    - Server-only; logs/traces latency; feature is required but UI remains usable if AI fails (falls back to manual filters with error toast).
+Phase 2: Invoices (deliverables)
+- Mirror table ergonomics, column persistence, export, actions menu, and rich cells (status/balance due/customer).
 
-## DB/query builder (Drizzle)
-- Centralized predicate builder that composes WHERE clauses for each filter; all queries scoped by `team_id`.
-- Minimal selects: transaction core fields + joins (category, client, account, assignment) required by table UI.
-- Attachments flag: join/count attachments by `transaction_id` or maintain `has_attachments` materialized field (if available) for speed.
-- Sorting: `date DESC`, `limit` via input.
-- Index guidance (ensure/verify):
-  - `transactions(team_id, date)`
-  - `transactions(team_id, status)`
-  - `transactions(team_id, category_slug)`
-  - `transactions(team_id, assigned_id)`
-  - `transactions(team_id, account_id)`
-  - `transactions(team_id, amount)`
-  - `attachments(transaction_id)`
-  - `transaction_tags(transaction_id, tag_id)`
+Phase 3: Vault (deliverables)
+- Mirror grid/table ergonomics, sticky headers, tag chips, bulk actions bar, and upload zone parity.
 
-## Admin integration
-- Replace local filter state in `transactions-view.tsx` with a single `FilterState` produced by `<TransactionsSearchFilter />`.
-- Keep initialData: pass server-fetched results; `useQuery` uses `initialData` to avoid refetch-on-mount.
-- Debounce search; apply-on-close for heavy filters; chip list reads from FilterState.
+Phase 4: Customers (deliverables)
+- Mirror table ergonomics, actions, and quick details drawer.
 
-## Acceptance criteria
-- UI parity with Midday (layout, interactions, chips, apply/clear).
-- AI parsing is required path; manual filters always available; invalid AI output handled with Zod and error toast.
-- Queries are team-scoped, minimal selects, no N+1; 50 items default; deterministic date formatting; no hydration errors.
-- Typecheck and lint pass.
+Phase 5: Orders (deliverables)
+- Adopt Midday orders table pattern: sticky columns, status chips, actions menu, export/bottom bars.
+- Keep initialData on first render, switch to infiniteQuery for paging; wire bulk actions to our mutations.
 
-## Risks & mitigations
-- Query slowness → ensure indexes, limit, and minimal selects; consider precomputed `has_attachments` if join is hot.
-- AI mis-parse → strict Zod validation and preview-before-apply diff.
-- Drift between Admin/API/DB → single `FilterState` + shared Zod schema shapes; centralized predicate builder.
+Phase 6: Measurements (deliverables)
+- Midday lacks Measurements; adapt Tracker table infra: sticky headers, selection, bulk actions, export, infiniteQuery.
+- Add day/week/month views with keyboard navigation; preserve initialData; keep domain-specific fields.
 
-## Rollout & metrics
-- Behind route-level feature flag only during development branch; not user-visible until merged.
-- Track parse latency and error rate; monitor enrichedList query time and rows scanned.
+Phase 7: Dashboard (deliverables)
+- Port card widgets patterns (spending, invoices, vault/inbox summaries) with server-first prefetch and light client hydration.
+- Consistent skeletons, card sizes, and quick actions; avoid double-fetching.
 
-## Next steps
-1) Create branch `feature/transactions-search-filter`.
-2) Scaffold component and types; render-only with mock state.
-3) Extend tRPC `enrichedList` input schema; wire to existing query builder (no behavior change yet).
-4) Implement predicate builder additions and minimal selects; verify team_id filters.
-5) Add `ai.parseTransactionQuery` route with Zod validation and prompt; UI “Ask AI” → preview → apply.
-6) Integrate component into `transactions-view.tsx`; remove ad‑hoc filter UI.
-7) Deterministic date/number formatting; debounce and apply-on-close behavior.
-8) Typecheck/lint; manual QA; commit.
-9) Open PR with performance notes and parity checklist.
+Execution steps (per phase)
+1) Read‑only audit (Droid Exec, --auto low): generate a concise diff of components/hooks to port and target files to edit; write audit artifact.
+2) Implementation (Droid Exec, --auto medium): refactor UI, add hooks/components, wire actions; run `bun run typecheck && bun run lint`; emit change summary; do not commit.
+3) Review & commit (manual approval): inspect git diff, then commit with conventional message.
+
+Acceptance criteria (Transactions)
+- Visual/behavioral parity: sticky select/date columns, tags, status/assigned cells, export bar, bottom bar on filters, keyboard nav, copy URL, enrichment polling.
+- No regressions in typecheck/lint; no schema or API changes; initial load continues to use initialData.
+
+Risks & mitigations
+- Licensing: avoid direct copy; re‑implement patterns or use our existing primitives. If we must import code, confirm license/commercial terms first.
+- Drift: keep a small shim layer so future Midday parity changes are localized.
+
+Estimated effort
+- Phase 1: 4–6 hours
+- Phases 2–4: ~3–5 hours each
+- Phases 5–7: ~3–5 hours each
+
+Next actions
+- Run read‑only audit for Transactions; on approval, proceed to implementation.
+

@@ -2,9 +2,10 @@ import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "../init";
 import { TRPCError } from "@trpc/server";
 import { createClient } from "@supabase/supabase-js";
-import { and, eq } from "drizzle-orm";
-import { teams, users, usersOnTeam } from "@cimantikos/database/schema";
-import { getTeamMembers } from "@cimantikos/database/queries";
+// Import Drizzle helpers from database schema to ensure single-module type identity
+import { and, eq } from "@Faworra/database/schema";
+import { teams, users, usersOnTeam } from "@Faworra/database/schema";
+import { getTeamMembers } from "@Faworra/database/queries";
 
 export const teamsRouter = createTRPCRouter({
   // List teams for the authenticated user
@@ -17,12 +18,19 @@ export const teamsRouter = createTRPCRouter({
     return rows.filter((r) => r.id);
   }),
 
-  // Get current team id for the user
+  // Get current team info for the user (id + baseCurrency)
   current: protectedProcedure.query(async ({ ctx }) => {
     const row = await ctx.db.query.users.findFirst({
       where: (u, { eq }) => eq(u.id, ctx.userId!),
     });
-    return { teamId: row?.currentTeamId ?? null };
+    const teamId = row?.currentTeamId ?? null;
+    if (!teamId) return { teamId: null as string | null, baseCurrency: undefined as string | undefined };
+    const settings = await ctx.db
+      .select({ baseCurrency: teams.baseCurrency })
+      .from(teams)
+      .where(eq(teams.id, teamId))
+      .limit(1);
+    return { teamId, baseCurrency: settings[0]?.baseCurrency };
   }),
 
   // Set current team id (only if user is a member)

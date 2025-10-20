@@ -1,5 +1,5 @@
 import "dotenv/config";
-import { createServerClient } from "@cimantikos/supabase";
+import { createServerClient } from "@Faworra/supabase";
 import { startBaileysForAccount } from "./providers/baileys";
 import type { WASocket } from "@whiskeysockets/baileys";
 import { Registry } from "./providers/registry";

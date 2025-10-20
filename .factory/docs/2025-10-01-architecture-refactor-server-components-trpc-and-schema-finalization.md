@@ -270,7 +270,7 @@ export type AppRouter = typeof appRouter;
 ```typescript
 // apps/api/src/trpc/routers/clients.ts
 import { createTRPCRouter, protectedProcedure } from '../init';
-import { getClients, getClient, createClient } from '@cimantikos/database/queries/clients';
+import { getClients, getClient, createClient } from '@Faworra/database/queries/clients';
 
 export const clientsRouter = createTRPCRouter({
   list: protectedProcedure

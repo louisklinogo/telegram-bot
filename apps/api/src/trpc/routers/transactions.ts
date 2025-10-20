@@ -9,7 +9,7 @@ import {
   getTransactionById,
   updateTransactionsBulk,
   softDeleteTransactionsBulk,
-} from "@cimantikos/database/queries";
+} from "@Faworra/database/queries";
 import {
   invoices,
   transactions,
@@ -19,8 +19,9 @@ import {
   transactionAttachments,
   usersOnTeam,
   users,
-} from "@cimantikos/database/schema";
-import { and, eq } from "drizzle-orm";
+} from "@Faworra/database/schema";
+// Import from database schema barrel to avoid duplicate drizzle-orm type instances
+import { and, eq } from "@Faworra/database/schema";
 
 export const transactionsRouter = createTRPCRouter({
   // Unified create mutation (discriminated union)

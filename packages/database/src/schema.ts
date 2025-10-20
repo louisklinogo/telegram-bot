@@ -6,6 +6,7 @@ import {
   numeric,
   jsonb,
   index,
+  uniqueIndex,
   varchar,
   check,
   primaryKey,
@@ -81,7 +82,7 @@ export const appointmentStatusEnum = pgEnum("appointment_status", [
 ]);
 
 /**
- * Schema V2 - Cimantikós Clothing Company
+ * Schema V2 - FaworraClothing Company
  * All monetary values are in Ghana Cedis (GHS)
  */
 
@@ -186,6 +187,12 @@ export const orders = pgTable(
     // Additional Info
     notes: text("notes"),
     dueDate: timestamp("due_date", { withTimezone: true }),
+    // Audit / provenance for agents & idempotency
+    idempotencyKey: text("idempotency_key"),
+    createdByType: text("created_by_type"), // user|agent|system
+    createdById: uuid("created_by_id"),
+    source: text("source"), // e.g., ui|api|agent
+    conversationId: text("conversation_id"),
     // Metadata
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
@@ -197,7 +204,8 @@ export const orders = pgTable(
     teamIdIdx: index("idx_orders_team_id").on(table.teamId),
     clientIdIdx: index("idx_orders_client_id").on(table.clientId),
     statusIdx: index("idx_orders_status").on(table.status),
-    teamOrderUnique: index("uq_orders_team_order").on(table.teamId, table.orderNumber),
+    teamOrderUnique: uniqueIndex("uniq_orders_team_order_number").on(table.teamId, table.orderNumber),
+    idempIdx: index("idx_orders_idempotency_key").on(table.idempotencyKey),
     createdAtIdx: index("idx_orders_created_at").on(table.createdAt),
     deletedAtIdx: index("idx_orders_deleted_at").on(table.deletedAt),
   }),
@@ -232,6 +240,12 @@ export const invoices = pgTable(
     invoiceUrl: text("invoice_url"), // PDF URL
     // Additional Info
     notes: text("notes"),
+    // Audit for agents & idempotency
+    idempotencyKey: text("idempotency_key"),
+    createdByType: text("created_by_type"),
+    createdById: uuid("created_by_id"),
+    source: text("source"),
+    conversationId: text("conversation_id"),
     // Metadata
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
@@ -243,6 +257,7 @@ export const invoices = pgTable(
     statusIdx: index("idx_invoices_status").on(table.status),
     sentAtIdx: index("idx_invoices_sent_at").on(table.sentAt),
     teamInvoiceUnique: index("uq_invoices_team_invoice").on(table.teamId, table.invoiceNumber),
+    idempIdx: index("idx_invoices_idempotency_key").on(table.idempotencyKey),
     createdAtIdx: index("idx_invoices_created_at").on(table.createdAt),
     deletedAtIdx: index("idx_invoices_deleted_at").on(table.deletedAt),
   }),
@@ -737,17 +752,50 @@ export const tags = pgTable(
 );
 
 // Order items (row-per-item)
-export const orderItems = pgTable("order_items", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  orderId: uuid("order_id")
-    .notNull()
-    .references(() => orders.id, { onDelete: "cascade" }),
-  name: text("name").notNull(),
-  quantity: integer("quantity").default(1).notNull(),
-  unitPrice: numeric("unit_price", { precision: 10, scale: 2 }).default("0").notNull(),
-  total: numeric("total", { precision: 10, scale: 2 }).default("0").notNull(),
-  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
-});
+export const orderItems = pgTable(
+  "order_items",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    orderId: uuid("order_id")
+      .notNull()
+      .references(() => orders.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    quantity: integer("quantity").default(1).notNull(),
+    // Use canonical column names used by existing DB (unit_price, total)
+    unitPrice: numeric("unit_price", { precision: 10, scale: 2 }).default("0").notNull(),
+    total: numeric("total", { precision: 10, scale: 2 }).default("0").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => ({
+    // Match live DB index from order_items_order_id_idx
+    orderIdIdx: index("order_items_order_id_idx").on(table.orderId),
+    // Check constraint from live DB
+    quantityCheck: check("order_items_quantity_check", sql`quantity > 0`),
+  }),
+);
+
+// Daily analytics summary (team scoped, day-granular)
+export const teamDailyOrdersSummary = pgTable(
+  "team_daily_orders_summary",
+  {
+    teamId: uuid("team_id").notNull(),
+    day: date("day").notNull(),
+    createdCount: integer("created_count").default(0).notNull(),
+    createdCountExclCancelled: integer("created_count_excl_cancelled").default(0).notNull(),
+    createdValueSumExclCancelled: numeric("created_value_sum_excl_cancelled", { precision: 12, scale: 2 })
+      .default("0")
+      .notNull(),
+    completedCount: integer("completed_count").default(0).notNull(),
+    completedValueSum: numeric("completed_value_sum", { precision: 12, scale: 2 }).default("0").notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => ({
+    pk: primaryKey({ columns: [table.teamId, table.day], name: "team_daily_orders_summary_pkey" }),
+  }),
+);
+
+// Re-export Drizzle helpers to ensure single-module type identity across workspace
+export { and, eq, ne, or, lt, lte, gt, gte, inArray, ilike, isNull, desc, asc } from "drizzle-orm";
 
 // Contacts for channels
 export const whatsappContacts = pgTable("whatsapp_contacts", {

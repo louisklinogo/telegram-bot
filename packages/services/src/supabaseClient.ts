@@ -1,4 +1,4 @@
-import { getEnvConfig, validateEnvironmentVariables } from "@cimantikos/config";
+import { getEnvConfig, validateEnvironmentVariables } from "@Faworra/config";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
 type SupabaseInstance = SupabaseClient<any, any, any>;

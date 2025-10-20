@@ -1,6 +1,6 @@
 import { createTRPCRouter, teamProcedure } from "../init";
 import { z } from "zod";
-import { getTeamAccounts, getThreadsByStatus } from "@cimantikos/database/queries";
+import { getTeamAccounts, getThreadsByStatus } from "@Faworra/database/queries";
 
 export const communicationsRouter = createTRPCRouter({
   accounts: teamProcedure.query(async ({ ctx }) => {

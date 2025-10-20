@@ -1,4 +1,4 @@
-# Cimantikós - Unified Communications & Business Management Platform
+# Faworra- Unified Communications & Business Management Platform
 
 Multi-tenant SaaS for managing clients, orders, invoices, transactions and unified communications (WhatsApp, Instagram, SMS) with AI assistance.
 
@@ -59,15 +59,15 @@ I need honest feedback on my code.
 ## Core Commands
 
 **Development:**
-- Start all services: `bun run dev` (API + Admin in parallel)
+- Start all services: `bun run dev` (API + Dashboard in parallel)
 - API only: `bun run dev:api` (Hono on :3001)
-- Admin only: `bun run dev:admin` (Next.js on :3000)
+- Dashboard only: `bun run dev:dashboard` (Next.js on :3000)
 - Worker (WhatsApp): `bun run dev:worker`
 
 **Quality Checks:**
 - Type-check all: `bun run typecheck`
 - Type-check API: `bun run typecheck:api`
-- Type-check Admin: `bun run typecheck:admin`
+- Type-check Dashboard: `bun run typecheck:dashboard`
 - Lint all: `bun run lint`
 - Format all: `bun run format`
 
@@ -91,7 +91,7 @@ We migrated from client-side only architecture to **Next.js 15 Server Components
 
 ```
 apps/
-├── admin/          # Next.js 15 frontend (Server Components + Client Components)
+├── dashboard/      # Next.js 15 frontend (Server Components + Client Components)
 ├── api/            # Hono backend with tRPC
 └── worker/         # WhatsApp message handling (Baileys)
 
@@ -141,7 +141,7 @@ getClients(db)                                          trpc.clients.list.useQue
 - REST endpoints for webhooks (WhatsApp, Instagram)
 - Business logic layer
 
-**`apps/admin/`**
+**`apps/dashboard/`**
 - Next.js 15 App Router
 - Server Components for data fetching
 - Client Components for UI/UX
@@ -185,9 +185,9 @@ This pattern was implemented across 7 pages in Phase A+B optimization (60-70% fa
 ### Server Component (Data Fetching)
 
 ```typescript
-// apps/admin/src/app/(dashboard)/feature/page.tsx
+// apps/dashboard/src/app/(dashboard)/feature/page.tsx
 import { db, getCurrentTeamId } from '@/lib/trpc/server';
-import { getFeatures } from '@cimantikos/database/queries';
+import { getFeatures } from '@Faworra/database/queries';
 
 export default async function FeaturePage() {
   const teamId = await getCurrentTeamId();
@@ -202,7 +202,7 @@ export default async function FeaturePage() {
 
 **Rules:**
 - MUST be async function
-- Direct DB access via `@cimantikos/database/queries`
+- Direct DB access via `@Faworra/database/queries`
 - NO hooks, NO 'use client' directive
 - Pass data as props to Client Components
 - ❌ NEVER use prefetch() or HydrateClient (deprecated - causes double-fetching)
@@ -210,7 +210,7 @@ export default async function FeaturePage() {
 ### Client Component (Interactivity)
 
 ```typescript
-// apps/admin/src/app/(dashboard)/feature/_components/feature-list.tsx
+// apps/dashboard/src/app/(dashboard)/feature/_components/feature-list.tsx
 'use client';
 
 import { trpc } from '@/lib/trpc';
@@ -277,8 +277,8 @@ const { mutate, isPending } = trpc.feature.create.useMutation({
 1. **Database query** (`packages/database/src/queries/feature.ts`)
 2. **tRPC router** (`apps/api/src/trpc/routers/feature.ts`)
 3. **Add to app router** (`apps/api/src/trpc/routers/_app.ts`)
-4. **Server Component page** (`apps/admin/src/app/(dashboard)/feature/page.tsx`)
-5. **Client Components** (`apps/admin/src/app/(dashboard)/feature/_components/`)
+4. **Server Component page** (`apps/dashboard/src/app/(dashboard)/feature/page.tsx`)
+5. **Client Components** (`apps/dashboard/src/app/(dashboard)/feature/_components/`)
 
 
 ## Coding Style & Conventions
@@ -299,7 +299,7 @@ const { mutate, isPending } = trpc.feature.create.useMutation({
 **Import Order:**
 1. React/Next.js
 2. Third-party libraries
-3. Workspace packages (`@cimantikos/*`)
+3. Workspace packages (`@Faworra/*`)
 4. Local components
 5. Types
 6. Utilities
@@ -470,7 +470,7 @@ These are reference repos, excluded in `.gitignore` as embedded git repos.
 
 **Type errors in Server Components:**
 ```bash
-bun run typecheck:admin
+bun run typecheck:dashboard
 ```
 
 **tRPC errors:**
@@ -495,8 +495,8 @@ grep -r "sendMessage" evolution-api/
 ## Quick Wins
 
 When agent needs to understand:
-- **Server Components**: Check `apps/admin/src/app/(dashboard)/clients/page.tsx`
-- **Client Components**: Check `apps/admin/src/app/(dashboard)/clients/_components/`
+- **Server Components**: Check `apps/dashboard/src/app/(dashboard)/clients/page.tsx`
+- **Client Components**: Check `apps/dashboard/src/app/(dashboard)/clients/_components/`
 - **tRPC Router**: Check `apps/api/src/trpc/routers/clients.ts`
 - **Database Queries**: Check `packages/database/src/queries/clients.ts`
 - **Auth Flow**: Check `apps/api/src/trpc/init.ts`

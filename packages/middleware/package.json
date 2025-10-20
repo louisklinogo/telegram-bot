@@ -1,0 +1,17 @@
+{
+  "name": "@Faworra/middleware",
+  "version": "0.1.0",
+  "private": true,
+  "exports": {
+    "./rate-limiter": {
+      "types": "./src/rate-limiter.ts",
+      "default": "./src/rate-limiter.ts"
+    }
+  },
+  "dependencies": {
+    "hono": "^4.6.6"
+  },
+  "devDependencies": {
+    "typescript": "^5"
+  }
+}

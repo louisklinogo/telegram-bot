@@ -1,5 +1,5 @@
 {
-  "name": "@cimantikos/api",
+  "name": "@Faworra/api",
   "private": true,
   "type": "module",
   "exports": {
@@ -12,12 +12,18 @@
     "typecheck": "tsc --noEmit -p tsconfig.json"
   },
   "dependencies": {
-    "@cimantikos/database": "workspace:*",
-    "@cimantikos/supabase": "workspace:*",
+    "@hono/zod-validator": "^0.2.1",
+    "@Faworra/middleware": "workspace:*",
+    "@Faworra/database": "workspace:*",
+    "@Faworra/supabase": "workspace:*",
     "hono": "^4.6.6",
     "@hono/trpc-server": "^0.3.4",
     "@trpc/server": "^11.6.0",
     "zod": "^3.23.8",
     "superjson": "^2.2.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "typescript": "^5"
   }
 }

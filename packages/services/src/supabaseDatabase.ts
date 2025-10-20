@@ -1,4 +1,4 @@
-import { validateEnvironmentVariables } from "@cimantikos/config";
+import { validateEnvironmentVariables } from "@Faworra/config";
 
 let cachedConnectionString: string | undefined;
 

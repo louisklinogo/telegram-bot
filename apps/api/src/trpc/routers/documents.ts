@@ -8,7 +8,7 @@ import {
   deleteDocument,
   getDocumentStats,
   getAllDocumentTags,
-} from "@cimantikos/database/queries";
+} from "@Faworra/database/queries";
 
 // Validation schemas
 const documentCreateSchema = z.object({

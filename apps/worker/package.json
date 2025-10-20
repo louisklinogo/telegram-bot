@@ -1,5 +1,5 @@
 {
-  "name": "@cimantikos/worker",
+  "name": "@Faworra/worker",
   "private": true,
   "type": "module",
   "scripts": {
@@ -8,7 +8,7 @@
     "build": "tsc -p tsconfig.json"
   },
   "dependencies": {
-    "@cimantikos/supabase": "workspace:*",
+    "@Faworra/supabase": "workspace:*",
     "@whiskeysockets/baileys": "^6.7.9"
   }
 }

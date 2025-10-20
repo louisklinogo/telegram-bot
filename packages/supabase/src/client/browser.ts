@@ -1,5 +1,5 @@
 import { createBrowserClient as createSSRBrowserClient } from "@supabase/ssr";
-import type { Database } from "@cimantikos/supabase/types";
+import type { Database } from "@Faworra/supabase/types";
 
 /**
  * Browser-side Supabase client for use in Client Components

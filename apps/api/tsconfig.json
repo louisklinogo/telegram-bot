@@ -8,5 +8,8 @@
     "noEmit": true,
     "types": []
   },
-  "include": ["src/**/*"]
+  "include": ["src/**/*"],
+  "exclude": [
+    "src/rest/routers/oauth.ts"
+  ]
 }

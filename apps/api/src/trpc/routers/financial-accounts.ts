@@ -5,8 +5,8 @@ import {
   getFinancialAccountById,
   createFinancialAccount,
   updateFinancialAccount,
-} from "@cimantikos/database/queries";
-import { activities } from "@cimantikos/database/schema";
+} from "@Faworra/database/queries";
+import { activities } from "@Faworra/database/schema";
 
 const createSchema = z.object({
   type: z.enum(["cash", "bank", "mobile_money", "card", "other"]),
