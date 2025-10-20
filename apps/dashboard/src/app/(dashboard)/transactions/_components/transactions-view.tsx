@@ -7,7 +7,7 @@ import {
   useReactTable,
   type VisibilityState,
 } from "@tanstack/react-table";
-import { Download, Plus, Trash2, Filter } from "lucide-react";
+import { Download, Plus, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { useInView } from "react-intersection-observer";
@@ -23,6 +23,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Icons } from "@/components/ui/icons";
 import { Sheet, SheetContent, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import {
   Table,
@@ -41,6 +42,8 @@ import { trpc } from "@/lib/trpc/client";
 import { createTransactionColumns, type TransactionRow } from "./transactions-columns";
 import TransactionsSearchFilter from "./transactions-search-filter";
 import type { FilterState } from "./types";
+import { FilterToolbar } from "@/components/filters/filter-toolbar";
+import type { FilterFieldDef } from "@/components/filters/types";
 
 type FilterType = "all" | "payment" | "expense" | "refund" | "adjustment";
 
@@ -205,6 +208,23 @@ export function TransactionsView({
     startDate,
     endDate,
   ]);
+
+  // New reusable filter fields
+  const filterFields: FilterFieldDef[] = useMemo(
+    () => [
+      { key: "type", label: "Type", type: "select" },
+      { key: "statuses", label: "Status", type: "multi" },
+      { key: "categories", label: "Category", type: "multi" },
+      { key: "tags", label: "Tags", type: "multi" },
+      { key: "accounts", label: "Accounts", type: "multi" },
+      { key: "assignees", label: "Assignees", type: "multi" },
+      { key: "dateRange", label: "Date Range", type: "date_range", map: { start: "startDate", end: "endDate" } },
+      { key: "amountRange", label: "Amount", type: "number_range", map: { min: "amountMin", max: "amountMax" } },
+      { key: "hasAttachments", label: "Attachments", type: "boolean" },
+      { key: "isRecurring", label: "Recurring", type: "boolean" },
+    ],
+    [],
+  );
 
   const clearAllFilters = () => {
     setFilterType("all");
@@ -707,6 +727,8 @@ export function TransactionsView({
               isRecurring,
             }}
             currency={currencyCode}
+            showSearchInput={false}
+            showFilterButton={false}
             onChange={(p: Partial<FilterState>) => {
               if (p.search !== undefined) setSearch(p.search || "");
               if (p.statuses !== undefined) setStatuses(p.statuses || []);
@@ -739,18 +761,39 @@ export function TransactionsView({
           <div className="flex items-center justify-end gap-2">
             <div className="hidden sm:flex items-center gap-1">
               <SearchInline />
-              <Button
-                variant={hasActiveFilters ? "default" : "outline"}
-                size="icon"
-                aria-label="Filters"
-                onClick={() => {
-                  // Open filter sheet inside TransactionsSearchFilter via URL param trigger
-                  // Simpler: toggle a small local event by setting a custom DOM event
-                  document.dispatchEvent(new CustomEvent("transactions:toggle-filters"));
+              {/* New generic FilterToolbar; maps to existing states */}
+              <FilterToolbar
+                fields={filterFields}
+                values={{
+                  type: filterType === "all" ? undefined : filterType,
+                  statuses,
+                  categories,
+                  tags,
+                  accounts,
+                  assignees,
+                  dateRange: { startDate, endDate },
+                  amountRange: { amountMin: amountMin ? Number(amountMin) : undefined, amountMax: amountMax ? Number(amountMax) : undefined },
+                  hasAttachments: hasAttachments === "any" ? undefined : hasAttachments === "with",
+                  isRecurring,
                 }}
-              >
-                <Filter className="h-4 w-4" />
-              </Button>
+                onChange={(next) => {
+                  setFilterType((next.type as any) ?? "all");
+                  setStatuses((next.statuses as any) ?? []);
+                  setCategories((next.categories as any) ?? []);
+                  setTags((next.tags as any) ?? []);
+                  setAccounts((next.accounts as any) ?? []);
+                  setAssignees((next.assignees as any) ?? []);
+                  const dr = (next as any).dateRange || {};
+                  setStartDate(dr.startDate || "");
+                  setEndDate(dr.endDate || "");
+                  const ar = (next as any).amountRange || {};
+                  setAmountMin(ar.amountMin != null ? String(ar.amountMin) : "");
+                  setAmountMax(ar.amountMax != null ? String(ar.amountMax) : "");
+                  const att = (next as any).hasAttachments;
+                  setHasAttachments(att === undefined ? "any" : att ? "with" : "without");
+                  setIsRecurring((next.isRecurring as any) ?? undefined);
+                }}
+              />
             </div>
             <TransactionsColumnVisibility columns={table.getAllColumns()} />
             <Button
