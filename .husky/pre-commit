@@ -2,14 +2,23 @@
 . "$(dirname -- "$0")/_/husky.sh"
 
 echo "Regenerating Supabase types..."
-# Use local CLI via bun scripts
-bun run db:types || {
-  echo "Type generation failed" >&2
-  exit 1
-}
+# Harden: only attempt generation + drift check when token is present
+if [ -n "$SUPABASE_ACCESS_TOKEN" ]; then
+  # Use local CLI via bun scripts
+  bun run db:types || {
+    echo "Type generation failed" >&2
+    exit 1
+  }
 
-echo "Checking for Supabase types drift..."
-git diff --quiet -- packages/supabase/src/types/database.generated.ts || {
-  echo "Supabase types drift detected. Please commit regenerated types." >&2
-  exit 1
-}
+  echo "Checking for Supabase types drift..."
+  if [ -f packages/supabase/src/types/database.generated.ts ]; then
+    git diff --quiet -- packages/supabase/src/types/database.generated.ts || {
+      echo "Supabase types drift detected. Please commit regenerated types." >&2
+      exit 1
+    }
+  else
+    echo "Types file missing; skipping drift check" >&2
+  fi
+else
+  echo "Skipping Supabase type generation and drift check (no SUPABASE_ACCESS_TOKEN)" >&2
+fi

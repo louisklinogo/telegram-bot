@@ -50,7 +50,7 @@ type Props = {
 export function FilterDropdown({ values, onChange, mode = "icon", hide }: Props) {
   const [open, setOpen] = useState(false);
   const [categoryQuery, setCategoryQuery] = useState("");
-  const { data: bounds } = trpc.transactions.amountBounds.useQuery(undefined, { enabled: open });
+  const { data: bounds } = trpc.transactions.amountBounds.useQuery(undefined, { enabled: open, staleTime: 60_000 });
   const minBound = bounds?.min ?? 0;
   const maxBound = bounds?.max && bounds.max > 0 ? Math.max(bounds.max, 1000) : 500000;
   const [range, setRange] = useState<[number, number]>([
@@ -82,12 +82,14 @@ export function FilterDropdown({ values, onChange, mode = "icon", hide }: Props)
 
   const { data: categories = [] } = trpc.transactionCategories.list.useQuery(undefined, {
     enabled: open,
+    staleTime: 60_000,
   });
-  const { data: tags = [] } = trpc.tags.list.useQuery(undefined, { enabled: open });
+  const { data: tags = [] } = trpc.tags.list.useQuery(undefined, { enabled: open, staleTime: 60_000 });
   const { data: financialAccounts = [] } = trpc.financialAccounts.list.useQuery(undefined, {
     enabled: open,
+    staleTime: 60_000,
   });
-  const { data: teamMembers = [] } = trpc.teams.members.useQuery(undefined, { enabled: open });
+  const { data: teamMembers = [] } = trpc.teams.members.useQuery(undefined, { enabled: open, staleTime: 60_000 });
 
   const statusOptions = useMemo(
     () => [

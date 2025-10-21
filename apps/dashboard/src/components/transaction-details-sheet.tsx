@@ -46,8 +46,16 @@ export function TransactionDetailsSheet() {
                 <div>
                   <div className="text-xs text-muted-foreground">Amount</div>
                   <div>
-                    {(data as any).transaction.currency}{" "}
-                    {Number((data as any).transaction.amount).toLocaleString()}
+                    {(() => {
+                      const cur = (data as any).transaction.currency as string;
+                      const amt = Number((data as any).transaction.amount || 0);
+                      return new Intl.NumberFormat("en-US", {
+                        style: "currency",
+                        currency: cur || "GHS",
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      }).format(amt);
+                    })()}
                   </div>
                 </div>
                 <div>
@@ -92,7 +100,16 @@ export function TransactionDetailsSheet() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <div className="text-xs text-muted-foreground">Method</div>
-                  <div>{(data as any).transaction.paymentMethod || "-"}</div>
+                  <div>
+                    {(() => {
+                      const raw = (data as any).transaction.paymentMethod as string | null;
+                      if (!raw) return "-";
+                      return raw
+                        .split("_")
+                        .map((p) => (p ? p[0].toUpperCase() + p.slice(1).toLowerCase() : p))
+                        .join(" ");
+                    })()}
+                  </div>
                 </div>
                 <div>
                   <div className="text-xs text-muted-foreground">Reference</div>
