@@ -6,14 +6,17 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { useMemo, useState } from "react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuCheckboxItem,
 } from "@/components/ui/dropdown-menu";
 import { formatAmount } from "@/lib/format-currency";
+import { trpc } from "@/lib/trpc/client";
 
 export type TransactionRow = {
   transaction: {
@@ -131,6 +134,7 @@ export function createTransactionColumns(context: ColumnContext): ColumnDef<Tran
       header: "Type",
       cell: ({ row }) => {
         const t = row.original.transaction.type;
+        const label = t.charAt(0).toUpperCase() + t.slice(1);
         const cls =
           t === "payment"
             ? "bg-green-100 text-green-700 border-green-200"
@@ -141,7 +145,7 @@ export function createTransactionColumns(context: ColumnContext): ColumnDef<Tran
                 : "bg-sky-100 text-sky-700 border-sky-200"; // adjustment
         return (
           <Badge variant="outline" className={cls}>
-            {t}
+            {label}
           </Badge>
         );
       },
@@ -174,18 +178,18 @@ export function createTransactionColumns(context: ColumnContext): ColumnDef<Tran
       cell: ({ row }) => {
         const s = row.original.transaction.status;
         const enriching = s === "pending" && row.original.transaction.enrichmentCompleted === false;
-        const cls =
-          s === "completed"
-            ? "bg-green-100 text-green-700 border-green-200"
-            : s === "pending"
-              ? "bg-amber-100 text-amber-700 border-amber-200"
-              : s === "failed"
-                ? "bg-red-100 text-red-700 border-red-200"
-                : "bg-slate-100 text-slate-700 border-slate-200"; // cancelled
+        const variantMap: Record<string, "default" | "secondary" | "outline" | "destructive"> = {
+          completed: "default",
+          pending: "secondary",
+          failed: "destructive",
+          cancelled: "destructive",
+        };
+        const label = s.charAt(0).toUpperCase() + s.slice(1);
+        const variant = (variantMap[s] ?? "outline") as any;
         return (
           <div className="flex items-center gap-2">
-            <Badge variant="outline" className={cls}>
-              {s}
+            <Badge variant={variant}>
+              {label}
             </Badge>
             {enriching && (
               <span
@@ -243,27 +247,9 @@ export function createTransactionColumns(context: ColumnContext): ColumnDef<Tran
       accessorKey: "tags",
       id: "tags",
       header: "Tags",
-      cell: ({ row }) => {
-        const tags = row.original.tags ?? [];
-        if (!tags.length) return <span className="text-sm text-muted-foreground">-</span>;
-        return (
-          <div className="flex flex-wrap gap-1 max-w-[220px]">
-            {tags.map((t) => (
-              <span
-                key={t.id}
-                className="px-1.5 py-0.5 rounded text-[10px] border"
-                style={
-                  t.color
-                    ? { backgroundColor: `${t.color}15`, borderColor: `${t.color}55` }
-                    : undefined
-                }
-              >
-                {t.name}
-              </span>
-            ))}
-          </div>
-        );
-      },
+      cell: ({ row }) => (
+        <TagsCell transactionId={row.original.transaction.id} initialTags={row.original.tags ?? []} />
+      ),
     },
     {
       accessorKey: "transaction.amount",
@@ -344,4 +330,83 @@ export function createTransactionColumns(context: ColumnContext): ColumnDef<Tran
       enableHiding: false,
     },
   ];
+}
+
+type Tag = { id: string; name: string; color: string | null };
+
+function TagsCell({ transactionId, initialTags }: { transactionId: string; initialTags: Tag[] }) {
+  const utils = trpc.useUtils();
+  const { data: allTags = [] } = trpc.tags.list.useQuery();
+  const [local, setLocal] = useState<Set<string>>(() => new Set(initialTags.map((t) => t.id)));
+
+  const addTag = trpc.transactionTags.add.useMutation({
+    onSuccess: async () => {
+      await utils.transactions.enrichedList.invalidate();
+    },
+  });
+  const removeTag = trpc.transactionTags.remove.useMutation({
+    onSuccess: async () => {
+      await utils.transactions.enrichedList.invalidate();
+    },
+  });
+
+  const selectedTags = useMemo(
+    () => allTags.filter((t: any) => local.has(t.id)),
+    [allTags, local],
+  );
+
+  const toggle = (tagId: string) => {
+    setLocal((prev) => {
+      const next = new Set(prev);
+      if (next.has(tagId)) {
+        next.delete(tagId);
+        removeTag.mutate({ transactionId, tagId });
+      } else {
+        next.add(tagId);
+        addTag.mutate({ transactionId, tagId });
+      }
+      return next;
+    });
+  };
+
+  return (
+    <div className="flex items-center gap-1 max-w-[260px]">
+      <div className="flex flex-wrap gap-1">
+        {selectedTags.length ? (
+          selectedTags.map((t: any) => (
+            <span
+              key={t.id}
+              className="px-1.5 py-0.5 rounded text-[10px] border"
+              style={t.color ? { backgroundColor: `${t.color}15`, borderColor: `${t.color}55` } : undefined}
+            >
+              {t.name}
+            </span>
+          ))
+        ) : (
+          <span className="text-sm text-muted-foreground">-</span>
+        )}
+      </div>
+      {allTags.length > 0 && (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="sm" className="h-6 px-1">
+              Edit
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" className="p-1 max-h-[300px] overflow-auto">
+            {allTags.map((t: any) => (
+              <DropdownMenuCheckboxItem
+                key={t.id}
+                checked={local.has(t.id)}
+                onCheckedChange={() => toggle(t.id)}
+                className="capitalize"
+              >
+                {t.name}
+              </DropdownMenuCheckboxItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      )}
+    </div>
+  );
 }
