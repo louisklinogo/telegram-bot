@@ -57,16 +57,25 @@ export function FilterDropdown({ values, onChange, mode = "icon", hide }: Props)
     values.amountMin ?? minBound,
     values.amountMax ?? maxBound,
   ]);
-  const [minText, setMinText] = useState<string>(String(values.amountMin ?? minBound));
-  const [maxText, setMaxText] = useState<string>(String(values.amountMax ?? maxBound));
+  const fmt = (n: number) =>
+    new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(
+      Number.isFinite(n) ? n : 0,
+    );
+  const parse = (s: string) => {
+    const normalized = s.replace(/,/g, "").trim();
+    const n = Number(normalized);
+    return Number.isFinite(n) ? n : 0;
+  };
+  const [minText, setMinText] = useState<string>(fmt(values.amountMin ?? minBound));
+  const [maxText, setMaxText] = useState<string>(fmt(values.amountMax ?? maxBound));
 
   // keep local slider state in sync with incoming values
   useEffect(() => {
     const min = values.amountMin ?? minBound;
     const max = values.amountMax ?? maxBound;
     setRange([min, max]);
-    setMinText(String(min));
-    setMaxText(String(max));
+    setMinText(fmt(min));
+    setMaxText(fmt(max));
   }, [values.amountMin, values.amountMax, minBound, maxBound]);
 
   // no-op
@@ -210,8 +219,8 @@ export function FilterDropdown({ values, onChange, mode = "icon", hide }: Props)
                   onValueChange={(next) => {
                     const [nmin, nmax] = next as [number, number];
                     setRange([nmin, nmax]);
-                    setMinText(String(nmin));
-                    setMaxText(String(nmax));
+                    setMinText(fmt(nmin));
+                    setMaxText(fmt(nmax));
                   }}
                   onValueCommit={([min, max]) =>
                     onChange({
@@ -222,7 +231,7 @@ export function FilterDropdown({ values, onChange, mode = "icon", hide }: Props)
                 />
                 <div className="flex items-center gap-2">
                   <Input
-                    type="number"
+                    type="text"
                     placeholder="Min"
                     className="w-28 h-8"
                     value={minText}
@@ -231,17 +240,17 @@ export function FilterDropdown({ values, onChange, mode = "icon", hide }: Props)
                       if (e.key === "Enter") (e.currentTarget as HTMLInputElement).blur();
                     }}
                     onBlur={() => {
-                      let min = Number(minText);
-                      if (Number.isNaN(min)) min = minBound;
+                      let min = parse(minText);
+                      if (!Number.isFinite(min)) min = minBound;
                       min = Math.max(minBound, Math.min(min, range[1]));
                       setRange([min, range[1]]);
-                      setMinText(String(min));
+                      setMinText(fmt(min));
                       onChange({ amountMin: min > minBound ? min : undefined });
                     }}
                   />
                   <span className="text-xs text-muted-foreground">to</span>
                   <Input
-                    type="number"
+                    type="text"
                     placeholder="Max"
                     className="w-28 h-8"
                     value={maxText}
@@ -250,11 +259,11 @@ export function FilterDropdown({ values, onChange, mode = "icon", hide }: Props)
                       if (e.key === "Enter") (e.currentTarget as HTMLInputElement).blur();
                     }}
                     onBlur={() => {
-                      let max = Number(maxText);
-                      if (Number.isNaN(max)) max = maxBound;
+                      let max = parse(maxText);
+                      if (!Number.isFinite(max)) max = maxBound;
                       max = Math.min(maxBound, Math.max(max, range[0]));
                       setRange([range[0], max]);
-                      setMaxText(String(max));
+                      setMaxText(fmt(max));
                       onChange({ amountMax: max < maxBound ? max : undefined });
                     }}
                   />
