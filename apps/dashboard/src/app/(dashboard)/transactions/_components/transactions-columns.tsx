@@ -144,7 +144,10 @@ export function createTransactionColumns(context: ColumnContext): ColumnDef<Tran
                 ? "bg-purple-100 text-purple-700 border-purple-200"
                 : "bg-sky-100 text-sky-700 border-sky-200"; // adjustment
         return (
-          <Badge variant="outline" className={cls}>
+          <Badge
+            variant="outline"
+            className={"rounded-full px-2.5 py-0.5 text-xs font-medium " + cls}
+          >
             {label}
           </Badge>
         );
@@ -165,11 +168,17 @@ export function createTransactionColumns(context: ColumnContext): ColumnDef<Tran
       accessorKey: "transaction.paymentMethod",
       id: "method",
       header: "Method",
-      cell: ({ row }) => (
-        <span className="text-sm text-muted-foreground">
-          {row.original.transaction.paymentMethod || "-"}
-        </span>
-      ),
+      cell: ({ row }) => {
+        const raw = row.original.transaction.paymentMethod || "";
+        const label = raw
+          ? raw
+              .toString()
+              .split("_")
+              .map((p) => (p ? p[0].toUpperCase() + p.slice(1).toLowerCase() : p))
+              .join(" ")
+          : "-";
+        return <span className="text-sm text-muted-foreground">{label}</span>;
+      },
     },
     {
       accessorKey: "transaction.status",
@@ -178,17 +187,21 @@ export function createTransactionColumns(context: ColumnContext): ColumnDef<Tran
       cell: ({ row }) => {
         const s = row.original.transaction.status;
         const enriching = s === "pending" && row.original.transaction.enrichmentCompleted === false;
-        const variantMap: Record<string, "default" | "secondary" | "outline" | "destructive"> = {
-          completed: "default",
-          pending: "secondary",
-          failed: "destructive",
-          cancelled: "destructive",
-        };
         const label = s.charAt(0).toUpperCase() + s.slice(1);
-        const variant = (variantMap[s] ?? "outline") as any;
+        const cls =
+          s === "completed"
+            ? "bg-green-100 text-green-700 border-green-200"
+            : s === "pending"
+              ? "bg-amber-100 text-amber-700 border-amber-200"
+              : s === "failed"
+                ? "bg-red-100 text-red-700 border-red-200"
+                : "bg-slate-100 text-slate-700 border-slate-200"; // cancelled
         return (
           <div className="flex items-center gap-2">
-            <Badge variant={variant}>
+            <Badge
+              variant="outline"
+              className={"rounded-full px-2.5 py-0.5 text-xs font-medium " + cls}
+            >
               {label}
             </Badge>
             {enriching && (
