@@ -16,7 +16,10 @@ import { Icons } from "@/components/ui/icons";
 import { FilterList } from "./filter-list";
 import type { TransactionsSearchFilterProps, FilterState } from "./types";
 
-type Props = TransactionsSearchFilterProps & { showSearchInput?: boolean };
+type Props = TransactionsSearchFilterProps & {
+  showSearchInput?: boolean;
+  showFilterButton?: boolean;
+};
 
 const PLACEHOLDERS = [
   "Software and taxes last month",
@@ -72,7 +75,7 @@ function FilterCheckbox({ id, label, checked, onCheckedChange }: FilterCheckboxP
   );
 }
 
-export function TransactionsSearchFilter({ value, onChange, onAskAI, currency = "GHS", showSearchInput = true }: Props) {
+export function TransactionsSearchFilter({ value, onChange, onAskAI, currency = "GHS", showSearchInput = true, showFilterButton = true }: Props) {
   const [placeholder, setPlaceholder] = useState("");
   const [streaming, setStreaming] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
@@ -219,22 +222,24 @@ export function TransactionsSearchFilter({ value, onChange, onAskAI, currency = 
           </form>
         )}
 
-        <Button
-          variant={isOpen ? "default" : "outline"}
-          size="sm"
-          onClick={() => setIsOpen(!isOpen)}
-          className={cn(
-            "transition-all duration-200",
-            hasValidFilters && "bg-primary text-primary-foreground"
-          )}
-        >
-          {streaming ? (
-            <Icons.Refresh className="h-4 w-4 animate-spin mr-2" />
-          ) : (
-            <Icons.Filter className="h-4 w-4 mr-2" />
-          )}
-          Filters
-        </Button>
+        {showFilterButton && (
+          <Button
+            variant={isOpen ? "default" : "outline"}
+            size="sm"
+            onClick={() => setIsOpen(!isOpen)}
+            className={cn(
+              "transition-all duration-200",
+              hasValidFilters && "bg-primary text-primary-foreground"
+            )}
+          >
+            {streaming ? (
+              <Icons.Refresh className="h-4 w-4 animate-spin mr-2" />
+            ) : (
+              <Icons.Filter className="h-4 w-4 mr-2" />
+            )}
+            Filters
+          </Button>
+        )}
       </div>
 
       {/* Applied Filters */}

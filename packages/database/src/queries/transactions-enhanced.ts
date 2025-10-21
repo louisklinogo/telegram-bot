@@ -43,6 +43,7 @@ export async function getTransactionsEnriched(
     amountMin?: number;
     amountMax?: number;
     isRecurring?: boolean;
+    fulfilled?: boolean; // derived: attachments OR completed
     limit?: number;
     cursor?: { date: Date | null; id: string } | null;
   },
@@ -63,11 +64,28 @@ export async function getTransactionsEnriched(
     amountMin,
     amountMax,
     isRecurring,
+    fulfilled,
     limit = 50,
     cursor,
   } = params;
 
   // Build where conditions
+  // Build attachment/tag EXISTS subqueries per Midday style
+  const attachmentsExist = sql`EXISTS (
+    SELECT 1 FROM transaction_attachments ta
+    WHERE ta.transaction_id = ${transactions.id}
+      AND ta.team_id = ${teamId}
+  )`;
+
+  const tagsExist = (tagIds: string[]) => sql`EXISTS (
+    SELECT 1
+    FROM transaction_tags tt
+    JOIN tags t ON t.id = tt.tag_id
+    WHERE tt.transaction_id = ${transactions.id}
+      AND tt.team_id = ${teamId}
+      AND t.id = ANY(ARRAY[${sql.join(tagIds.map((id) => sql`${id}`), sql`, `)}])
+  )`;
+
   const whereConditions = and(
     eq(transactions.teamId, teamId),
     isNull(transactions.deletedAt),
@@ -93,6 +111,18 @@ export async function getTransactionsEnriched(
     amountMax != null ? lte(transactions.amount, amountMax as any) : sql`true`,
     startDate ? gte(transactions.date, startDate.toISOString().slice(0, 10)) : sql`true`,
     endDate ? lte(transactions.date, endDate.toISOString().slice(0, 10)) : sql`true`,
+    // Attachments include/exclude in WHERE via EXISTS
+    hasAttachments === true ? attachmentsExist : sql`true`,
+    hasAttachments === false ? sql`NOT (${attachmentsExist})` : sql`true`,
+    // Fulfilled derived flag
+    fulfilled === true
+      ? sql`( ${attachmentsExist} OR ${eq(transactions.status, 'completed' as any)} )`
+      : sql`true`,
+    fulfilled === false
+      ? sql`NOT ( ${attachmentsExist} OR ${eq(transactions.status, 'completed' as any)} )`
+      : sql`true`,
+    // Tags filter via EXISTS
+    tagIds && tagIds.length > 0 ? tagsExist(tagIds) : sql`true`,
     cursor?.date
       ? or(
           lt(
@@ -164,22 +194,6 @@ export async function getTransactionsEnriched(
     .limit(limit);
 
   const results = await query;
-
-  // Apply attachment filter if specified
-  if (hasAttachments !== undefined) {
-    return results.filter((r) =>
-      hasAttachments ? r.attachmentCount > 0 : r.attachmentCount === 0,
-    );
-  }
-
-  // Apply tag filter if specified
-  if (tagIds && tagIds.length > 0) {
-    return results.filter((r) => {
-      const transactionTagIds = r.tags.map((t) => t.id);
-      return tagIds.some((tagId) => transactionTagIds.includes(tagId));
-    });
-  }
-
   return results;
 }
 
@@ -370,6 +384,28 @@ export async function getTransactionById(
     .limit(1);
 
   return result[0];
+}
+
+/**
+ * Get min/max transaction amounts for a team (for dynamic slider bounds)
+ */
+export async function getTransactionAmountBounds(
+  db: DbClient,
+  params: { teamId: string },
+) {
+  const { teamId } = params;
+  const rows = await db
+    .select({
+      min: sql<number>`MIN(${transactions.amount})`,
+      max: sql<number>`MAX(${transactions.amount})`,
+    })
+    .from(transactions)
+    .where(and(eq(transactions.teamId, teamId), isNull(transactions.deletedAt)))
+    .limit(1);
+
+  const min = rows[0]?.min ?? 0;
+  const max = rows[0]?.max ?? 0;
+  return { min, max };
 }
 
 /**

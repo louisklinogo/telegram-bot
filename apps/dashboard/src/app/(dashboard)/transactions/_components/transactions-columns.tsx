@@ -304,6 +304,9 @@ export function createTransactionColumns(context: ColumnContext): ColumnDef<Tran
               <DropdownMenuItem onClick={() => context.onViewDetails(row.original)}>
                 View details
               </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => context.onViewDetails(row.original)}>
+                Edit tags…
+              </DropdownMenuItem>
               <DropdownMenuItem onClick={() => context.onCopyUrl(transaction.id)}>
                 Copy share URL
               </DropdownMenuItem>

@@ -6,6 +6,8 @@ import { useTransactionParams } from "@/hooks/use-transaction-params";
 import { trpc } from "@/lib/trpc/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { X } from "lucide-react";
 
 export function TransactionDetailsSheet() {
   const { isOpen, transactionId, close } = useTransactionParams();
@@ -107,24 +109,7 @@ export function TransactionDetailsSheet() {
                   <div>{(data as any).transaction.excludeFromAnalytics ? "Yes" : "No"}</div>
                 </div>
               </div>
-              <div>
-                <div className="text-xs text-muted-foreground">Tags</div>
-                <div className="flex flex-wrap gap-1">
-                  {Array.isArray((data as any).tags) && (data as any).tags.length > 0 ? (
-                    (data as any).tags.map((t: any) => (
-                      <span
-                        key={t.id}
-                        className="px-1.5 py-0.5 rounded text-[10px] border"
-                        style={t.color ? { backgroundColor: `${t.color}15`, borderColor: `${t.color}55` } : undefined}
-                      >
-                        {t.name}
-                      </span>
-                    ))
-                  ) : (
-                    <span>-</span>
-                  )}
-                </div>
-              </div>
+              <TagsEditor transactionId={(data as any).transaction.id} existing={((data as any).tags ?? []) as any[]} />
               <div>
                 <div className="text-xs text-muted-foreground">Notes</div>
                 <div>{(data as any).transaction.notes || "-"}</div>
@@ -134,5 +119,63 @@ export function TransactionDetailsSheet() {
         </ScrollArea>
       </SheetContent>
     </Sheet>
+  );
+}
+
+type Tag = { id: string; name: string; color: string | null };
+
+function TagsEditor({ transactionId, existing }: { transactionId: string; existing: Tag[] }) {
+  const utils = trpc.useUtils();
+  const { data: allTags = [] } = trpc.tags.list.useQuery();
+  const addTag = trpc.transactionTags.add.useMutation({
+    onSuccess: async () => {
+      await utils.transactions.byId.invalidate({ id: transactionId });
+      await utils.transactions.enrichedList.invalidate();
+    },
+  });
+  const removeTag = trpc.transactionTags.remove.useMutation({
+    onSuccess: async () => {
+      await utils.transactions.byId.invalidate({ id: transactionId });
+      await utils.transactions.enrichedList.invalidate();
+    },
+  });
+
+  const existingIds = new Set(existing.map((t) => t.id));
+
+  return (
+    <div>
+      <div className="text-xs text-muted-foreground">Tags</div>
+      <div className="flex flex-wrap gap-1 mb-2">
+        {existing.length ? (
+          existing.map((t) => (
+            <span
+              key={t.id}
+              className="px-1.5 py-0.5 rounded text-[10px] border inline-flex items-center gap-1"
+              style={t.color ? { backgroundColor: `${t.color}15`, borderColor: `${t.color}55` } : undefined}
+            >
+              {t.name}
+              <button
+                aria-label="Remove tag"
+                className="ml-1 text-muted-foreground hover:text-foreground"
+                onClick={() => removeTag.mutate({ transactionId, tagId: t.id })}
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </span>
+          ))
+        ) : (
+          <span>-</span>
+        )}
+      </div>
+      <div className="flex flex-wrap gap-2">
+        {allTags
+          .filter((t: any) => !existingIds.has(t.id))
+          .map((t: any) => (
+            <Button key={t.id} size="sm" variant="outline" onClick={() => addTag.mutate({ transactionId, tagId: t.id })}>
+              + {t.name}
+            </Button>
+          ))}
+      </div>
+    </div>
   );
 }

@@ -13,9 +13,9 @@ type Pill = {
   onRemove: () => void;
 };
 
-export function FilterPills({ pills }: { pills: Pill[] }) {
+export function FilterPills({ pills, trailing }: { pills: Pill[]; trailing?: React.ReactNode }) {
   return (
-    <div className="flex flex-wrap gap-2 py-2">
+    <div className="flex flex-wrap items-center gap-2 py-2">
       {pills.map((p) => (
         <Popover key={p.field.key}>
           <PopoverTrigger asChild>
@@ -33,6 +33,7 @@ export function FilterPills({ pills }: { pills: Pill[] }) {
           </PopoverContent>
         </Popover>
       ))}
+      {trailing}
     </div>
   );
 }

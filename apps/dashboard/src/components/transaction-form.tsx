@@ -33,6 +33,7 @@ import {
 import { currencies } from "@Faworra/schemas";
 import { useDropzone } from "react-dropzone";
 import { Icons } from "@/components/ui/icons";
+import { ComboboxMulti } from "@/components/ui/combobox-multi";
 
 const transactionFormSchema = z.object({
   type: z.enum(["payment", "expense", "refund", "adjustment"]),
@@ -121,6 +122,10 @@ export function TransactionForm({ onSuccess, defaultInvoiceId, defaultClientId }
   );
   // Get categories (hierarchical)
   const { data: categoriesTree = [] } = trpc.transactionCategories.list.useQuery();
+  // Tags
+  const { data: availableTags = [] } = trpc.tags.list.useQuery();
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const createTagMutation = trpc.tags.create.useMutation();
   type CategoryNode = {
     id: string;
     name: string;
@@ -190,6 +195,7 @@ export function TransactionForm({ onSuccess, defaultInvoiceId, defaultClientId }
           ? new Date(data.transactionDate).toISOString()
           : undefined,
         excludeFromAnalytics: !!data.excludeFromAnalytics,
+        tags: selectedTags,
         attachments,
       } as any);
     } else {
@@ -209,6 +215,7 @@ export function TransactionForm({ onSuccess, defaultInvoiceId, defaultClientId }
         paymentReference: data.paymentReference || undefined,
         notes: data.notes || undefined,
         excludeFromAnalytics: !!data.excludeFromAnalytics,
+        tags: selectedTags,
         attachments,
       } as any);
     }
@@ -431,6 +438,23 @@ export function TransactionForm({ onSuccess, defaultInvoiceId, defaultClientId }
                       </PopoverContent>
                     </Popover>
                   </div>
+                </div>
+
+                <div>
+                  <Label>Tags</Label>
+                  <ComboboxMulti
+                    items={(availableTags as any[]).map((t) => ({ id: t.id, label: t.name }))}
+                    values={selectedTags}
+                    onChange={setSelectedTags}
+                    placeholder="Select tags"
+                    searchPlaceholder="Search or create tags..."
+                    onCreate={async (name) => {
+                      const created = await createTagMutation.mutateAsync({ name });
+                      setSelectedTags((prev) => [...prev, created.id]);
+                      await utils.tags.list.invalidate();
+                    }}
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">You can add tags to help filter transactions later.</p>
                 </div>
 
                 <div>

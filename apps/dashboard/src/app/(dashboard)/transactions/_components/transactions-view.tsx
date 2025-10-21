@@ -10,6 +10,7 @@ import {
 import { Download, Plus, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { parseAsArrayOf, parseAsBoolean, parseAsInteger, parseAsString, useQueryState, useQueryStates } from "nuqs";
 import { useInView } from "react-intersection-observer";
 import { AddTransactions } from "@/components/add-transactions";
 import { SearchInline } from "@/components/search-inline";
@@ -43,6 +44,7 @@ import { createTransactionColumns, type TransactionRow } from "./transactions-co
 import TransactionsSearchFilter from "./transactions-search-filter";
 import type { FilterState } from "./types";
 import { FilterToolbar } from "@/components/filters/filter-toolbar";
+import { FilterDropdown } from "@/components/filters/filter-dropdown";
 import type { FilterFieldDef } from "@/components/filters/types";
 
 type FilterType = "all" | "payment" | "expense" | "refund" | "adjustment";
@@ -61,23 +63,45 @@ export function TransactionsView({
   const currency = useTeamCurrency();
   const _queryClient = useQueryClient();
   const utils = trpc.useUtils();
-  const [filterType, setFilterType] = useState<FilterType>("all");
-  const [search, setSearch] = useState("");
+  const [q] = useQueryState("q", { defaultValue: "" });
+  const [filters, setFilters] = useQueryStates(
+    {
+      type: parseAsString,
+      statuses: parseAsArrayOf(parseAsString),
+      categories: parseAsArrayOf(parseAsString),
+      tags: parseAsArrayOf(parseAsString),
+      accounts: parseAsArrayOf(parseAsString),
+      assignees: parseAsArrayOf(parseAsString),
+      start: parseAsString,
+      end: parseAsString,
+      amount_range: parseAsArrayOf(parseAsInteger),
+      attachments: parseAsString, // "include" | "exclude"
+      recurring: parseAsBoolean,
+    },
+    { shallow: true },
+  );
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const selectedCount = selected.size;
 
   // Advanced filter state
-  const [statuses, setStatuses] = useState<string[]>([]);
-  const [categories, setCategories] = useState<string[]>([]);
-  const [tags, setTags] = useState<string[]>([]);
-  const [accounts, setAccounts] = useState<string[]>([]);
-  const [assignees, setAssignees] = useState<string[]>([]);
-  const [hasAttachments, setHasAttachments] = useState<"any" | "with" | "without">("any");
-  const [isRecurring, setIsRecurring] = useState<boolean | undefined>(undefined);
-  const [amountMin, setAmountMin] = useState<string>("");
-  const [amountMax, setAmountMax] = useState<string>("");
-  const [startDate, setStartDate] = useState<string>("");
-  const [endDate, setEndDate] = useState<string>("");
+  const filterType: FilterType = (filters.type as FilterType) ?? "all";
+  const statuses: string[] = filters.statuses ?? [];
+  const categories: string[] = filters.categories ?? [];
+  const tags: string[] = filters.tags ?? [];
+  const accounts: string[] = filters.accounts ?? [];
+  const assignees: string[] = filters.assignees ?? [];
+  const startDate: string = filters.start ?? "";
+  const endDate: string = filters.end ?? "";
+  const amountRange: number[] | undefined = filters.amount_range ?? undefined;
+  const amountMin: number | undefined = amountRange?.[0] ?? undefined;
+  const amountMax: number | undefined = amountRange?.[1] ?? undefined;
+  const hasAttachments: "any" | "with" | "without" = filters.attachments
+    ? filters.attachments === "include"
+      ? "with"
+      : "without"
+    : "any";
+  const isRecurring: boolean | undefined = filters.recurring ?? undefined;
+  // fulfilled filter removed
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>(() => {
     try {
@@ -101,12 +125,12 @@ export function TransactionsView({
       accounts: accounts.length ? accounts : undefined,
       assignees: assignees.length ? assignees : undefined,
       isRecurring: isRecurring,
-      search: search || undefined,
+      search: q || undefined,
       startDate: startDate ? new Date(`${startDate}T00:00:00Z`) : undefined,
       endDate: endDate ? new Date(`${endDate}T23:59:59Z`) : undefined,
       hasAttachments: hasAttachments === "any" ? undefined : hasAttachments === "with",
-      amountMin: amountMin ? Number(amountMin) : undefined,
-      amountMax: amountMax ? Number(amountMax) : undefined,
+      amountMin: amountMin != null ? Number(amountMin) : undefined,
+      amountMax: amountMax != null ? Number(amountMax) : undefined,
       limit: 50,
     };
 
@@ -126,7 +150,7 @@ export function TransactionsView({
     accounts,
     assignees,
     isRecurring,
-    search,
+    q,
     startDate,
     endDate,
     hasAttachments,
@@ -179,8 +203,8 @@ export function TransactionsView({
   const currencyCode = currency;
   const hasActiveFilters = useMemo(() => {
     return (
-      filterType !== "all" ||
-      Boolean(search) ||
+    filterType !== "all" ||
+      Boolean(q) ||
       statuses.length > 0 ||
       categories.length > 0 ||
       tags.length > 0 ||
@@ -188,14 +212,14 @@ export function TransactionsView({
       assignees.length > 0 ||
       isRecurring != null ||
       hasAttachments !== "any" ||
-      Boolean(amountMin) ||
-      Boolean(amountMax) ||
+      amountMin != null ||
+      amountMax != null ||
       Boolean(startDate) ||
       Boolean(endDate)
     );
   }, [
     filterType,
-    search,
+    q,
     statuses,
     categories,
     tags,
@@ -203,8 +227,8 @@ export function TransactionsView({
     assignees,
     isRecurring,
     hasAttachments,
-    amountMin,
-    amountMax,
+      amountMin,
+      amountMax,
     startDate,
     endDate,
   ]);
@@ -227,17 +251,19 @@ export function TransactionsView({
   );
 
   const clearAllFilters = () => {
-    setFilterType("all");
-    setSearch("");
-    setStatuses([]);
-    setCategories([]);
-    setTags([]);
-    setAccounts([]);
-    setHasAttachments("any");
-    setAmountMin("");
-    setAmountMax("");
-    setStartDate("");
-    setEndDate("");
+    setFilters({
+      type: null,
+      statuses: null,
+      categories: null,
+      tags: null,
+      accounts: null,
+      assignees: null,
+      start: null,
+      end: null,
+      amount_range: null,
+      attachments: null,
+      recurring: null,
+    });
   };
 
   // Stats (regular query instead of suspense to debug)
@@ -257,22 +283,25 @@ export function TransactionsView({
 
   const applyParsedFilters = (p: any) => {
     if (!p || typeof p !== "object") return;
-    if (p.type !== undefined) setFilterType((p.type as any) || "all");
-    if (p.search !== undefined) setSearch(p.search || "");
-    if (p.status) setStatuses(p.status as any);
-    if (p.statuses) setStatuses(p.statuses as any);
-    if (p.categories) setCategories(p.categories as string[]);
-    if (p.tags) setTags(p.tags as string[]);
-    if (p.accounts) setAccounts(p.accounts as string[]);
-    if (p.assignees) setAssignees(p.assignees as string[]);
-    if (p.isRecurring !== undefined) setIsRecurring(p.isRecurring as boolean);
-    if (p.hasAttachments !== undefined) setHasAttachments(p.hasAttachments ? "with" : "without");
-    if (p.amountMin !== undefined) setAmountMin(p.amountMin != null ? String(p.amountMin) : "");
-    if (p.amountMax !== undefined) setAmountMax(p.amountMax != null ? String(p.amountMax) : "");
-    if (p.startDate !== undefined)
-      setStartDate(p.startDate ? new Date(p.startDate).toISOString().slice(0, 10) : "");
-    if (p.endDate !== undefined)
-      setEndDate(p.endDate ? new Date(p.endDate).toISOString().slice(0, 10) : "");
+    setFilters({
+      type: (p.type as any) ?? null,
+      statuses: (p.statuses as any) ?? (p.status as any) ?? null,
+      categories: (p.categories as any) ?? null,
+      tags: (p.tags as any) ?? null,
+      accounts: (p.accounts as any) ?? null,
+      assignees: (p.assignees as any) ?? null,
+      recurring: typeof p.isRecurring === "boolean" ? p.isRecurring : null,
+      attachments:
+        p.hasAttachments === undefined ? null : p.hasAttachments ? "include" : "exclude",
+      amount_range:
+        p.amountMin != null || p.amountMax != null
+          ? [p.amountMin ?? 0, p.amountMax ?? 500000]
+          : null,
+      start: p.startDate
+        ? new Date(p.startDate).toISOString().slice(0, 10)
+        : null,
+      end: p.endDate ? new Date(p.endDate).toISOString().slice(0, 10) : null,
+    });
   };
 
   // ✅ CORRECT: Use initialData from server, match query params with server
@@ -614,22 +643,11 @@ export function TransactionsView({
   }, [columnVisibility]);
 
   return (
-    <div className="flex flex-col gap-6 px-6">
+    <div className="flex flex-col gap-6">
       <TransactionSheet />
       <TransactionDetailsSheet />
 
-      {/* Active filter chips */}
-      <div className="flex flex-wrap gap-2">
-        {filterType !== "all" && (
-          <Badge
-            variant="secondary"
-            className="cursor-pointer"
-            onClick={() => setFilterType("all")}
-          >
-            type:{filterType} ×
-          </Badge>
-        )}
-      </div>
+      {/* Active filter chips removed — pills row is the single source of truth */}
 
       {/* Bulk selection bar - Midday style */}
       {selectedCount > 0 && (
@@ -651,150 +669,91 @@ export function TransactionsView({
         </div>
       )}
 
-      <div className="grid gap-4 md:grid-cols-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 pt-6">
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Total Income
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
+          <CardHeader className="pb-3">
+            <CardTitle className="font-medium text-2xl">
               {formatAmount({ currency: currencyCode, amount: (stats as any)?.totalIncome || 0 })}
-            </div>
-            <p className="mt-1 text-xs text-muted-foreground">All time payments</p>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pb-[34px]">
+            <div>Total Income</div>
+            <div className="text-sm text-muted-foreground">All time payments</div>
           </CardContent>
         </Card>
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Total Expenses
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
+          <CardHeader className="pb-3">
+            <CardTitle className="font-medium text-2xl">
               {formatAmount({ currency: currencyCode, amount: (stats as any)?.totalExpenses || 0 })}
-            </div>
-            <p className="mt-1 text-xs text-muted-foreground">All time expenses</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Net Profit</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {formatAmount({ currency: currencyCode, amount: (stats as any)?.netProfit || 0 })}
-            </div>
-            <p className="mt-1 text-xs text-muted-foreground">Income minus expenses</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Pending Payments
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
+          <CardContent className="pb-[34px]">
+            <div>Total Expenses</div>
+            <div className="text-sm text-muted-foreground">All time expenses</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="font-medium text-2xl">
+              {formatAmount({ currency: currencyCode, amount: (stats as any)?.netProfit || 0 })}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pb-[34px]">
+            <div>Net Profit</div>
+            <div className="text-sm text-muted-foreground">Income minus expenses</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="font-medium text-2xl">
               {formatAmount({
                 currency: currencyCode,
                 amount: (stats as any)?.pendingPayments || 0,
               })}
-            </div>
-            <p className="mt-1 text-xs text-muted-foreground">Awaiting collection</p>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pb-[34px]">
+            <div>Pending Payments</div>
+            <div className="text-sm text-muted-foreground">Awaiting collection</div>
           </CardContent>
         </Card>
       </div>
 
       <div>
         <div className="mb-4 space-y-4">
-          {/* Search and Filter Section */}
-          <TransactionsSearchFilter
-            value={{
-              search,
-              statuses: statuses as any,
-              categories,
-              tags,
-              accounts,
-              assignees,
-              startDate,
-              endDate,
-              amountMin: amountMin ? parseInt(amountMin, 10) : undefined,
-              amountMax: amountMax ? parseInt(amountMax, 10) : undefined,
-              hasAttachments:
-                hasAttachments === "with" ? true : hasAttachments === "without" ? false : undefined,
-              isRecurring,
-            }}
-            currency={currencyCode}
-            showSearchInput={false}
-            showFilterButton={false}
-            onChange={(p: Partial<FilterState>) => {
-              if (p.search !== undefined) setSearch(p.search || "");
-              if (p.statuses !== undefined) setStatuses(p.statuses || []);
-              if (p.categories !== undefined) setCategories(p.categories || []);
-              if (p.tags !== undefined) setTags(p.tags || []);
-              if (p.accounts !== undefined) setAccounts(p.accounts || []);
-              if (p.assignees !== undefined) setAssignees(p.assignees || []);
-              if (p.startDate !== undefined) setStartDate(p.startDate || "");
-              if (p.endDate !== undefined) setEndDate(p.endDate || "");
-              if (p.amountMin !== undefined) setAmountMin(p.amountMin ? String(p.amountMin) : "");
-              if (p.amountMax !== undefined) setAmountMax(p.amountMax ? String(p.amountMax) : "");
-              if (p.hasAttachments !== undefined)
-                setHasAttachments(
-                  p.hasAttachments === true
-                    ? "with"
-                    : p.hasAttachments === false
-                      ? "without"
-                      : "any",
-                );
-              if (p.isRecurring !== undefined) setIsRecurring(p.isRecurring);
-            }}
-            onAskAI={async (q) => {
-              const parsed = await aiParse.mutateAsync({ query: q });
-              applyParsedFilters(parsed);
-              return parsed as any;
-            }}
-          />
-
-          {/* Notion-like right-aligned toolbar: inline search + filter + controls */}
-          <div className="flex items-center justify-end gap-2">
-            <div className="hidden sm:flex items-center gap-1">
-              <SearchInline />
-              {/* New generic FilterToolbar; maps to existing states */}
-              <FilterToolbar
-                fields={filterFields}
-                values={{
-                  type: filterType === "all" ? undefined : filterType,
-                  statuses,
-                  categories,
-                  tags,
-                  accounts,
-                  assignees,
-                  dateRange: { startDate, endDate },
-                  amountRange: { amountMin: amountMin ? Number(amountMin) : undefined, amountMax: amountMax ? Number(amountMax) : undefined },
-                  hasAttachments: hasAttachments === "any" ? undefined : hasAttachments === "with",
-                  isRecurring,
-                }}
-                onChange={(next) => {
-                  setFilterType((next.type as any) ?? "all");
-                  setStatuses((next.statuses as any) ?? []);
-                  setCategories((next.categories as any) ?? []);
-                  setTags((next.tags as any) ?? []);
-                  setAccounts((next.accounts as any) ?? []);
-                  setAssignees((next.assignees as any) ?? []);
-                  const dr = (next as any).dateRange || {};
-                  setStartDate(dr.startDate || "");
-                  setEndDate(dr.endDate || "");
-                  const ar = (next as any).amountRange || {};
-                  setAmountMin(ar.amountMin != null ? String(ar.amountMin) : "");
-                  setAmountMax(ar.amountMax != null ? String(ar.amountMax) : "");
-                  const att = (next as any).hasAttachments;
-                  setHasAttachments(att === undefined ? "any" : att ? "with" : "without");
-                  setIsRecurring((next.isRecurring as any) ?? undefined);
-                }}
-              />
-            </div>
+          {/* Row 1: Right-aligned toolbar (search, filter icon, column visibility, export, add) */}
+          <div className="hidden sm:flex items-center justify-end gap-2">
+            <SearchInline />
+            <FilterDropdown
+              values={{
+                statuses,
+                categories,
+                tags,
+                accounts,
+                assignees,
+                startDate,
+                endDate,
+                amountMin,
+                amountMax,
+                  attachments: hasAttachments === "any" ? undefined : hasAttachments === "with" ? "include" : "exclude",
+              }}
+              onChange={(n) => {
+                setFilters({
+                  statuses: n.statuses ?? null,
+                  categories: n.categories ?? null,
+                  tags: n.tags ?? null,
+                  accounts: n.accounts ?? null,
+                  assignees: n.assignees ?? null,
+                  start: n.startDate ?? null,
+                  end: n.endDate ?? null,
+                  amount_range:
+                    n.amountMin != null || n.amountMax != null
+                      ? [n.amountMin ?? 0, n.amountMax ?? 500000]
+                      : null,
+                    attachments: n.attachments ?? null,
+                });
+              }}
+            />
             <TransactionsColumnVisibility columns={table.getAllColumns()} />
             <Button
               variant="outline"
@@ -808,7 +767,63 @@ export function TransactionsView({
             </Button>
             <AddTransactions />
           </div>
-          {/* Removed top-left filter tabs; Type moved into Filters sheet */}
+
+          {/* Row 2: Left pills + +Filter, Right Reset only */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-1">
+              <FilterToolbar
+                appearance="chip"
+                fields={filterFields}
+                values={{
+                  type: filterType === "all" ? undefined : filterType,
+                  statuses,
+                  categories,
+                  tags,
+                  accounts,
+                  assignees,
+                  dateRange: { startDate, endDate },
+                amountRange: { amountMin, amountMax },
+                  hasAttachments: hasAttachments === "any" ? undefined : hasAttachments === "with",
+                  isRecurring,
+                }}
+                onChange={(next) => {
+                  setFilters({
+                    type: (next.type as any) ?? null,
+                    statuses: (next.statuses as any) ?? null,
+                    categories: (next.categories as any) ?? null,
+                    tags: (next.tags as any) ?? null,
+                    accounts: (next.accounts as any) ?? null,
+                    assignees: (next.assignees as any) ?? null,
+                    start: (next as any).dateRange?.startDate ?? null,
+                    end: (next as any).dateRange?.endDate ?? null,
+                  amount_range:
+                    (next as any).amountRange?.amountMin != null || (next as any).amountRange?.amountMax != null
+                      ? [
+                          (next as any).amountRange?.amountMin ?? 0,
+                          (next as any).amountRange?.amountMax ?? 500000,
+                        ]
+                      : null,
+                    attachments:
+                      (next as any).hasAttachments === undefined
+                        ? null
+                        : (next as any).hasAttachments
+                          ? "include"
+                          : "exclude",
+                    recurring: (next.isRecurring as any) ?? null,
+                  });
+                }}
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              {hasActiveFilters && (
+                <Button variant="ghost" size="sm" onClick={clearAllFilters}>
+                  Reset
+                </Button>
+              )}
+            </div>
+          </div>
+
+          {/* Using Notion-style pills + picker only; legacy sheet UI removed */}
         </div>
 
         {!rows.length ? (
@@ -963,19 +978,7 @@ export function TransactionsView({
         <div ref={loadMoreRef} />
       </div>
 
-      {/* Filters popover/sheet removed — Midday uses AI-first search without separate filter surface */}
-
-      {/* BottomBar: show when filters are active */}
-      {hasActiveFilters && (
-        <div className="fixed bottom-4 left-1/2 z-50 -translate-x-1/2 rounded-lg border bg-background shadow-lg">
-          <div className="flex items-center gap-3 px-4 py-2">
-            <span className="text-sm">Filters active</span>
-            <Button size="sm" variant="ghost" onClick={clearAllFilters}>
-              Clear filters
-            </Button>
-          </div>
-        </div>
-      )}
+      {/* No floating bottom bar; Reset lives on the pills row */}
 
       {/* Allocate Sheet */}
       <Sheet open={allocateOpen} onOpenChange={setAllocateOpen}>

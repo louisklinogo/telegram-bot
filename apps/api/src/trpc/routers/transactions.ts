@@ -14,6 +14,7 @@ import {
   invoices,
   transactions,
   transactionAllocations,
+  transactionTags,
   financialAccounts,
   transactionCategories,
   transactionAttachments,
@@ -40,6 +41,7 @@ export const transactionsRouter = createTRPCRouter({
           paymentReference: z.string().optional(),
           transactionDate: z.string().datetime().optional(),
           excludeFromAnalytics: z.boolean().optional(),
+          tags: z.array(z.string().uuid()).optional(),
           attachments: z
             .array(
               z.object({
@@ -69,6 +71,7 @@ export const transactionsRouter = createTRPCRouter({
           paymentReference: z.string().optional(),
           notes: z.string().optional(),
           excludeFromAnalytics: z.boolean().optional(),
+          tags: z.array(z.string().uuid()).optional(),
           attachments: z
             .array(
               z.object({
@@ -106,6 +109,8 @@ export const transactionsRouter = createTRPCRouter({
             paymentMethod: input.paymentMethod ?? null,
             paymentReference: input.paymentReference ?? null,
             transactionDate: input.transactionDate ? new Date(input.transactionDate) : new Date(),
+            // Mark payments created via the Transactions form as manual entries
+            manual: true,
             excludeFromAnalytics: input.excludeFromAnalytics ?? false,
           })
           .returning();
@@ -122,6 +127,17 @@ export const transactionsRouter = createTRPCRouter({
             invoiceId: input.invoiceId,
             amount: input.amount as any,
           });
+        }
+
+        // Optional tags
+        if (input.tags && input.tags.length) {
+          await ctx.db.insert(transactionTags).values(
+            input.tags.map((tagId) => ({
+              teamId: ctx.teamId,
+              transactionId: created.id,
+              tagId,
+            })),
+          ).onConflictDoNothing();
         }
 
         if (input.attachments && input.attachments.length > 0) {
@@ -187,6 +203,17 @@ export const transactionsRouter = createTRPCRouter({
           uploadedBy: ctx.userId ?? null,
         }));
         await ctx.db.insert(transactionAttachments).values(rows);
+      }
+
+      // Optional tags
+      if (input.tags && input.tags.length) {
+        await ctx.db.insert(transactionTags).values(
+          input.tags.map((tagId) => ({
+            teamId: ctx.teamId,
+            transactionId: created.id,
+            tagId,
+          })),
+        ).onConflictDoNothing();
       }
 
       return created;
@@ -311,6 +338,12 @@ export const transactionsRouter = createTRPCRouter({
       .leftJoin(users, eq(usersOnTeam.userId, users.id))
       .where(eq(usersOnTeam.teamId, ctx.teamId));
     return rows.filter((r) => r.id);
+  }),
+
+  // Amount bounds for dynamic slider
+  amountBounds: teamProcedure.query(async ({ ctx }) => {
+    const { getTransactionAmountBounds } = await import("@Faworra/database/queries");
+    return getTransactionAmountBounds(ctx.db, { teamId: ctx.teamId });
   }),
 
   // Enriched list with filters, tags, attachments count, pagination cursor
