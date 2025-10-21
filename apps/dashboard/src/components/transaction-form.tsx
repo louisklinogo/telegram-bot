@@ -34,6 +34,7 @@ import { currencies } from "@Faworra/schemas";
 import { useDropzone } from "react-dropzone";
 import { Icons } from "@/components/ui/icons";
 import { ComboboxMulti } from "@/components/ui/combobox-multi";
+import { formatAmount } from "@/lib/format-currency";
 
 const transactionFormSchema = z.object({
   type: z.enum(["payment", "expense", "refund", "adjustment"]),
@@ -511,7 +512,7 @@ export function TransactionForm({ onSuccess, defaultInvoiceId, defaultClientId }
                           <SelectContent>
                             {invoices.map((invoice: any) => (
                               <SelectItem key={invoice.id} value={invoice.id}>
-                                {invoice.invoiceNumber} - {invoice.currency || "GHS"} {invoice.amount}
+                                {invoice.invoiceNumber} - {formatAmount({ currency: invoice.currency || "GHS", amount: Number(invoice.amount || 0) })}
                               </SelectItem>
                             ))}
                           </SelectContent>
