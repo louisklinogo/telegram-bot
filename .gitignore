@@ -133,3 +133,6 @@ evolution-api
 # Secret files with tokens/keys
 docs/essentials.txt
 token.txt
+
+# Archived local notes and assets
+.archived/
