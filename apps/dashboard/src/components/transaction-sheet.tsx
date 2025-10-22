@@ -6,9 +6,9 @@ import { TransactionForm } from "@/components/transaction-form";
 import { useTransactionParams } from "@/hooks/use-transaction-params";
 
 export function TransactionSheet() {
-  const { isOpen, type, invoiceId, clientId, close } = useTransactionParams();
+  const { isOpen, sheet, invoiceId, clientId, close } = useTransactionParams();
 
-  if (type !== "create") return null;
+  if (sheet !== "create") return null;
 
   return (
     <Sheet open={isOpen} onOpenChange={(open) => !open && close()}>

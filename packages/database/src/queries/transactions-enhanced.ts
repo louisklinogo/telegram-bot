@@ -44,6 +44,7 @@ export async function getTransactionsEnriched(
     amountMax?: number;
     isRecurring?: boolean;
     fulfilled?: boolean; // derived: attachments OR completed
+    includeTags?: boolean; // controls whether to aggregate tag data
     limit?: number;
     cursor?: { date: Date | null; id: string } | null;
   },
@@ -65,6 +66,7 @@ export async function getTransactionsEnriched(
     amountMax,
     isRecurring,
     fulfilled,
+    includeTags = true,
     limit = 50,
     cursor,
   } = params;
@@ -101,11 +103,7 @@ export async function getTransactionsEnriched(
     accounts && accounts.length > 0 ? inArray(transactions.accountId, accounts as any) : sql`true`,
     isRecurring != null ? eq(transactions.recurring, isRecurring) : sql`true`,
     search
-      ? or(
-          ilike(transactions.name, `%${search}%`),
-          ilike(transactions.description, `%${search}%`),
-          ilike(transactions.counterpartyName, `%${search}%`),
-        )
+      ? sql`fts_vector @@ websearch_to_tsquery('english', ${search})`
       : sql`true`,
     amountMin != null ? gte(transactions.amount, amountMin as any) : sql`true`,
     amountMax != null ? lte(transactions.amount, amountMax as any) : sql`true`,
@@ -145,16 +143,9 @@ export async function getTransactionsEnriched(
   );
 
   // Base query with aggregations
-  const query = db
-    .select({
-      transaction: transactions,
-      client: clients,
-      category: transactionCategories,
-      assignedUser: users,
-      // Count allocations
-      allocationCount: sql<number>`COUNT(DISTINCT ${transactionAllocations.id})`,
-      // Aggregate tags
-      tags: sql<TransactionTagJson[]>`
+  // Build dynamic select fields
+  const tagSelect = includeTags
+    ? sql<TransactionTagJson[]>`
         COALESCE(
           json_agg(
             DISTINCT jsonb_build_object(
@@ -165,12 +156,34 @@ export async function getTransactionsEnriched(
           ) FILTER (WHERE ${tags.id} IS NOT NULL),
           '[]'::json
         )
-      `,
-      // Count attachments
-      attachmentCount: sql<number>`
-        COUNT(DISTINCT ${transactionAttachments.id})
-      `,
-    })
+      `
+    : sql<TransactionTagJson[]>`'[]'::json`;
+
+  const baseSelect = {
+    transaction: {
+      id: transactions.id,
+      date: transactions.date,
+      description: transactions.description,
+      paymentReference: transactions.paymentReference,
+      type: transactions.type,
+      status: transactions.status,
+      amount: transactions.amount,
+      categorySlug: transactions.categorySlug,
+      paymentMethod: transactions.paymentMethod,
+      excludeFromAnalytics: transactions.excludeFromAnalytics,
+      enrichmentCompleted: transactions.enrichmentCompleted,
+      manual: transactions.manual,
+      currency: transactions.currency,
+      transactionNumber: transactions.transactionNumber,
+    },
+    client: { id: clients.id, name: clients.name },
+    category: { id: transactionCategories.id, name: transactionCategories.name, slug: transactionCategories.slug },
+    assignedUser: { id: users.id, fullName: users.fullName, email: users.email },
+    tags: tagSelect,
+  } as const;
+
+  const baseFrom = db
+    .select(baseSelect)
     .from(transactions)
     .leftJoin(clients, eq(transactions.clientId, clients.id))
     .leftJoin(
@@ -180,20 +193,23 @@ export async function getTransactionsEnriched(
         eq(transactions.categorySlug, transactionCategories.slug),
       ),
     )
-    .leftJoin(users, eq(transactions.assignedId, users.id))
+    .leftJoin(users, eq(transactions.assignedId, users.id));
+
+  const queryWithTags = baseFrom
     .leftJoin(transactionTags, eq(transactions.id, transactionTags.transactionId))
     .leftJoin(tags, eq(transactionTags.tagId, tags.id))
-    .leftJoin(transactionAttachments, eq(transactions.id, transactionAttachments.transactionId))
-    .leftJoin(
-      transactionAllocations,
-      eq(transactions.id, transactionAllocations.transactionId),
-    )
     .where(whereConditions)
     .groupBy(transactions.id, clients.id, transactionCategories.id, users.id)
     .orderBy(desc(transactions.date), desc(transactions.id))
     .limit(limit);
 
-  const results = await query;
+  const queryNoTags = baseFrom
+    .where(whereConditions)
+    .groupBy(transactions.id, clients.id, transactionCategories.id, users.id)
+    .orderBy(desc(transactions.date), desc(transactions.id))
+    .limit(limit);
+
+  const results = await (includeTags ? queryWithTags : queryNoTags);
   return results;
 }
 
@@ -263,6 +279,7 @@ export async function updateTransactionsBulk(
         | "irregular"
         | null;
       excludeFromAnalytics?: boolean;
+      notes?: string | null;
     };
   },
 ) {

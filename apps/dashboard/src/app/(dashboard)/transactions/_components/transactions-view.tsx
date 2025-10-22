@@ -1,5 +1,5 @@
 "use client";
-import { useQueryClient } from "@tanstack/react-query";
+import { keepPreviousData, useQueryClient } from "@tanstack/react-query";
 import {
   flexRender,
   getCoreRowModel,
@@ -46,18 +46,23 @@ import type { FilterState } from "./types";
 import { FilterToolbar } from "@/components/filters/filter-toolbar";
 import { FilterDropdown } from "@/components/filters/filter-dropdown";
 import type { FilterFieldDef } from "@/components/filters/types";
+import { TransactionsAnalyticsCarousel } from "./transactions-analytics-carousel";
 
 type FilterType = "all" | "payment" | "expense" | "refund" | "adjustment";
 
 type TransactionsViewProps = {
   initialTransactions?: any[];
   initialStats?: any;
+  initialSpending?: any[];
+  initialRecent?: any[];
   initialInvoices?: any[];
 };
 
 export function TransactionsView({
   initialTransactions = [],
   initialStats,
+  initialSpending,
+  initialRecent,
   initialInvoices = [],
 }: TransactionsViewProps) {
   const currency = useTeamCurrency();
@@ -84,7 +89,11 @@ export function TransactionsView({
   const selectedCount = selected.size;
 
   // Advanced filter state
-  const filterType: FilterType = (filters.type as FilterType) ?? "all";
+  const rawType = (filters.type as string | undefined) ?? undefined;
+  const allowedTypes = new Set<FilterType>(["payment", "expense", "refund", "adjustment"]);
+  const filterType: FilterType = rawType && allowedTypes.has(rawType as FilterType)
+    ? (rawType as FilterType)
+    : "all";
   const statuses: string[] = filters.statuses ?? [];
   const categories: string[] = filters.categories ?? [];
   const tags: string[] = filters.tags ?? [];
@@ -117,6 +126,7 @@ export function TransactionsView({
   // Categories are set via AI parse or elsewhere; no lazy load UI here (Midday parity)
 
   const enrichedInput = useMemo(() => {
+    const includeTags = columnVisibility?.tags !== false; // load tags only if column is visible
     const input: any = {
       type: filterType === "all" ? undefined : (filterType as any),
       status: statuses.length ? (statuses as any) : undefined,
@@ -131,6 +141,7 @@ export function TransactionsView({
       hasAttachments: hasAttachments === "any" ? undefined : hasAttachments === "with",
       amountMin: amountMin != null ? Number(amountMin) : undefined,
       amountMax: amountMax != null ? Number(amountMax) : undefined,
+      includeTags,
       limit: 50,
     };
 
@@ -156,6 +167,7 @@ export function TransactionsView({
     hasAttachments,
     amountMin,
     amountMax,
+    columnVisibility,
   ]);
 
   // Infinite enriched list
@@ -165,6 +177,7 @@ export function TransactionsView({
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
+    isFetching,
     refetch,
   } = trpc.transactions.enrichedList.useInfiniteQuery(enrichedInput as any, {
     getNextPageParam: (last) => (last as any)?.nextCursor ?? null,
@@ -172,22 +185,16 @@ export function TransactionsView({
       initialTransactions.length > 0
         ? { pages: [{ items: initialTransactions, nextCursor: null }], pageParams: [null] }
         : undefined,
+    placeholderData: keepPreviousData,
+    staleTime: 15_000,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
   });
   useEffect(() => {
     if (loadMoreInView && hasNextPage && !isFetchingNextPage) fetchNextPage();
   }, [loadMoreInView, hasNextPage, isFetchingNextPage, fetchNextPage]);
 
-  // Debug: Log the query parameters to see if filters are updating
-  console.log("🔍 Filter Debug:", {
-    enrichedInput,
-    filterCounts: {
-      statuses: statuses.length,
-      categories: categories.length,
-      tags: tags.length,
-      accounts: accounts.length,
-      assignees: assignees.length,
-    },
-  });
+  // Debug log removed to avoid noise and unnecessary console overhead
   const transactions = useMemo(
     () => (infiniteData?.pages || []).flatMap((p: any) => p.items || []),
     [infiniteData],
@@ -233,21 +240,77 @@ export function TransactionsView({
     endDate,
   ]);
 
+  // Options for filter pills (for supported controls)
+  const typeOptions = useMemo(
+    () => [
+      { value: "payment", label: "Payment" },
+      { value: "expense", label: "Expense" },
+      { value: "refund", label: "Refund" },
+      { value: "adjustment", label: "Adjustment" },
+    ],
+    [],
+  );
+  const statusOptionsPill = useMemo(
+    () => [
+      { value: "completed", label: "Completed" },
+      { value: "pending", label: "Pending" },
+      { value: "failed", label: "Failed" },
+      { value: "cancelled", label: "Cancelled" },
+    ],
+    [],
+  );
+
+  // Optional dynamic options (light queries; cached)
+  const { data: categoriesList = [] } = trpc.transactionCategories.list.useQuery(undefined, {
+    staleTime: 60_000,
+  });
+  const { data: tagsList = [] } = trpc.tags.list.useQuery(undefined, { staleTime: 60_000 });
+  const { data: accountsList = [] } = trpc.financialAccounts.list.useQuery(undefined, {
+    staleTime: 60_000,
+  });
+  const { data: membersList = [] } = trpc.teams.members.useQuery(undefined, { staleTime: 60_000 });
+
   // New reusable filter fields
   const filterFields: FilterFieldDef[] = useMemo(
     () => [
-      { key: "type", label: "Type", type: "select" },
-      { key: "statuses", label: "Status", type: "multi" },
-      { key: "categories", label: "Category", type: "multi" },
-      { key: "tags", label: "Tags", type: "multi" },
-      { key: "accounts", label: "Accounts", type: "multi" },
-      { key: "assignees", label: "Assignees", type: "multi" },
+      { key: "type", label: "Type", type: "select", options: typeOptions },
+      { key: "statuses", label: "Status", type: "multi", options: statusOptionsPill },
+      {
+        key: "categories",
+        label: "Category",
+        type: "multi",
+        options: (categoriesList as any[]).map((c) => ({ value: String(c.slug), label: String(c.name || c.slug) })),
+      },
+      {
+        key: "tags",
+        label: "Tags",
+        type: "multi",
+        options: (tagsList as any[]).map((t) => ({ value: String(t.id), label: String(t.name) })),
+      },
+      {
+        key: "accounts",
+        label: "Accounts",
+        type: "multi",
+        options: (accountsList as any[]).map((a) => ({
+          value: String(a.id),
+          label: String(a.currency ? `${a.name} (${a.currency})` : a.name),
+        })),
+      },
+      {
+        key: "assignees",
+        label: "Assignees",
+        type: "multi",
+        options: (membersList as any[]).map((m) => ({
+          value: String(m.id),
+          label: String(m.fullName || m.email || "Unknown"),
+        })),
+      },
       { key: "dateRange", label: "Date Range", type: "date_range", map: { start: "startDate", end: "endDate" } },
       { key: "amountRange", label: "Amount", type: "number_range", map: { min: "amountMin", max: "amountMax" } },
       { key: "hasAttachments", label: "Attachments", type: "boolean" },
       { key: "isRecurring", label: "Recurring", type: "boolean" },
     ],
-    [],
+    [typeOptions, statusOptionsPill, categoriesList, tagsList, accountsList, membersList],
   );
 
   const clearAllFilters = () => {
@@ -266,11 +329,7 @@ export function TransactionsView({
     });
   };
 
-  // Stats (regular query instead of suspense to debug)
-  const { data: stats } = trpc.transactions.stats.useQuery(undefined, {
-    initialData: initialStats,
-    staleTime: 30000,
-  });
+  // Removed redundant stats query – analytics cards handle their own data
 
   const [allocateOpen, setAllocateOpen] = useState(false);
   const [selectedTrx, setSelectedTrx] = useState<any | null>(null);
@@ -332,6 +391,8 @@ export function TransactionsView({
         utils.transactions.enrichedList.invalidate(),
         utils.transactions.list.invalidate(),
         utils.transactions.stats.invalidate(),
+        utils.transactions.spending.invalidate(),
+        utils.transactions.recentLite.invalidate(),
       ]);
       setSelected(new Set());
     },
@@ -340,18 +401,36 @@ export function TransactionsView({
     async onMutate(variables) {
       // Optimistically remove from current list
       await utils.transactions.enrichedList.cancel(enrichedInput as any);
-      const previous = utils.transactions.enrichedList.getData(enrichedInput as any);
+      const previous = utils.transactions.enrichedList.getData(enrichedInput as any) as
+        | { pages: Array<{ items: any[]; nextCursor?: string | null }>; pageParams: any[] }
+        | undefined;
+      const ids = new Set((variables as any).transactionIds ?? []);
       if (previous) {
-        utils.transactions.enrichedList.setData(
-          enrichedInput as any,
-          {
-            ...previous,
-            items: previous.items.filter(
-              (r: any) => !(variables.transactionIds ?? []).includes(r.transaction.id),
-            ),
-          } as any,
-        );
+        const next = {
+          ...previous,
+          pages: previous.pages.map((p) => ({
+            ...p,
+            items: (p.items || []).filter((r: any) => !ids.has(r.transaction.id)),
+          })),
+        } as any;
+        utils.transactions.enrichedList.setData(enrichedInput as any, next);
       }
+      // Also update all cached filtered lists to avoid ghost rows when switching filters
+      try {
+        const entries = _queryClient.getQueriesData({ queryKey: ["transactions", "enrichedList"] });
+        for (const [key, data] of entries) {
+          const d: any = data as any;
+          if (!d || !d.pages) continue;
+          const next = {
+            ...d,
+            pages: d.pages.map((p: any) => ({
+              ...p,
+              items: (p.items || []).filter((r: any) => !ids.has(r.transaction.id)),
+            })),
+          };
+          _queryClient.setQueryData(key as any, next);
+        }
+      } catch {}
       return { previous } as any;
     },
     onError: (_err, _vars, ctx) => {
@@ -364,6 +443,8 @@ export function TransactionsView({
         utils.transactions.enrichedList.invalidate(),
         utils.transactions.list.invalidate(),
         utils.transactions.stats.invalidate(),
+        utils.transactions.spending.invalidate(),
+        utils.transactions.recentLite.invalidate(),
       ]);
       setSelected(new Set());
     },
@@ -517,6 +598,7 @@ export function TransactionsView({
 
   const { open: openParams } = useTransactionParams();
   const { toast } = useToast();
+  const widgetsRef = useRef<HTMLDivElement | null>(null);
 
   // Convert rows to TransactionRow type
   const tableData: TransactionRow[] = useMemo(
@@ -633,7 +715,7 @@ export function TransactionsView({
       table.getSelectedRowModel().rows.map((row) => row.original.transaction.id),
     );
     setSelected(selectedIds);
-  }, [table]);
+  }, [rowSelection, table]);
 
   // Persist column visibility
   useEffect(() => {
@@ -649,9 +731,9 @@ export function TransactionsView({
 
       {/* Active filter chips removed — pills row is the single source of truth */}
 
-      {/* Bulk selection bar - Midday style */}
+      {/* Bulk selection bar (mobile fallback only) */}
       {selectedCount > 0 && (
-        <div className="mb-4 flex items-center justify-between border-b bg-muted/40 px-4 py-3">
+        <div className="sm:hidden mb-4 flex items-center justify-between border-b bg-muted/40 px-4 py-3">
           <div className="flex items-center gap-3">
             <span className="text-sm font-medium">Bulk edit</span>
             <div className="h-4 w-px bg-border" />
@@ -669,62 +751,46 @@ export function TransactionsView({
         </div>
       )}
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 pt-6">
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="font-medium text-2xl">
-              {formatAmount({ currency: currencyCode, amount: (stats as any)?.totalIncome || 0 })}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="pb-[34px]">
-            <div>Total Income</div>
-            <div className="text-sm text-muted-foreground">All time payments</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="font-medium text-2xl">
-              {formatAmount({ currency: currencyCode, amount: (stats as any)?.totalExpenses || 0 })}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="pb-[34px]">
-            <div>Total Expenses</div>
-            <div className="text-sm text-muted-foreground">All time expenses</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="font-medium text-2xl">
-              {formatAmount({ currency: currencyCode, amount: (stats as any)?.netProfit || 0 })}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="pb-[34px]">
-            <div>Net Profit</div>
-            <div className="text-sm text-muted-foreground">Income minus expenses</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="font-medium text-2xl">
-              {formatAmount({
-                currency: currencyCode,
-                amount: (stats as any)?.pendingPayments || 0,
-              })}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="pb-[34px]">
-            <div>Pending Payments</div>
-            <div className="text-sm text-muted-foreground">Awaiting collection</div>
-          </CardContent>
-        </Card>
-      </div>
+      {/* Analytics carousel */}
+      <TransactionsAnalyticsCarousel initialStats={initialStats} initialSpending={initialSpending} initialRecent={initialRecent} />
 
       <div>
         <div className="mb-4 space-y-4">
           {/* Row 1: Right-aligned toolbar (search, filter icon, column visibility, export, add) */}
-          <div className="hidden sm:flex items-center justify-end gap-2">
-            <SearchInline />
-            <FilterDropdown
+          <div className="hidden sm:grid grid-cols-[420px,1fr,auto] items-center gap-2 sticky top-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 px-1 py-1 rounded">
+            {/* Left column: reserved slot for bulk actions (fixed width) */}
+            <div className="min-w-0">
+              {selectedCount > 0 ? (
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-muted-foreground">{selectedCount} selected</span>
+                  <BulkActions ids={Array.from(selected)} onComplete={() => setSelected(new Set())} />
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-1"
+                    onClick={_handleBulkExport}
+                  >
+                    <Download className="h-4 w-4" /> Export
+                  </Button>
+                  <Button size="sm" variant="ghost" onClick={handleConfirmDelete} className="gap-1">
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                  <Button size="sm" variant="ghost" onClick={() => setRowSelection({})}>
+                    Clear
+                  </Button>
+                </div>
+              ) : (
+                <div className="opacity-0 pointer-events-none select-none h-9" />
+              )}
+            </div>
+
+            {/* Middle column: spacer to keep layout stable */}
+            <div className="min-w-0" />
+
+            {/* Right column: filters and controls */}
+            <div className="flex items-center justify-end gap-2">
+              <SearchInline />
+              <FilterDropdown
               values={{
                 statuses,
                 categories,
@@ -753,19 +819,20 @@ export function TransactionsView({
                     attachments: n.attachments ?? null,
                 });
               }}
-            />
-            <TransactionsColumnVisibility columns={table.getAllColumns()} />
-            <Button
-              variant="outline"
-              size="sm"
-              className="gap-2"
-              onClick={exportSelected}
-              disabled={selectedCount === 0}
-            >
-              <Download className="h-4 w-4" /> Export{" "}
-              {selectedCount > 0 ? `(${selectedCount})` : ""}
-            </Button>
-            <AddTransactions />
+              />
+              <TransactionsColumnVisibility columns={table.getAllColumns()} />
+              {selectedCount === 0 && (
+                <Button
+                  variant="outline"
+                  size="icon"
+                  aria-label="Export"
+                  onClick={exportSelected}
+                >
+                  <Download className="h-4 w-4" />
+                </Button>
+              )}
+              <AddTransactions />
+            </div>
           </div>
 
           {/* Row 2: Left pills + +Filter, Right Reset only */}
@@ -830,40 +897,25 @@ export function TransactionsView({
           hasActiveFilters ? (
             <EmptyState
               title="No results"
-              description="Try another search, or adjusting the filters"
+              description="Try another search, or adjust the filters."
               action={{ label: "Clear filters", onClick: clearAllFilters }}
+            />
+          ) : accountsList.length === 0 ? (
+            <EmptyState
+              title="No transactions"
+              description="Connect or add an account to start importing transactions and unlock insights."
+              action={{ label: "Add account", onClick: () => setCreateAccountOpen(true) }}
             />
           ) : (
             <EmptyState
               title="No transactions"
-              description={
-                <div className="flex flex-col items-center gap-3">
-                  <div className="text-muted-foreground text-sm">
-                    You haven't recorded any transactions yet.
-                  </div>
-                  <div className="flex gap-2">
-                    <Button size="sm" className="gap-2" onClick={() => openParams()}>
-                      <Plus className="h-4 w-4" /> Record transaction
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="gap-2"
-                      onClick={() => setCreateAccountOpen(true)}
-                    >
-                      Create account
-                    </Button>
-                    <Button asChild variant="outline" size="sm" className="gap-2">
-                      <Link href="/settings/accounts">Manage accounts</Link>
-                    </Button>
-                  </div>
-                </div>
-              }
+              description="Record your first transaction to get started."
+              action={{ label: "Record transaction", onClick: () => openParams() }}
             />
           )
         ) : (
           <div
-            className="overflow-x-auto"
+            className="relative overflow-x-auto"
             role="application"
             aria-label="Transactions table keyboard navigation"
             onKeyDown={(e) => {
@@ -899,6 +951,9 @@ export function TransactionsView({
               }
             }}
           >
+            {isFetching && !isFetchingNextPage ? (
+              <div className="absolute left-0 right-0 top-0 h-0.5 bg-primary/70 animate-pulse" />
+            ) : null}
             <Table className="min-w-[1200px]">
               <TableHeader>
                 {table.getHeaderGroups().map((headerGroup) => (
@@ -936,9 +991,18 @@ export function TransactionsView({
                       key={row.id}
                       data-state={row.getIsSelected() && "selected"}
                       className={"hover:bg-muted/50 " + (idx === focusedIndex ? "bg-muted/40" : "")}
-                      onClick={() => {
+                      onClick={(e) => {
                         setFocusedIndex(idx);
                         lastAnchorIndex.current = idx;
+                        if (selectedCount > 0) return;
+                        const target = e.target as HTMLElement | null;
+                        const interactive = target?.closest(
+                          'button, a, input, select, textarea, [role="button"], [role="menuitem"], [data-row-click-exempt]'
+                        );
+                        if (!interactive) {
+                          const id = row.original.transaction.id;
+                          if (id) openParams({ transactionId: id });
+                        }
                       }}
                     >
                       {row.getVisibleCells().map((cell) => {
@@ -975,7 +1039,7 @@ export function TransactionsView({
           </div>
         )}
         {/* Infinite scroll sentinel */}
-        <div ref={loadMoreRef} />
+        <div ref={loadMoreRef as any} />
       </div>
 
       {/* No floating bottom bar; Reset lives on the pills row */}

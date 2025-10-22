@@ -9,6 +9,8 @@ import {
   getTransactionById,
   updateTransactionsBulk,
   softDeleteTransactionsBulk,
+  getSpendingByCategory,
+  getRecentTransactionsLite,
 } from "@Faworra/database/queries";
 import {
   invoices,
@@ -365,6 +367,7 @@ export const transactionsRouter = createTRPCRouter({
           accounts: z.array(z.string().uuid()).optional(),
           amountMin: z.number().optional(),
           amountMax: z.number().optional(),
+          includeTags: z.boolean().optional(),
           limit: z.number().min(1).max(100).default(50),
           cursor: z.object({ date: z.string().nullable(), id: z.string() }).nullish(),
         })
@@ -387,6 +390,7 @@ export const transactionsRouter = createTRPCRouter({
         accounts: input?.accounts,
         amountMin: input?.amountMin,
         amountMax: input?.amountMax,
+        includeTags: input?.includeTags,
         limit: input?.limit,
         cursor: input?.cursor
           ? {
@@ -528,6 +532,7 @@ export const transactionsRouter = createTRPCRouter({
             .nullable()
             .optional(),
           excludeFromAnalytics: z.boolean().optional(),
+          notes: z.string().nullable().optional(),
         }),
       }),
     )
@@ -759,9 +764,37 @@ export const transactionsRouter = createTRPCRouter({
       return { items, nextCursor };
     }),
 
-  stats: teamProcedure.query(async ({ ctx }) => {
-    return getTransactionStats(ctx.db, ctx.teamId);
-  }),
+  stats: teamProcedure
+    .input(z.object({ startDate: z.string().datetime().optional(), endDate: z.string().datetime().optional() }).optional())
+    .query(async ({ ctx, input }) => {
+      return getTransactionStats(ctx.db, {
+        teamId: ctx.teamId,
+        startDate: input?.startDate ? new Date(input.startDate) : undefined,
+        endDate: input?.endDate ? new Date(input.endDate) : undefined,
+      });
+    }),
+
+  spending: teamProcedure
+    .input(z.object({ startDate: z.string().datetime().optional(), endDate: z.string().datetime().optional(), limit: z.number().min(1).max(50).default(12) }).optional())
+    .query(async ({ ctx, input }) => {
+      return getSpendingByCategory(ctx.db, {
+        teamId: ctx.teamId,
+        startDate: input?.startDate ? new Date(input.startDate) : undefined,
+        endDate: input?.endDate ? new Date(input.endDate) : undefined,
+        limit: input?.limit ?? 12,
+      });
+    }),
+
+  recentLite: teamProcedure
+    .input(z.object({ startDate: z.string().datetime().optional(), endDate: z.string().datetime().optional(), limit: z.number().min(1).max(50).default(8) }).optional())
+    .query(async ({ ctx, input }) => {
+      return getRecentTransactionsLite(ctx.db, {
+        teamId: ctx.teamId,
+        startDate: input?.startDate ? new Date(input.startDate) : undefined,
+        endDate: input?.endDate ? new Date(input.endDate) : undefined,
+        limit: input?.limit ?? 8,
+      });
+    }),
 
   allocationsByInvoice: teamProcedure
     .input(z.object({ invoiceId: z.string().uuid() }))
@@ -845,5 +878,63 @@ export const transactionsRouter = createTRPCRouter({
         .returning();
 
       return inserted[0];
+    }),
+
+  // Attachments: add to existing transaction
+  attachmentsAdd: teamProcedure
+    .input(
+      z.object({
+        transactionId: z.string().uuid(),
+        attachments: z.array(
+          z.object({
+            path: z.string(),
+            filename: z.string().optional(),
+            contentType: z.string().nullable().optional(),
+            size: z.number().nullable().optional(),
+            type: z.string().optional(),
+            checksum: z.string().optional(),
+          }),
+        ),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      // Verify transaction belongs to team
+      const trx = await ctx.db
+        .select({ id: transactions.id })
+        .from(transactions)
+        .where(and(eq(transactions.id, input.transactionId), eq(transactions.teamId, ctx.teamId)))
+        .limit(1);
+      if (!trx[0]) throw new TRPCError({ code: "FORBIDDEN", message: "Invalid transaction" });
+
+      if (!input.attachments.length) return { inserted: 0 };
+      const rows = input.attachments.map((a) => ({
+        teamId: ctx.teamId,
+        transactionId: input.transactionId,
+        name: a.filename ?? a.path.split("/").pop() ?? "file",
+        path: a.path.split("/"),
+        type: a.type ?? null,
+        mimeType: (a.contentType ?? null) as any,
+        size: (a.size as any) ?? null,
+        checksum: a.checksum ?? null,
+        uploadedBy: ctx.userId ?? null,
+      }));
+      const inserted = await ctx.db.insert(transactionAttachments).values(rows).returning({ id: transactionAttachments.id });
+      return { inserted: inserted.length };
+    }),
+
+  // Attachments: remove from existing transaction
+  attachmentsRemove: teamProcedure
+    .input(z.object({ attachmentId: z.string().uuid() }))
+    .mutation(async ({ ctx, input }) => {
+      // Ensure attachment belongs to a transaction in team
+      const own = await ctx.db
+        .select({ id: transactionAttachments.id })
+        .from(transactionAttachments)
+        .leftJoin(transactions, eq(transactionAttachments.transactionId, transactions.id))
+        .where(and(eq(transactionAttachments.id, input.attachmentId), eq(transactions.teamId, ctx.teamId)))
+        .limit(1);
+      if (!own[0]) throw new TRPCError({ code: "FORBIDDEN", message: "Invalid attachment" });
+      await ctx.db.delete(transactionAttachments).where(eq(transactionAttachments.id, input.attachmentId));
+      return { success: true };
     }),
 });

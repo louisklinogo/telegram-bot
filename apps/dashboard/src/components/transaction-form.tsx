@@ -165,6 +165,8 @@ export function TransactionForm({ onSuccess, defaultInvoiceId, defaultClientId }
       utils.transactions.enrichedList.invalidate();
       utils.transactions.list.invalidate();
       utils.transactions.stats.invalidate();
+      utils.transactions.spending.invalidate();
+      utils.transactions.recentLite.invalidate();
       // If it was a payment, invoices might be affected
       if ((variables as any)?.kind === "payment") {
         utils.invoices.list.invalidate();

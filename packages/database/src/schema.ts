@@ -634,6 +634,7 @@ export const transactions = pgTable(
     teamTypeIdx: index("idx_transactions_team_type_date").on(table.teamId, table.type, table.date),
     internalIdIdx: index("idx_transactions_internal_id").on(table.internalId),
     accountIdx: index("idx_transactions_account_id").on(table.accountId),
+    teamAmountIdx: index("idx_transactions_team_amount").on(table.teamId, table.amount),
   }),
 );
 

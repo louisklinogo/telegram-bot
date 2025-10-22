@@ -9,7 +9,7 @@ export default async function TransactionsPageV1() {
 
   const [transactions, stats] = await Promise.all([
     getTransactionsEnriched(db, { teamId, limit: 50 }),
-    getTransactionStats(db, teamId),
+    getTransactionStats(db, { teamId }),
   ]);
 
   return <TransactionsView initialTransactions={transactions} initialStats={stats} />;
