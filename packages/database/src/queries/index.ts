@@ -17,3 +17,4 @@ export * from "./documents";
 export * from "./transaction-categories";
 export * from "./tags";
 export * from "./financial-accounts";
+export * from "./products";

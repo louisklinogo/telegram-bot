@@ -62,7 +62,7 @@ export type Database = {
           created_at: string
           endpoint: string
           id: string
-          ip_address: unknown | null
+          ip_address: unknown
           method: string
           request_size_bytes: number | null
           response_size_bytes: number | null
@@ -76,7 +76,7 @@ export type Database = {
           created_at?: string
           endpoint: string
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           method: string
           request_size_bytes?: number | null
           response_size_bytes?: number | null
@@ -90,7 +90,7 @@ export type Database = {
           created_at?: string
           endpoint?: string
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           method?: string
           request_size_bytes?: number | null
           response_size_bytes?: number | null
@@ -959,6 +959,47 @@ export type Database = {
           },
         ]
       }
+      inventory_locations: {
+        Row: {
+          address: string | null
+          code: string | null
+          created_at: string
+          id: string
+          is_default: boolean
+          name: string
+          team_id: string
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          code?: string | null
+          created_at?: string
+          id?: string
+          is_default?: boolean
+          name: string
+          team_id: string
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          code?: string | null
+          created_at?: string
+          id?: string
+          is_default?: boolean
+          name?: string
+          team_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inventory_locations_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       invoice_items: {
         Row: {
           created_at: string
@@ -1658,6 +1699,191 @@ export type Database = {
           },
         ]
       }
+      product_inventory: {
+        Row: {
+          allocated: number
+          location_id: string
+          on_hand: number
+          safety_stock: number
+          updated_at: string
+          variant_id: string
+        }
+        Insert: {
+          allocated?: number
+          location_id: string
+          on_hand?: number
+          safety_stock?: number
+          updated_at?: string
+          variant_id: string
+        }
+        Update: {
+          allocated?: number
+          location_id?: string
+          on_hand?: number
+          safety_stock?: number
+          updated_at?: string
+          variant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_inventory_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "inventory_locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_inventory_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "product_variants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      product_variants: {
+        Row: {
+          availability_date: string | null
+          backorder_policy: string | null
+          barcode: string | null
+          capacity_per_period: number | null
+          cost: number | null
+          created_at: string
+          currency: string | null
+          fulfillment_type: Database["public"]["Enums"]["fulfillment_type"]
+          id: string
+          lead_time_days: number | null
+          name: string | null
+          pack_size: number | null
+          price: number | null
+          product_id: string
+          sku: string | null
+          status: Database["public"]["Enums"]["product_status"]
+          stock_managed: boolean
+          team_id: string
+          unit_of_measure: string | null
+          updated_at: string
+        }
+        Insert: {
+          availability_date?: string | null
+          backorder_policy?: string | null
+          barcode?: string | null
+          capacity_per_period?: number | null
+          cost?: number | null
+          created_at?: string
+          currency?: string | null
+          fulfillment_type?: Database["public"]["Enums"]["fulfillment_type"]
+          id?: string
+          lead_time_days?: number | null
+          name?: string | null
+          pack_size?: number | null
+          price?: number | null
+          product_id: string
+          sku?: string | null
+          status?: Database["public"]["Enums"]["product_status"]
+          stock_managed?: boolean
+          team_id: string
+          unit_of_measure?: string | null
+          updated_at?: string
+        }
+        Update: {
+          availability_date?: string | null
+          backorder_policy?: string | null
+          barcode?: string | null
+          capacity_per_period?: number | null
+          cost?: number | null
+          created_at?: string
+          currency?: string | null
+          fulfillment_type?: Database["public"]["Enums"]["fulfillment_type"]
+          id?: string
+          lead_time_days?: number | null
+          name?: string | null
+          pack_size?: number | null
+          price?: number | null
+          product_id?: string
+          sku?: string | null
+          status?: Database["public"]["Enums"]["product_status"]
+          stock_managed?: boolean
+          team_id?: string
+          unit_of_measure?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_variants_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_variants_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      products: {
+        Row: {
+          attributes: Json
+          category_slug: string | null
+          created_at: string
+          deleted_at: string | null
+          description: string | null
+          id: string
+          images: Json
+          name: string
+          slug: string | null
+          status: Database["public"]["Enums"]["product_status"]
+          tags: Json
+          team_id: string
+          type: Database["public"]["Enums"]["product_type"]
+          updated_at: string
+        }
+        Insert: {
+          attributes?: Json
+          category_slug?: string | null
+          created_at?: string
+          deleted_at?: string | null
+          description?: string | null
+          id?: string
+          images?: Json
+          name: string
+          slug?: string | null
+          status?: Database["public"]["Enums"]["product_status"]
+          tags?: Json
+          team_id: string
+          type?: Database["public"]["Enums"]["product_type"]
+          updated_at?: string
+        }
+        Update: {
+          attributes?: Json
+          category_slug?: string | null
+          created_at?: string
+          deleted_at?: string | null
+          description?: string | null
+          id?: string
+          images?: Json
+          name?: string
+          slug?: string | null
+          status?: Database["public"]["Enums"]["product_status"]
+          tags?: Json
+          team_id?: string
+          type?: Database["public"]["Enums"]["product_type"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "products_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tags: {
         Row: {
           color: string | null
@@ -2210,7 +2436,7 @@ export type Database = {
           enrichment_completed: boolean | null
           exclude_from_analytics: boolean
           frequency: Database["public"]["Enums"]["transaction_frequency"] | null
-          fts_vector: unknown | null
+          fts_vector: unknown
           id: string
           internal_id: string
           invoice_id: string | null
@@ -2251,7 +2477,7 @@ export type Database = {
           frequency?:
             | Database["public"]["Enums"]["transaction_frequency"]
             | null
-          fts_vector?: unknown | null
+          fts_vector?: unknown
           id?: string
           internal_id: string
           invoice_id?: string | null
@@ -2292,7 +2518,7 @@ export type Database = {
           frequency?:
             | Database["public"]["Enums"]["transaction_frequency"]
             | null
-          fts_vector?: unknown | null
+          fts_vector?: unknown
           id?: string
           internal_id?: string
           invoice_id?: string | null
@@ -2676,38 +2902,12 @@ export type Database = {
           transaction_id: string
         }[]
       }
-      gtrgm_compress: {
-        Args: { "": unknown }
-        Returns: unknown
-      }
-      gtrgm_decompress: {
-        Args: { "": unknown }
-        Returns: unknown
-      }
-      gtrgm_in: {
-        Args: { "": unknown }
-        Returns: unknown
-      }
-      gtrgm_options: {
-        Args: { "": unknown }
-        Returns: undefined
-      }
-      gtrgm_out: {
-        Args: { "": unknown }
-        Returns: unknown
-      }
-      next_order_number: {
-        Args: { p_team_id: string }
-        Returns: string
-      }
+      next_order_number: { Args: { p_team_id: string }; Returns: string }
       recalc_invoice_payments: {
         Args: { p_invoice_id: string }
         Returns: undefined
       }
-      recalc_order_totals: {
-        Args: { p_order_id: string }
-        Returns: undefined
-      }
+      recalc_order_totals: { Args: { p_order_id: string }; Returns: undefined }
       search_transactions: {
         Args: { p_limit?: number; p_query: string; p_team_id: string }
         Returns: {
@@ -2719,30 +2919,14 @@ export type Database = {
           transaction_id: string
         }[]
       }
-      set_limit: {
-        Args: { "": number }
-        Returns: number
-      }
-      show_limit: {
-        Args: Record<PropertyKey, never>
-        Returns: number
-      }
-      show_trgm: {
-        Args: { "": string }
-        Returns: string[]
-      }
-      unaccent: {
-        Args: { "": string }
-        Returns: string
-      }
-      unaccent_init: {
-        Args: { "": unknown }
-        Returns: unknown
-      }
+      show_limit: { Args: never; Returns: number }
+      show_trgm: { Args: { "": string }; Returns: string[] }
+      unaccent: { Args: { "": string }; Returns: string }
     }
     Enums: {
       appointment_status: "scheduled" | "completed" | "cancelled" | "no_show"
       comm_message_status: "queued" | "sent" | "delivered" | "read" | "failed"
+      fulfillment_type: "stocked" | "dropship" | "made_to_order" | "preorder"
       invoice_status:
         | "draft"
         | "sent"
@@ -2751,6 +2935,8 @@ export type Database = {
         | "cancelled"
         | "partially_paid"
       order_status: "generated" | "in_progress" | "completed" | "cancelled"
+      product_status: "active" | "draft" | "archived"
+      product_type: "physical" | "service" | "digital" | "bundle"
       team_role: "owner" | "admin" | "agent" | "viewer"
       transaction_frequency:
         | "weekly"
@@ -2897,6 +3083,7 @@ export const Constants = {
     Enums: {
       appointment_status: ["scheduled", "completed", "cancelled", "no_show"],
       comm_message_status: ["queued", "sent", "delivered", "read", "failed"],
+      fulfillment_type: ["stocked", "dropship", "made_to_order", "preorder"],
       invoice_status: [
         "draft",
         "sent",
@@ -2906,6 +3093,8 @@ export const Constants = {
         "partially_paid",
       ],
       order_status: ["generated", "in_progress", "completed", "cancelled"],
+      product_status: ["active", "draft", "archived"],
+      product_type: ["physical", "service", "digital", "bundle"],
       team_role: ["owner", "admin", "agent", "viewer"],
       transaction_frequency: [
         "weekly",

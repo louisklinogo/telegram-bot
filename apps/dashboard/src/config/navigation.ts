@@ -9,6 +9,7 @@ import {
   Settings,
   Users,
   Vault,
+  Package,
 } from "lucide-react";
 
 export type NavItem = {
@@ -52,7 +53,6 @@ export const NAV_SECTIONS: NavSection[] = [
         icon: CreditCard,
         description: "Payments & expenses",
         children: [
-          { title: "Transactions (New)", href: "/transactions-1" },
           { title: "Categories", href: "/transactions/categories" },
         ],
       },
@@ -67,6 +67,12 @@ export const NAV_SECTIONS: NavSection[] = [
         href: "/invoices",
         icon: ReceiptText,
         description: "Billing & payments",
+      },
+      {
+        title: "Products",
+        href: "/products",
+        icon: Package,
+        description: "Catalog & inventory",
       },
       {
         title: "Clients",

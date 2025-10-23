@@ -81,6 +81,29 @@ export const appointmentStatusEnum = pgEnum("appointment_status", [
   "no_show",
 ]);
 
+// ============================================================================
+// Enums for products
+// ============================================================================
+export const productStatusEnum = pgEnum("product_status", [
+  "active",
+  "draft",
+  "archived",
+]);
+
+export const productTypeEnum = pgEnum("product_type", [
+  "physical",
+  "service",
+  "digital",
+  "bundle",
+]);
+
+export const fulfillmentTypeEnum = pgEnum("fulfillment_type", [
+  "stocked",
+  "dropship",
+  "made_to_order",
+  "preorder",
+]);
+
 /**
  * Schema V2 - FaworraClothing Company
  * All monetary values are in Ghana Cedis (GHS)
@@ -386,6 +409,142 @@ export const usersRelations = relations(users, ({ many }) => ({
   memberships: many(teamMemberships),
   assignedTransactions: many(transactions),
   uploadedAttachments: many(transactionAttachments),
+}));
+
+// ============================================================================
+// Products domain
+// ============================================================================
+
+export const products = pgTable(
+  "products",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    teamId: uuid("team_id")
+      .notNull()
+      .references(() => teams.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    slug: varchar("slug", { length: 120 }),
+    type: productTypeEnum("type").default("physical").notNull(),
+    status: productStatusEnum("status").default("active").notNull(),
+    description: text("description"),
+    categorySlug: varchar("category_slug", { length: 120 }),
+    images: jsonb("images").$type<string[]>().default(sql`'[]'::jsonb`).notNull(),
+    tags: jsonb("tags").$type<string[]>().default(sql`'[]'::jsonb`).notNull(),
+    attributes: jsonb("attributes").default(sql`'{}'::jsonb`).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+    deletedAt: timestamp("deleted_at", { withTimezone: true }),
+  },
+  (table) => ({
+    teamIdx: index("idx_products_team").on(table.teamId),
+    teamNameIdx: index("idx_products_team_name").on(table.teamId, table.name),
+    teamSlugUnique: uniqueIndex("uq_products_team_slug").on(table.teamId, table.slug),
+    statusIdx: index("idx_products_status").on(table.status),
+  }),
+);
+
+export const inventoryLocations = pgTable(
+  "inventory_locations",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    teamId: uuid("team_id")
+      .notNull()
+      .references(() => teams.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    code: varchar("code", { length: 32 }),
+    isDefault: boolean("is_default").default(false).notNull(),
+    address: text("address"),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => ({
+    teamIdx: index("idx_locations_team").on(table.teamId),
+    teamCodeUnique: uniqueIndex("uq_locations_team_code").on(table.teamId, table.code),
+  }),
+);
+
+export const productVariants = pgTable(
+  "product_variants",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    teamId: uuid("team_id")
+      .notNull()
+      .references(() => teams.id, { onDelete: "cascade" }),
+    productId: uuid("product_id")
+      .notNull()
+      .references(() => products.id, { onDelete: "cascade" }),
+    name: text("name"),
+    sku: varchar("sku", { length: 64 }),
+    barcode: varchar("barcode", { length: 64 }),
+    unitOfMeasure: varchar("unit_of_measure", { length: 32 }),
+    packSize: numeric("pack_size", { precision: 10, scale: 3 }),
+    price: numeric("price", { precision: 12, scale: 2 }),
+    currency: varchar("currency", { length: 8 }),
+    cost: numeric("cost", { precision: 12, scale: 2 }),
+    status: productStatusEnum("status").default("active").notNull(),
+    fulfillmentType: fulfillmentTypeEnum("fulfillment_type")
+      .default("stocked")
+      .notNull(),
+    stockManaged: boolean("stock_managed").default(true).notNull(),
+    leadTimeDays: integer("lead_time_days"),
+    availabilityDate: date("availability_date"),
+    backorderPolicy: varchar("backorder_policy", { length: 16 }), // deny|allow|preorder
+    capacityPerPeriod: integer("capacity_per_period"),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => ({
+    teamIdx: index("idx_variants_team").on(table.teamId),
+    productIdx: index("idx_variants_product").on(table.productId),
+    teamSkuUnique: uniqueIndex("uq_variants_team_sku").on(table.teamId, table.sku),
+    statusIdx: index("idx_variants_status").on(table.status),
+  }),
+);
+
+export const productInventory = pgTable(
+  "product_inventory",
+  {
+    variantId: uuid("variant_id")
+      .notNull()
+      .references(() => productVariants.id, { onDelete: "cascade" }),
+    locationId: uuid("location_id")
+      .notNull()
+      .references(() => inventoryLocations.id, { onDelete: "cascade" }),
+    onHand: integer("on_hand").default(0).notNull(),
+    allocated: integer("allocated").default(0).notNull(),
+    safetyStock: integer("safety_stock").default(0).notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => ({
+    pk: primaryKey({ columns: [table.variantId, table.locationId], name: "pk_product_inventory" }),
+  }),
+);
+
+export const productsRelations = relations(products, ({ many, one }) => ({
+  variants: many(productVariants),
+}));
+
+export const productVariantsRelations = relations(productVariants, ({ one, many }) => ({
+  product: one(products, {
+    fields: [productVariants.productId],
+    references: [products.id],
+  }),
+  inventory: many(productInventory),
+}));
+
+export const inventoryLocationsRelations = relations(inventoryLocations, ({ many }) => ({
+  inventory: many(productInventory),
+}));
+
+export const productInventoryRelations = relations(productInventory, ({ one }) => ({
+  variant: one(productVariants, {
+    fields: [productInventory.variantId],
+    references: [productVariants.id],
+  }),
+  location: one(inventoryLocations, {
+    fields: [productInventory.locationId],
+    references: [inventoryLocations.id],
+  }),
 }));
 
 // Communications domain
