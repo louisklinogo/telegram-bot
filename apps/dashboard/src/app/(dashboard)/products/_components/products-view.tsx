@@ -1,15 +1,16 @@
 "use client";
 
-import { keepPreviousData, useQueryClient } from "@tanstack/react-query";
-import { useMemo } from "react";
+import { keepPreviousData } from "@tanstack/react-query";
+import { useEffect, useMemo, useState } from "react";
 import { useTeamCurrency } from "@/hooks/use-team-currency";
 import { trpc } from "@/lib/trpc/client";
 import { createProductColumns, type ProductRow } from "./products-columns";
-import { useReactTable, getCoreRowModel, flexRender } from "@tanstack/react-table";
+import { useReactTable, getCoreRowModel, flexRender, type VisibilityState } from "@tanstack/react-table";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { SearchInline } from "@/components/search-inline";
-import { FilterToolbar } from "@/components/filters/filter-toolbar";
-import type { FilterFieldDef } from "@/components/filters/types";
+import { Button } from "@/components/ui/button";
+import { TransactionsColumnVisibility } from "@/components/transactions-column-visibility";
+import { Download } from "lucide-react";
 
 type ProductsViewProps = {
   initialProducts?: Array<{
@@ -40,13 +41,71 @@ export function ProductsView({ initialProducts = [] }: ProductsViewProps) {
   const rows: ProductRow[] = useMemo(() => (data?.items as any) ?? [], [data]);
 
   const columns = useMemo(() => createProductColumns({ currencyCode: currency, onView: () => {} }), [currency]);
-  const table = useReactTable({ data: rows, columns, getCoreRowModel: getCoreRowModel() });
+  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>(() => {
+    try {
+      const raw = typeof window !== "undefined" ? localStorage.getItem("productsColumns") : null;
+      return raw ? (JSON.parse(raw) as VisibilityState) : {};
+    } catch {
+      return {} as VisibilityState;
+    }
+  });
+  const table = useReactTable({ data: rows, columns, getCoreRowModel: getCoreRowModel(), state: { columnVisibility }, onColumnVisibilityChange: setColumnVisibility });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem("productsColumns", JSON.stringify(columnVisibility));
+    } catch {}
+  }, [columnVisibility]);
+
+  const exportRows = () => {
+    if (!rows.length) return;
+    const data = rows.map((r) => ({
+      name: r.product.name,
+      status: r.product.status,
+      variants: r.variantsCount,
+      price_min: r.priceMin ?? "",
+      price_max: r.priceMax ?? "",
+      stock_on_hand: r.stockOnHand,
+      stock_allocated: r.stockAllocated,
+    }));
+    const headers = Object.keys(data[0] || {});
+    const csv = [headers.join(","), ...data.map((r) => headers.map((h) => JSON.stringify((r as any)[h] ?? "")).join(","))].join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `products_${rows.length}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <SearchInline />
+    <div className="flex flex-col gap-6">
+      {/* Analytics carousel space */}
+      <div className="pt-6">
+        <div className="h-[200px]" />
       </div>
+
+      <div className="mb-4 space-y-4">
+        {/* Right-aligned toolbar like Transactions */}
+        <div className="hidden sm:grid grid-cols-[420px,1fr,auto] items-center gap-2 sticky top-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 px-1 py-1 rounded">
+          {/* Left reserved slot to keep layout stable */}
+          <div className="min-w-0">
+            <div className="opacity-0 pointer-events-none select-none h-9" />
+          </div>
+          {/* Middle spacer */}
+          <div className="min-w-0" />
+          {/* Right controls */}
+          <div className="flex items-center justify-end gap-2">
+            <SearchInline />
+            <TransactionsColumnVisibility columns={table.getAllColumns()} />
+            <Button variant="outline" size="icon" aria-label="Export" onClick={exportRows}>
+              <Download className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      </div>
+
       <div className="overflow-x-auto">
         <Table className="min-w-[900px]">
           <TableHeader>
