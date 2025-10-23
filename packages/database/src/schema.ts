@@ -504,6 +504,9 @@ export const productVariants = pgTable(
 export const productInventory = pgTable(
   "product_inventory",
   {
+    teamId: uuid("team_id")
+      .notNull()
+      .references(() => teams.id, { onDelete: "cascade" }),
     variantId: uuid("variant_id")
       .notNull()
       .references(() => productVariants.id, { onDelete: "cascade" }),
@@ -517,6 +520,7 @@ export const productInventory = pgTable(
   },
   (table) => ({
     pk: primaryKey({ columns: [table.variantId, table.locationId], name: "pk_product_inventory" }),
+    teamIdx: index("idx_product_inventory_team").on(table.teamId),
   }),
 );
 

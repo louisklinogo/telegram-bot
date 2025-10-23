@@ -1705,6 +1705,7 @@ export type Database = {
           location_id: string
           on_hand: number
           safety_stock: number
+          team_id: string
           updated_at: string
           variant_id: string
         }
@@ -1713,6 +1714,7 @@ export type Database = {
           location_id: string
           on_hand?: number
           safety_stock?: number
+          team_id: string
           updated_at?: string
           variant_id: string
         }
@@ -1721,10 +1723,18 @@ export type Database = {
           location_id?: string
           on_hand?: number
           safety_stock?: number
+          team_id?: string
           updated_at?: string
           variant_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_product_inventory_team"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "product_inventory_location_id_fkey"
             columns: ["location_id"]
