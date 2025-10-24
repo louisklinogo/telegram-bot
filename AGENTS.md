@@ -22,9 +22,12 @@ Adherence (PR Checklist):
 - [ ] Minimal selects; `.returns<T>()` only at end.
 - [ ] Zod validation present; consistent error shape.
 - [ ] CI passes typecheck/lint/build; no schema/type drift.
- - [ ] UI/UX mirrors Midday components and patterns by default; no placeholder UIs without explicit approval; deviations documented with rationale.
+- [ ] UI/UX mirrors Midday components and patterns by default; no placeholder UIs without explicit approval; deviations documented with rationale.
+- [ ] **Data tables follow [coding-guidelines-data-tables.md](docs/coding-guidelines-data-tables.md)**: useSuspenseInfiniteQuery, virtualization for 50+ rows, real-time updates, custom hooks extracted.
 
 Full document: `docs/engineering-constitution.md`
+
+**Data Table Guidelines:** When implementing list/table pages (transactions, clients, orders, etc.), follow [docs/coding-guidelines-data-tables.md](docs/coding-guidelines-data-tables.md) and use [docs/data-table-checklist.md](docs/data-table-checklist.md) to ensure performance and consistency.
 
 ## Communication Style
 
