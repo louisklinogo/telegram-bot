@@ -1,5 +1,5 @@
 {
-  "$schema": "https://biomejs.dev/schemas/2.2.0/schema.json",
+  "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
   "vcs": {
     "enabled": true,
     "clientKind": "git",
@@ -7,7 +7,9 @@
   },
   "files": {
     "ignoreUnknown": true,
-    "experimentalScannerIgnores": ["midday-assistant-v2/**"]
+    "experimentalScannerIgnores": [
+      "midday**"
+    ]
   },
   "formatter": {
     "enabled": true,
@@ -41,5 +43,8 @@
         "organizeImports": "on"
       }
     }
-  }
+  },
+  "extends": [
+    "ultracite"
+  ]
 }

@@ -25,13 +25,14 @@
     "format": "bunx --bun biome format --write .",
     "typecheck": "bun run typecheck:dashboard && bun run typecheck:api && bun run typecheck:website",
     "typecheck:dashboard": "cd apps/dashboard && bunx --bun tsc --noEmit",
-    "typecheck:api": "cd apps/api && tsc --noEmit",
+    "typecheck:api": "cd apps/api && bunx --bun tsc --noEmit",
     "typecheck:website": "cd apps/website && tsc --noEmit",
     "verify:rls": "bun scripts/verify-rls.ts",
     "db:types": "supabase gen types typescript --project-id zvatkstmsyuytbajzuvn > packages/supabase/src/types/database.generated.ts",
     "db:types:generated": "supabase gen types typescript --project-id zvatkstmsyuytbajzuvn > packages/supabase/src/types/database.generated.ts",
     "db:pull": "bunx --bun drizzle-kit introspect --config=drizzle.config.ts",
     "db:check": "bunx --bun drizzle-kit check --config=drizzle.config.ts",
+    "db:migrate:leads": "bun scripts/migrate-leads.ts",
     "prepare": "husky install"
   },
   "dependencies": {
@@ -50,11 +51,11 @@
     "zustand": "^5.0.8"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.2.5",
+    "@biomejs/biome": "2.2.4",
     "concurrently": "^9.2.1",
     "culori": "3.3.0",
     "husky": "^9.1.6",
     "supabase": "^2.48.3",
-    "ultracite": "^5.5.0"
+    "ultracite": "5.4.7"
   }
 }
