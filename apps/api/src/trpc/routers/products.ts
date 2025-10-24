@@ -219,6 +219,17 @@ export const productsRouter = createTRPCRouter({
       return deleted;
     }),
 
+  mediaUpdate: teamProcedure
+    .input(z.object({ id: z.string().uuid(), alt: z.string().optional(), position: z.number().int().optional() }))
+    .mutation(async ({ ctx, input }) => {
+      const [row] = await ctx.db
+        .update(productMedia)
+        .set({ alt: input.alt ?? undefined, position: input.position ?? undefined })
+        .where(and(eq(productMedia.teamId, ctx.teamId), eq(productMedia.id, input.id)))
+        .returning();
+      return row;
+    }),
+
   variantCreate: teamProcedure
     .input(
       z.object({

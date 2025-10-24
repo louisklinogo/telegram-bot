@@ -90,6 +90,13 @@ export function ProductSheet() {
   const { data: locations = [] } = trpc.products.inventoryLocations.useQuery(undefined, { enabled: !!productId });
   const [editingVariantId, setEditingVariantId] = useState<string | null>(null);
   const [variantEdits, setVariantEdits] = useState<Record<string, { price?: number | null; status?: string }>>({});
+  const { data: media = [], refetch: refetchMedia } = trpc.products.mediaList.useQuery({ productId: productId as any }, { enabled: !!productId });
+  const mediaAdd = trpc.products.mediaAdd.useMutation();
+  const mediaDelete = trpc.products.mediaDelete.useMutation();
+  const mediaSetPrimary = trpc.products.mediaSetPrimary.useMutation();
+  const mediaUpdate = trpc.products.mediaUpdate.useMutation();
+  const [newMediaPath, setNewMediaPath] = useState("");
+  const [newMediaAlt, setNewMediaAlt] = useState("");
   const utils = trpc.useUtils();
 
   const onSubmit = async (data: FormData) => {
@@ -275,6 +282,41 @@ export function ProductSheet() {
 
           {productId && (variants as any[]).length ? (
             <InventoryEditor productId={productId!} variants={variants as any[]} />
+          ) : null}
+
+          {productId ? (
+            <div className="space-y-3">
+              <div className="text-sm font-medium">Media</div>
+              <div className="space-y-2">
+                {(media as any[]).map((m) => (
+                  <div key={m.id} className="flex items-center gap-3">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={m.path} alt={m.alt || ""} className="h-12 w-12 rounded object-cover" />
+                    <div className="min-w-0 flex-1">
+                      <div className="text-sm truncate">{m.path}</div>
+                      <div className="text-xs text-muted-foreground">{m.alt || ""}</div>
+                    </div>
+                    <Button size="sm" variant={m.isPrimary ? "secondary" : "outline"} onClick={async () => { await mediaSetPrimary.mutateAsync({ id: m.id }); await refetchMedia(); }}>{m.isPrimary ? "Primary" : "Set primary"}</Button>
+                    <Button size="sm" variant="outline" onClick={async () => { await mediaUpdate.mutateAsync({ id: m.id, position: (m.position ?? 0) - 1 }); await refetchMedia(); }}>Up</Button>
+                    <Button size="sm" variant="outline" onClick={async () => { await mediaUpdate.mutateAsync({ id: m.id, position: (m.position ?? 0) + 1 }); await refetchMedia(); }}>Down</Button>
+                    <Button size="sm" variant="destructive" onClick={async () => { await mediaDelete.mutateAsync({ id: m.id }); await refetchMedia(); }}>Delete</Button>
+                  </div>
+                ))}
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Path/URL</Label>
+                  <Input value={newMediaPath} onChange={(e) => setNewMediaPath(e.target.value)} placeholder="/storage/path.jpg or https://..." />
+                </div>
+                <div>
+                  <Label>Alt</Label>
+                  <Input value={newMediaAlt} onChange={(e) => setNewMediaAlt(e.target.value)} />
+                </div>
+                <div className="col-span-2 flex justify-end">
+                  <Button type="button" onClick={async () => { if (!newMediaPath) return; await mediaAdd.mutateAsync({ productId: productId as any, path: newMediaPath, alt: newMediaAlt }); setNewMediaPath(""); setNewMediaAlt(""); await refetchMedia(); }}>Add media</Button>
+                </div>
+              </div>
+            </div>
           ) : null}
 
           <SheetFooter>
