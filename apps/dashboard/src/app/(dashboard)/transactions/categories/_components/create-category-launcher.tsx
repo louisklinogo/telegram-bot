@@ -13,7 +13,7 @@ type CategoryNode = {
   children?: CategoryNode[];
 };
 
-export function CreateCategoryLauncher({ categories = [] }: { categories?: CategoryNode[] }) {
+export function CreateCategoryLauncher({ categories = [], defaultTaxType = "" }: { categories?: CategoryNode[]; defaultTaxType?: string }) {
   const [open, setOpen] = useState(false);
   const router = useRouter();
   return (
@@ -28,6 +28,7 @@ export function CreateCategoryLauncher({ categories = [] }: { categories?: Categ
           if (!v) router.refresh();
         }}
         categories={categories}
+        defaultTaxType={defaultTaxType}
       />
     </>
   );

@@ -25,6 +25,7 @@ type ColumnContext = {
   onView: (row: ProductRow) => void;
   onEdit?: (row: ProductRow) => void;
   onDelete?: (row: ProductRow) => void;
+  onPrefetch?: (row: ProductRow) => void;
 };
 
 export function createProductColumns(ctx: ColumnContext): ColumnDef<ProductRow>[] {
@@ -92,7 +93,13 @@ export function createProductColumns(ctx: ColumnContext): ColumnDef<ProductRow>[
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuItem onSelect={() => ctx.onView(row.original)}>View details</DropdownMenuItem>
-            <DropdownMenuItem onSelect={() => ctx.onEdit?.(row.original)}>Edit…</DropdownMenuItem>
+            <DropdownMenuItem
+              onPointerEnter={() => ctx.onPrefetch?.(row.original)}
+              onFocus={() => ctx.onPrefetch?.(row.original)}
+              onSelect={() => ctx.onEdit?.(row.original)}
+            >
+              Edit…
+            </DropdownMenuItem>
             <DropdownMenuItem className="text-destructive" onSelect={() => ctx.onDelete?.(row.original)}>Delete</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

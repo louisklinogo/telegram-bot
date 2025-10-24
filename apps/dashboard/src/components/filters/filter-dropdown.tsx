@@ -101,9 +101,9 @@ export function FilterDropdown({ values, onChange, mode = "icon", hide }: Props)
     [],
   );
 
-  const closeAfter = (update: Partial<Props["values"]>) => {
+  // Keep dropdown open for multi-selects to allow multiple toggles without closing
+  const apply = (update: Partial<Props["values"]>) => {
     onChange(update);
-    setTimeout(() => setOpen(false), 0);
   };
 
   const derivedHide = hide ?? {
@@ -158,7 +158,9 @@ export function FilterDropdown({ values, onChange, mode = "icon", hide }: Props)
                     const start = range?.from
                       ? range.from.toISOString().slice(0, 10)
                       : undefined;
-                    const end = range?.to ? range.to.toISOString().slice(0, 10) : undefined;
+                    let end = range?.to ? range.to.toISOString().slice(0, 10) : undefined;
+                    // Single-day selection: treat as start=end for immediate filtering
+                    if (start && !end) end = start;
                     onChange({ startDate: start, endDate: end });
                     if (range?.from && range?.to) {
                       setTimeout(() => setOpen(false), 0);
@@ -190,7 +192,7 @@ export function FilterDropdown({ values, onChange, mode = "icon", hide }: Props)
                       const next = curr.includes(s.id)
                         ? curr.filter((v) => v !== s.id)
                         : [...curr, s.id];
-                      closeAfter({ statuses: next });
+                      apply({ statuses: [...next].sort() });
                     }}
                   >
                     {s.name}
@@ -309,7 +311,7 @@ export function FilterDropdown({ values, onChange, mode = "icon", hide }: Props)
                         const next = curr.includes(slug)
                           ? curr.filter((v) => v !== slug)
                           : [...curr, slug];
-                        closeAfter({ categories: next });
+                        apply({ categories: [...next].sort() });
                       }}
                     >
                       <span className="inline-flex items-center gap-2">
@@ -350,11 +352,11 @@ export function FilterDropdown({ values, onChange, mode = "icon", hide }: Props)
                       key={tag.id}
                       checked={Boolean(values.tags?.includes(tag.id))}
                       onCheckedChange={() => {
-                        const curr = values.tags ?? [];
-                        const next = curr.includes(tag.id)
-                          ? curr.filter((v) => v !== tag.id)
-                          : [...curr, tag.id];
-                        closeAfter({ tags: next });
+                    const curr = values.tags ?? [];
+                    const next = curr.includes(tag.id)
+                      ? curr.filter((v) => v !== tag.id)
+                      : [...curr, tag.id];
+                    apply({ tags: [...next].sort() });
                       }}
                     >
                       {tag.name}
@@ -385,11 +387,11 @@ export function FilterDropdown({ values, onChange, mode = "icon", hide }: Props)
                       key={account.id}
                       checked={Boolean(values.accounts?.includes(account.id))}
                       onCheckedChange={() => {
-                        const curr = values.accounts ?? [];
-                        const next = curr.includes(account.id)
-                          ? curr.filter((v) => v !== account.id)
-                          : [...curr, account.id];
-                        closeAfter({ accounts: next });
+                    const curr = values.accounts ?? [];
+                    const next = curr.includes(account.id)
+                      ? curr.filter((v) => v !== account.id)
+                      : [...curr, account.id];
+                    apply({ accounts: [...next].sort() });
                       }}
                     >
                       {account.name} {account.currency ? `(${account.currency})` : ""}
@@ -420,11 +422,11 @@ export function FilterDropdown({ values, onChange, mode = "icon", hide }: Props)
                       key={m.id}
                       checked={Boolean(values.assignees?.includes(m.id))}
                       onCheckedChange={() => {
-                        const curr = values.assignees ?? [];
-                        const next = curr.includes(m.id)
-                          ? curr.filter((v) => v !== m.id)
-                          : [...curr, m.id];
-                        onChange({ assignees: next });
+                    const curr = values.assignees ?? [];
+                    const next = curr.includes(m.id)
+                      ? curr.filter((v) => v !== m.id)
+                      : [...curr, m.id];
+                    onChange({ assignees: [...next].sort() });
                       }}
                     >
                       <span className="inline-flex items-center gap-2">

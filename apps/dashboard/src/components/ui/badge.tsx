@@ -16,7 +16,7 @@ const badgeVariants = cva(
           "font-mono rounded-none bg-transparent text-[10px] font-normal border-border border text-primary",
         tag: "font-mono text-muted-foreground bg-secondary text-[10px] dark:bg-secondary border-none font-normal rounded-none",
         "tag-rounded":
-          "font-mono text-muted-foreground bg-secondary text-[12px] dark:bg-secondary font-normal px-3 py-1 border-none",
+          "font-mono text-muted-foreground bg-secondary text-[9px] dark:bg-secondary font-normal px-3 py-1 border-none",
         "tag-outline": "border-transparent bg-zinc-700 text-zinc-200 hover:bg-zinc-700/80",
       },
     },

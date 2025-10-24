@@ -1,5 +1,5 @@
 "use client";
-import { keepPreviousData, useQueryClient } from "@tanstack/react-query";
+import { useSuspenseInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import {
   flexRender,
   getCoreRowModel,
@@ -7,8 +7,8 @@ import {
   useReactTable,
   type VisibilityState,
 } from "@tanstack/react-table";
-import { Download, Plus, Trash2 } from "lucide-react";
-import Link from "next/link";
+import { useVirtualizer } from "@tanstack/react-virtual";
+import { Download, Trash2 } from "lucide-react";
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { parseAsArrayOf, parseAsBoolean, parseAsInteger, parseAsString, useQueryState, useQueryStates } from "nuqs";
 import { useInView } from "react-intersection-observer";
@@ -20,11 +20,8 @@ import { EmptyState } from "@/components/empty-state";
 import { TransactionDetailsSheet } from "@/components/transaction-details-sheet";
 import { TransactionSheet } from "@/components/transaction-sheet";
 import { TransactionsColumnVisibility } from "@/components/transactions-column-visibility";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Icons } from "@/components/ui/icons";
 import { Sheet, SheetContent, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import {
   Table,
@@ -38,24 +35,50 @@ import { useToast } from "@/components/ui/use-toast";
 import { useStickyColumns } from "@/hooks/use-sticky-columns";
 import { useTeamCurrency } from "@/hooks/use-team-currency";
 import { useTransactionParams } from "@/hooks/use-transaction-params";
-import { formatAmount } from "@/lib/format-currency";
 import { trpc } from "@/lib/trpc/client";
 import { createTransactionColumns, type TransactionRow } from "./transactions-columns";
-import TransactionsSearchFilter from "./transactions-search-filter";
-import type { FilterState } from "./types";
 import { FilterToolbar } from "@/components/filters/filter-toolbar";
 import { FilterDropdown } from "@/components/filters/filter-dropdown";
 import type { FilterFieldDef } from "@/components/filters/types";
 import { TransactionsAnalyticsCarousel } from "./transactions-analytics-carousel";
+import { useTransactionsInvalidation } from "../_hooks/use-transactions-invalidation";
+import { createBrowserClient } from "@Faworra/supabase/client";
+import type { RouterOutputs } from "@Faworra/api/trpc/routers/_app";
 
 type FilterType = "all" | "payment" | "expense" | "refund" | "adjustment";
 
+type EnrichedItem = RouterOutputs["transactions"]["enrichedList"]["items"][number];
+type Stats = RouterOutputs["transactions"]["stats"];
+type Spending = RouterOutputs["transactions"]["spending"];
+type RecentLite = RouterOutputs["transactions"]["recentLite"];
+type InvoicesList = RouterOutputs["invoices"]["list"];
+
+type EnrichedListInput = {
+  type?: "payment" | "expense" | "refund" | "adjustment";
+  status?: ("pending" | "completed" | "failed" | "cancelled")[];
+  categories?: string[];
+  tags?: string[];
+  assignedId?: string;
+  assignees?: string[];
+  isRecurring?: boolean;
+  search?: string;
+  startDate?: string;
+  endDate?: string;
+  hasAttachments?: boolean;
+  accounts?: string[];
+  amountMin?: number;
+  amountMax?: number;
+  includeTags?: boolean;
+  limit?: number;
+  cursor?: { date: string | null; id: string } | null;
+};
+
 type TransactionsViewProps = {
-  initialTransactions?: any[];
-  initialStats?: any;
-  initialSpending?: any[];
-  initialRecent?: any[];
-  initialInvoices?: any[];
+  initialTransactions?: EnrichedItem[];
+  initialStats?: Stats;
+  initialSpending?: Spending;
+  initialRecent?: RecentLite;
+  initialInvoices?: InvoicesList;
 };
 
 export function TransactionsView({
@@ -63,11 +86,12 @@ export function TransactionsView({
   initialStats,
   initialSpending,
   initialRecent,
-  initialInvoices = [],
+  initialInvoices,
 }: TransactionsViewProps) {
   const currency = useTeamCurrency();
-  const _queryClient = useQueryClient();
+  const queryClient = useQueryClient();
   const utils = trpc.useUtils();
+  const invalidateTransactions = useTransactionsInvalidation();
   const [q] = useQueryState("q", { defaultValue: "" });
   const [filters, setFilters] = useQueryStates(
     {
@@ -121,23 +145,28 @@ export function TransactionsView({
       return {} as VisibilityState;
     }
   });
-  const [_deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   // Categories are set via AI parse or elsewhere; no lazy load UI here (Midday parity)
 
-  const enrichedInput = useMemo(() => {
+  const enrichedInput = useMemo<EnrichedListInput>(() => {
+    const sort = (arr?: string[]) => (Array.isArray(arr) ? [...arr].sort() : undefined);
+    const statusesSorted = sort(statuses);
+    const categoriesSorted = sort(categories);
+    const tagsSorted = sort(tags);
+    const accountsSorted = sort(accounts);
+    const assigneesSorted = sort(assignees);
     const includeTags = columnVisibility?.tags !== false; // load tags only if column is visible
-    const input: any = {
-      type: filterType === "all" ? undefined : (filterType as any),
-      status: statuses.length ? (statuses as any) : undefined,
-      categories: categories.length ? categories : undefined,
-      tags: tags.length ? tags : undefined,
-      accounts: accounts.length ? accounts : undefined,
-      assignees: assignees.length ? assignees : undefined,
+    const input: EnrichedListInput = {
+      type: filterType === "all" ? undefined : filterType,
+      status: statusesSorted && statusesSorted.length ? (statusesSorted as EnrichedListInput["status"]) : undefined,
+      categories: categoriesSorted && categoriesSorted.length ? categoriesSorted : undefined,
+      tags: tagsSorted && tagsSorted.length ? tagsSorted : undefined,
+      accounts: accountsSorted && accountsSorted.length ? accountsSorted : undefined,
+      assignees: assigneesSorted && assigneesSorted.length ? assigneesSorted : undefined,
       isRecurring: isRecurring,
       search: q || undefined,
-      startDate: startDate ? new Date(`${startDate}T00:00:00Z`) : undefined,
-      endDate: endDate ? new Date(`${endDate}T23:59:59Z`) : undefined,
+      startDate: startDate ? `${startDate}T00:00:00.000Z` : undefined,
+      endDate: endDate ? `${endDate}T23:59:59.000Z` : undefined,
       hasAttachments: hasAttachments === "any" ? undefined : hasAttachments === "with",
       amountMin: amountMin != null ? Number(amountMin) : undefined,
       amountMax: amountMax != null ? Number(amountMax) : undefined,
@@ -146,13 +175,11 @@ export function TransactionsView({
     };
 
     // Remove undefined values to avoid issues
-    Object.keys(input).forEach((key) => {
-      if (input[key] === undefined) {
-        delete input[key];
-      }
-    });
+    const cleaned = Object.fromEntries(
+      Object.entries(input).filter(([, v]) => v !== undefined),
+    ) as EnrichedListInput;
 
-    return input;
+    return cleaned;
   }, [
     filterType,
     statuses,
@@ -170,8 +197,10 @@ export function TransactionsView({
     columnVisibility,
   ]);
 
-  // Infinite enriched list
+  // ✅ CORRECT: Use useSuspenseInfiniteQuery for optimal performance (Phase A+B pattern)
   const { ref: loadMoreRef, inView: loadMoreInView } = useInView({ rootMargin: "200px" });
+  type Cursor = { date: string | null; id: string };
+  type EnrichedPage = { items: EnrichedItem[]; nextCursor: Cursor | null };
   const {
     data: infiniteData,
     fetchNextPage,
@@ -179,34 +208,41 @@ export function TransactionsView({
     isFetchingNextPage,
     isFetching,
     refetch,
-  } = trpc.transactions.enrichedList.useInfiniteQuery(enrichedInput as any, {
-    getNextPageParam: (last) => (last as any)?.nextCursor ?? null,
+    error: listError,
+  } = useSuspenseInfiniteQuery({
+    queryKey: ["transactions.enrichedList", enrichedInput],
+    queryFn: async ({ pageParam }): Promise<EnrichedPage> => {
+      const result = await utils.client.transactions.enrichedList.query({
+        ...enrichedInput,
+        cursor: pageParam as Cursor | null,
+      });
+      return result as EnrichedPage;
+    },
+    getNextPageParam: (last) => last?.nextCursor ?? null,
+    initialPageParam: null as Cursor | null,
     initialData:
-      initialTransactions.length > 0
-        ? { pages: [{ items: initialTransactions, nextCursor: null }], pageParams: [null] }
+      initialTransactions && initialTransactions.length > 0
+        ? ({
+            pages: [{ items: initialTransactions, nextCursor: null } as EnrichedPage],
+            pageParams: [null as Cursor | null],
+          } as { pages: EnrichedPage[]; pageParams: Array<Cursor | null> })
         : undefined,
-    placeholderData: keepPreviousData,
     staleTime: 15_000,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
+    retry: false,
   });
+
   useEffect(() => {
     if (loadMoreInView && hasNextPage && !isFetchingNextPage) fetchNextPage();
   }, [loadMoreInView, hasNextPage, isFetchingNextPage, fetchNextPage]);
 
-  // Debug log removed to avoid noise and unnecessary console overhead
-  const transactions = useMemo(
-    () => (infiniteData?.pages || []).flatMap((p: any) => p.items || []),
+  const transactions = useMemo<EnrichedItem[]>(
+    () => (infiniteData?.pages || []).flatMap((p) => p.items || []),
     [infiniteData],
   );
-  const byId = useMemo(
-    () => new Map<string, any>(transactions.map((r: any) => [r.transaction.id, r])),
-    [transactions],
-  );
-  const { data: membersData } = trpc.transactions.members.useQuery(undefined, {
-    staleTime: 30000,
-  });
-  const _members = (membersData as any[]) ?? [];
+
+  const byId = useMemo(() => new Map<string, EnrichedItem>(transactions.map((r) => [r.transaction.id, r])), [transactions]);
   const currencyCode = currency;
   const hasActiveFilters = useMemo(() => {
     return (
@@ -279,19 +315,19 @@ export function TransactionsView({
         key: "categories",
         label: "Category",
         type: "multi",
-        options: (categoriesList as any[]).map((c) => ({ value: String(c.slug), label: String(c.name || c.slug) })),
+        options: categoriesList.map((c: any) => ({ value: String(c.slug), label: String(c.name || c.slug) })),
       },
       {
         key: "tags",
         label: "Tags",
         type: "multi",
-        options: (tagsList as any[]).map((t) => ({ value: String(t.id), label: String(t.name) })),
+        options: tagsList.map((t: any) => ({ value: String(t.id), label: String(t.name) })),
       },
       {
         key: "accounts",
         label: "Accounts",
         type: "multi",
-        options: (accountsList as any[]).map((a) => ({
+        options: accountsList.map((a: any) => ({
           value: String(a.id),
           label: String(a.currency ? `${a.name} (${a.currency})` : a.name),
         })),
@@ -300,7 +336,7 @@ export function TransactionsView({
         key: "assignees",
         label: "Assignees",
         type: "multi",
-        options: (membersList as any[]).map((m) => ({
+        options: membersList.map((m: any) => ({
           value: String(m.id),
           label: String(m.fullName || m.email || "Unknown"),
         })),
@@ -332,34 +368,33 @@ export function TransactionsView({
   // Removed redundant stats query – analytics cards handle their own data
 
   const [allocateOpen, setAllocateOpen] = useState(false);
-  const [selectedTrx, setSelectedTrx] = useState<any | null>(null);
+  const [selectedTrx, setSelectedTrx] = useState<EnrichedItem | null>(null);
   const [selectedInvoiceId, setSelectedInvoiceId] = useState("");
   const [allocAmount, setAllocAmount] = useState(0);
   const [createAccountOpen, setCreateAccountOpen] = useState(false);
-  const aiParse = trpc.transactions.aiParse.useMutation();
   const invoiceSelectId = useId();
   const allocAmountId = useId();
 
-  const applyParsedFilters = (p: any) => {
+  const applyParsedFilters = (p: Record<string, unknown>) => {
     if (!p || typeof p !== "object") return;
     setFilters({
-      type: (p.type as any) ?? null,
-      statuses: (p.statuses as any) ?? (p.status as any) ?? null,
-      categories: (p.categories as any) ?? null,
-      tags: (p.tags as any) ?? null,
-      accounts: (p.accounts as any) ?? null,
-      assignees: (p.assignees as any) ?? null,
+      type: (p.type as string | null) ?? null,
+      statuses: (p.statuses as string[] | null) ?? (p.status as string[] | null) ?? null,
+      categories: (p.categories as string[] | null) ?? null,
+      tags: (p.tags as string[] | null) ?? null,
+      accounts: (p.accounts as string[] | null) ?? null,
+      assignees: (p.assignees as string[] | null) ?? null,
       recurring: typeof p.isRecurring === "boolean" ? p.isRecurring : null,
       attachments:
         p.hasAttachments === undefined ? null : p.hasAttachments ? "include" : "exclude",
       amount_range:
         p.amountMin != null || p.amountMax != null
-          ? [p.amountMin ?? 0, p.amountMax ?? 500000]
+          ? [p.amountMin as number ?? 0, p.amountMax as number ?? 500000]
           : null,
       start: p.startDate
-        ? new Date(p.startDate).toISOString().slice(0, 10)
+        ? new Date(p.startDate as string).toISOString().slice(0, 10)
         : null,
-      end: p.endDate ? new Date(p.endDate).toISOString().slice(0, 10) : null,
+      end: p.endDate ? new Date(p.endDate as string).toISOString().slice(0, 10) : null,
     });
   };
 
@@ -367,85 +402,118 @@ export function TransactionsView({
   const { data: invoicesResult } = trpc.invoices.list.useQuery(
     { limit: 50 },
     {
-      initialData: initialInvoices as any,
+      initialData: initialInvoices,
       staleTime: 30000, // Don't refetch for 30 seconds
     },
   );
-  const invoices = (invoicesResult as any)?.items ?? invoicesResult ?? [];
+  const invoices = invoicesResult?.items ?? [];
 
   const allocateMutation = trpc.transactions.allocate.useMutation({
     onSuccess: async () => {
-      await Promise.all([
-        utils.transactions.enrichedList.invalidate(),
-        utils.transactions.list.invalidate(),
-        utils.transactions.stats.invalidate(),
-        utils.invoices.list.invalidate(),
-      ]);
+      await invalidateTransactions();
+      await utils.invoices.list.invalidate();
       setAllocateOpen(false);
     },
   });
 
   const bulkUpdate = trpc.transactions.bulkUpdate.useMutation({
     onSuccess: async () => {
-      await Promise.all([
-        utils.transactions.enrichedList.invalidate(),
-        utils.transactions.list.invalidate(),
-        utils.transactions.stats.invalidate(),
-        utils.transactions.spending.invalidate(),
-        utils.transactions.recentLite.invalidate(),
-      ]);
+      await invalidateTransactions();
       setSelected(new Set());
+    },
+  });
+  // Targeted update for menu actions: optimistic single-row patch + minimal invalidations
+  const menuUpdate = trpc.transactions.bulkUpdate.useMutation({
+    async onMutate(variables) {
+      type BulkUpdateVars = { transactionIds: string[]; updates: Record<string, unknown> };
+      const vars = variables as BulkUpdateVars;
+      const id = vars?.transactionIds?.[0];
+      const updates = vars?.updates ?? {};
+      if (!id) return;
+      
+      await queryClient.cancelQueries({ queryKey: ["transactions.enrichedList", enrichedInput] });
+      const prev = queryClient.getQueryData<{
+        pages: Array<{ items: EnrichedItem[]; nextCursor?: string | null }>;
+        pageParams: unknown[];
+      }>(["transactions.enrichedList", enrichedInput]);
+      
+      if (prev) {
+        const next = {
+          ...prev,
+          pages: prev.pages.map((p) => ({
+            ...p,
+            items: (p.items || []).map((r) =>
+              r.transaction.id === id ? { ...r, transaction: { ...r.transaction, ...updates } } : r,
+            ),
+          })),
+        };
+        queryClient.setQueryData(["transactions.enrichedList", enrichedInput], next);
+      }
+      return { prev };
+    },
+    onError: (_err, _vars, ctx) => {
+      if (ctx?.prev) {
+        queryClient.setQueryData(["transactions.enrichedList", enrichedInput], ctx.prev);
+      }
+    },
+    onSettled: async () => {
+      await invalidateTransactions();
     },
   });
   const bulkDelete = trpc.transactions.bulkDelete.useMutation({
     async onMutate(variables) {
+      type BulkDeleteVars = { transactionIds: string[] };
+      const vars = variables as BulkDeleteVars;
+      const ids = new Set(vars.transactionIds ?? []);
+      
       // Optimistically remove from current list
-      await utils.transactions.enrichedList.cancel(enrichedInput as any);
-      const previous = utils.transactions.enrichedList.getData(enrichedInput as any) as
-        | { pages: Array<{ items: any[]; nextCursor?: string | null }>; pageParams: any[] }
-        | undefined;
-      const ids = new Set((variables as any).transactionIds ?? []);
+      await queryClient.cancelQueries({ queryKey: ["transactions.enrichedList", enrichedInput] });
+      const previous = queryClient.getQueryData<{
+        pages: Array<{ items: EnrichedItem[]; nextCursor?: string | null }>;
+        pageParams: unknown[];
+      }>(["transactions.enrichedList", enrichedInput]);
+      
       if (previous) {
         const next = {
           ...previous,
           pages: previous.pages.map((p) => ({
             ...p,
-            items: (p.items || []).filter((r: any) => !ids.has(r.transaction.id)),
+            items: (p.items || []).filter((r) => !ids.has(r.transaction.id)),
           })),
-        } as any;
-        utils.transactions.enrichedList.setData(enrichedInput as any, next);
+        };
+        queryClient.setQueryData(["transactions.enrichedList", enrichedInput], next);
       }
+      
       // Also update all cached filtered lists to avoid ghost rows when switching filters
       try {
-        const entries = _queryClient.getQueriesData({ queryKey: ["transactions", "enrichedList"] });
+        const entries = queryClient.getQueriesData<{
+          pages: Array<{ items: EnrichedItem[]; nextCursor?: string | null }>;
+          pageParams: unknown[];
+        }>({ queryKey: ["transactions.enrichedList"] });
+        
         for (const [key, data] of entries) {
-          const d: any = data as any;
-          if (!d || !d.pages) continue;
+          if (!data || !data.pages) continue;
           const next = {
-            ...d,
-            pages: d.pages.map((p: any) => ({
+            ...data,
+            pages: data.pages.map((p) => ({
               ...p,
-              items: (p.items || []).filter((r: any) => !ids.has(r.transaction.id)),
+              items: (p.items || []).filter((r) => !ids.has(r.transaction.id)),
             })),
           };
-          _queryClient.setQueryData(key as any, next);
+          queryClient.setQueryData(key, next);
         }
-      } catch {}
-      return { previous } as any;
+      } catch {
+        // Ignore errors in cache update
+      }
+      return { previous };
     },
     onError: (_err, _vars, ctx) => {
       if (ctx?.previous) {
-        utils.transactions.enrichedList.setData(enrichedInput as any, ctx.previous as any);
+        queryClient.setQueryData(["transactions.enrichedList", enrichedInput], ctx.previous);
       }
     },
     onSettled: async () => {
-      await Promise.all([
-        utils.transactions.enrichedList.invalidate(),
-        utils.transactions.list.invalidate(),
-        utils.transactions.stats.invalidate(),
-        utils.transactions.spending.invalidate(),
-        utils.transactions.recentLite.invalidate(),
-      ]);
+      await invalidateTransactions();
       setSelected(new Set());
     },
   });
@@ -456,43 +524,76 @@ export function TransactionsView({
     return !rows[0]?.transaction?.enrichmentCompleted;
   }, [rows]);
 
+  // ✅ IMPROVED: Use Supabase real-time instead of polling
   useEffect(() => {
     if (!shouldPollForEnrichment) return;
-    const interval = setInterval(() => {
+    
+    const supabase = createBrowserClient();
+    const channel = supabase
+      .channel('transactions-enrichment')
+      .on('postgres_changes', {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'transactions',
+      }, (payload) => {
+        // Only refetch if enrichment completed
+        if (payload.new && (payload.new as { enrichment_completed?: boolean }).enrichment_completed) {
+          refetch();
+        }
+      })
+      .subscribe();
+
+    // Fallback timeout in case real-time fails
+    const timeout = setTimeout(() => {
       refetch();
-    }, 3000);
-    const timeout = setTimeout(() => clearInterval(interval), 60_000);
+    }, 60_000);
+
     return () => {
-      clearInterval(interval);
+      supabase.removeChannel(channel);
       clearTimeout(timeout);
     };
   }, [shouldPollForEnrichment, refetch]);
   const [focusedIndex, setFocusedIndex] = useState<number>(0);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const lastAnchorIndex = useRef<number | null>(null);
   useEffect(() => {
     if (rows.length === 0) setFocusedIndex(0);
     else if (focusedIndex > rows.length - 1) setFocusedIndex(rows.length - 1);
   }, [rows.length, focusedIndex]);
+  
   // Sticky columns offsets
   const { leftDate } = useStickyColumns();
 
-  const _openAllocate = (row: any) => {
-    setSelectedTrx(row);
-    setAllocAmount(Number(row.transaction.amount || 0));
-    setSelectedInvoiceId("");
-    setAllocateOpen(true);
-  };
+  // Convert rows to TransactionRow type (needed before virtualization)
+  const tableData: TransactionRow[] = useMemo(
+    () =>
+      rows.map((row) => ({
+        transaction: row.transaction,
+        client: row.client,
+        category: row.category,
+        assignedUser: row.assignedUser,
+        tags: row.tags,
+      })),
+    [rows],
+  );
 
-  const _toggleAll = (checked: boolean) => {
-    if (!checked) {
-      setRowSelection({});
-    } else {
-      const ids = rows.map((r: any) => r.transaction.id);
-      const selection: Record<string, boolean> = {};
-      for (const id of ids) selection[id] = true;
-      setRowSelection(selection);
-    }
-  };
+  // ✅ Table virtualization for performance with large datasets
+  const tableContainerRef = useRef<HTMLDivElement>(null);
+  const rowVirtualizer = useVirtualizer({
+    count: tableData.length,
+    getScrollElement: () => tableContainerRef.current,
+    estimateSize: () => 60, // Estimated row height in pixels
+    overscan: 10, // Render 10 extra rows above and below viewport
+    enabled: tableData.length > 50, // Only virtualize if more than 50 rows
+  });
+
+  const virtualRows = rowVirtualizer.getVirtualItems();
+  const totalSize = rowVirtualizer.getTotalSize();
+  const paddingTop = virtualRows.length > 0 ? virtualRows[0]?.start || 0 : 0;
+  const paddingBottom = virtualRows.length > 0 
+    ? totalSize - (virtualRows[virtualRows.length - 1]?.end || 0) 
+    : 0;
+
   const toggleRow = (id: string, checked: boolean) => {
     setRowSelection((prev) => {
       if (checked) {
@@ -507,25 +608,25 @@ export function TransactionsView({
 
   const exportSelected = () => {
     if (selected.size === 0) return;
-    const rows = Array.from(selected)
+    const selectedRows: EnrichedItem[] = Array.from(selected)
       .map((id) => byId.get(id))
-      .filter(Boolean)
-      .map((row: any) => ({
-        date: new Date(row.transaction.date as any).toISOString(),
-        description: row.transaction.description ?? "",
-        client: row.client?.name ?? "",
-        type: row.transaction.type,
-        category: row.category?.name ?? row.transaction.categorySlug ?? "",
-        method: row.transaction.paymentMethod ?? "",
-        status: row.transaction.status,
-        currency: row.transaction.currency,
-        amount: Number(row.transaction.amount ?? 0),
-        transaction_number: row.transaction.transactionNumber,
-      }));
+      .filter((r): r is EnrichedItem => Boolean(r));
+    const rows = selectedRows.map((row) => ({
+      date: new Date(row.transaction.date as any).toISOString(),
+      description: row.transaction.description ?? "",
+      client: row.client?.name ?? "",
+      type: row.transaction.type,
+      category: row.category?.name ?? row.transaction.categorySlug ?? "",
+      method: row.transaction.paymentMethod ?? "",
+      status: row.transaction.status,
+      currency: row.transaction.currency,
+      amount: Number(row.transaction.amount ?? 0),
+      transaction_number: row.transaction.transactionNumber,
+    }));
     const headers = Object.keys(rows[0] || {});
     const csv = [
       headers.join(","),
-      ...rows.map((r) => headers.map((h) => JSON.stringify((r as any)[h] ?? "")).join(",")),
+      ...rows.map((r) => headers.map((h) => JSON.stringify((r as Record<string, unknown>)[h] ?? "")).join(",")),
     ].join("\n");
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
@@ -598,20 +699,6 @@ export function TransactionsView({
 
   const { open: openParams } = useTransactionParams();
   const { toast } = useToast();
-  const widgetsRef = useRef<HTMLDivElement | null>(null);
-
-  // Convert rows to TransactionRow type
-  const tableData: TransactionRow[] = useMemo(
-    () =>
-      rows.map((row: any) => ({
-        transaction: row.transaction,
-        client: row.client,
-        category: row.category,
-        assignedUser: row.assignedUser,
-        tags: row.tags,
-      })),
-    [rows],
-  );
 
   // TanStack Table setup
   const columns = useMemo(() => {
@@ -635,9 +722,9 @@ export function TransactionsView({
       },
       onToggleStatus: async (id, status) => {
         try {
-          await bulkUpdate.mutateAsync({
+          await menuUpdate.mutateAsync({
             transactionIds: [id],
-            updates: { status: status as any },
+            updates: { status },
           });
           toast({ description: "Transaction updated" });
         } catch {
@@ -646,9 +733,9 @@ export function TransactionsView({
       },
       onVoid: async (id) => {
         try {
-          await bulkUpdate.mutateAsync({
+          await menuUpdate.mutateAsync({
             transactionIds: [id],
-            updates: { status: "cancelled" as any, excludeFromAnalytics: true },
+            updates: { status: "cancelled", excludeFromAnalytics: true },
           });
           toast({ description: "Transaction voided" });
         } catch {
@@ -657,9 +744,9 @@ export function TransactionsView({
       },
       onUnvoid: async (id) => {
         try {
-          await bulkUpdate.mutateAsync({
+          await menuUpdate.mutateAsync({
             transactionIds: [id],
-            updates: { status: "pending" as any, excludeFromAnalytics: false },
+            updates: { status: "pending", excludeFromAnalytics: false },
           });
           toast({ description: "Transaction unvoided" });
         } catch {
@@ -668,7 +755,7 @@ export function TransactionsView({
       },
       onToggleExclude: async (id, exclude) => {
         try {
-          await bulkUpdate.mutateAsync({
+          await menuUpdate.mutateAsync({
             transactionIds: [id],
             updates: { excludeFromAnalytics: exclude },
           });
@@ -752,7 +839,7 @@ export function TransactionsView({
       )}
 
       {/* Analytics carousel */}
-      <TransactionsAnalyticsCarousel initialStats={initialStats} initialSpending={initialSpending} initialRecent={initialRecent} />
+      <TransactionsAnalyticsCarousel initialStats={initialStats} initialSpending={initialSpending} />
 
       <div>
         <div className="mb-4 space-y-4">
@@ -893,7 +980,13 @@ export function TransactionsView({
           {/* Using Notion-style pills + picker only; legacy sheet UI removed */}
         </div>
 
-        {!rows.length ? (
+        {listError ? (
+          <EmptyState
+            title="Could not load results"
+            description="There was a problem applying the current filters."
+            action={{ label: "Clear filters", onClick: clearAllFilters }}
+          />
+        ) : !rows.length ? (
           hasActiveFilters ? (
             <EmptyState
               title="No results"
@@ -915,29 +1008,45 @@ export function TransactionsView({
           )
         ) : (
           <div
-            className="relative overflow-x-auto"
+            ref={tableContainerRef}
+            className="relative overflow-auto max-h-[calc(100vh-400px)]"
             role="application"
             aria-label="Transactions table keyboard navigation"
             onKeyDown={(e) => {
               if (!rows.length) return;
               if (e.key === "ArrowDown") {
                 e.preventDefault();
-                setFocusedIndex((i) => Math.min(i + 1, rows.length - 1));
+                const newIndex = Math.min(focusedIndex + 1, rows.length - 1);
+                setFocusedIndex(newIndex);
+                // Scroll to focused row if virtualized
+                if (tableData.length > 50) {
+                  rowVirtualizer.scrollToIndex(newIndex, { align: 'center' });
+                }
               } else if (e.key === "ArrowUp") {
                 e.preventDefault();
-                setFocusedIndex((i) => Math.max(i - 1, 0));
+                const newIndex = Math.max(focusedIndex - 1, 0);
+                setFocusedIndex(newIndex);
+                if (tableData.length > 50) {
+                  rowVirtualizer.scrollToIndex(newIndex, { align: 'center' });
+                }
             } else if (e.key === "Home") {
               e.preventDefault();
               setFocusedIndex(0);
+              if (tableData.length > 50) {
+                rowVirtualizer.scrollToIndex(0);
+              }
             } else if (e.key === "End") {
               e.preventDefault();
               setFocusedIndex(rows.length - 1);
+              if (tableData.length > 50) {
+                rowVirtualizer.scrollToIndex(rows.length - 1);
+              }
             } else if (e.key === " " && e.shiftKey) {
               e.preventDefault();
               const anchor = lastAnchorIndex.current ?? focusedIndex;
               const start = Math.min(anchor, focusedIndex);
               const end = Math.max(anchor, focusedIndex);
-              const rangeIds = rows.slice(start, end + 1).map((r: any) => r.transaction.id);
+              const rangeIds = rows.slice(start, end + 1).map((r) => r.transaction.id);
               setRowSelection((prev) => {
                 const next = { ...prev } as Record<string, boolean>;
                 for (const id of rangeIds) next[id] = true;
@@ -952,14 +1061,13 @@ export function TransactionsView({
             }}
           >
             {isFetching && !isFetchingNextPage ? (
-              <div className="absolute left-0 right-0 top-0 h-0.5 bg-primary/70 animate-pulse" />
+              <div className="absolute left-0 right-0 top-0 h-0.5 bg-primary/70 animate-pulse z-20" />
             ) : null}
             <Table className="min-w-[1200px]">
-              <TableHeader>
+              <TableHeader className="sticky top-0 z-10 bg-background">
                 {table.getHeaderGroups().map((headerGroup) => (
                   <TableRow key={headerGroup.id}>
                     {headerGroup.headers.map((header) => {
-                      const _isSticky = header.id === "select" || header.id === "date";
                       return (
                         <TableHead
                           key={header.id}
@@ -986,47 +1094,63 @@ export function TransactionsView({
               </TableHeader>
               <TableBody>
                 {table.getRowModel().rows.length > 0 ? (
-                  table.getRowModel().rows.map((row, idx) => (
-                    <TableRow
-                      key={row.id}
-                      data-state={row.getIsSelected() && "selected"}
-                      className={"hover:bg-muted/50 " + (idx === focusedIndex ? "bg-muted/40" : "")}
-                      onClick={(e) => {
-                        setFocusedIndex(idx);
-                        lastAnchorIndex.current = idx;
-                        if (selectedCount > 0) return;
-                        const target = e.target as HTMLElement | null;
-                        const interactive = target?.closest(
-                          'button, a, input, select, textarea, [role="button"], [role="menuitem"], [data-row-click-exempt]'
-                        );
-                        if (!interactive) {
-                          const id = row.original.transaction.id;
-                          if (id) openParams({ transactionId: id });
-                        }
-                      }}
-                    >
-                      {row.getVisibleCells().map((cell) => {
-                        const _isSticky = cell.column.id === "select" || cell.column.id === "date";
-                        return (
-                          <TableCell
-                            key={cell.id}
-                            className={
-                              cell.column.id === "select"
-                                ? "sticky left-0 z-10 bg-background"
-                                : cell.column.id === "date"
-                                  ? "font-medium sticky z-10 bg-background w-36"
-                                  : cell.column.id === "actions"
-                                    ? "pr-2"
-                                    : ""
+                  <>
+                    {paddingTop > 0 && (
+                      <tr>
+                        <td style={{ height: `${paddingTop}px` }} />
+                      </tr>
+                    )}
+                    {(tableData.length > 50 ? virtualRows : table.getRowModel().rows.map((_, idx) => ({ index: idx }))).map((virtualRow) => {
+                      const row = table.getRowModel().rows[virtualRow.index];
+                      if (!row) return null;
+                      const idx = virtualRow.index;
+                      return (
+                        <TableRow
+                          key={row.id}
+                          data-state={row.getIsSelected() && "selected"}
+                          className={"hover:bg-muted/50 " + (idx === focusedIndex ? "bg-muted/40" : "")}
+                          onClick={(e) => {
+                            setFocusedIndex(idx);
+                            lastAnchorIndex.current = idx;
+                            if (selectedCount > 0) return;
+                            const target = e.target as HTMLElement | null;
+                            const interactive = target?.closest(
+                              'button, a, input, select, textarea, [role="button"], [role="menuitem"], [role="option"], [data-row-click-exempt]'
+                            );
+                            if (!interactive) {
+                              const id = row.original.transaction.id;
+                              if (id) openParams({ transactionId: id });
                             }
-                            style={cell.column.id === "date" ? { left: leftDate } : undefined}
-                          >
-                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                          </TableCell>
-                        );
-                      })}
-                    </TableRow>
-                  ))
+                          }}
+                        >
+                          {row.getVisibleCells().map((cell) => {
+                            return (
+                              <TableCell
+                                key={cell.id}
+                                className={
+                                  cell.column.id === "select"
+                                    ? "sticky left-0 z-10 bg-background"
+                                    : cell.column.id === "date"
+                                      ? "font-medium sticky z-10 bg-background w-36"
+                                      : cell.column.id === "actions"
+                                        ? "pr-2"
+                                        : ""
+                                }
+                                style={cell.column.id === "date" ? { left: leftDate } : undefined}
+                              >
+                                {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                              </TableCell>
+                            );
+                          })}
+                        </TableRow>
+                      );
+                    })}
+                    {paddingBottom > 0 && (
+                      <tr>
+                        <td style={{ height: `${paddingBottom}px` }} />
+                      </tr>
+                    )}
+                  </>
                 ) : (
                   <TableRow>
                     <TableCell colSpan={table.getAllColumns().length} className="h-24 text-center">
@@ -1039,7 +1163,7 @@ export function TransactionsView({
           </div>
         )}
         {/* Infinite scroll sentinel */}
-        <div ref={loadMoreRef as any} />
+        <div ref={loadMoreRef} />
       </div>
 
       {/* No floating bottom bar; Reset lives on the pills row */}

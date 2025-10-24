@@ -5,6 +5,14 @@ import type { FilterFieldDef } from "./types";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { ComboboxMulti } from "@/components/ui/combobox-multi";
 
 type CommonProps = {
   field: FilterFieldDef;
@@ -17,9 +25,9 @@ export function Control({ field, value, onChange }: CommonProps) {
 
   useEffect(() => setLocal(value), [value]);
 
-  // Debounced commit
+  // Debounced commit (tighter for snappier pills UX)
   useEffect(() => {
-    const id = setTimeout(() => onChange(local), 250);
+    const id = setTimeout(() => onChange(local), 150);
     return () => clearTimeout(id);
   }, [local]);
 
@@ -51,6 +59,44 @@ export function Control({ field, value, onChange }: CommonProps) {
         >
           No
         </Button>
+      </div>
+    );
+  }
+
+  if (field.type === "select") {
+    const opts = field.options ?? [];
+    return (
+      <Select
+        value={local ?? ""}
+        onValueChange={(val) => setLocal(val || undefined)}
+      >
+        <SelectTrigger className="h-8 w-[220px]">
+          <SelectValue placeholder={`Select ${field.label.toLowerCase()}…`} />
+        </SelectTrigger>
+        <SelectContent>
+          {opts.map((opt) => (
+            <SelectItem key={opt.value} value={opt.value}>
+              {opt.label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    );
+  }
+
+  if (field.type === "multi") {
+    const opts = field.options ?? [];
+    const items = opts.map((o) => ({ id: o.value, label: o.label }));
+    const vals: string[] = Array.isArray(local) ? local : [];
+    return (
+      <div className="w-[240px]">
+        <ComboboxMulti
+          items={items}
+          values={vals}
+          onChange={(ids) => setLocal(ids && ids.length ? ids : undefined)}
+          placeholder={`Select ${field.label.toLowerCase()}…`}
+          searchPlaceholder={`Search ${field.label.toLowerCase()}…`}
+        />
       </div>
     );
   }
@@ -102,6 +148,5 @@ export function Control({ field, value, onChange }: CommonProps) {
     );
   }
 
-  // multi/select controls can be added later (we’ll reuse existing ComboboxDropdown if needed)
   return <div className="text-xs text-muted-foreground">Unsupported control</div>;
 }

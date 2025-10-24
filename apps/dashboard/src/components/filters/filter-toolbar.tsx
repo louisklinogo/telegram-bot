@@ -21,6 +21,7 @@ export function FilterToolbar({ fields, values, onChange, appearance = "icon" }:
     return Object.keys(values).filter((k) => {
       const v = (values as any)[k];
       if (v == null) return false;
+      if (typeof v === "boolean") return v === true; // only show pill for true booleans
       if (Array.isArray(v)) return v.length > 0;
       if (typeof v === "object") {
         const entries = Object.values(v ?? {});

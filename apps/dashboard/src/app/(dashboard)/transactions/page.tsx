@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { getCurrentTeamId, db } from "@/lib/trpc/server";
-import { getTransactionsEnriched, getTransactionStats, getSpendingByCategory, getRecentTransactionsLite } from "@Faworra/database/queries";
+import { getTransactionsEnriched, getTransactionStats, getSpendingByCategory } from "@Faworra/database/queries";
 import { TransactionsView } from "./_components/transactions-view";
 
 export default async function TransactionsPage() {
@@ -12,11 +12,10 @@ export default async function TransactionsPage() {
   const start30 = new Date(now.getTime() - 86400000 * 29);
   const start = new Date(Date.UTC(start30.getUTCFullYear(), start30.getUTCMonth(), start30.getUTCDate(), 0, 0, 0));
 
-  const [transactions, stats, spending, recent] = await Promise.all([
+  const [transactions, stats, spending] = await Promise.all([
     getTransactionsEnriched(db, { teamId, limit: 50 }),
     getTransactionStats(db, { teamId, startDate: start, endDate: end }),
     getSpendingByCategory(db, { teamId, startDate: start, endDate: end, limit: 10 }),
-    getRecentTransactionsLite(db, { teamId, startDate: start, endDate: end, limit: 8 }),
   ]);
 
   return (
@@ -24,7 +23,6 @@ export default async function TransactionsPage() {
       initialTransactions={transactions}
       initialStats={stats}
       initialSpending={spending}
-      initialRecent={recent}
     />
   );
 }

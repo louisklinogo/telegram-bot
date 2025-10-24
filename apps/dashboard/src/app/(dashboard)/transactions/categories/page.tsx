@@ -1,20 +1,25 @@
 import { db, getCurrentTeamId } from "@/lib/trpc/server";
-import { getTransactionCategories } from "@Faworra/database/queries";
+import { getTransactionCategories, getTeamById } from "@Faworra/database/queries";
 import { CategoriesTable } from "./_components/categories-table";
-import { CreateCategoryLauncher } from "./_components/create-category-launcher";
 
 export default async function TransactionCategoriesPage() {
   const teamId = await getCurrentTeamId();
   if (!teamId) return null;
 
   const categories = await getTransactionCategories(db, { teamId });
+  const team = await getTeamById(db, teamId);
+  const defaultTaxType = mapCountryToTaxType(team?.country);
 
   return (
     <div className="px-6 py-6 space-y-3">
-      <div className="flex items-center justify-end">
-        <CreateCategoryLauncher categories={categories as any} />
-      </div>
-      <CategoriesTable initialCategories={categories as any} />
+      <CategoriesTable initialCategories={categories as any} defaultTaxType={defaultTaxType} />
     </div>
   );
+}
+
+function mapCountryToTaxType(country?: string | null) {
+  const c = (country || "").toUpperCase();
+  if (c === "GH") return "vat";
+  if (["CA", "AU", "NZ", "IN", "SG"].includes(c)) return "gst";
+  return "";
 }

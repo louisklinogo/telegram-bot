@@ -35,6 +35,7 @@ import { useDropzone } from "react-dropzone";
 import { Icons } from "@/components/ui/icons";
 import { ComboboxMulti } from "@/components/ui/combobox-multi";
 import { formatAmount } from "@/lib/format-currency";
+import { useTeamCurrency } from "@/hooks/use-team-currency";
 
 const transactionFormSchema = z.object({
   type: z.enum(["payment", "expense", "refund", "adjustment"]),
@@ -63,6 +64,7 @@ interface TransactionFormProps {
 export function TransactionForm({ onSuccess, defaultInvoiceId, defaultClientId }: TransactionFormProps) {
   const { toast } = useToast();
   const utils = trpc.useUtils();
+  const teamCurrency = useTeamCurrency();
   const [uploading, setUploading] = useState(false);
   const [attachments, setAttachments] = useState<
     { path: string; filename?: string; contentType?: string | null; size?: number | null }[]
@@ -74,7 +76,7 @@ export function TransactionForm({ onSuccess, defaultInvoiceId, defaultClientId }
     defaultValues: {
       type: "payment",
       amount: 0,
-      currency: "GHS",
+      currency: teamCurrency,
       clientId: defaultClientId || "",
       invoiceId: defaultInvoiceId || "",
       orderId: "",
@@ -403,7 +405,7 @@ export function TransactionForm({ onSuccess, defaultInvoiceId, defaultClientId }
                         if (acc?.currency) setValue("currency", acc.currency);
                       }}
                       onCreate={async (name) => {
-                        const currency = watch("currency") || "GHS";
+                        const currency = watch("currency") || teamCurrency;
                         const res = await createAccount.mutateAsync({ name, type: "cash", currency });
                         await utils.transactions.accounts.invalidate();
                         setValue("accountId", res.id);
@@ -514,7 +516,7 @@ export function TransactionForm({ onSuccess, defaultInvoiceId, defaultClientId }
                           <SelectContent>
                             {invoices.map((invoice: any) => (
                               <SelectItem key={invoice.id} value={invoice.id}>
-                                {invoice.invoiceNumber} - {formatAmount({ currency: invoice.currency || "GHS", amount: Number(invoice.amount || 0) })}
+                                {invoice.invoiceNumber} - {formatAmount({ currency: invoice.currency || teamCurrency, amount: Number(invoice.amount || 0) })}
                               </SelectItem>
                             ))}
                           </SelectContent>

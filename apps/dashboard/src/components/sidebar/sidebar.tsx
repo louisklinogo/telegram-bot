@@ -1,7 +1,18 @@
 "use client";
 
-import type { LucideIcon } from "lucide-react";
-import { ChevronDown } from "lucide-react";
+import {
+  MdOutlineMonitor,
+  MdGridView,
+  MdInbox,
+  MdCreditCard,
+  MdListAlt,
+  MdReceiptLong,
+  MdPeople,
+  MdStraighten,
+  MdInventory2,
+  MdSettings,
+  MdExpandMore,
+} from "react-icons/md";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
@@ -68,7 +79,7 @@ export function Sidebar({ teams = [], currentTeamId }: SidebarProps) {
       {/* Navigation */}
       <TooltipProvider delayDuration={0}>
         <ScrollArea className="flex-1 pt-[70px] pb-6">
-          <nav className="w-full">
+          <nav className="w-full mt-3">
             <div className="flex flex-col gap-6">
               {NAV_SECTIONS.map((section) => (
                 <div key={section.title} className="flex flex-col gap-2">
@@ -120,7 +131,7 @@ type SidebarLinkProps = {
 };
 
 function SidebarLink({ item, active, expanded, expandedItemHref, onToggle }: SidebarLinkProps) {
-  const Icon = item.icon as LucideIcon;
+  const Icon = getSidebarIcon(item);
   const hasChildren = Boolean(item.children && item.children.length > 0);
   const isItemExpanded = expanded && expandedItemHref === item.href;
 
@@ -137,9 +148,10 @@ function SidebarLink({ item, active, expanded, expandedItemHref, onToggle }: Sid
         />
 
         {/* Icon - Fixed position from left */}
-        <div className="absolute top-0 left-[15px] w-[40px] h-[40px] flex items-center justify-center text-foreground group-hover:!text-primary pointer-events-none">
+        <div className="absolute top-0 left-[15px] w-[40px] h-[40px] flex items-center justify-center text-muted-foreground group-hover:!text-primary pointer-events-none transition-colors">
           <div className={cn(active && "text-primary")}> 
-            <Icon className="h-5 w-5" />
+            {/* Material Sharp icons via react-icons; size fixed to 20px */}
+            <Icon size={20} className="shrink-0" />
           </div>
         </div>
 
@@ -174,7 +186,7 @@ function SidebarLink({ item, active, expanded, expandedItemHref, onToggle }: Sid
                     isItemExpanded && "rotate-180",
                   )}
                 >
-                  <ChevronDown className="h-4 w-4" />
+                  <MdExpandMore size={16} />
                 </button>
               )}
             </div>
@@ -225,4 +237,19 @@ function SidebarLink({ item, active, expanded, expandedItemHref, onToggle }: Sid
       </TooltipContent>
     </Tooltip>
   );
+}
+
+function getSidebarIcon(item: NavItem) {
+  // Map known top-level routes to Material Sharp icons; default to Grid
+  const href = item.href;
+  if (href === "/") return MdOutlineMonitor; // closest to "Monitoring"
+  if (href.startsWith("/inbox")) return MdInbox;
+  if (href.startsWith("/transactions")) return MdCreditCard;
+  if (href.startsWith("/orders")) return MdListAlt;
+  if (href.startsWith("/invoices")) return MdReceiptLong;
+  if (href.startsWith("/clients")) return MdPeople;
+  if (href.startsWith("/measurements")) return MdStraighten;
+  if (href.startsWith("/vault")) return MdInventory2;
+  if (href.startsWith("/settings")) return MdSettings;
+  return MdGridView;
 }

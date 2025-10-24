@@ -1,8 +1,9 @@
 "use client";
 
-import { format } from "date-fns";
-import { Image as ImageIcon, Paperclip, Send, Smile } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { format, isSameDay, isToday, isYesterday } from "date-fns";
+import { ArrowLeft, Image as ImageIcon, Paperclip, Send, Smile, X } from "lucide-react";
+import { WhatsappLogo, InstagramLogo } from "phosphor-react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -11,168 +12,115 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import type { InboxMessage } from "@/types/inbox";
+import { trpc } from "@/lib/trpc/client";
+import { useRealtimeMessages } from "@/hooks/use-realtime-messages";
 
 interface InboxDetailsProps {
   message: InboxMessage | null;
 }
 
 export function InboxDetails({ message }: InboxDetailsProps) {
-  const [items, setItems] = useState<
-    {
-      id: string;
-      sender: "customer" | "business";
-      type: "text" | "image" | "video" | "document";
-      content: string;
-      created_at: string;
-      attachments?: { id: string; content_type: string }[];
-      delivered_at?: string | null;
-      read_at?: string | null;
-    }[]
-  >([]);
-  const [nextCursor, setNextCursor] = useState<string | null>(null);
-  const [text, setText] = useState("");
-  const [sending, setSending] = useState(false);
-  const [uploading, setUploading] = useState(false);
-  const pollRef = useRef<NodeJS.Timeout | null>(null);
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
-
   const threadId = message?.id ?? null;
+  const [text, setText] = useState("");
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const scrollRef = useRef<HTMLDivElement | null>(null);
+  const [attachments, setAttachments] = useState<File[]>([]);
 
-  const fetchMessages = async () => {
-    try {
-      const base = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
-      const res = await fetch(`${base}/communications/threads/${threadId}/messages?limit=50`, {
-        cache: "no-store",
-      });
-      const json = await res.json();
-      const mapped = Array.isArray(json?.items)
-        ? json.items.map((m: any) => ({
-            id: m.id,
-            sender: m.direction === "in" ? "customer" : "business",
-            type: (m.type as "text" | "image" | "video" | "document") || "text",
-            content: m.content || "",
-            created_at: m.created_at,
-            attachments: m.attachments || [],
-            delivered_at: m.delivered_at || null,
-            read_at: m.read_at || null,
-          }))
-        : [];
-      setItems(mapped);
-      setNextCursor(json?.nextCursor || null);
-    } catch {}
-  };
-
-  const loadOlder = async () => {
-    try {
-      if (!items.length) return;
-      const base = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
-      const before = encodeURIComponent(items[0].created_at);
-      const res = await fetch(
-        `${base}/communications/threads/${threadId}/messages?limit=50&before=${before}`,
-        { cache: "no-store" },
-      );
-      const json = await res.json();
-      const mapped = Array.isArray(json?.items)
-        ? json.items.map((m: any) => ({
-            id: m.id,
-            sender: m.direction === "in" ? "customer" : "business",
-            type: (m.type as "text" | "image" | "video" | "document") || "text",
-            content: m.content || "",
-            created_at: m.created_at,
-            attachments: m.attachments || [],
-            delivered_at: m.delivered_at || null,
-            read_at: m.read_at || null,
-          }))
-        : [];
-      setItems((prev) => [...mapped, ...prev]);
-      setNextCursor(json?.nextCursor || null);
-    } catch {}
-  };
+  const { messages, isLoading } = useRealtimeMessages(threadId);
+  const sendMessage = trpc.communications.messages.send.useMutation();
 
   const send = async () => {
+    if (!threadId) return;
+
+    // If we have attachments, upload and send them first (caption on first media if text provided)
+    if (attachments.length > 0) {
+      try {
+        setUploading(true);
+        const base = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+
+        for (let i = 0; i < attachments.length; i++) {
+          const file = attachments[i];
+          const mediaType = file.type.startsWith("image/")
+            ? "image"
+            : file.type.startsWith("video/")
+              ? "video"
+              : file.type.startsWith("audio/")
+                ? "audio"
+                : "document";
+
+          const form = new FormData();
+          form.append("file", file, file.name);
+
+          const upRes = await fetch(`${base}/communications/uploads`, {
+            method: "POST",
+            body: form,
+          });
+          if (!upRes.ok) {
+            const err = await upRes.json().catch(() => ({} as Record<string, unknown>));
+            throw new Error((err as any)?.error || `Upload failed (${upRes.status})`);
+          }
+          const upJson = (await upRes.json()) as {
+            path: string;
+            contentType?: string;
+            filename?: string;
+          };
+
+          const clientMessageId =
+            typeof crypto !== "undefined" && (crypto as any).randomUUID
+              ? (crypto as any).randomUUID()
+              : Math.random().toString(36).slice(2);
+
+          await fetch(`${base}/communications/threads/${threadId}/send-media`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              mediaPath: upJson.path,
+              mediaType,
+              filename: upJson.filename || file.name,
+              caption: i === 0 && text.trim() ? text.trim() : undefined,
+              clientMessageId,
+            }),
+          });
+        }
+
+        // Clear caption only if it was used as first-media caption and no standalone text message is needed
+        setText("");
+        setAttachments([]);
+        if (fileInputRef.current) fileInputRef.current.value = "";
+      } catch (err) {
+        console.error("Failed to send media:", err);
+      } finally {
+        setUploading(false);
+      }
+      return;
+    }
+
+    // Fallback: text-only message
     if (!text.trim()) return;
-    setSending(true);
     const clientMessageId =
       typeof crypto !== "undefined" && (crypto as any).randomUUID
         ? (crypto as any).randomUUID()
         : Math.random().toString(36).slice(2);
-    const base = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
-    await fetch(`${base}/communications/threads/${threadId}/send`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text, clientMessageId }),
-    });
-    setText("");
-    fetchMessages();
-    setSending(false);
+    try {
+      await sendMessage.mutateAsync({
+        threadId,
+        text: text.trim(),
+        clientMessageId,
+      });
+      setText("");
+    } catch (err) {
+      console.error("Failed to send message:", err);
+    }
   };
 
   const onPickFile = () => fileInputRef.current?.click();
 
-  const onFileChange: React.ChangeEventHandler<HTMLInputElement> = async (e) => {
-    try {
-      const file = e.target.files?.[0];
-      if (!file || !threadId) return;
-      setUploading(true);
-      const mediaType = file.type.startsWith("image/")
-        ? "image"
-        : file.type.startsWith("video/")
-          ? "video"
-          : file.type.startsWith("audio/")
-            ? "audio"
-            : "document";
-      const base = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
-      const form = new FormData();
-      form.append("file", file, file.name);
-      const upRes = await fetch(`${base}/communications/uploads`, {
-        method: "POST",
-        body: form,
-      });
-      if (!upRes.ok) {
-        const err = await upRes.json().catch(() => ({}));
-        throw new Error(err?.error || `Upload failed (${upRes.status})`);
-      }
-      const upJson = (await upRes.json()) as {
-        path: string;
-        contentType?: string;
-        filename?: string;
-      };
-      const path = upJson.path;
-      const safeName = upJson.filename || file.name;
-      const clientMessageId =
-        typeof crypto !== "undefined" && (crypto as any).randomUUID
-          ? (crypto as any).randomUUID()
-          : Math.random().toString(36).slice(2);
-      await fetch(`${base}/communications/threads/${threadId}/send-media`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          mediaPath: path,
-          mediaType,
-          filename: safeName,
-          caption: text || undefined,
-          clientMessageId,
-        }),
-      });
-      setText("");
-      fetchMessages();
-    } catch (err) {
-      // noop; could show toast
-    } finally {
-      setUploading(false);
-      if (fileInputRef.current) fileInputRef.current.value = "";
-    }
+  const onFileChange: React.ChangeEventHandler<HTMLInputElement> = (e) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+    setAttachments((prev) => [...prev, ...files]);
   };
-
-  useEffect(() => {
-    fetchMessages();
-    if (pollRef.current) clearInterval(pollRef.current);
-    pollRef.current = setInterval(fetchMessages, 2000);
-    return () => {
-      if (pollRef.current) clearInterval(pollRef.current);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [threadId]);
 
   const getInitials = (name: string) => {
     return name
@@ -182,6 +130,34 @@ export function InboxDetails({ message }: InboxDetailsProps) {
       .toUpperCase()
       .slice(0, 2);
   };
+
+  // Group messages by date
+  const groupedMessages = useMemo(() => {
+    const groups: { date: Date; messages: typeof messages }[] = [];
+    let currentGroup: { date: Date; messages: typeof messages } | null = null;
+
+    for (const msg of messages) {
+      if (!currentGroup || !isSameDay(currentGroup.date, msg.createdAt)) {
+        currentGroup = { date: msg.createdAt, messages: [] };
+        groups.push(currentGroup);
+      }
+      currentGroup.messages.push(msg);
+    }
+
+    return groups;
+  }, [messages]);
+
+  const formatDateSeparator = (date: Date) => {
+    if (isToday(date)) return "Today";
+    if (isYesterday(date)) return "Yesterday";
+    return format(date, "MMMM d, yyyy");
+  };
+
+  // Auto-scroll to bottom on messages change
+  useEffect(() => {
+    if (!scrollRef.current) return;
+    scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+  }, [messages.length, threadId]);
 
   return (
     <div className="flex h-full flex-col">
@@ -197,14 +173,16 @@ export function InboxDetails({ message }: InboxDetailsProps) {
               <div className="flex items-center gap-2">
                 <h3 className="font-semibold">{message.customerName}</h3>
                 {message.platform === "whatsapp" ? (
-                  <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                  <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 gap-1">
+                    <WhatsappLogo size={14} weight="duotone" />
                     WhatsApp
                   </Badge>
                 ) : (
                   <Badge
                     variant="outline"
-                    className="bg-gradient-to-r from-purple-50 to-pink-50 text-purple-700 border-purple-200"
+                    className="bg-gradient-to-r from-purple-50 to-pink-50 text-purple-700 border-purple-200 gap-1"
                   >
+                    <InstagramLogo size={14} weight="duotone" />
                     Instagram
                   </Badge>
                 )}
@@ -220,50 +198,99 @@ export function InboxDetails({ message }: InboxDetailsProps) {
       </div>
 
       {/* Messages */}
-      <ScrollArea className="flex-1 p-4" hideScrollbar>
-        <div className="space-y-4">
-          {nextCursor && (
-            <div className="flex justify-center">
-              <button className="text-xs text-primary underline" onClick={loadOlder}>
-                Load older
-              </button>
+      <ScrollArea className="flex-1 p-4" hideScrollbar ref={scrollRef}>
+        {isLoading ? (
+          <div className="flex justify-center py-8">
+            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary" />
+          </div>
+        ) : messages.length === 0 ? (
+          <div className="flex items-center justify-center h-full text-center text-muted-foreground">
+            <div className="space-y-2">
+              <p className="text-sm">No messages yet</p>
+              <p className="text-xs">Start the conversation by sending a message</p>
             </div>
-          )}
-          {items.map((msg) => (
-            <div
-              key={msg.id}
-              className={cn("flex", msg.sender === "customer" ? "justify-start" : "justify-end")}
-            >
-              <div
-                className={cn(
-                  "max-w-[70%] rounded-lg px-4 py-2",
-                  msg.sender === "customer" ? "bg-muted" : "bg-primary text-primary-foreground",
-                )}
-              >
-                {msg.type === "image" && msg.attachments && msg.attachments.length > 0 && (
-                  <div className="mb-2">
-                    <AttachmentPreview
-                      attachmentId={msg.attachments[0].id}
-                      contentType={msg.attachments[0].content_type}
-                    />
+          </div>
+        ) : (
+          <div className="space-y-6">
+            {groupedMessages.map((group, groupIndex) => (
+              <div key={groupIndex} className="space-y-4">
+                {/* Date Separator */}
+                <div className="flex items-center justify-center">
+                  <div className="bg-muted px-3 py-1 rounded-full text-xs text-muted-foreground">
+                    {formatDateSeparator(group.date)}
                   </div>
-                )}
-                <p className="text-sm">{msg.content}</p>
-                <div className="mt-1 flex items-center gap-1 text-xs opacity-70">
-                  <span>{format(new Date(msg.created_at), "HH:mm")}</span>
-                  {msg.sender === "business" && (
-                    <span>{msg.read_at ? "✓✓" : msg.delivered_at ? "✓✓" : "✓"}</span>
-                  )}
                 </div>
+
+                {/* Messages in this date group */}
+                {group.messages.map((msg, msgIndex) => {
+                  const prevMsg = msgIndex > 0 ? group.messages[msgIndex - 1] : null;
+                  const showAvatar = !prevMsg || prevMsg.direction !== msg.direction;
+
+                  return (
+                    <div
+                      key={msg.id}
+                      className={cn(
+                        "flex gap-2",
+                        msg.direction === "in" ? "justify-start" : "justify-end"
+                      )}
+                    >
+                      {msg.direction === "in" && showAvatar && (
+                        <Avatar className="h-8 w-8 mt-1">
+                          <AvatarImage src={message?.customerAvatar} />
+                          <AvatarFallback className="text-xs">
+                            {getInitials(message?.customerName || "?")}
+                          </AvatarFallback>
+                        </Avatar>
+                      )}
+                      {msg.direction === "in" && !showAvatar && <div className="w-8" />}
+
+                      <div
+                        className={cn(
+                          "max-w-[70%] rounded-lg px-4 py-2",
+                          msg.direction === "in"
+                            ? "bg-muted"
+                            : "bg-primary text-primary-foreground"
+                        )}
+                      >
+                        <p className="text-sm whitespace-pre-wrap break-words">{msg.content}</p>
+                        <div className="mt-1 flex items-center gap-1 text-xs opacity-70">
+                          <span>{format(msg.createdAt, "HH:mm")}</span>
+                          {msg.direction === "out" && (
+                            <span className="ml-1">
+                              {msg.readAt ? "✓✓" : msg.deliveredAt ? "✓" : "○"}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </ScrollArea>
 
       {/* Input Footer */}
       <TooltipProvider>
-        <div className="border-t p-4">
+        <div className="border-t p-4 space-y-2">
+          {attachments.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {attachments.map((file, idx) => (
+                <div key={idx} className="flex items-center gap-2 bg-muted px-3 py-1 rounded-md text-xs">
+                  <span className="truncate max-w-[200px]">{file.name}</span>
+                  <button
+                    type="button"
+                    onClick={() => setAttachments((prev) => prev.filter((_, i) => i !== idx))}
+                    className="text-muted-foreground hover:text-foreground"
+                    aria-label="Remove attachment"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
           <div className="flex items-center gap-2">
             <Tooltip>
               <TooltipTrigger asChild>
@@ -282,6 +309,7 @@ export function InboxDetails({ message }: InboxDetailsProps) {
                   <input
                     ref={fileInputRef}
                     type="file"
+                    multiple
                     className="hidden"
                     onChange={onFileChange}
                   />
@@ -301,7 +329,10 @@ export function InboxDetails({ message }: InboxDetailsProps) {
               value={text}
               onChange={(e) => setText(e.target.value)}
               onKeyDown={(e) => {
-                if (e.key === "Enter" && !e.shiftKey) {
+                if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
+                  e.preventDefault();
+                  send();
+                } else if (e.key === "Enter" && !e.shiftKey) {
                   e.preventDefault();
                   send();
                 }
@@ -310,7 +341,7 @@ export function InboxDetails({ message }: InboxDetailsProps) {
 
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button onClick={send} disabled={sending || uploading || !threadId}>
+                <Button onClick={send} disabled={sendMessage.isPending || uploading || !threadId}>
                   <Send className="h-4 w-4" />
                 </Button>
               </TooltipTrigger>
@@ -322,30 +353,5 @@ export function InboxDetails({ message }: InboxDetailsProps) {
         </div>
       </TooltipProvider>
     </div>
-  );
-}
-
-function AttachmentPreview({
-  attachmentId,
-  contentType,
-}: {
-  attachmentId: string;
-  contentType: string;
-}) {
-  const [url, setUrl] = useState<string | null>(null);
-  useEffect(() => {
-    const base = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
-    fetch(`${base}/communications/attachments/${attachmentId}/url`)
-      .then((r) => r.json())
-      .then((j) => setUrl(j?.url || null))
-      .catch(() => {});
-  }, [attachmentId]);
-  if (!url) return <div className="text-xs text-muted-foreground">Loading attachment…</div>;
-  if ((contentType || "").startsWith("image/"))
-    return <img src={url} alt="attachment" className="rounded max-w-full h-auto" />;
-  return (
-    <a href={url} target="_blank" rel="noreferrer" className="underline text-xs">
-      Download
-    </a>
   );
 }

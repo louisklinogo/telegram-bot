@@ -15,6 +15,9 @@ import { Switch } from "@/components/ui/switch";
 import { trpc } from "@/lib/trpc/client";
 import { Icons } from "@/components/ui/icons";
 import { useRouter } from "next/navigation";
+import { InputColor } from "./input-color";
+import { Combobox, type Option } from "@/components/ui/combobox";
+import { SubmitButton } from "@/components/ui/submit-button";
 
 type CategoryNode = {
   id: string;
@@ -94,6 +97,8 @@ export function CategoryEditSheet({ open, onOpenChange, id, categories = [] }: P
   };
 
   const flat = useMemo(() => flatten(categories), [categories]);
+  const currentNode = useMemo(() => (id ? findNode(categories, id) : null), [categories, id]);
+  const hasChildren = Boolean(currentNode && currentNode.children && currentNode.children.length > 0);
   const excludeIds = new Set<string>();
   if (id) {
     excludeIds.add(id);
@@ -102,10 +107,15 @@ export function CategoryEditSheet({ open, onOpenChange, id, categories = [] }: P
     if (node) gatherIds(node, excludeIds);
   }
 
+  const parentOptions: Option[] = useMemo(() => {
+    const flat = flatten(categories);
+    return flat.map((opt) => ({ id: opt.id, name: `${"\u00A0".repeat(opt.depth * 2)}${opt.name}` }));
+  }, [categories]);
+
   return (
     <Sheet open={open} onOpenChange={(o) => onOpenChange(o)}>
-      <SheetContent>
-        <SheetHeader className="mb-6 flex items-center justify-between flex-row">
+      <SheetContent className="flex flex-col overflow-hidden p-0">
+        <SheetHeader className="px-6 pt-6 pb-2 flex items-center justify-between flex-row">
           <h2 className="text-xl">Edit Category</h2>
           <div className="flex items-center gap-2">
             {id && (
@@ -134,109 +144,85 @@ export function CategoryEditSheet({ open, onOpenChange, id, categories = [] }: P
           </div>
         </SheetHeader>
 
-        <div className="flex flex-col space-y-4">
-          <div className="space-y-1">
-            <label className="text-xs text-muted-foreground">Name</label>
-            <div className="flex items-center gap-2">
-              <input
-                type="color"
-                value={color}
-                onChange={(e) => setColor(e.target.value)}
-                className="h-9 w-9 rounded border p-0"
-                aria-label="Pick color"
-              />
-              <Input
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Category name"
-              />
-            </div>
-          </div>
-
-          <div className="space-y-1">
-            <label className="text-xs text-muted-foreground">Parent</label>
-            <Select
-              value={selectedParent ?? ""}
-              onValueChange={(v) => setSelectedParent(v || undefined)}
-              disabled={Boolean((data as any)?.system)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="No parent" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="">No parent</SelectItem>
-                {flat
-                  .filter((o) => !excludeIds.has(o.id))
-                  .map((opt) => (
-                    <SelectItem key={opt.id} value={opt.id}>
-                      {"".padStart(opt.depth * 2, "\u00A0")}
-                      {opt.name}
-                    </SelectItem>
-                  ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-1">
-            <label className="text-xs text-muted-foreground">Description</label>
-            <Input
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Optional"
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
+        <div className="flex flex-col flex-1 min-h-0">
+          <div className="flex-1 overflow-y-auto scrollbar-hide px-6 py-4 space-y-4">
             <div className="space-y-1">
-              <label className="text-xs text-muted-foreground">Tax Type</label>
-              <Select value={taxType ?? ""} onValueChange={(v) => setTaxType(v || undefined)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select tax type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="">None</SelectItem>
-                  <SelectItem value="vat">VAT</SelectItem>
-                  <SelectItem value="gst">GST</SelectItem>
-                  <SelectItem value="sales_tax">Sales Tax</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1">
-              <label className="text-xs text-muted-foreground">Tax Rate (%)</label>
-              <Input
-                value={taxRate}
-                onChange={(e) => setTaxRate(e.target.value)}
-                placeholder="e.g. 25"
+              <label className="text-xs text-muted-foreground">Name</label>
+              <InputColor
+                name={name}
+                color={color}
+                placeholder="Name"
+                onChange={({ name: n, color: c }) => {
+                  setName(n);
+                  setColor(c);
+                }}
               />
             </div>
-          </div>
 
-          <div className="space-y-1">
-            <label className="text-xs text-muted-foreground">Report Code</label>
-            <Input
-              value={taxReportingCode}
-              onChange={(e) => setTaxReportingCode(e.target.value)}
-              placeholder="Optional"
-            />
-          </div>
+            <div className="space-y-1">
+              <label className="text-xs text-muted-foreground">Parent Category (Optional)</label>
+              {hasChildren ? (
+                <div className="flex items-center space-x-2 p-3 py-2 border border-border bg-muted/50">
+                  <span className="text-sm text-muted-foreground">Cannot change parent - this category has children</span>
+                </div>
+              ) : (
+                <Combobox
+                  options={parentOptions.filter((o) => !excludeIds.has(o.id))}
+                  value={parentOptions.find((o) => o.id === selectedParent)}
+                  onSelect={(opt) => setSelectedParent(opt?.id)}
+                  onRemove={() => setSelectedParent(undefined)}
+                  placeholder="Select parent category"
+                  disabled={Boolean((data as any)?.system)}
+                  showIcon={false}
+                />
+              )}
+            </div>
 
-          <div className="flex items-center justify-between border p-3 mt-2">
-            <div>
-              <div className="text-xs text-muted-foreground">Exclude from reports</div>
-              <div className="text-xs text-muted-foreground">
-                Transactions in this category won't appear in reports
+            <div className="space-y-1">
+              <label className="text-xs text-muted-foreground">Description</label>
+              <Input value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Description" />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <label className="text-xs text-muted-foreground">Tax Type</label>
+                <Select value={taxType ?? "none"} onValueChange={(v) => setTaxType(v === "none" ? undefined : v)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select tax type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Custom Tax</SelectItem>
+                    <SelectItem value="vat">VAT</SelectItem>
+                    <SelectItem value="gst">GST</SelectItem>
+                    <SelectItem value="sales_tax">Sales Tax</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs text-muted-foreground">Tax Rate</label>
+                <Input value={taxRate} onChange={(e) => setTaxRate(e.target.value)} placeholder="Tax Rate" />
               </div>
             </div>
-            <Switch checked={excluded} onCheckedChange={setExcluded} />
+            <div className="text-xs text-muted-foreground">For unsupported or internal tax logic.</div>
+
+            <div className="space-y-1">
+              <label className="text-xs text-muted-foreground">Report Code</label>
+              <Input value={taxReportingCode} onChange={(e) => setTaxReportingCode(e.target.value)} placeholder="Report Code" />
+            </div>
+
+            <div className="border border-border p-3 mt-2 pt-1.5 flex items-center justify-between">
+              <div>
+                <div className="text-xs text-muted-foreground">Exclude from Reports</div>
+                <div className="text-xs text-muted-foreground">Transactions in this category won't appear in financial reports</div>
+              </div>
+              <Switch checked={excluded} onCheckedChange={setExcluded} />
+            </div>
           </div>
 
-          <div className="pt-2 flex items-center justify-end gap-2">
-            <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isPending}>
-              Cancel
-            </Button>
-            <Button onClick={submit} disabled={!name.trim() || isPending}>
-              {isPending ? "Saving…" : "Save"}
-            </Button>
+          <div className="mt-auto sticky bottom-0 bg-background px-6 py-4 border-t z-10">
+            <SubmitButton onClick={submit} disabled={!name.trim()} isSubmitting={isPending} className="w-full">
+              Update
+            </SubmitButton>
           </div>
         </div>
       </SheetContent>

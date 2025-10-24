@@ -1,6 +1,7 @@
 import { Search, Settings } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { KeyboardShortcutsHelp } from "./keyboard-shortcuts-help";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -15,6 +16,8 @@ interface InboxHeaderProps {
   onSearchChange: (query: string) => void;
   platformFilter: "all" | "whatsapp" | "instagram";
   onPlatformFilterChange: (filter: "all" | "whatsapp" | "instagram") => void;
+  statusFilter: "open" | "pending" | "resolved" | "snoozed";
+  onStatusFilterChange: (status: "open" | "pending" | "resolved" | "snoozed") => void;
 }
 
 export function InboxHeader({
@@ -22,6 +25,8 @@ export function InboxHeader({
   onSearchChange,
   platformFilter,
   onPlatformFilterChange,
+  statusFilter,
+  onStatusFilterChange,
 }: InboxHeaderProps) {
   return (
     <div className="flex items-center justify-between gap-4 border-b p-4">
@@ -35,6 +40,23 @@ export function InboxHeader({
             className="pl-9"
           />
         </div>
+
+        <Select
+          value={statusFilter}
+          onValueChange={(value) =>
+            onStatusFilterChange(value as "open" | "pending" | "resolved" | "snoozed")
+          }
+        >
+          <SelectTrigger className="w-[140px]">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="open">Open</SelectItem>
+            <SelectItem value="pending">Pending</SelectItem>
+            <SelectItem value="resolved">Resolved</SelectItem>
+            <SelectItem value="snoozed">Snoozed</SelectItem>
+          </SelectContent>
+        </Select>
 
         <Select
           value={platformFilter}
@@ -53,11 +75,14 @@ export function InboxHeader({
         </Select>
       </div>
 
-      <Link href="/inbox/settings">
-        <Button variant="outline" size="icon">
-          <Settings className="h-4 w-4" />
-        </Button>
-      </Link>
+      <div className="flex items-center gap-2">
+        <KeyboardShortcutsHelp />
+        <Link href="/inbox/settings">
+          <Button variant="outline" size="icon">
+            <Settings className="h-4 w-4" />
+          </Button>
+        </Link>
+      </div>
     </div>
   );
 }

@@ -6,27 +6,26 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { useMemo, useState } from "react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-  DropdownMenuCheckboxItem,
 } from "@/components/ui/dropdown-menu";
 import { formatAmount } from "@/lib/format-currency";
-import { trpc } from "@/lib/trpc/client";
+import type { RouterOutputs } from "@Faworra/api/trpc/routers/_app";
+import { TagsCell } from "./tags-cell";
 
 export type TransactionRow = {
   transaction: {
     id: string;
     date: string | Date;
-    description: string;
+    description: string | null;
     paymentReference?: string | null;
     type: "payment" | "expense" | "refund" | "adjustment";
-    status: "pending" | "completed" | "failed" | "cancelled";
-    amount: number;
+    status: "pending" | "completed" | "failed" | "cancelled" | null;
+    amount: number | string;
     categorySlug?: string | null;
     paymentMethod?: string | null;
     excludeFromAnalytics?: boolean | null;
@@ -55,11 +54,12 @@ type ColumnContext = {
   onToggleSelection: (id: string) => void;
   onViewDetails: (row: TransactionRow) => void;
   onCopyUrl: (id: string) => void;
-  onToggleStatus: (id: string, status: string) => void;
+  onToggleStatus: (id: string, status: NonNullable<TransactionRow["transaction"]["status"]>) => void;
   onToggleExclude: (id: string, exclude: boolean) => void;
   onVoid: (id: string) => void;
   onUnvoid: (id: string) => void;
   onDelete: (id: string) => void;
+  onMenuOpenChange?: (open: boolean) => void;
 };
 
 export function createTransactionColumns(context: ColumnContext): ColumnDef<TransactionRow>[] {
@@ -185,7 +185,7 @@ export function createTransactionColumns(context: ColumnContext): ColumnDef<Tran
       id: "status",
       header: "Status",
       cell: ({ row }) => {
-        const s = row.original.transaction.status;
+        const s = row.original.transaction.status ?? "pending";
         const enriching = s === "pending" && row.original.transaction.enrichmentCompleted === false;
         const label = s.charAt(0).toUpperCase() + s.slice(1);
         const cls =
@@ -197,21 +197,24 @@ export function createTransactionColumns(context: ColumnContext): ColumnDef<Tran
                 ? "bg-red-100 text-red-700 border-red-200"
                 : "bg-slate-100 text-slate-700 border-slate-200"; // cancelled
         return (
-          <div className="flex items-center gap-2">
-            <Badge
-              variant="outline"
-              className={"rounded-full px-2.5 py-0.5 text-xs font-medium " + cls}
-            >
-              {label}
-            </Badge>
-            {enriching && (
+          <Badge
+            variant="outline"
+            className={
+              "rounded-full px-2.5 py-0.5 text-xs font-medium inline-flex items-center gap-1.5 " +
+              cls
+            }
+          >
+            {s === "completed" && (
+              <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-green-500" />
+            )}
+            {s === "pending" && (
               <span
-                aria-label="Enriching..."
-                title="Enriching..."
-                className="h-2 w-2 rounded-full bg-amber-500 animate-pulse"
+                aria-hidden
+                className={"h-1.5 w-1.5 rounded-full bg-amber-500 " + (enriching ? "animate-pulse" : "")}
               />
             )}
-          </div>
+            {label}
+          </Badge>
         );
       },
     },
@@ -221,13 +224,11 @@ export function createTransactionColumns(context: ColumnContext): ColumnDef<Tran
       header: "Origin",
       cell: ({ row }) => {
         const isManual = !!row.original.transaction.manual;
-        const cls = isManual
-          ? "bg-slate-100 text-slate-700 border-slate-200"
-          : "bg-zinc-100 text-zinc-700 border-zinc-200";
+        const textCls = isManual ? "text-slate-700" : "text-[#878787]";
         return (
-          <Badge variant="outline" className={cls}>
+          <span className={"border border-border rounded-full py-1 px-2 text-[10px] font-mono " + textCls}>
             {isManual ? "Manual" : "System"}
-          </Badge>
+          </span>
         );
       },
     },
@@ -261,7 +262,10 @@ export function createTransactionColumns(context: ColumnContext): ColumnDef<Tran
       id: "tags",
       header: "Tags",
       cell: ({ row }) => (
-        <TagsCell transactionId={row.original.transaction.id} initialTags={row.original.tags ?? []} />
+        <TagsCell 
+          transactionId={row.original.transaction.id} 
+          initialTags={row.original.tags ?? []} 
+        />
       ),
     },
     {
@@ -278,7 +282,7 @@ export function createTransactionColumns(context: ColumnContext): ColumnDef<Tran
                 type === "payment" ? "text-green-600" : type === "expense" ? "text-red-600" : ""
               }
             >
-              {formatAmount({ currency: context.currencyCode, amount })}
+              {formatAmount({ currency: context.currencyCode, amount: Number(amount) })}
             </span>
           </div>
         );
@@ -293,44 +297,45 @@ export function createTransactionColumns(context: ColumnContext): ColumnDef<Tran
         const isCompleted = transaction.status === "completed";
 
         return (
-          <DropdownMenu>
+          <DropdownMenu onOpenChange={context.onMenuOpenChange}
+          >
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm">
+              <Button variant="ghost" size="sm" data-row-click-exempt>
                 <MoreHorizontal className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-[180px]">
-              <DropdownMenuItem onClick={() => context.onViewDetails(row.original)}>
+            <DropdownMenuContent forceMount align="end" className="w-[180px]" onCloseAutoFocus={(e) => e.preventDefault()}>
+              <DropdownMenuItem onSelect={() => setTimeout(() => context.onViewDetails(row.original), 0)}>
                 View details
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => context.onViewDetails(row.original)}>
+              <DropdownMenuItem onSelect={() => setTimeout(() => context.onViewDetails(row.original), 0)}>
                 Edit tags…
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => context.onCopyUrl(transaction.id)}>
+              <DropdownMenuItem onSelect={() => setTimeout(() => context.onCopyUrl(transaction.id), 0)}>
                 Copy share URL
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem
-                onClick={() =>
-                  context.onToggleStatus(transaction.id, isCompleted ? "pending" : "completed")
+                onSelect={() =>
+                  setTimeout(() => context.onToggleStatus(transaction.id, isCompleted ? "pending" : "completed"), 0)
                 }
               >
                 Mark as {isCompleted ? "uncompleted" : "completed"}
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => context.onVoid(transaction.id)}>
+              <DropdownMenuItem onSelect={() => setTimeout(() => context.onVoid(transaction.id), 0)}>
                 Void
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => context.onUnvoid(transaction.id)}>
+              <DropdownMenuItem onSelect={() => setTimeout(() => context.onUnvoid(transaction.id), 0)}>
                 Unvoid
               </DropdownMenuItem>
               <DropdownMenuItem
-                onClick={() => context.onToggleExclude(transaction.id, !isExcluded)}
+                onSelect={() => setTimeout(() => context.onToggleExclude(transaction.id, !isExcluded), 0)}
               >
                 {isExcluded ? "Include" : "Exclude"} from analytics
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem
-                onClick={() => context.onDelete(transaction.id)}
+                onSelect={() => setTimeout(() => context.onDelete(transaction.id), 0)}
                 className="text-destructive"
                 disabled={!transaction.manual}
               >
@@ -345,81 +350,3 @@ export function createTransactionColumns(context: ColumnContext): ColumnDef<Tran
   ];
 }
 
-type Tag = { id: string; name: string; color: string | null };
-
-function TagsCell({ transactionId, initialTags }: { transactionId: string; initialTags: Tag[] }) {
-  const utils = trpc.useUtils();
-  const { data: allTags = [] } = trpc.tags.list.useQuery();
-  const [local, setLocal] = useState<Set<string>>(() => new Set(initialTags.map((t) => t.id)));
-
-  const addTag = trpc.transactionTags.add.useMutation({
-    onSuccess: async () => {
-      await utils.transactions.enrichedList.invalidate();
-    },
-  });
-  const removeTag = trpc.transactionTags.remove.useMutation({
-    onSuccess: async () => {
-      await utils.transactions.enrichedList.invalidate();
-    },
-  });
-
-  const selectedTags = useMemo(
-    () => allTags.filter((t: any) => local.has(t.id)),
-    [allTags, local],
-  );
-
-  const toggle = (tagId: string) => {
-    setLocal((prev) => {
-      const next = new Set(prev);
-      if (next.has(tagId)) {
-        next.delete(tagId);
-        removeTag.mutate({ transactionId, tagId });
-      } else {
-        next.add(tagId);
-        addTag.mutate({ transactionId, tagId });
-      }
-      return next;
-    });
-  };
-
-  return (
-    <div className="flex items-center gap-1 max-w-[260px]">
-      <div className="flex flex-wrap gap-1">
-        {selectedTags.length ? (
-          selectedTags.map((t: any) => (
-            <span
-              key={t.id}
-              className="px-1.5 py-0.5 rounded text-[10px] border"
-              style={t.color ? { backgroundColor: `${t.color}15`, borderColor: `${t.color}55` } : undefined}
-            >
-              {t.name}
-            </span>
-          ))
-        ) : (
-          <span className="text-sm text-muted-foreground">-</span>
-        )}
-      </div>
-      {allTags.length > 0 && (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="sm" className="h-6 px-1">
-              Edit
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="start" className="p-1 max-h-[300px] overflow-auto">
-            {allTags.map((t: any) => (
-              <DropdownMenuCheckboxItem
-                key={t.id}
-                checked={local.has(t.id)}
-                onCheckedChange={() => toggle(t.id)}
-                className="capitalize"
-              >
-                {t.name}
-              </DropdownMenuCheckboxItem>
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
-      )}
-    </div>
-  );
-}

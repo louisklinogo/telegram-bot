@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { useMemo, useState } from "react";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -15,6 +15,13 @@ import { Switch } from "@/components/ui/switch";
 import { trpc } from "@/lib/trpc/client";
 import { Icons } from "@/components/ui/icons";
 import { useRouter } from "next/navigation";
+import { InputColor } from "./input-color";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { SubmitButton } from "@/components/ui/submit-button";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Combobox, type Option } from "@/components/ui/combobox";
 
 type CategoryNode = {
   id: string;
@@ -29,6 +36,7 @@ type Props = {
   onOpenChange: (open: boolean) => void;
   parentId?: string | null;
   categories?: CategoryNode[];
+  defaultTaxType?: string;
 };
 
 export function CategoryCreateSheet({
@@ -36,158 +44,240 @@ export function CategoryCreateSheet({
   onOpenChange,
   parentId = null,
   categories = [],
+  defaultTaxType = "",
 }: Props) {
   const utils = trpc.useUtils();
   const router = useRouter();
-  const [name, setName] = useState("");
-  const [color, setColor] = useState<string>("#8B5CF6");
-  const [description, setDescription] = useState("");
-  const [selectedParent, setSelectedParent] = useState<string | undefined>(parentId ?? undefined);
-  const [taxType, setTaxType] = useState<string | undefined>(undefined);
-  const [taxRate, setTaxRate] = useState<string>("");
-  const [taxReportingCode, setTaxReportingCode] = useState("");
-  const [excluded, setExcluded] = useState(false);
+
+  const formSchema = z.object({
+    name: z.string().min(1, "Name is required"),
+    color: z.string(),
+    description: z.string().optional(),
+    parentId: z.string().uuid().optional(),
+    taxType: z.enum(["vat", "gst", "sales_tax"]).optional(),
+    taxRate: z.union([z.string(), z.number()]).optional(),
+    taxReportingCode: z.string().optional(),
+    excluded: z.boolean().optional(),
+  });
+
+  type FormValues = z.infer<typeof formSchema>;
+
+  const form = useForm<FormValues>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      name: "",
+      color: "#8B5CF6",
+      description: "",
+      parentId: parentId ?? undefined,
+      taxType: undefined,
+      taxRate: "",
+      taxReportingCode: "",
+      excluded: false,
+    },
+  });
 
   const { mutateAsync, isPending } = trpc.transactionCategories.create.useMutation({
     onSuccess: async () => {
       await utils.transactionCategories.list.invalidate();
       onOpenChange(false);
-      setName("");
       router.refresh();
+      form.reset();
     },
   });
 
-  const submit = async () => {
-    if (!name.trim()) return;
+  const onSubmit = async (values: FormValues) => {
     await mutateAsync({
-      name: name.trim(),
-      color,
-      description: description || undefined,
-      parentId: selectedParent,
-      taxType: taxType || undefined,
-      taxRate: taxRate || undefined,
-      taxReportingCode: taxReportingCode || undefined,
-      excluded,
+      name: values.name.trim(),
+      color: values.color,
+      description: values.description || undefined,
+      parentId: values.parentId,
+      taxType: values.taxType || undefined,
+      taxRate: values.taxRate ? String(values.taxRate) : undefined,
+      taxReportingCode: values.taxReportingCode || undefined,
+      excluded: Boolean(values.excluded),
     } as any);
   };
 
-  const flatOptions = flatten(categories).filter((o) => true);
+  const flatOptions = useMemo(() => flatten(categories), [categories]);
+  const parentOptions: Option[] = useMemo(
+    () =>
+      flatOptions.map((opt) => ({
+        id: opt.id,
+        name: `${"\u00A0".repeat(opt.depth * 2)}${opt.name}`,
+      })),
+    [flatOptions],
+  );
 
   return (
     <Sheet open={open} onOpenChange={(o) => onOpenChange(o)}>
       <SheetContent className="flex flex-col overflow-hidden p-0">
-        <SheetHeader className="px-6 pt-6 pb-0 flex-shrink-0">
-          <SheetTitle className="text-xl">Create Category</SheetTitle>
-        </SheetHeader>
+        <div className="px-6 pt-6 pb-2 flex-shrink-0 flex flex-row items-center justify-between">
+          <h2 className="text-base font-semibold">Create Category</h2>
+          <Button
+            size="icon"
+            variant="ghost"
+            onClick={() => onOpenChange(false)}
+            className="p-0 m-0 size-auto hover:bg-transparent"
+            aria-label="Close"
+          >
+            <Icons.Close className="size-5" />
+          </Button>
+        </div>
 
-        <div className="flex-1 overflow-y-auto scrollbar-hide px-6 py-4">
-          <div className="flex flex-col space-y-4">
-          <div className="space-y-1">
-            <label className="text-xs text-muted-foreground">Name</label>
-            <div className="flex items-center gap-2">
-              <input
-                type="color"
-                value={color}
-                onChange={(e) => setColor(e.target.value)}
-                className="h-9 w-9 rounded border p-0"
-                aria-label="Pick color"
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col flex-1 min-h-0">
+            <div className="flex-1 overflow-y-auto scrollbar-hide px-6 py-4 space-y-4">
+              <FormField
+                control={form.control}
+                name="name"
+                render={() => (
+                  <FormItem className="space-y-1">
+                    <FormLabel className="text-xs text-muted-foreground">Name</FormLabel>
+                    <FormControl>
+                      <InputColor
+                        name={form.watch("name")}
+                        color={form.watch("color")}
+                        placeholder="Name"
+                        onChange={({ name, color }) => {
+                          form.setValue("name", name, { shouldValidate: true });
+                          form.setValue("color", color);
+                        }}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-              <Input
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="e.g. Utilities, Sales"
+
+              <FormField
+                control={form.control}
+                name="parentId"
+                render={({ field }) => (
+                  <FormItem className="space-y-1">
+                    <FormLabel className="text-xs text-muted-foreground">Parent Category (Optional)</FormLabel>
+                    <FormControl>
+                      <Combobox
+                        options={parentOptions}
+                        value={parentOptions.find((o) => o.id === field.value)}
+                        onSelect={(opt) => field.onChange(opt?.id)}
+                        onRemove={() => field.onChange(undefined)}
+                        placeholder="Select parent category"
+                        showIcon={false}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-            </div>
-          </div>
 
-          <div className="space-y-1">
-            <label className="text-xs text-muted-foreground">Parent (optional)</label>
-            <Select
-              value={selectedParent ?? ""}
-              onValueChange={(v) => setSelectedParent(v || undefined)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="No parent" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="">No parent</SelectItem>
-                {flatOptions.map((opt) => (
-                  <SelectItem key={opt.id} value={opt.id}>
-                    {"".padStart(opt.depth * 2, "\u00A0")}
-                    {opt.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-1">
-            <label className="text-xs text-muted-foreground">Description</label>
-            <Input
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Optional"
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1">
-              <label className="text-xs text-muted-foreground">Tax Type</label>
-              <Select value={taxType ?? ""} onValueChange={(v) => setTaxType(v || undefined)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select tax type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="">None</SelectItem>
-                  <SelectItem value="vat">VAT</SelectItem>
-                  <SelectItem value="gst">GST</SelectItem>
-                  <SelectItem value="sales_tax">Sales Tax</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1">
-              <label className="text-xs text-muted-foreground">Tax Rate (%)</label>
-              <Input
-                value={taxRate}
-                onChange={(e) => setTaxRate(e.target.value)}
-                placeholder="e.g. 25"
+              <FormField
+                control={form.control}
+                name="description"
+                render={({ field }) => (
+                  <FormItem className="space-y-1">
+                    <FormLabel className="text-xs text-muted-foreground">Description</FormLabel>
+                    <FormControl>
+                      <Input {...field} placeholder="Description" />
+                    </FormControl>
+                  </FormItem>
+                )}
               />
-            </div>
-          </div>
 
-          <div className="space-y-1">
-            <label className="text-xs text-muted-foreground">Report Code</label>
-            <Input
-              value={taxReportingCode}
-              onChange={(e) => setTaxReportingCode(e.target.value)}
-              placeholder="Optional"
-            />
-          </div>
+              <div className="grid grid-cols-2 gap-3">
+                <FormField
+                  control={form.control}
+                  name="taxType"
+                  render={({ field }) => (
+                    <FormItem className="space-y-1">
+                      <FormLabel className="text-xs text-muted-foreground">Tax Type</FormLabel>
+                      <FormControl>
+                        <Select
+                          value={field.value ?? "none"}
+                          onValueChange={(v) => field.onChange(v === "none" ? undefined : v)}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select tax type" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="none">Custom Tax</SelectItem>
+                            <SelectItem value="vat">VAT</SelectItem>
+                            <SelectItem value="gst">GST</SelectItem>
+                            <SelectItem value="sales_tax">Sales Tax</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
 
-            <div className="flex items-center justify-between border p-3 mt-2">
-              <div>
-                <div className="text-xs text-muted-foreground">Exclude from reports</div>
-                <div className="text-xs text-muted-foreground">
-                  Transactions in this category won't appear in reports
-                </div>
+                <FormField
+                  control={form.control}
+                  name="taxRate"
+                  render={({ field }) => (
+                    <FormItem className="space-y-1">
+                      <FormLabel className="text-xs text-muted-foreground">Tax Rate</FormLabel>
+                      <FormControl>
+                        <Input
+                          value={(field.value as any) ?? ""}
+                          onChange={(e) => field.onChange(e.target.value)}
+                          placeholder="Tax Rate"
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
               </div>
-              <Switch checked={excluded} onCheckedChange={setExcluded} />
-            </div>
-          </div>
-        </div>
+              <div className="text-xs text-muted-foreground">For unsupported or internal tax logic.</div>
 
-        <div className="flex-shrink-0 flex justify-end gap-4 px-6 py-4 border-t">
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isPending}>
-            Cancel
-          </Button>
-          <Button onClick={submit} disabled={!name.trim() || isPending}>
-            {isPending ? "Creating…" : "Create"}
-          </Button>
-        </div>
+              <FormField
+                control={form.control}
+                name="taxReportingCode"
+                render={({ field }) => (
+                  <FormItem className="space-y-1">
+                    <FormLabel className="text-xs text-muted-foreground">Report Code</FormLabel>
+                    <FormControl>
+                      <Input {...field} placeholder="Report Code" />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="excluded"
+                render={({ field }) => (
+                  <FormItem className="space-y-1">
+                    <div className="border border-border p-3 mt-2 pt-1.5">
+                      <div className="flex items-center justify-between space-x-2">
+                        <div className="space-y-0.5">
+                          <FormLabel className="text-xs text-muted-foreground">Exclude from Reports</FormLabel>
+                          <div className="text-xs text-muted-foreground">
+                            Transactions in this category won't appear in financial reports
+                          </div>
+                        </div>
+                        <FormControl>
+                          <Switch checked={field.value ?? false} onCheckedChange={field.onChange} />
+                        </FormControl>
+                      </div>
+                    </div>
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <div className="mt-auto sticky bottom-0 bg-background px-6 py-4 border-t z-10">
+              <SubmitButton type="submit" className="w-full" isSubmitting={isPending}>
+                Create
+              </SubmitButton>
+            </div>
+          </form>
+        </Form>
       </SheetContent>
     </Sheet>
   );
 }
+
+// removed dynamic tax helper in favor of Midday-style static copy
 
 function flatten(nodes: CategoryNode[], depth = 0): Array<CategoryNode & { depth: number }> {
   const out: Array<CategoryNode & { depth: number }> = [];

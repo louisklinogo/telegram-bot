@@ -2,7 +2,7 @@
 
 import { ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { InstagramLogo } from "./assets/instagram-logo";
 
 interface InstagramModalProps {
@@ -19,6 +19,9 @@ export function InstagramModal({ isOpen, onClose }: InstagramModalProps) {
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Connect Instagram</DialogTitle>
+        </DialogHeader>
         <div className="flex flex-col items-center space-y-6 p-8 pt-10">
           <div className="flex flex-col items-center space-y-4">
             <div className="scale-150">
