@@ -48,15 +48,18 @@ export async function getTransactionStats(db: DbClient, params: { teamId: string
     completed_transactions: number | null;
   }>`
     SELECT 
-      COALESCE(SUM(CASE WHEN type = 'payment' AND status = 'completed' AND exclude_from_analytics IS NOT TRUE THEN amount ELSE 0 END), 0) AS total_income,
-      COALESCE(SUM(CASE WHEN type = 'expense' AND status = 'completed' AND exclude_from_analytics IS NOT TRUE THEN amount ELSE 0 END), 0) AS total_expenses,
-      COALESCE(SUM(CASE WHEN type = 'payment' AND status = 'pending' AND exclude_from_analytics IS NOT TRUE THEN amount ELSE 0 END), 0) AS pending_payments,
-      COUNT(*) FILTER (WHERE status = 'completed') AS completed_transactions
-    FROM transactions
-    WHERE team_id = ${teamId}
-      AND deleted_at IS NULL
-      ${startStr ? sql`AND date >= ${startStr}` : sql``}
-      ${endStr ? sql`AND date <= ${endStr}` : sql``}
+      COALESCE(SUM(CASE WHEN t.type = 'payment' AND t.status = 'completed' AND t.exclude_from_analytics IS NOT TRUE THEN t.amount ELSE 0 END), 0) AS total_income,
+      COALESCE(SUM(CASE WHEN t.type = 'expense' AND t.status = 'completed' AND t.exclude_from_analytics IS NOT TRUE THEN t.amount ELSE 0 END), 0) AS total_expenses,
+      COALESCE(SUM(CASE WHEN t.type = 'payment' AND t.status = 'pending' AND t.exclude_from_analytics IS NOT TRUE THEN t.amount ELSE 0 END), 0) AS pending_payments,
+      COUNT(*) FILTER (WHERE t.status = 'completed') AS completed_transactions
+    FROM transactions t
+    LEFT JOIN transaction_categories c
+      ON c.team_id = t.team_id AND c.slug = t.category_slug
+    WHERE t.team_id = ${teamId}
+      AND t.deleted_at IS NULL
+      ${startStr ? sql`AND t.date >= ${startStr}` : sql``}
+      ${endStr ? sql`AND t.date <= ${endStr}` : sql``}
+      AND (c.id IS NULL OR c.excluded IS NOT TRUE)
   `);
 
   const row = res?.rows?.[0] ||
@@ -105,6 +108,8 @@ export async function getSpendingByCategory(
         eq(transactions.type, "expense" as any),
         eq(transactions.status, "completed" as any),
         sql`${transactions.excludeFromAnalytics} IS NOT TRUE`,
+        // Exclude categories marked as excluded; keep uncategorized
+        or(isNull(transactionCategories.id), eq(transactionCategories.excluded, false)),
         startStr ? gte(transactions.date, startStr as any) : sql`true`,
         endStr ? lte(transactions.date, endStr as any) : sql`true`,
       ),

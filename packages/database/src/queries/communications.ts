@@ -5,6 +5,7 @@ import {
   communicationMessages,
   communicationAccounts,
   clients,
+  leads,
 } from "../schema";
 
 /**
@@ -46,10 +47,15 @@ export async function getThreadsByStatus(
       thread: communicationThreads,
       account: communicationAccounts,
       client: clients,
+      lead: leads,
     })
     .from(communicationThreads)
     .leftJoin(communicationAccounts, eq(communicationThreads.accountId, communicationAccounts.id))
     .leftJoin(clients, eq(communicationThreads.customerId, clients.id))
+    .leftJoin(
+      leads,
+      and(eq(leads.teamId, communicationThreads.teamId), eq(leads.threadId, communicationThreads.id)),
+    )
     .where(
       cursor?.lastMessageAt
         ? and(

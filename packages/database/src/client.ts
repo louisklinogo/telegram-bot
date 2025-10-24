@@ -33,19 +33,17 @@ const client = postgres(connectionString, {
 // Create drizzle instance with schema and a before/after query hook
 export const db = drizzle(client, {
   schema,
-  logger: (process.env.DB_LOG_QUERIES === '1')
-    ? {
-        logQuery(query, params) {
-          try {
-            const text = Array.isArray(query) ? query.join(' ') : String(query);
-            addQueryLog({ sql: text, ms: 0 });
-            if (process.env.NODE_ENV === 'development') {
-              console.debug(`[db] ${text.slice(0, 500)}${params?.length ? ` :: [${params.length}]` : ''}`);
-            }
-          } catch {}
-        },
-      }
-    : undefined,
+  logger: {
+    logQuery(query, params) {
+      try {
+        const text = Array.isArray(query) ? query.join(' ') : String(query);
+        addQueryLog({ sql: text, ms: 0 });
+        if (process.env.DB_LOG_QUERIES === '1') {
+          console.debug(`[db] ${text.slice(0, 500)}${params?.length ? ` :: [${params.length}]` : ''}`);
+        }
+      } catch {}
+    },
+  },
 });
 
 export type DbClient = typeof db;

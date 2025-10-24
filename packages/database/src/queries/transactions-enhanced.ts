@@ -1,4 +1,4 @@
-import { and, desc, eq, isNull, sql, lt, or, gte, lte, inArray, ilike } from "drizzle-orm";
+import { and, desc, eq, isNull, sql, lt, or, gte, lte, inArray } from "drizzle-orm";
 import type { DbClient } from "../client";
 import {
   transactions,

@@ -18,3 +18,5 @@ export * from "./transaction-categories";
 export * from "./tags";
 export * from "./financial-accounts";
 export * from "./products";
+export * from "./product-categories";
+export * from "./leads";

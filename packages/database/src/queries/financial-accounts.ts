@@ -61,7 +61,7 @@ export async function createFinancialAccount(
       teamId: params.teamId,
       type: params.type as any,
       name: params.name,
-      currency: params.currency || "GHS",
+      currency: params.currency || undefined,
       provider: params.provider || null,
       externalId: params.externalId || null,
       openingBalance: params.openingBalance || null,

@@ -1,6 +1,7 @@
 import { and, desc, eq, isNull, sql } from "drizzle-orm";
 import type { DbClient } from "../client";
 import { transactionCategories } from "../schema";
+import { getTransactionCategories } from "./transactions-enhanced";
 
 export type CreateCategoryParams = {
   teamId: string;
@@ -174,4 +175,152 @@ export async function deleteCategory(db: DbClient, teamId: string, id: string) {
     .where(and(eq(transactionCategories.id, id), eq(transactionCategories.teamId, teamId)))
     .returning();
   return row;
+}
+
+/**
+ * Seed hierarchical children and reparent existing top-level system categories.
+ * Idempotent per team. Creates only missing children; does not rename/delete.
+ */
+export async function seedCategoryHierarchy(db: DbClient, teamId: string) {
+  const all = await getCategoriesFlat(db, teamId);
+  const bySlug = new Map<string, any>();
+  const byId = new Map<string, any>();
+  for (const c of all) {
+    bySlug.set((c.slug as string) || "", c);
+    byId.set(c.id as string, c);
+  }
+
+  const ensureParent = (slug: string) => {
+    const p = bySlug.get(slug);
+    if (!p) throw new Error(`Parent category '${slug}' not found for team`);
+    return p as { id: string } & any;
+  };
+
+  // 1) Reparent existing income children under Income
+  const income = bySlug.get("income");
+  if (income) {
+    const toReparent = ["sales", "service-revenue", "other-income"].filter((s) => bySlug.has(s));
+    for (const s of toReparent) {
+      const child = bySlug.get(s);
+      if (child && child.parentId !== income.id) {
+        await updateCategory(db, teamId, { id: child.id, parentId: income.id });
+      }
+    }
+  }
+
+  type ChildDef = { name: string; excluded?: boolean };
+  const childrenMap: Record<string, ChildDef[]> = {
+    income: [
+      { name: "Subscription Revenue" },
+      { name: "Shipping Income" },
+    ],
+    cogs: [
+      { name: "Raw Materials" },
+      { name: "Manufacturing / Assembly" },
+      { name: "Freight-in" },
+      { name: "Packaging" },
+    ],
+    marketing: [
+      { name: "Paid Ads (Meta/Google)" },
+      { name: "Influencers / Sponsorships" },
+      { name: "Print / OOH" },
+      { name: "Promo Items" },
+    ],
+    software: [
+      { name: "SaaS Tools" },
+      { name: "Cloud Hosting" },
+      { name: "Domain / SSL" },
+      { name: "Email Services" },
+    ],
+    meals: [
+      { name: "Client Meals" },
+      { name: "Team Meals" },
+      { name: "Conferences / Events" },
+    ],
+    equipment: [
+      { name: "Hardware (Laptops)" },
+      { name: "Tools" },
+      { name: "Repairs & Maintenance" },
+    ],
+    "office-supplies": [
+      { name: "Stationery" },
+      { name: "Printer & Ink" },
+      { name: "Office Furniture" },
+    ],
+    travel: [
+      { name: "Airfare" },
+      { name: "Hotels" },
+      { name: "Local Transport" },
+      { name: "Fuel" },
+    ],
+    "professional-services": [
+      { name: "Legal" },
+      { name: "Accounting" },
+      { name: "Consulting" },
+      { name: "Contractors" },
+    ],
+    "rent-utilities": [
+      { name: "Rent" },
+      { name: "Electricity" },
+      { name: "Water" },
+      { name: "Internet / Phone" },
+    ],
+    taxes: [
+      { name: "Income Tax Payments" },
+      { name: "Sales Tax Remittance" },
+      { name: "Permit / Filing Fees" },
+    ],
+    insurance: [
+      { name: "General Liability" },
+      { name: "Health Insurance" },
+      { name: "Workers' Comp" },
+    ],
+    "bank-fees": [
+      { name: "Processing / Gateway Fees" },
+      { name: "Wire / Transfer Fees" },
+      { name: "Chargebacks" },
+    ],
+    adjustments: [
+      { name: "Rounding", excluded: true },
+      { name: "FX Gains/Losses", excluded: true },
+      { name: "Opening Balance", excluded: true },
+    ],
+  };
+
+  for (const [parentSlug, list] of Object.entries(childrenMap)) {
+    const parent = bySlug.get(parentSlug);
+    if (!parent) continue; // parent must exist
+    for (const def of list) {
+      // check if a child with the same name already exists under this team
+      const existing = all.find(
+        (c) => (c.name as string).toLowerCase() === def.name.toLowerCase(),
+      );
+      if (existing) {
+        // ensure parent linkage is set
+        if (existing.parentId !== parent.id) {
+          await updateCategory(db, teamId, { id: existing.id, parentId: parent.id });
+        }
+        // ensure excluded flag if requested
+        if (def.excluded && existing.excluded !== true) {
+          await updateCategory(db, teamId, { id: existing.id, excluded: true });
+        }
+        continue;
+      }
+      // create new child
+      await createCategory(db, {
+        teamId,
+        name: def.name,
+        color: null,
+        description: null,
+        parentId: parent.id,
+        taxRate: null,
+        taxType: null,
+        taxReportingCode: null,
+        excluded: def.excluded ?? false,
+      });
+    }
+  }
+
+  // Return fresh tree
+  return getTransactionCategories(db, { teamId });
 }

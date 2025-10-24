@@ -11,6 +11,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { trpc } from "@/lib/trpc/client";
+import { useTeamCurrency } from "@/hooks/use-team-currency";
 
 type Props = {
   open: boolean;
@@ -22,7 +23,8 @@ export function CreateAccountDialog({ open, onOpenChange, onCreated }: Props) {
   const utils = trpc.useUtils();
   const [name, setName] = useState("");
   const [type, setType] = useState<"cash" | "bank" | "mobile_money" | "card" | "other">("cash");
-  const [currency, setCurrency] = useState("GHS");
+  const teamCurrency = useTeamCurrency();
+  const [currency, setCurrency] = useState(teamCurrency);
 
   const { mutateAsync, isPending } = trpc.transactions.accountsCreate.useMutation({
     onSuccess: async () => {
@@ -31,7 +33,7 @@ export function CreateAccountDialog({ open, onOpenChange, onCreated }: Props) {
       onOpenChange(false);
       setName("");
       setType("cash");
-      setCurrency("GHS");
+      setCurrency(teamCurrency);
     },
   });
 
