@@ -1153,6 +1153,118 @@ export type Database = {
           },
         ]
       }
+      leads: {
+        Row: {
+          created_at: string
+          customer_id: string | null
+          id: string
+          instagram_contact_id: string | null
+          last_interaction_at: string | null
+          message_count: number
+          metadata: Json
+          notes: string | null
+          owner_user_id: string | null
+          prospect_handle: string | null
+          prospect_name: string | null
+          prospect_phone: string | null
+          qualification: string
+          score: number
+          source: string
+          status: string
+          team_id: string
+          thread_id: string | null
+          updated_at: string
+          whatsapp_contact_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          customer_id?: string | null
+          id?: string
+          instagram_contact_id?: string | null
+          last_interaction_at?: string | null
+          message_count?: number
+          metadata?: Json
+          notes?: string | null
+          owner_user_id?: string | null
+          prospect_handle?: string | null
+          prospect_name?: string | null
+          prospect_phone?: string | null
+          qualification?: string
+          score?: number
+          source: string
+          status?: string
+          team_id: string
+          thread_id?: string | null
+          updated_at?: string
+          whatsapp_contact_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          customer_id?: string | null
+          id?: string
+          instagram_contact_id?: string | null
+          last_interaction_at?: string | null
+          message_count?: number
+          metadata?: Json
+          notes?: string | null
+          owner_user_id?: string | null
+          prospect_handle?: string | null
+          prospect_name?: string | null
+          prospect_phone?: string | null
+          qualification?: string
+          score?: number
+          source?: string
+          status?: string
+          team_id?: string
+          thread_id?: string | null
+          updated_at?: string
+          whatsapp_contact_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "leads_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leads_instagram_contact_fk"
+            columns: ["instagram_contact_id"]
+            isOneToOne: false
+            referencedRelation: "instagram_contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leads_owner_user_id_fkey"
+            columns: ["owner_user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leads_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leads_thread_id_fkey"
+            columns: ["thread_id"]
+            isOneToOne: false
+            referencedRelation: "communication_threads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leads_whatsapp_contact_fk"
+            columns: ["whatsapp_contact_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_contacts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       measurements: {
         Row: {
           client_id: string
@@ -1695,6 +1807,106 @@ export type Database = {
             columns: ["team_id"]
             isOneToOne: false
             referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      product_categories: {
+        Row: {
+          color: string | null
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          parent_id: string | null
+          slug: string
+          system: boolean
+          team_id: string
+          updated_at: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          parent_id?: string | null
+          slug: string
+          system?: boolean
+          team_id: string
+          updated_at?: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          parent_id?: string | null
+          slug?: string
+          system?: boolean
+          team_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_categories_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "product_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_categories_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      product_category_mappings: {
+        Row: {
+          created_at: string
+          id: string
+          product_category_id: string
+          team_id: string
+          transaction_category_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          product_category_id: string
+          team_id: string
+          transaction_category_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          product_category_id?: string
+          team_id?: string
+          transaction_category_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_category_mappings_product_category_id_fkey"
+            columns: ["product_category_id"]
+            isOneToOne: false
+            referencedRelation: "product_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_category_mappings_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_category_mappings_transaction_category_id_fkey"
+            columns: ["transaction_category_id"]
+            isOneToOne: false
+            referencedRelation: "transaction_categories"
             referencedColumns: ["id"]
           },
         ]
@@ -2999,6 +3211,10 @@ export type Database = {
       show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }
       unaccent: { Args: { "": string }; Returns: string }
+      update_lead_from_thread_id: {
+        Args: { p_thread_id: string }
+        Returns: undefined
+      }
     }
     Enums: {
       appointment_status: "scheduled" | "completed" | "cancelled" | "no_show"

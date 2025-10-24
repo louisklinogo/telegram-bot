@@ -391,6 +391,67 @@ export const measurementsRelations = relations(measurements, ({ one }) => ({
   }),
 }));
 
+// ============================================================================
+// Leads (Sales pipeline entries linked to contacts/threads)
+// ============================================================================
+export const leads = pgTable(
+  "leads",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    teamId: uuid("team_id")
+      .notNull()
+      .references(() => teams.id, { onDelete: "cascade" }),
+    threadId: uuid("thread_id").references(() => communicationThreads.id, {
+      onDelete: "set null",
+    }),
+    customerId: uuid("customer_id").references(() => clients.id, { onDelete: "set null" }),
+    ownerUserId: uuid("owner_user_id").references(() => users.id, { onDelete: "set null" }),
+    // Immutable prospect snapshot (captured at lead creation)
+    prospectName: text("prospect_name"),
+    prospectPhone: varchar("prospect_phone", { length: 50 }),
+    prospectHandle: text("prospect_handle"),
+    whatsappContactId: uuid("whatsapp_contact_id").references(() => whatsappContacts.id, {
+      onDelete: "set null",
+    }),
+    instagramContactId: uuid("instagram_contact_id").references(() => instagramContacts.id, {
+      onDelete: "set null",
+    }),
+    source: varchar("source", { length: 32 }).notNull(), // whatsapp|instagram|email|telegram
+    status: varchar("status", { length: 32 }).default("new").notNull(), // new|interested|qualified|converted|lost
+    score: integer("score").default(0).notNull(), // 0-100
+    qualification: varchar("qualification", { length: 16 }).default("cold").notNull(), // hot|warm|cold
+    messageCount: integer("message_count").default(0).notNull(),
+    lastInteractionAt: timestamp("last_interaction_at", { withTimezone: true }),
+    notes: text("notes"),
+    metadata: jsonb("metadata").default(sql`'{}'::jsonb`).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => ({
+    teamIdx: index("idx_leads_team").on(table.teamId),
+    teamStatusIdx: index("idx_leads_team_status").on(table.teamId, table.status),
+    teamScoreIdx: index("idx_leads_team_score").on(table.teamId, table.score),
+    lastInteractionIdx: index("idx_leads_last_interaction").on(
+      table.teamId,
+      table.lastInteractionAt,
+      table.id,
+    ),
+    uniqueTeamThread: uniqueIndex("uq_leads_team_thread").on(table.teamId, table.threadId),
+  }),
+);
+
+export const leadsRelations = relations(leads, ({ one }) => ({
+  team: one(teams, { fields: [leads.teamId], references: [teams.id] }),
+  thread: one(communicationThreads, {
+    fields: [leads.threadId],
+    references: [communicationThreads.id],
+  }),
+  client: one(clients, { fields: [leads.customerId], references: [clients.id] }),
+  owner: one(users, { fields: [leads.ownerUserId], references: [users.id] }),
+  whatsappContact: one(whatsappContacts, { fields: [leads.whatsappContactId], references: [whatsappContacts.id] }),
+  instagramContact: one(instagramContacts, { fields: [leads.instagramContactId], references: [instagramContacts.id] }),
+}));
+
 export const teamsRelations = relations(teams, ({ many }) => ({
   clients: many(clients),
   orders: many(orders),
@@ -403,6 +464,7 @@ export const teamsRelations = relations(teams, ({ many }) => ({
   transactionTags: many(transactionTags),
   transactionAttachments: many(transactionAttachments),
   tags: many(tags),
+  leads: many(leads),
 }));
 
 export const usersRelations = relations(users, ({ many }) => ({
@@ -548,6 +610,36 @@ export const productInventoryRelations = relations(productInventory, ({ one }) =
     fields: [productInventory.locationId],
     references: [inventoryLocations.id],
   }),
+}));
+
+// Product Categories (hierarchical, team-specific)
+export const productCategories = pgTable(
+  "product_categories",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    teamId: uuid("team_id")
+      .notNull()
+      .references(() => teams.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    slug: text("slug").notNull(),
+    color: text("color"),
+    description: text("description"),
+    parentId: uuid("parent_id").references((): any => productCategories.id, { onDelete: "set null" }),
+    system: boolean("system").default(false).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => ({
+    teamIdx: index("idx_product_categories_team_id").on(table.teamId),
+    parentIdx: index("idx_product_categories_parent_id").on(table.parentId),
+    slugIdx: index("idx_product_categories_slug").on(table.slug),
+    uniqueSlugPerTeam: index("unique_product_category_slug_per_team").on(table.teamId, table.slug),
+  }),
+);
+
+export const productCategoriesRelations = relations(productCategories, ({ many }) => ({
+  // children relation via parentId handled at query layer
+  // products: many(products) - products keep a slug reference only for now
 }));
 
 // Product media: normalized images/files per product or variant
@@ -902,6 +994,30 @@ export const transactionTags = pgTable(
   }),
 );
 
+// Mapping between product categories and transaction categories (per team)
+export const productCategoryMappings = pgTable(
+  "product_category_mappings",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    teamId: uuid("team_id")
+      .notNull()
+      .references(() => teams.id, { onDelete: "cascade" }),
+    productCategoryId: uuid("product_category_id")
+      .notNull()
+      .references(() => productCategories.id, { onDelete: "cascade" }),
+    transactionCategoryId: uuid("transaction_category_id")
+      .notNull()
+      .references((): any => transactionCategories.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => ({
+    teamIdx: index("idx_pcm_team").on(table.teamId),
+    productIdx: index("idx_pcm_product_category").on(table.productCategoryId),
+    transactionIdx: index("idx_pcm_transaction_category").on(table.transactionCategoryId),
+    uniquePerTeam: uniqueIndex("uq_pcm_team_product").on(table.teamId, table.productCategoryId),
+  }),
+);
+
 // Transaction Attachments (receipts, invoices, documents)
 export const transactionAttachments = pgTable(
   "transaction_attachments",
@@ -992,7 +1108,7 @@ export const teamDailyOrdersSummary = pgTable(
 );
 
 // Re-export Drizzle helpers to ensure single-module type identity across workspace
-export { and, eq, ne, or, lt, lte, gt, gte, inArray, ilike, isNull, desc, asc } from "drizzle-orm";
+export { and, eq, ne, or, lt, lte, gt, gte, inArray, ilike, isNull, desc, asc, sql } from "drizzle-orm";
 
 // Contacts for channels
 export const whatsappContacts = pgTable("whatsapp_contacts", {
