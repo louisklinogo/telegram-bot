@@ -1751,6 +1751,76 @@ export type Database = {
           },
         ]
       }
+      product_media: {
+        Row: {
+          alt: string | null
+          created_at: string
+          height: number | null
+          id: string
+          is_primary: boolean
+          mime_type: string | null
+          path: string
+          position: number | null
+          product_id: string
+          size_bytes: number | null
+          team_id: string
+          variant_id: string | null
+          width: number | null
+        }
+        Insert: {
+          alt?: string | null
+          created_at?: string
+          height?: number | null
+          id?: string
+          is_primary?: boolean
+          mime_type?: string | null
+          path: string
+          position?: number | null
+          product_id: string
+          size_bytes?: number | null
+          team_id: string
+          variant_id?: string | null
+          width?: number | null
+        }
+        Update: {
+          alt?: string | null
+          created_at?: string
+          height?: number | null
+          id?: string
+          is_primary?: boolean
+          mime_type?: string | null
+          path?: string
+          position?: number | null
+          product_id?: string
+          size_bytes?: number | null
+          team_id?: string
+          variant_id?: string | null
+          width?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_media_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_media_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_media_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "product_variants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       product_variants: {
         Row: {
           availability_date: string | null

@@ -29,6 +29,13 @@ export async function getProductsEnriched(db: DbClient, params: ProductListParam
       priceMax: sql<string | null>`MAX(${productVariants.price})`,
       stockOnHand: sql<number>`COALESCE(SUM(${productInventory.onHand}), 0)`,
       stockAllocated: sql<number>`COALESCE(SUM(${productInventory.allocated}), 0)`,
+      primaryImage: sql<string | null>`(
+        SELECT pm.path
+        FROM product_media pm
+        WHERE pm.product_id = ${products.id} AND pm.variant_id IS NULL
+        ORDER BY pm.is_primary DESC, pm.position NULLS LAST, pm.created_at DESC
+        LIMIT 1
+      )`,
     })
     .from(products)
     .leftJoin(productVariants, eq(productVariants.productId, products.id))
@@ -56,5 +63,6 @@ export async function getProductsEnriched(db: DbClient, params: ProductListParam
     priceMax: r.priceMax != null ? Number(r.priceMax) : null,
     stockOnHand: Number(r.stockOnHand || 0),
     stockAllocated: Number(r.stockAllocated || 0),
+    primaryImage: (r as any).primaryImage ?? null,
   }));
 }

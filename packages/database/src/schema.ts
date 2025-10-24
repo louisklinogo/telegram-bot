@@ -551,6 +551,40 @@ export const productInventoryRelations = relations(productInventory, ({ one }) =
   }),
 }));
 
+// Product media: normalized images/files per product or variant
+export const productMedia = pgTable(
+  "product_media",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    teamId: uuid("team_id")
+      .notNull()
+      .references(() => teams.id, { onDelete: "cascade" }),
+    productId: uuid("product_id")
+      .notNull()
+      .references(() => products.id, { onDelete: "cascade" }),
+    variantId: uuid("variant_id").references(() => productVariants.id, { onDelete: "cascade" }),
+    path: text("path").notNull(),
+    alt: text("alt"),
+    isPrimary: boolean("is_primary").default(false).notNull(),
+    position: integer("position"),
+    width: integer("width"),
+    height: integer("height"),
+    sizeBytes: integer("size_bytes"),
+    mimeType: varchar("mime_type", { length: 128 }),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => ({
+    teamIdx: index("idx_product_media_team").on(table.teamId),
+    productIdx: index("idx_product_media_product").on(table.productId),
+    variantIdx: index("idx_product_media_variant").on(table.variantId),
+  }),
+);
+
+export const productMediaRelations = relations(productMedia, ({ one }) => ({
+  product: one(products, { fields: [productMedia.productId], references: [products.id] }),
+  variant: one(productVariants, { fields: [productMedia.variantId], references: [productVariants.id] }),
+}));
+
 // Communications domain
 export const communicationAccounts = pgTable(
   "communication_accounts",

@@ -17,6 +17,7 @@ export type ProductRow = {
   priceMax: number | null;
   stockOnHand: number;
   stockAllocated: number;
+  primaryImage?: string | null;
 };
 
 type ColumnContext = {
@@ -31,6 +32,12 @@ export function createProductColumns(ctx: ColumnContext): ColumnDef<ProductRow>[
       header: "Product",
       cell: ({ row }) => (
         <div className="flex items-center gap-2">
+          {row.original.primaryImage ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={row.original.primaryImage || ""} alt="" className="h-8 w-8 rounded object-cover" />
+          ) : (
+            <div className="h-8 w-8 rounded bg-muted flex items-center justify-center text-[10px] text-muted-foreground">–</div>
+          )}
           <div className="min-w-0">
             <div className="text-sm font-medium truncate">{row.original.product.name}</div>
             <div className="text-xs text-muted-foreground">{row.original.variantsCount} variants</div>
