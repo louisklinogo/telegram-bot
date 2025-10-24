@@ -3,6 +3,7 @@
 import { keepPreviousData } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { useTeamCurrency } from "@/hooks/use-team-currency";
+import { useRouter } from "next/navigation";
 import { trpc } from "@/lib/trpc/client";
 import { createProductColumns, type ProductRow } from "./products-columns";
 import { useReactTable, getCoreRowModel, flexRender, type VisibilityState } from "@tanstack/react-table";
@@ -26,7 +27,8 @@ type ProductsViewProps = {
 
 export function ProductsView({ initialProducts = [] }: ProductsViewProps) {
   const currency = useTeamCurrency();
-  const { data } = trpc.products.list.useQuery(
+  const router = useRouter();
+  const { data, error, refetch } = trpc.products.list.useQuery(
     { limit: 50 },
     {
       initialData: { items: initialProducts, nextCursor: null } as any,
@@ -107,8 +109,18 @@ export function ProductsView({ initialProducts = [] }: ProductsViewProps) {
         </div>
       </div>
 
-      {rows.length === 0 ? (
-        <EmptyState title="No products" description="Add your first product to get started." />
+      {error ? (
+        <EmptyState
+          title="Could not load products"
+          description="There was a problem loading the list."
+          action={{ label: "Retry", onClick: () => refetch() }}
+        />
+      ) : rows.length === 0 ? (
+        <EmptyState
+          title="No products"
+          description="Add your first product to get started."
+          action={{ label: "Add product", onClick: () => router.push("/products?new=1") }}
+        />
       ) : (
         <div className="overflow-x-auto">
           <Table className="min-w-[900px]">
