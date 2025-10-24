@@ -23,6 +23,8 @@ export type ProductRow = {
 type ColumnContext = {
   currencyCode: string;
   onView: (row: ProductRow) => void;
+  onEdit?: (row: ProductRow) => void;
+  onDelete?: (row: ProductRow) => void;
 };
 
 export function createProductColumns(ctx: ColumnContext): ColumnDef<ProductRow>[] {
@@ -90,6 +92,8 @@ export function createProductColumns(ctx: ColumnContext): ColumnDef<ProductRow>[
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuItem onSelect={() => ctx.onView(row.original)}>View details</DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => ctx.onEdit?.(row.original)}>Edit…</DropdownMenuItem>
+            <DropdownMenuItem className="text-destructive" onSelect={() => ctx.onDelete?.(row.original)}>Delete</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       ),

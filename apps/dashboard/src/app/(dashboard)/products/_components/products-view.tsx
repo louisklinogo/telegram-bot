@@ -3,8 +3,6 @@
 import { keepPreviousData } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { useTeamCurrency } from "@/hooks/use-team-currency";
-import { useRouter } from "next/navigation";
-import { trpc } from "@/lib/trpc/client";
 import { createProductColumns, type ProductRow } from "./products-columns";
 import { useReactTable, getCoreRowModel, flexRender, type VisibilityState } from "@tanstack/react-table";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -13,6 +11,9 @@ import { Button } from "@/components/ui/button";
 import { TransactionsColumnVisibility } from "@/components/transactions-column-visibility";
 import { Download } from "lucide-react";
 import { EmptyState } from "@/components/empty-state";
+import { ProductSheet } from "./product-sheet";
+import { Plus } from "lucide-react";
+ 
 
 type ProductsViewProps = {
   initialProducts?: Array<{
@@ -28,6 +29,12 @@ type ProductsViewProps = {
 export function ProductsView({ initialProducts = [] }: ProductsViewProps) {
   const currency = useTeamCurrency();
   const router = useRouter();
+  const utils = trpc.useUtils();
+  const del = trpc.products.delete.useMutation({
+    onSuccess: async () => {
+      await utils.products.list.invalidate();
+    },
+  });
   const { data, error, refetch } = trpc.products.list.useQuery(
     { limit: 50 },
     {
@@ -43,7 +50,16 @@ export function ProductsView({ initialProducts = [] }: ProductsViewProps) {
 
   const rows: ProductRow[] = useMemo(() => (data?.items as any) ?? [], [data]);
 
-  const columns = useMemo(() => createProductColumns({ currencyCode: currency, onView: () => {} }), [currency]);
+  const columns = useMemo(() => createProductColumns({
+    currencyCode: currency,
+    onView: () => {},
+    onEdit: (row) => router.push(`/products?productId=${row.product.id}`),
+    onDelete: async (row) => {
+      try {
+        await del.mutateAsync({ id: row.product.id } as any);
+      } catch {}
+    },
+  }), [currency, router, del]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>(() => {
     try {
       const raw = typeof window !== "undefined" ? localStorage.getItem("productsColumns") : null;
@@ -105,6 +121,7 @@ export function ProductsView({ initialProducts = [] }: ProductsViewProps) {
             <Button variant="outline" size="icon" aria-label="Export" onClick={exportRows}>
               <Download className="h-4 w-4" />
             </Button>
+            <Button size="sm" onClick={() => router.push("/products?new=1")}> <Plus className="h-4 w-4 mr-1" /> Add</Button>
           </div>
         </div>
       </div>
@@ -145,6 +162,7 @@ export function ProductsView({ initialProducts = [] }: ProductsViewProps) {
           </Table>
         </div>
       )}
+      <ProductSheet />
     </div>
   );
 }
