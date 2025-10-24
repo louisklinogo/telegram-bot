@@ -1913,7 +1913,6 @@ export type Database = {
           deleted_at: string | null
           description: string | null
           id: string
-          images: Json
           name: string
           slug: string | null
           status: Database["public"]["Enums"]["product_status"]
@@ -1929,7 +1928,6 @@ export type Database = {
           deleted_at?: string | null
           description?: string | null
           id?: string
-          images?: Json
           name: string
           slug?: string | null
           status?: Database["public"]["Enums"]["product_status"]
@@ -1945,7 +1943,6 @@ export type Database = {
           deleted_at?: string | null
           description?: string | null
           id?: string
-          images?: Json
           name?: string
           slug?: string | null
           status?: Database["public"]["Enums"]["product_status"]

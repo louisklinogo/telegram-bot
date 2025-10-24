@@ -428,7 +428,6 @@ export const products = pgTable(
     status: productStatusEnum("status").default("active").notNull(),
     description: text("description"),
     categorySlug: varchar("category_slug", { length: 120 }),
-    images: jsonb("images").$type<string[]>().default(sql`'[]'::jsonb`).notNull(),
     tags: jsonb("tags").$type<string[]>().default(sql`'[]'::jsonb`).notNull(),
     attributes: jsonb("attributes").default(sql`'{}'::jsonb`).notNull(),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
