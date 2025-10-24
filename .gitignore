@@ -127,8 +127,9 @@ apps/worker/.sessions/
 logs/
 
 # Embedded git repositories
-evolution-api
-#midday
+evolution-api/
+midday/
+v0*
 
 # Secret files with tokens/keys
 docs/essentials.txt
