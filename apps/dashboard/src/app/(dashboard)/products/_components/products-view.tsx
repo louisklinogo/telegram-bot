@@ -1,7 +1,10 @@
 "use client";
 
-import { keepPreviousData } from "@tanstack/react-query";
-import { useEffect, useMemo, useState } from "react";
+import { keepPreviousData, useSuspenseInfiniteQuery } from "@tanstack/react-query";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useInView } from "react-intersection-observer";
+import { parseAsArrayOf, parseAsString, useQueryStates } from "nuqs";
+import { useVirtualizer } from "@tanstack/react-virtual";
 import { useTeamCurrency } from "@/hooks/use-team-currency";
 import { createProductColumns, type ProductRow } from "./products-columns";
 import { useReactTable, getCoreRowModel, flexRender, type VisibilityState } from "@tanstack/react-table";
@@ -11,8 +14,19 @@ import { Button } from "@/components/ui/button";
 import { TransactionsColumnVisibility } from "@/components/transactions-column-visibility";
 import { Download } from "lucide-react";
 import { EmptyState } from "@/components/empty-state";
-import { ProductSheet } from "./product-sheet";
+import { FilterToolbar } from "@/components/filters/filter-toolbar";
+import dynamic from "next/dynamic";
+const ProductSheet = dynamic(() => import("./product-sheet").then((m) => m.ProductSheet), {
+  ssr: false,
+  loading: () => null,
+});
+const VariantsSheet = dynamic(() => import("./variants-sheet").then((m) => m.VariantsSheet), {
+  ssr: false,
+  loading: () => null,
+});
 import { Plus } from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { trpc } from "@/lib/trpc/client";
  
 
 type ProductsViewProps = {
@@ -29,27 +43,65 @@ type ProductsViewProps = {
 export function ProductsView({ initialProducts = [] }: ProductsViewProps) {
   const currency = useTeamCurrency();
   const router = useRouter();
+  const params = useSearchParams();
+  const isSheetOpen = (params.get("new") === "1" || !!params.get("productId")) && params.get("variants") !== "1";
   const utils = trpc.useUtils();
+  const [{ statuses, category }, setFilters] = useQueryStates(
+    {
+      statuses: parseAsArrayOf(parseAsString),
+      category: parseAsString,
+    },
+    { shallow: true },
+  );
   const del = trpc.products.delete.useMutation({
     onSuccess: async () => {
       await utils.products.list.invalidate();
     },
   });
-  const { data, error, refetch } = trpc.products.list.useQuery(
-    { limit: 50 },
-    {
-      initialData: { items: initialProducts, nextCursor: null } as any,
-      placeholderData: keepPreviousData,
-      staleTime: 30000,
-      refetchOnMount: false,
-      refetchOnReconnect: false,
-      refetchOnWindowFocus: false,
-      retry: false,
+  type Cursor = { updatedAt: string | Date; id: string } | null;
+  type Page = { items: ProductRow[]; nextCursor: Cursor };
+  const { ref: loadMoreRef, inView: loadMoreInView } = useInView({ rootMargin: "200px" });
+  const {
+    data: infiniteData,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isFetching,
+    error,
+    refetch,
+  } = useSuspenseInfiniteQuery({
+    queryKey: ["products.list", { statuses, category }],
+    queryFn: async ({ pageParam }): Promise<Page> => {
+      const res = await utils.client.products.list.query({
+        limit: 50,
+        status: Array.isArray(statuses) && statuses.length ? (statuses as any) : undefined,
+        categorySlug: category || undefined,
+        cursor: pageParam as any,
+      });
+      return res as unknown as Page;
     },
+    getNextPageParam: (last) => last?.nextCursor ?? null,
+    initialPageParam: null as Cursor,
+    initialData:
+      initialProducts && initialProducts.length > 0
+        ? ({ pages: [{ items: initialProducts as any, nextCursor: null }], pageParams: [null] } as any)
+        : undefined,
+    staleTime: 30_000,
+    refetchOnReconnect: false,
+    refetchOnWindowFocus: false,
+    retry: false,
+  });
+
+  useEffect(() => {
+    if (loadMoreInView && hasNextPage && !isFetchingNextPage) fetchNextPage();
+  }, [loadMoreInView, hasNextPage, isFetchingNextPage, fetchNextPage]);
+
+  const rows: ProductRow[] = useMemo(
+    () => (infiniteData?.pages || []).flatMap((p: any) => p.items || []),
+    [infiniteData],
   );
 
-  const rows: ProductRow[] = useMemo(() => (data?.items as any) ?? [], [data]);
-
+  const prefetched = useRef<Set<string>>(new Set());
   const columns = useMemo(() => createProductColumns({
     currencyCode: currency,
     onView: () => {},
@@ -58,6 +110,15 @@ export function ProductsView({ initialProducts = [] }: ProductsViewProps) {
       try {
         await del.mutateAsync({ id: row.product.id } as any);
       } catch {}
+    },
+    onPrefetch: (row) => {
+      const id = row.product.id;
+      if (!prefetched.current.has(id)) {
+        prefetched.current.add(id);
+        void utils.products.details.prefetch({ id });
+      }
+      // Inventory locations are team-global; prefetch once and keep forever
+      void utils.products.inventoryLocations.prefetch();
     },
   }), [currency, router, del]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>(() => {
@@ -124,6 +185,36 @@ export function ProductsView({ initialProducts = [] }: ProductsViewProps) {
             <Button size="sm" onClick={() => router.push("/products?new=1")}> <Plus className="h-4 w-4 mr-1" /> Add</Button>
           </div>
         </div>
+        <div className="flex items-center justify-between">
+          <FilterToolbar
+            appearance="chip"
+            fields={[
+              {
+                key: "statuses",
+                label: "Status",
+                type: "multi",
+                options: [
+                  { value: "active", label: "Active" },
+                  { value: "draft", label: "Draft" },
+                  { value: "archived", label: "Archived" },
+                ],
+              },
+              { key: "category", label: "Category", type: "select" },
+            ]}
+            values={{ statuses: statuses ?? [], category }}
+            onChange={(next) => {
+              setFilters({
+                statuses: (next.statuses as any) ?? null,
+                category: (next.category as any) ?? null,
+              });
+            }}
+          />
+          {(Array.isArray(statuses) && statuses.length) || category ? (
+            <Button size="sm" variant="ghost" onClick={() => setFilters({ statuses: null, category: null })}>
+              Reset
+            </Button>
+          ) : null}
+        </div>
       </div>
 
       {error ? (
@@ -139,30 +230,81 @@ export function ProductsView({ initialProducts = [] }: ProductsViewProps) {
           action={{ label: "Add product", onClick: () => router.push("/products?new=1") }}
         />
       ) : (
-        <div className="overflow-x-auto">
-          <Table className="min-w-[900px]">
-            <TableHeader>
-              {table.getHeaderGroups().map((hg) => (
-                <TableRow key={hg.id}>
-                  {hg.headers.map((h) => (
-                    <TableHead key={h.id}>{h.isPlaceholder ? null : flexRender(h.column.columnDef.header, h.getContext())}</TableHead>
+        (() => {
+          const tableContainerRef = useRef<HTMLDivElement>(null);
+          const allRows = table.getRowModel().rows;
+          const rowVirtualizer = useVirtualizer({
+            count: allRows.length,
+            getScrollElement: () => tableContainerRef.current,
+            estimateSize: () => 60,
+            overscan: 10,
+            enabled: allRows.length > 50,
+          });
+          const virtualItems = rowVirtualizer.getVirtualItems();
+          const totalSize = rowVirtualizer.getTotalSize();
+          const paddingTop = virtualItems.length > 0 ? virtualItems[0]?.start || 0 : 0;
+          const paddingBottom = virtualItems.length > 0 ? totalSize - (virtualItems[virtualItems.length - 1]?.end || 0) : 0;
+
+          return (
+            <div ref={tableContainerRef} className="relative overflow-auto max-h-[calc(100vh-400px)]">
+              <Table className="min-w-[900px]">
+                <TableHeader className="sticky top-0 z-10 bg-background">
+                  {table.getHeaderGroups().map((hg) => (
+                    <TableRow key={hg.id}>
+                      {hg.headers.map((h) => (
+                        <TableHead key={h.id}>{h.isPlaceholder ? null : flexRender(h.column.columnDef.header, h.getContext())}</TableHead>
+                      ))}
+                    </TableRow>
                   ))}
-                </TableRow>
-              ))}
-            </TableHeader>
-            <TableBody>
-              {table.getRowModel().rows.map((r) => (
-                <TableRow key={r.id}>
-                  {r.getVisibleCells().map((c) => (
-                    <TableCell key={c.id}>{flexRender(c.column.columnDef.cell, c.getContext())}</TableCell>
-                  ))}
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
+                </TableHeader>
+                <TableBody>
+                  {allRows.length > 0 ? (
+                    <>
+                      {paddingTop > 0 && (
+                        <tr>
+                          <td style={{ height: `${paddingTop}px` }} />
+                        </tr>
+                      )}
+                      {(allRows.length > 50 ? virtualItems : allRows.map((_, i) => ({ index: i } as any))).map((vr: any) => {
+                        const row = allRows[vr.index];
+                        if (!row) return null;
+                        return (
+                          <TableRow key={row.id}>
+                            {row.getVisibleCells().map((c) => (
+                              <TableCell key={c.id}>{flexRender(c.column.columnDef.cell, c.getContext())}</TableCell>
+                            ))}
+                          </TableRow>
+                        );
+                      })}
+                      {paddingBottom > 0 && (
+                        <tr>
+                          <td style={{ height: `${paddingBottom}px` }} />
+                        </tr>
+                      )}
+                      {isFetching && !isFetchingNextPage ? (
+                        <tr>
+                          <td colSpan={table.getAllColumns().length}>
+                            <div className="h-8 text-sm text-muted-foreground">Loading…</div>
+                          </td>
+                        </tr>
+                      ) : null}
+                    </>
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={table.getAllColumns().length} className="h-24 text-center">
+                        No results.
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+              <div ref={loadMoreRef} className="h-8" />
+            </div>
+          );
+        })()
       )}
-      <ProductSheet />
+      {isSheetOpen ? <ProductSheet /> : null}
+      {params.get("variants") === "1" && params.get("productId") ? <VariantsSheet /> : null}
     </div>
   );
 }

@@ -11,6 +11,7 @@ import { registerCommunicationsRoutes } from "./rest/communications";
 import { registerProviderRoutes } from "./rest/providers";
 import { registerInvoicesRoutes } from "./rest/invoices";
 import { registerTransactionsRoutes } from "./rest/transactions";
+import { registerProductsRoutes } from "./rest/products";
 import { requireAuthTeam } from "./rest/middleware/auth";
 
 const app = new Hono<ApiEnv>();
@@ -39,10 +40,12 @@ app.use("/communications/*", requireAuthTeam);
 app.use("/providers/*", requireAuthTeam);
 app.use("/invoices/*", requireAuthTeam);
 app.use("/transactions/*", requireAuthTeam);
+app.use("/products/*", requireAuthTeam);
 registerCommunicationsRoutes(app);
 registerProviderRoutes(app);
 registerInvoicesRoutes(app);
 registerTransactionsRoutes(app);
+registerProductsRoutes(app);
 
 export default {
   port: process.env.API_PORT ? Number(process.env.API_PORT) : 3001,

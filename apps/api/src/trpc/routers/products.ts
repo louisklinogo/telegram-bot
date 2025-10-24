@@ -1,17 +1,71 @@
 import { z } from "zod";
 import { createTRPCRouter, teamProcedure } from "../init";
 import { getProductsEnriched } from "@Faworra/database/queries";
-import { productMedia, and, eq } from "@Faworra/database/schema";
+import { productMedia, and, eq, isNull, products, asc, desc } from "@Faworra/database/schema";
+import { sql } from "@Faworra/database/schema";
 
 export const productsRouter = createTRPCRouter({
+  details: teamProcedure
+    .input(z.object({ id: z.string().uuid() }))
+    .query(async ({ ctx, input }) => {
+      const { products, productVariants } = await import("@Faworra/database/schema");
+      const productRows = await ctx.db
+        .select({
+          id: products.id,
+          teamId: products.teamId,
+          name: products.name,
+          status: products.status,
+          type: products.type,
+          categorySlug: products.categorySlug,
+          description: products.description,
+          updatedAt: products.updatedAt,
+        })
+        .from(products)
+        .where(
+          (await import("@Faworra/database/schema")).and(
+            (await import("@Faworra/database/schema")).eq(products.teamId, ctx.teamId),
+            (await import("@Faworra/database/schema")).eq(products.id, input.id),
+            (await import("@Faworra/database/schema")).isNull(products.deletedAt),
+          ),
+        )
+        .limit(1);
+      const product = productRows[0] || null;
+      if (!product) return null;
+
+      const variants = await ctx.db
+        .select({
+          id: productVariants.id,
+          productId: productVariants.productId,
+          name: productVariants.name,
+          sku: productVariants.sku,
+          barcode: productVariants.barcode,
+          price: productVariants.price,
+          currency: productVariants.currency,
+          status: productVariants.status,
+          fulfillmentType: productVariants.fulfillmentType,
+          stockManaged: productVariants.stockManaged,
+          leadTimeDays: productVariants.leadTimeDays,
+          updatedAt: productVariants.updatedAt,
+        })
+        .from(productVariants)
+        .where(
+          (await import("@Faworra/database/schema")).and(
+            (await import("@Faworra/database/schema")).eq(productVariants.teamId, ctx.teamId),
+            (await import("@Faworra/database/schema")).eq(productVariants.productId, input.id),
+          ),
+        );
+
+      return { product, variants } as const;
+    }),
   byId: teamProcedure
     .input(z.object({ id: z.string().uuid() }))
     .query(async ({ ctx, input }) => {
-      const rows = await ctx.db.query.products.findMany({
-        where: (p, { and, eq, isNull }) => and(eq(p.teamId, ctx.teamId), eq(p.id, input.id), isNull(p.deletedAt)),
-        limit: 1,
-      } as any);
-      return rows?.[0] || null;
+      const rows = await ctx.db
+        .select()
+        .from(products)
+        .where(and(eq(products.teamId, ctx.teamId), eq(products.id, input.id), isNull(products.deletedAt)))
+        .limit(1);
+      return rows[0] || null;
     }),
 
   create: teamProcedure
@@ -137,8 +191,13 @@ export const productsRouter = createTRPCRouter({
           and(
             eq(productMedia.teamId, ctx.teamId),
             eq(productMedia.productId, input.productId),
-            input.variantId ? eq(productMedia.variantId, input.variantId) : ({} as any),
+            input.variantId ? eq(productMedia.variantId, input.variantId) : sql`true`,
           ),
+        )
+        .orderBy(
+          desc(productMedia.isPrimary),
+          asc(sql`COALESCE(${productMedia.position}, 2147483647)`),
+          desc(productMedia.createdAt),
         );
       return rows;
     }),
@@ -163,7 +222,7 @@ export const productsRouter = createTRPCRouter({
             and(
               eq(productMedia.teamId, ctx.teamId),
               eq(productMedia.productId, input.productId),
-              input.variantId ? eq(productMedia.variantId, input.variantId) : ({} as any),
+              input.variantId ? eq(productMedia.variantId, input.variantId) : sql`true`,
             ),
           );
       }
@@ -182,6 +241,52 @@ export const productsRouter = createTRPCRouter({
       return row;
     }),
 
+  mediaAddMany: teamProcedure
+    .input(
+      z.object({
+        productId: z.string().uuid(),
+        items: z.array(
+          z.object({
+            variantId: z.string().uuid().optional(),
+            path: z.string().min(1),
+            alt: z.string().optional(),
+            isPrimary: z.boolean().optional(),
+            position: z.number().int().optional(),
+          }),
+        ).min(1),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const hasPrimary = input.items.some((i) => i.isPrimary);
+      if (hasPrimary) {
+        // If any item is primary for a scope, clear current primary for that scope once
+        const variantIds = Array.from(new Set(input.items.map((i) => i.variantId || null)));
+        for (const vid of variantIds) {
+          await ctx.db
+            .update(productMedia)
+            .set({ isPrimary: false })
+            .where(
+              and(
+                eq(productMedia.teamId, ctx.teamId),
+                eq(productMedia.productId, input.productId),
+                vid ? eq(productMedia.variantId, vid) : sql`true`,
+              ),
+            );
+        }
+      }
+      const values = input.items.map((i) => ({
+        teamId: ctx.teamId,
+        productId: input.productId,
+        variantId: i.variantId ?? null,
+        path: i.path,
+        alt: i.alt ?? null,
+        isPrimary: Boolean(i.isPrimary),
+        position: i.position ?? null,
+      }));
+      const rows = await ctx.db.insert(productMedia).values(values).returning();
+      return rows;
+    }),
+
   mediaSetPrimary: teamProcedure
     .input(z.object({ id: z.string().uuid() }))
     .mutation(async ({ ctx, input }) => {
@@ -198,7 +303,7 @@ export const productsRouter = createTRPCRouter({
           and(
             eq(productMedia.teamId, ctx.teamId),
             eq(productMedia.productId, row.productId),
-            row.variantId ? eq(productMedia.variantId, row.variantId) : ({} as any),
+            row.variantId ? eq(productMedia.variantId, row.variantId) : sql`true`,
           ),
         );
       const [updated] = await ctx.db
@@ -228,6 +333,45 @@ export const productsRouter = createTRPCRouter({
         .where(and(eq(productMedia.teamId, ctx.teamId), eq(productMedia.id, input.id)))
         .returning();
       return row;
+    }),
+
+  mediaReorder: teamProcedure
+    .input(
+      z.object({
+        productId: z.string().uuid(),
+        variantId: z.string().uuid().optional(),
+        order: z.array(z.string().uuid()).min(1),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      return await ctx.db.transaction(async (tx) => {
+        const scopeWhere = and(
+          eq(productMedia.teamId, ctx.teamId),
+          eq(productMedia.productId, input.productId),
+          input.variantId ? eq(productMedia.variantId, input.variantId) : sql`true`,
+        );
+        const rows = await tx
+          .select({ id: productMedia.id })
+          .from(productMedia)
+          .where(scopeWhere)
+          .orderBy(
+            desc(productMedia.isPrimary),
+            asc(sql`COALESCE(${productMedia.position}, 2147483647)`),
+            desc(productMedia.createdAt),
+          );
+        const validSet = new Set(rows.map((r) => r.id));
+        const requested = input.order.filter((id) => validSet.has(id));
+        const requestedSet = new Set(requested);
+        const remaining = rows.map((r) => r.id).filter((id) => !requestedSet.has(id));
+        const finalOrder = [...requested, ...remaining];
+        for (let i = 0; i < finalOrder.length; i++) {
+          await tx
+            .update(productMedia)
+            .set({ position: i })
+            .where(and(eq(productMedia.teamId, ctx.teamId), eq(productMedia.id, finalOrder[i])));
+        }
+        return { count: finalOrder.length } as const;
+      });
     }),
 
   variantCreate: teamProcedure
