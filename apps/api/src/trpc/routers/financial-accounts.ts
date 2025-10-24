@@ -11,7 +11,7 @@ import { activities } from "@Faworra/database/schema";
 const createSchema = z.object({
   type: z.enum(["cash", "bank", "mobile_money", "card", "other"]),
   name: z.string().min(1).max(255),
-  currency: z.string().length(3).optional().default("GHS"),
+  currency: z.string().length(3).optional(),
   provider: z.string().optional(),
   externalId: z.string().optional(),
   openingBalance: z.string().optional(),
@@ -38,7 +38,15 @@ export const financialAccountsRouter = createTRPCRouter({
   create: teamProcedure
     .input(createSchema)
     .mutation(async ({ ctx, input }) => {
-      const row = await createFinancialAccount(ctx.db, { teamId: ctx.teamId, ...input });
+      // Default to team's base currency if not provided
+      const { teams } = await import("@Faworra/database/schema");
+      const rowTeam = await ctx.db
+        .select({ baseCurrency: teams.baseCurrency })
+        .from(teams)
+        .where((await import("@Faworra/database/schema")).eq(teams.id, ctx.teamId))
+        .limit(1);
+      const currency = input.currency ?? rowTeam[0]?.baseCurrency ?? "GHS";
+      const row = await createFinancialAccount(ctx.db, { teamId: ctx.teamId, ...input, currency });
       
       // Activity log
       await ctx.db.insert(activities).values({

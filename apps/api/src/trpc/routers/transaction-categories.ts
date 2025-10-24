@@ -7,7 +7,7 @@ import {
   updateCategory,
   deleteCategory,
 } from "@Faworra/database/queries";
-import { activities } from "@Faworra/database/schema";
+import { activities, transactions, and, eq, gte } from "@Faworra/database/schema";
 
 const createSchema = z.object({
   name: z.string().min(1),
@@ -37,6 +37,22 @@ export const transactionCategoriesRouter = createTRPCRouter({
 
   create: teamProcedure.input(createSchema).mutation(async ({ ctx, input }) => {
     const row = await createCategory(ctx.db, { teamId: ctx.teamId, ...input } as any);
+    // Denormalize exclude flag onto recent transactions for performance-sensitive queries
+    if (row && input.excluded === true && row.slug) {
+      const since = new Date();
+      since.setMonth(since.getMonth() - 18);
+      const sinceStr = since.toISOString().slice(0, 10);
+      await ctx.db
+        .update(transactions)
+        .set({ excludeFromAnalytics: true })
+        .where(
+          and(
+            eq(transactions.teamId, ctx.teamId),
+            eq(transactions.categorySlug, row.slug),
+            gte(transactions.date, sinceStr as any),
+          ),
+        );
+    }
     // Activity log
     await ctx.db.insert(activities).values({
       teamId: ctx.teamId,
@@ -55,6 +71,22 @@ export const transactionCategoriesRouter = createTRPCRouter({
   update: teamProcedure.input(updateSchema).mutation(async ({ ctx, input }) => {
     const { id, ...data } = input as any;
     const row = await updateCategory(ctx.db, ctx.teamId, { id, ...data });
+    // If excluded flag provided, mirror onto recent transactions for this category
+    if (row && row.slug && input.excluded !== undefined) {
+      const since = new Date();
+      since.setMonth(since.getMonth() - 18);
+      const sinceStr = since.toISOString().slice(0, 10);
+      await ctx.db
+        .update(transactions)
+        .set({ excludeFromAnalytics: Boolean(input.excluded) })
+        .where(
+          and(
+            eq(transactions.teamId, ctx.teamId),
+            eq(transactions.categorySlug, row.slug),
+            gte(transactions.date, sinceStr as any),
+          ),
+        );
+    }
     // Activity log
     await ctx.db.insert(activities).values({
       teamId: ctx.teamId,
@@ -87,4 +119,17 @@ export const transactionCategoriesRouter = createTRPCRouter({
       });
       return row;
     }),
+
+  seedChildren: teamProcedure.mutation(async ({ ctx }) => {
+    const { seedCategoryHierarchy } = await import("@Faworra/database/queries/transaction-categories");
+    const result = await seedCategoryHierarchy(ctx.db, ctx.teamId);
+    // Activity log
+    await ctx.db.insert(activities).values({
+      teamId: ctx.teamId,
+      userId: ctx.userId,
+      type: "category.seed_children",
+      metadata: { count: Array.isArray(result) ? result.length : 0 } as any,
+    });
+    return result;
+  }),
 });

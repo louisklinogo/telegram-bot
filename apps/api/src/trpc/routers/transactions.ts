@@ -22,9 +22,194 @@ import {
   transactionAttachments,
   usersOnTeam,
   users,
+  teams,
 } from "@Faworra/database/schema";
 // Import from database schema barrel to avoid duplicate drizzle-orm type instances
 import { and, eq } from "@Faworra/database/schema";
+
+// Internal helpers to deduplicate transaction creation logic
+async function insertPaymentWithExtras(ctx: any, input: {
+  amount: number;
+  currency: string;
+  description?: string;
+  clientId?: string | null;
+  orderId?: string | null;
+  invoiceId?: string | null;
+  paymentMethod?: string | null;
+  paymentReference?: string | null;
+  transactionDate?: string | Date | null;
+  excludeFromAnalytics?: boolean;
+  tags?: string[];
+  attachments?: Array<{
+    path: string;
+    filename?: string;
+    contentType?: string | null;
+    size?: number | null;
+    type?: string | null;
+    checksum?: string | null;
+  }>;
+}) {
+  const trxNumber = `TX-${Date.now()}`;
+  const [created] = await ctx.db
+    .insert(transactions)
+    .values({
+      teamId: ctx.teamId,
+      date: new Date().toISOString().slice(0, 10),
+      name: input.description ?? `Payment ${trxNumber}`,
+      internalId: trxNumber,
+      transactionNumber: trxNumber,
+      type: "payment",
+      status: "completed",
+      amount: input.amount as any,
+      currency: input.currency,
+      description: input.description ?? `Payment ${trxNumber}`,
+      clientId: input.clientId ?? null,
+      orderId: input.orderId ?? null,
+      invoiceId: input.invoiceId ?? null,
+      paymentMethod: input.paymentMethod ?? null,
+      paymentReference: input.paymentReference ?? null,
+      transactionDate: input.transactionDate ? new Date(input.transactionDate) : new Date(),
+      // Payments created via the Transactions form are considered manual entries
+      manual: true,
+      excludeFromAnalytics: input.excludeFromAnalytics ?? false,
+    })
+    .returning();
+
+  // Optional invoice allocation (full amount)
+  if (input.invoiceId) {
+    const inv = await ctx.db
+      .select({ id: invoices.id })
+      .from(invoices)
+      .where(and(eq(invoices.id, input.invoiceId), eq(invoices.teamId, ctx.teamId)))
+      .limit(1);
+    if (!inv[0]) throw new TRPCError({ code: "FORBIDDEN", message: "Invalid invoice" });
+    await ctx.db.insert(transactionAllocations).values({
+      transactionId: created.id,
+      invoiceId: input.invoiceId,
+      amount: input.amount as any,
+    });
+  }
+
+  // Optional tags
+  if (input.tags && input.tags.length) {
+    await ctx.db
+      .insert(transactionTags)
+      .values(
+        input.tags.map((tagId) => ({
+          teamId: ctx.teamId,
+          transactionId: created.id,
+          tagId,
+        })),
+      )
+      .onConflictDoNothing();
+  }
+
+  // Optional attachments
+  if (input.attachments && input.attachments.length > 0) {
+    const rows = input.attachments.map((a) => ({
+      teamId: ctx.teamId,
+      transactionId: created.id,
+      name: a.filename ?? a.path.split("/").pop() ?? "file",
+      path: a.path.split("/"),
+      type: a.type ?? null,
+      mimeType: (a.contentType ?? null) as any,
+      size: (a.size as any) ?? null,
+      checksum: a.checksum ?? null,
+      uploadedBy: ctx.userId ?? null,
+    }));
+    await ctx.db.insert(transactionAttachments).values(rows);
+  }
+
+  return created;
+}
+
+async function insertEntryWithExtras(ctx: any, input: {
+  type: "payment" | "expense" | "refund" | "adjustment";
+  amount: number;
+  currency: string;
+  description: string;
+  date?: string | null;
+  accountId?: string | null;
+  categorySlug?: string | null;
+  assignedId?: string | null;
+  clientId?: string | null;
+  orderId?: string | null;
+  paymentMethod?: string | null;
+  paymentReference?: string | null;
+  notes?: string | null;
+  excludeFromAnalytics?: boolean;
+  tags?: string[];
+  attachments?: Array<{
+    path: string;
+    filename?: string;
+    contentType?: string | null;
+    size?: number | null;
+    type?: string | null;
+    checksum?: string | null;
+  }>;
+}) {
+  const trxNumber = `TX-${Date.now()}`;
+  const today = new Date();
+  const dateOnly = input.date ?? today.toISOString().slice(0, 10);
+
+  const [created] = await ctx.db
+    .insert(transactions)
+    .values({
+      teamId: ctx.teamId,
+      date: dateOnly as any,
+      name: input.description,
+      description: input.description,
+      internalId: trxNumber,
+      transactionNumber: trxNumber,
+      type: input.type,
+      status: "completed",
+      amount: input.amount as any,
+      currency: input.currency,
+      clientId: input.clientId ?? null,
+      orderId: input.orderId ?? null,
+      paymentMethod: input.paymentMethod ?? null,
+      paymentReference: input.paymentReference ?? null,
+      notes: input.notes ?? null,
+      categorySlug: input.categorySlug ?? null,
+      assignedId: input.assignedId ?? null,
+      accountId: input.accountId ?? null,
+      manual: true,
+      transactionDate: today,
+      excludeFromAnalytics: input.excludeFromAnalytics ?? false,
+    })
+    .returning();
+
+  // Optional tags
+  if (input.tags && input.tags.length) {
+    await ctx.db
+      .insert(transactionTags)
+      .values(
+        input.tags.map((tagId) => ({
+          teamId: ctx.teamId,
+          transactionId: created.id,
+          tagId,
+        })),
+      )
+      .onConflictDoNothing();
+  }
+
+  if (input.attachments && input.attachments.length > 0) {
+    const rows = input.attachments.map((a) => ({
+      teamId: ctx.teamId,
+      transactionId: created.id,
+      name: a.filename ?? a.path.split("/").pop() ?? "file",
+      path: a.path.split("/"),
+      type: a.type ?? null,
+      mimeType: (a.contentType ?? null) as any,
+      size: (a.size as any) ?? null,
+      checksum: a.checksum ?? null,
+      uploadedBy: ctx.userId ?? null,
+    }));
+    await ctx.db.insert(transactionAttachments).values(rows);
+  }
+
+  return created;
+}
 
 export const transactionsRouter = createTRPCRouter({
   // Unified create mutation (discriminated union)
@@ -34,7 +219,7 @@ export const transactionsRouter = createTRPCRouter({
         z.object({
           kind: z.literal("payment"),
           amount: z.number().positive(),
-          currency: z.string().min(3).max(3).default("GHS"),
+          currency: z.string().min(3).max(3).optional(),
           description: z.string().optional(),
           clientId: z.string().uuid().optional(),
           orderId: z.string().uuid().optional(),
@@ -61,7 +246,7 @@ export const transactionsRouter = createTRPCRouter({
           kind: z.literal("entry"),
           type: z.enum(["payment", "expense", "refund", "adjustment"]).default("expense"),
           amount: z.number().positive(),
-          currency: z.string().min(3).max(3).default("GHS"),
+          currency: z.string().min(3).max(3).optional(),
           description: z.string().min(1),
           date: z.string().optional(),
           accountId: z.string().uuid().optional(),
@@ -90,135 +275,50 @@ export const transactionsRouter = createTRPCRouter({
       ]),
     )
     .mutation(async ({ ctx, input }) => {
+      const teamCurrency = async () => {
+        const row = await ctx.db
+          .select({ baseCurrency: teams.baseCurrency })
+          .from(teams)
+          .where(eq(teams.id, ctx.teamId!))
+          .limit(1);
+        return row[0]?.baseCurrency || "GHS";
+      };
       if (input.kind === "payment") {
-        const trxNumber = `TX-${Date.now()}`;
-        const [created] = await ctx.db
-          .insert(transactions)
-          .values({
-            teamId: ctx.teamId,
-            date: new Date().toISOString().slice(0, 10),
-            name: input.description ?? `Payment ${trxNumber}`,
-            internalId: trxNumber,
-            transactionNumber: trxNumber,
-            type: "payment",
-            status: "completed",
-            amount: input.amount as any,
-            currency: input.currency,
-            description: input.description ?? `Payment ${trxNumber}`,
-            clientId: input.clientId ?? null,
-            orderId: input.orderId ?? null,
-            invoiceId: input.invoiceId ?? null,
-            paymentMethod: input.paymentMethod ?? null,
-            paymentReference: input.paymentReference ?? null,
-            transactionDate: input.transactionDate ? new Date(input.transactionDate) : new Date(),
-            // Mark payments created via the Transactions form as manual entries
-            manual: true,
-            excludeFromAnalytics: input.excludeFromAnalytics ?? false,
-          })
-          .returning();
-
-        if (input.invoiceId) {
-          const inv = await ctx.db
-            .select({ id: invoices.id })
-            .from(invoices)
-            .where(and(eq(invoices.id, input.invoiceId), eq(invoices.teamId, ctx.teamId)))
-            .limit(1);
-          if (!inv[0]) throw new TRPCError({ code: "FORBIDDEN", message: "Invalid invoice" });
-          await ctx.db.insert(transactionAllocations).values({
-            transactionId: created.id,
-            invoiceId: input.invoiceId,
-            amount: input.amount as any,
-          });
-        }
-
-        // Optional tags
-        if (input.tags && input.tags.length) {
-          await ctx.db.insert(transactionTags).values(
-            input.tags.map((tagId) => ({
-              teamId: ctx.teamId,
-              transactionId: created.id,
-              tagId,
-            })),
-          ).onConflictDoNothing();
-        }
-
-        if (input.attachments && input.attachments.length > 0) {
-          const rows = input.attachments.map((a) => ({
-            teamId: ctx.teamId,
-            transactionId: created.id,
-            name: a.filename ?? a.path.split("/").pop() ?? "file",
-            path: a.path.split("/"),
-            type: a.type ?? null,
-            mimeType: (a.contentType ?? null) as any,
-            size: (a.size as any) ?? null,
-            checksum: a.checksum ?? null,
-            uploadedBy: ctx.userId ?? null,
-          }));
-          await ctx.db.insert(transactionAttachments).values(rows);
-        }
-
-        return created;
+        return insertPaymentWithExtras(ctx, {
+          amount: input.amount,
+          currency: input.currency ?? (await teamCurrency()),
+          description: input.description,
+          clientId: input.clientId ?? null,
+          orderId: input.orderId ?? null,
+          invoiceId: input.invoiceId ?? null,
+          paymentMethod: input.paymentMethod ?? null,
+          paymentReference: input.paymentReference ?? null,
+          transactionDate: input.transactionDate ?? null,
+          excludeFromAnalytics: input.excludeFromAnalytics,
+          tags: input.tags,
+          attachments: input.attachments,
+        });
       }
 
       // kind === 'entry'
-      const trxNumber = `TX-${Date.now()}`;
-      const today = new Date();
-      const dateOnly = input.date ?? today.toISOString().slice(0, 10);
-
-      const [created] = await ctx.db
-        .insert(transactions)
-        .values({
-          teamId: ctx.teamId,
-          date: dateOnly as any,
-          name: input.description,
-          description: input.description,
-          internalId: trxNumber,
-          transactionNumber: trxNumber,
-          type: input.type,
-          status: "completed",
-          amount: input.amount as any,
-          currency: input.currency,
-          clientId: input.clientId ?? null,
-          orderId: input.orderId ?? null,
-          paymentMethod: input.paymentMethod ?? null,
-          paymentReference: input.paymentReference ?? null,
-          notes: input.notes ?? null,
-          categorySlug: input.categorySlug ?? null,
-          assignedId: input.assignedId ?? null,
-          accountId: input.accountId ?? null,
-          manual: true,
-          transactionDate: today,
-          excludeFromAnalytics: input.excludeFromAnalytics ?? false,
-        })
-        .returning();
-
-      if (input.attachments && input.attachments.length > 0) {
-        const rows = input.attachments.map((a) => ({
-          teamId: ctx.teamId,
-          transactionId: created.id,
-          name: a.filename ?? a.path.split("/").pop() ?? "file",
-          path: a.path.split("/"),
-          type: a.type ?? null,
-          mimeType: (a.contentType ?? null) as any,
-          size: (a.size as any) ?? null,
-          checksum: a.checksum ?? null,
-          uploadedBy: ctx.userId ?? null,
-        }));
-        await ctx.db.insert(transactionAttachments).values(rows);
-      }
-
-      // Optional tags
-      if (input.tags && input.tags.length) {
-        await ctx.db.insert(transactionTags).values(
-          input.tags.map((tagId) => ({
-            teamId: ctx.teamId,
-            transactionId: created.id,
-            tagId,
-          })),
-        ).onConflictDoNothing();
-      }
-
-      return created;
+      return insertEntryWithExtras(ctx, {
+        type: input.type,
+        amount: input.amount,
+        currency: input.currency ?? (await teamCurrency()),
+        description: input.description,
+        date: input.date ?? null,
+        accountId: input.accountId ?? null,
+        categorySlug: input.categorySlug ?? null,
+        assignedId: input.assignedId ?? null,
+        clientId: input.clientId ?? null,
+        orderId: input.orderId ?? null,
+        paymentMethod: input.paymentMethod ?? null,
+        paymentReference: input.paymentReference ?? null,
+        notes: input.notes ?? null,
+        excludeFromAnalytics: input.excludeFromAnalytics,
+        tags: input.tags,
+        attachments: input.attachments,
+      });
     }),
   // List financial accounts for selection in UI
   accounts: teamProcedure.query(async ({ ctx }) => {
@@ -239,7 +339,7 @@ export const transactionsRouter = createTRPCRouter({
       z.object({
         name: z.string().min(1),
         type: z.enum(["cash", "bank", "mobile_money", "card", "other"]).default("cash"),
-        currency: z.string().min(3).max(3).default("GHS"),
+        currency: z.string().min(3).max(3).optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -374,6 +474,15 @@ export const transactionsRouter = createTRPCRouter({
         .optional(),
     )
     .query(async ({ ctx, input }) => {
+      // DEBUG: log incoming start/end and cursor
+      try {
+        // eslint-disable-next-line no-console
+        console.log("[enrichedList][api] input:", {
+          startDate: input?.startDate,
+          endDate: input?.endDate,
+          cursor: input?.cursor,
+        });
+      } catch {}
       const rows = await getTransactionsEnriched(ctx.db, {
         teamId: ctx.teamId,
         type: input?.type,
@@ -401,6 +510,13 @@ export const transactionsRouter = createTRPCRouter({
       });
 
       const last = rows.at(-1);
+      try {
+        // eslint-disable-next-line no-console
+        console.log("[enrichedList][api] returned:", {
+          count: rows.length,
+          sample: rows.slice(0, 10).map((r) => r.transaction.date),
+        });
+      } catch {}
       const nextCursor = last
         ? {
             date: last.transaction.date ? new Date(last.transaction.date).toISOString() : null,
@@ -560,7 +676,7 @@ export const transactionsRouter = createTRPCRouter({
     .input(
       z.object({
         amount: z.number().positive(),
-        currency: z.string().min(3).max(3).default("GHS"),
+        currency: z.string().min(3).max(3).optional(),
         description: z.string().optional(),
         clientId: z.string().uuid().optional(),
         orderId: z.string().uuid().optional(),
@@ -584,65 +700,25 @@ export const transactionsRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      const trxNumber = `TX-${Date.now()}`;
-      const [created] = await ctx.db
-        .insert(transactions)
-        .values({
-          teamId: ctx.teamId,
-          date: new Date().toISOString().slice(0, 10),
-          name: input.description ?? `Payment ${trxNumber}`,
-          internalId: trxNumber,
-          transactionNumber: trxNumber,
-          type: "payment",
-          status: "completed",
-          amount: input.amount as any,
-          currency: input.currency,
-          description: input.description ?? `Payment ${trxNumber}`,
-          clientId: input.clientId ?? null,
-          orderId: input.orderId ?? null,
-          invoiceId: input.invoiceId ?? null,
-          paymentMethod: input.paymentMethod ?? null,
-          paymentReference: input.paymentReference ?? null,
-          transactionDate: input.transactionDate ? new Date(input.transactionDate) : new Date(),
-          excludeFromAnalytics: input.excludeFromAnalytics ?? false,
-        })
-        .returning();
-
-      if (input.invoiceId) {
-        // Verify invoice belongs to team, then allocate full amount
-        const inv = await ctx.db
-          .select({ id: invoices.id })
-          .from(invoices)
-          .where(and(eq(invoices.id, input.invoiceId), eq(invoices.teamId, ctx.teamId)))
-          .limit(1);
-        if (!inv[0]) throw new TRPCError({ code: "FORBIDDEN", message: "Invalid invoice" });
-        await ctx.db
-          .insert(transactionAllocations)
-          .values({
-            transactionId: created.id,
-            invoiceId: input.invoiceId,
-            amount: input.amount as any,
-          })
-          .returning();
-      }
-
-      // Optional attachments
-      if (input.attachments && input.attachments.length > 0) {
-        const rows = input.attachments.map((a) => ({
-          teamId: ctx.teamId,
-          transactionId: created.id,
-          name: a.filename ?? a.path.split("/").pop() ?? "file",
-          path: a.path.split("/"),
-          type: a.type ?? null,
-          mimeType: (a.contentType ?? null) as any,
-          size: (a.size as any) ?? null,
-          checksum: a.checksum ?? null,
-          uploadedBy: ctx.userId ?? null,
-        }));
-        await ctx.db.insert(transactionAttachments).values(rows);
-      }
-
-      return created;
+      const row = await ctx.db
+        .select({ baseCurrency: teams.baseCurrency })
+        .from(teams)
+        .where(eq(teams.id, ctx.teamId!))
+        .limit(1);
+      const cur = input.currency ?? row[0]?.baseCurrency ?? "GHS";
+      return insertPaymentWithExtras(ctx, {
+        amount: input.amount,
+        currency: cur,
+        description: input.description,
+        clientId: input.clientId ?? null,
+        orderId: input.orderId ?? null,
+        invoiceId: input.invoiceId ?? null,
+        paymentMethod: input.paymentMethod ?? null,
+        paymentReference: input.paymentReference ?? null,
+        transactionDate: input.transactionDate ?? null,
+        excludeFromAnalytics: input.excludeFromAnalytics,
+        attachments: input.attachments,
+      });
     }),
 
   // Create a manual transaction (non-payment types or payments without allocation)
@@ -651,7 +727,7 @@ export const transactionsRouter = createTRPCRouter({
       z.object({
         type: z.enum(["payment", "expense", "refund", "adjustment"]),
         amount: z.number().positive(),
-        currency: z.string().min(3).max(3).default("GHS"),
+        currency: z.string().min(3).max(3).optional(),
         description: z.string().min(1),
         date: z.string().optional(),
         accountId: z.string().uuid().optional(),
@@ -678,53 +754,29 @@ export const transactionsRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      const trxNumber = `TX-${Date.now()}`;
-      const today = new Date();
-      const dateOnly = input.date ?? today.toISOString().slice(0, 10);
-
-      const [created] = await ctx.db
-        .insert(transactions)
-        .values({
-          teamId: ctx.teamId,
-          date: dateOnly as any,
-          name: input.description,
-          description: input.description,
-          internalId: trxNumber,
-          transactionNumber: trxNumber,
-          type: input.type,
-          status: "completed",
-          amount: input.amount as any,
-          currency: input.currency,
-          clientId: input.clientId ?? null,
-          orderId: input.orderId ?? null,
-          paymentMethod: input.paymentMethod ?? null,
-          paymentReference: input.paymentReference ?? null,
-          notes: input.notes ?? null,
-          categorySlug: input.categorySlug ?? null,
-          assignedId: input.assignedId ?? null,
-          accountId: input.accountId ?? null,
-          manual: true,
-          transactionDate: today,
-          excludeFromAnalytics: input.excludeFromAnalytics ?? false,
-        })
-        .returning();
-
-      if (input.attachments && input.attachments.length > 0) {
-        const rows = input.attachments.map((a) => ({
-          teamId: ctx.teamId,
-          transactionId: created.id,
-          name: a.filename ?? a.path.split("/").pop() ?? "file",
-          path: a.path.split("/"),
-          type: a.type ?? null,
-          mimeType: (a.contentType ?? null) as any,
-          size: (a.size as any) ?? null,
-          checksum: a.checksum ?? null,
-          uploadedBy: ctx.userId ?? null,
-        }));
-        await ctx.db.insert(transactionAttachments).values(rows);
-      }
-
-      return created;
+      const row = await ctx.db
+        .select({ baseCurrency: teams.baseCurrency })
+        .from(teams)
+        .where(eq(teams.id, ctx.teamId!))
+        .limit(1);
+      const cur = input.currency ?? row[0]?.baseCurrency ?? "GHS";
+      return insertEntryWithExtras(ctx, {
+        type: input.type,
+        amount: input.amount,
+        currency: cur,
+        description: input.description,
+        date: input.date ?? null,
+        accountId: input.accountId ?? null,
+        categorySlug: input.categorySlug ?? null,
+        assignedId: input.assignedId ?? null,
+        clientId: input.clientId ?? null,
+        orderId: input.orderId ?? null,
+        paymentMethod: input.paymentMethod ?? null,
+        paymentReference: input.paymentReference ?? null,
+        notes: input.notes ?? null,
+        excludeFromAnalytics: input.excludeFromAnalytics,
+        attachments: input.attachments,
+      });
     }),
 
   list: teamProcedure
