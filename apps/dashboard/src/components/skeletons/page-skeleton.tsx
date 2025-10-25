@@ -9,7 +9,7 @@ export function PageWithTableSkeleton() {
       {/* Header */}
       <div className="flex items-center justify-between py-6">
         <div>
-          <Skeleton className="h-9 w-48 mb-2" />
+          <Skeleton className="mb-2 h-9 w-48" />
           <Skeleton className="h-4 w-64" />
         </div>
         <Skeleton className="h-10 w-32" />
@@ -19,7 +19,7 @@ export function PageWithTableSkeleton() {
       <StatsGridSkeleton count={3} />
 
       {/* Table */}
-      <TableSkeleton rows={8} columns={6} showSearch={true} />
+      <TableSkeleton columns={6} rows={8} showSearch={true} />
     </div>
   );
 }
@@ -30,7 +30,7 @@ export function PageWithCardsSkeleton() {
       {/* Header */}
       <div className="flex items-center justify-between py-6">
         <div>
-          <Skeleton className="h-9 w-48 mb-2" />
+          <Skeleton className="mb-2 h-9 w-48" />
           <Skeleton className="h-4 w-64" />
         </div>
         <Skeleton className="h-10 w-32" />
@@ -50,9 +50,9 @@ export function PageWithCardsSkeleton() {
         {Array.from({ length: 9 }).map((_, i) => (
           <Card key={i}>
             <div className="p-6">
-              <div className="flex items-start justify-between mb-4">
+              <div className="mb-4 flex items-start justify-between">
                 <div className="flex-1">
-                  <Skeleton className="h-5 w-32 mb-2" />
+                  <Skeleton className="mb-2 h-5 w-32" />
                   <Skeleton className="h-3 w-24" />
                 </div>
                 <Skeleton className="h-8 w-8 rounded" />

@@ -1,13 +1,13 @@
-import { and, desc, eq, isNull, sql, lt, or, gte, lte, inArray } from "drizzle-orm";
+import { and, desc, eq, gte, inArray, isNull, lt, lte, or, sql } from "drizzle-orm";
 import type { DbClient } from "../client";
 import {
-  transactions,
   clients,
-  transactionCategories,
-  transactionTags,
-  transactionAttachments,
-  transactionAllocations,
   tags,
+  transactionAllocations,
+  transactionAttachments,
+  transactionCategories,
+  transactions,
+  transactionTags,
   users,
 } from "../schema";
 
@@ -47,7 +47,7 @@ export async function getTransactionsEnriched(
     includeTags?: boolean; // controls whether to aggregate tag data
     limit?: number;
     cursor?: { date: Date | null; id: string } | null;
-  },
+  }
 ) {
   const {
     teamId,
@@ -85,7 +85,10 @@ export async function getTransactionsEnriched(
     JOIN tags t ON t.id = tt.tag_id
     WHERE tt.transaction_id = ${transactions.id}
       AND tt.team_id = ${teamId}
-      AND t.id = ANY(ARRAY[${sql.join(tagIds.map((id) => sql`${id}`), sql`, `)}])
+      AND t.id = ANY(ARRAY[${sql.join(
+        tagIds.map((id) => sql`${id}`),
+        sql`, `
+      )}])
   )`;
 
   const whereConditions = and(
@@ -102,9 +105,7 @@ export async function getTransactionsEnriched(
       : sql`true`,
     accounts && accounts.length > 0 ? inArray(transactions.accountId, accounts as any) : sql`true`,
     isRecurring != null ? eq(transactions.recurring, isRecurring) : sql`true`,
-    search
-      ? sql`fts_vector @@ websearch_to_tsquery('english', ${search})`
-      : sql`true`,
+    search ? sql`fts_vector @@ websearch_to_tsquery('english', ${search})` : sql`true`,
     amountMin != null ? gte(transactions.amount, amountMin as any) : sql`true`,
     amountMax != null ? lte(transactions.amount, amountMax as any) : sql`true`,
     startDate ? gte(transactions.date, startDate.toISOString().slice(0, 10)) : sql`true`,
@@ -114,10 +115,10 @@ export async function getTransactionsEnriched(
     hasAttachments === false ? sql`NOT (${attachmentsExist})` : sql`true`,
     // Fulfilled derived flag
     fulfilled === true
-      ? sql`( ${attachmentsExist} OR ${eq(transactions.status, 'completed' as any)} )`
+      ? sql`( ${attachmentsExist} OR ${eq(transactions.status, "completed" as any)} )`
       : sql`true`,
     fulfilled === false
-      ? sql`NOT ( ${attachmentsExist} OR ${eq(transactions.status, 'completed' as any)} )`
+      ? sql`NOT ( ${attachmentsExist} OR ${eq(transactions.status, "completed" as any)} )`
       : sql`true`,
     // Tags filter via EXISTS
     tagIds && tagIds.length > 0 ? tagsExist(tagIds) : sql`true`,
@@ -125,21 +126,17 @@ export async function getTransactionsEnriched(
       ? or(
           lt(
             transactions.date,
-            typeof cursor.date === "string"
-              ? cursor.date
-              : cursor.date.toISOString().slice(0, 10),
+            typeof cursor.date === "string" ? cursor.date : cursor.date.toISOString().slice(0, 10)
           ),
           and(
             eq(
               transactions.date,
-              typeof cursor.date === "string"
-                ? cursor.date
-                : cursor.date.toISOString().slice(0, 10),
+              typeof cursor.date === "string" ? cursor.date : cursor.date.toISOString().slice(0, 10)
             ),
-            lt(transactions.id, cursor.id),
-          ),
+            lt(transactions.id, cursor.id)
+          )
         )
-      : sql`true`,
+      : sql`true`
   );
 
   // Base query with aggregations
@@ -177,7 +174,11 @@ export async function getTransactionsEnriched(
       transactionNumber: transactions.transactionNumber,
     },
     client: { id: clients.id, name: clients.name },
-    category: { id: transactionCategories.id, name: transactionCategories.name, slug: transactionCategories.slug },
+    category: {
+      id: transactionCategories.id,
+      name: transactionCategories.name,
+      slug: transactionCategories.slug,
+    },
     assignedUser: { id: users.id, fullName: users.fullName, email: users.email },
     tags: tagSelect,
   } as const;
@@ -190,8 +191,8 @@ export async function getTransactionsEnriched(
       transactionCategories,
       and(
         eq(transactions.teamId, transactionCategories.teamId),
-        eq(transactions.categorySlug, transactionCategories.slug),
-      ),
+        eq(transactions.categorySlug, transactionCategories.slug)
+      )
     )
     .leftJoin(users, eq(transactions.assignedId, users.id));
 
@@ -222,7 +223,7 @@ export async function searchTransactions(
     teamId: string;
     query: string;
     limit?: number;
-  },
+  }
 ) {
   const { teamId, query, limit = 20 } = params;
 
@@ -241,15 +242,15 @@ export async function searchTransactions(
       transactionCategories,
       and(
         eq(transactions.teamId, transactionCategories.teamId),
-        eq(transactions.categorySlug, transactionCategories.slug),
-      ),
+        eq(transactions.categorySlug, transactionCategories.slug)
+      )
     )
     .where(
       and(
         eq(transactions.teamId, teamId),
         isNull(transactions.deletedAt),
-        sql`fts_vector @@ websearch_to_tsquery('english', ${query})`,
-      ),
+        sql`fts_vector @@ websearch_to_tsquery('english', ${query})`
+      )
     )
     .orderBy(sql`rank DESC`, desc(transactions.date), desc(transactions.id))
     .limit(limit);
@@ -281,7 +282,7 @@ export async function updateTransactionsBulk(
       excludeFromAnalytics?: boolean;
       notes?: string | null;
     };
-  },
+  }
 ) {
   const { teamId, transactionIds, updates } = params;
 
@@ -295,8 +296,8 @@ export async function updateTransactionsBulk(
       and(
         eq(transactions.teamId, teamId),
         inArray(transactions.id, transactionIds),
-        isNull(transactions.deletedAt),
-      ),
+        isNull(transactions.deletedAt)
+      )
     )
     .returning();
 }
@@ -309,7 +310,7 @@ export async function softDeleteTransactionsBulk(
   params: {
     teamId: string;
     transactionIds: string[];
-  },
+  }
 ) {
   const { teamId, transactionIds } = params;
 
@@ -323,8 +324,8 @@ export async function softDeleteTransactionsBulk(
         isNull(transactions.deletedAt),
         eq(transactions.manual, true),
         // Ensure not allocated to any invoice
-        sql`NOT EXISTS (SELECT 1 FROM transaction_allocations ta WHERE ta.transaction_id = ${transactions.id})`,
-      ),
+        sql`NOT EXISTS (SELECT 1 FROM transaction_allocations ta WHERE ta.transaction_id = ${transactions.id})`
+      )
     )
     .returning({ id: transactions.id });
 
@@ -339,7 +340,7 @@ export async function getTransactionById(
   params: {
     teamId: string;
     transactionId: string;
-  },
+  }
 ) {
   const { teamId, transactionId } = params;
 
@@ -383,8 +384,8 @@ export async function getTransactionById(
       transactionCategories,
       and(
         eq(transactions.teamId, transactionCategories.teamId),
-        eq(transactions.categorySlug, transactionCategories.slug),
-      ),
+        eq(transactions.categorySlug, transactionCategories.slug)
+      )
     )
     .leftJoin(users, eq(transactions.assignedId, users.id))
     .leftJoin(transactionTags, eq(transactions.id, transactionTags.transactionId))
@@ -394,8 +395,8 @@ export async function getTransactionById(
       and(
         eq(transactions.teamId, teamId),
         eq(transactions.id, transactionId),
-        isNull(transactions.deletedAt),
-      ),
+        isNull(transactions.deletedAt)
+      )
     )
     .groupBy(transactions.id, clients.id, transactionCategories.id, users.id)
     .limit(1);
@@ -406,10 +407,7 @@ export async function getTransactionById(
 /**
  * Get min/max transaction amounts for a team (for dynamic slider bounds)
  */
-export async function getTransactionAmountBounds(
-  db: DbClient,
-  params: { teamId: string },
-) {
+export async function getTransactionAmountBounds(db: DbClient, params: { teamId: string }) {
   const { teamId } = params;
   const rows = await db
     .select({
@@ -432,7 +430,7 @@ export async function getTransactionCategories(
   db: DbClient,
   params: {
     teamId: string;
-  },
+  }
 ) {
   const { teamId } = params;
 
@@ -472,7 +470,7 @@ export async function getTransactionTags(
   db: DbClient,
   params: {
     teamId: string;
-  },
+  }
 ) {
   const { teamId } = params;
 

@@ -1,7 +1,9 @@
 "use client";
 
-import { useState } from "react";
 import { Label } from "@Faworra/ui/label";
+import { X } from "lucide-react";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -10,8 +12,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { trpc } from "@/lib/trpc/client";
-import { X } from "lucide-react";
-import { Button } from "@/components/ui/button";
 
 type DocumentRelationsProps = {
   value: {
@@ -39,18 +39,18 @@ export function DocumentRelationsSelector({ value, onChange }: DocumentRelations
           <Label>Link to Order (Optional)</Label>
           {value.orderId && (
             <Button
-              variant="ghost"
-              size="sm"
               className="h-auto p-0"
               onClick={() => onChange({ ...value, orderId: undefined })}
+              size="sm"
+              variant="ghost"
             >
               <X className="h-3 w-3" />
             </Button>
           )}
         </div>
         <Select
-          value={value.orderId || "none"}
           onValueChange={(val) => onChange({ ...value, orderId: val === "none" ? undefined : val })}
+          value={value.orderId || "none"}
         >
           <SelectTrigger>
             <SelectValue placeholder="Select an order..." />
@@ -71,20 +71,20 @@ export function DocumentRelationsSelector({ value, onChange }: DocumentRelations
           <Label>Link to Invoice (Optional)</Label>
           {value.invoiceId && (
             <Button
-              variant="ghost"
-              size="sm"
               className="h-auto p-0"
               onClick={() => onChange({ ...value, invoiceId: undefined })}
+              size="sm"
+              variant="ghost"
             >
               <X className="h-3 w-3" />
             </Button>
           )}
         </div>
         <Select
-          value={value.invoiceId || "none"}
           onValueChange={(val) =>
             onChange({ ...value, invoiceId: val === "none" ? undefined : val })
           }
+          value={value.invoiceId || "none"}
         >
           <SelectTrigger>
             <SelectValue placeholder="Select an invoice..." />
@@ -105,20 +105,20 @@ export function DocumentRelationsSelector({ value, onChange }: DocumentRelations
           <Label>Link to Client (Optional)</Label>
           {value.clientId && (
             <Button
-              variant="ghost"
-              size="sm"
               className="h-auto p-0"
               onClick={() => onChange({ ...value, clientId: undefined })}
+              size="sm"
+              variant="ghost"
             >
               <X className="h-3 w-3" />
             </Button>
           )}
         </div>
         <Select
-          value={value.clientId || "none"}
           onValueChange={(val) =>
             onChange({ ...value, clientId: val === "none" ? undefined : val })
           }
+          value={value.clientId || "none"}
         >
           <SelectTrigger>
             <SelectValue placeholder="Select a client..." />

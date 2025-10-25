@@ -47,7 +47,7 @@ export function useMeasurements() {
 }
 
 export function useDashboardStats() {
-  return trpc.transactions.stats.useQuery(undefined, { refetchInterval: 30000 });
+  return trpc.transactions.stats.useQuery(undefined, { refetchInterval: 30_000 });
 }
 
 export function useTransactions() {
@@ -55,5 +55,5 @@ export function useTransactions() {
 }
 
 export function useTransactionStats() {
-  return trpc.transactions.stats.useQuery(undefined, { refetchInterval: 30000 });
+  return trpc.transactions.stats.useQuery(undefined, { refetchInterval: 30_000 });
 }

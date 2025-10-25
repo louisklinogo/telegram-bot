@@ -1,8 +1,9 @@
 "use client";
 
-import countries from "@/lib/country-flags";
+import { CaretSortIcon, CheckIcon } from "@radix-ui/react-icons";
+import * as React from "react";
+import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 import {
   Command,
   CommandEmpty,
@@ -12,9 +13,8 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CaretSortIcon, CheckIcon } from "@radix-ui/react-icons";
-import * as React from "react";
-import { useEffect } from "react";
+import countries from "@/lib/country-flags";
+import { cn } from "@/lib/utils";
 
 type Props = {
   defaultValue: string;
@@ -34,13 +34,13 @@ export function CountrySelector({ defaultValue, onSelect }: Props) {
   const selected = Object.values(countries).find((country) => country.code === value);
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover onOpenChange={setOpen} open={open}>
       <PopoverTrigger asChild>
         <Button
-          variant="outline"
-          role="combobox"
           aria-expanded={open}
-          className="w-full justify-between font-normal truncate"
+          className="w-full justify-between truncate font-normal"
+          role="combobox"
+          variant="outline"
         >
           <span className="truncate">
             {value && selected ? `${selected.emoji} ${selected.name}` : "Select country"}
@@ -48,28 +48,28 @@ export function CountrySelector({ defaultValue, onSelect }: Props) {
           <CaretSortIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[225px] p-0" align="start">
+      <PopoverContent align="start" className="w-[225px] p-0">
         <Command loop>
-          <CommandInput placeholder="Search country..." className="h-9 px-2" autoComplete="off" />
+          <CommandInput autoComplete="off" className="h-9 px-2" placeholder="Search country..." />
           <CommandEmpty>No country found.</CommandEmpty>
           <CommandGroup>
-            <CommandList className="overflow-y-auto max-h-[230px] pt-2">
+            <CommandList className="max-h-[230px] overflow-y-auto pt-2">
               {Object.values(countries).map((country) => (
                 <CommandItem
                   key={country.code}
-                  value={country.name}
                   onSelect={() => {
                     setValue(country.code);
                     onSelect?.(country.code, country.name);
                     setOpen(false);
                   }}
+                  value={country.name}
                 >
                   <span className="mr-2">{country.emoji}</span>
                   {country.name}
                   <CheckIcon
                     className={cn(
                       "ml-auto h-4 w-4",
-                      value === country.code ? "opacity-100" : "opacity-0",
+                      value === country.code ? "opacity-100" : "opacity-0"
                     )}
                   />
                 </CommandItem>

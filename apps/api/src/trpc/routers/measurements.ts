@@ -1,18 +1,18 @@
+import {
+  compareMeasurementVersions,
+  createMeasurement,
+  createMeasurementVersion,
+  deleteMeasurement,
+  getActiveMeasurement,
+  getMeasurementById,
+  getMeasurementHistory,
+  getMeasurementsWithClient,
+  getMeasurementVersions,
+  setActiveMeasurementVersion,
+  updateMeasurement,
+} from "@Faworra/database/queries";
 import { z } from "zod";
 import { createTRPCRouter, teamProcedure } from "../init";
-import {
-  getMeasurementsWithClient,
-  getMeasurementById,
-  createMeasurement,
-  updateMeasurement,
-  deleteMeasurement,
-  getMeasurementVersions,
-  getActiveMeasurement,
-  getMeasurementHistory,
-  createMeasurementVersion,
-  setActiveMeasurementVersion,
-  compareMeasurementVersions,
-} from "@Faworra/database/queries";
 
 export const measurementsRouter = createTRPCRouter({
   list: teamProcedure
@@ -23,16 +23,16 @@ export const measurementsRouter = createTRPCRouter({
           offset: z.number().min(0).default(0),
           activeOnly: z.boolean().optional(), // Filter to show only active versions
         })
-        .optional(),
+        .optional()
     )
-    .query(async ({ ctx, input }) => {
-      return getMeasurementsWithClient(ctx.db, {
+    .query(async ({ ctx, input }) =>
+      getMeasurementsWithClient(ctx.db, {
         teamId: ctx.teamId,
         limit: input?.limit,
         offset: input?.offset,
         activeOnly: input?.activeOnly,
-      });
-    }),
+      })
+    ),
 
   byId: teamProcedure
     .input(z.object({ id: z.string().uuid() }))
@@ -53,7 +53,7 @@ export const measurementsRouter = createTRPCRouter({
         previousVersionId: z.string().uuid().nullable().optional(),
         isActive: z.boolean().optional(),
         tags: z.array(z.string()).optional(),
-      }),
+      })
     )
     .mutation(async ({ ctx, input }) => {
       // Convert takenAt string to Date object for Drizzle
@@ -78,7 +78,7 @@ export const measurementsRouter = createTRPCRouter({
         // Versioning fields
         tags: z.array(z.string()).optional(),
         isActive: z.boolean().optional(),
-      }),
+      })
     )
     .mutation(async ({ ctx, input }) => {
       const { id, takenAt, ...rest } = input;
@@ -108,14 +108,14 @@ export const measurementsRouter = createTRPCRouter({
     .input(
       z.object({
         measurementGroupId: z.string().uuid(),
-      }),
+      })
     )
-    .query(async ({ ctx, input }) => {
-      return getMeasurementVersions(ctx.db, {
+    .query(async ({ ctx, input }) =>
+      getMeasurementVersions(ctx.db, {
         teamId: ctx.teamId,
         measurementGroupId: input.measurementGroupId,
-      });
-    }),
+      })
+    ),
 
   /**
    * Get the active (current) measurement for a client
@@ -124,14 +124,14 @@ export const measurementsRouter = createTRPCRouter({
     .input(
       z.object({
         clientId: z.string().uuid(),
-      }),
+      })
     )
-    .query(async ({ ctx, input }) => {
-      return getActiveMeasurement(ctx.db, {
+    .query(async ({ ctx, input }) =>
+      getActiveMeasurement(ctx.db, {
         teamId: ctx.teamId,
         clientId: input.clientId,
-      });
-    }),
+      })
+    ),
 
   /**
    * Get measurement history for a client (all measurement groups)
@@ -140,14 +140,14 @@ export const measurementsRouter = createTRPCRouter({
     .input(
       z.object({
         clientId: z.string().uuid(),
-      }),
+      })
     )
-    .query(async ({ ctx, input }) => {
-      return getMeasurementHistory(ctx.db, {
+    .query(async ({ ctx, input }) =>
+      getMeasurementHistory(ctx.db, {
         teamId: ctx.teamId,
         clientId: input.clientId,
-      });
-    }),
+      })
+    ),
 
   /**
    * Create a new version from an existing measurement
@@ -162,7 +162,7 @@ export const measurementsRouter = createTRPCRouter({
         tags: z.array(z.string()).optional(),
         takenAt: z.string().datetime().optional(),
         setAsActive: z.boolean().optional(),
-      }),
+      })
     )
     .mutation(async ({ ctx, input }) => {
       const { existingMeasurementId, setAsActive, ...newData } = input;
@@ -181,14 +181,14 @@ export const measurementsRouter = createTRPCRouter({
     .input(
       z.object({
         measurementId: z.string().uuid(),
-      }),
+      })
     )
-    .mutation(async ({ ctx, input }) => {
-      return setActiveMeasurementVersion(ctx.db, {
+    .mutation(async ({ ctx, input }) =>
+      setActiveMeasurementVersion(ctx.db, {
         measurementId: input.measurementId,
         teamId: ctx.teamId,
-      });
-    }),
+      })
+    ),
 
   /**
    * Compare two measurement versions
@@ -198,13 +198,13 @@ export const measurementsRouter = createTRPCRouter({
       z.object({
         versionId1: z.string().uuid(),
         versionId2: z.string().uuid(),
-      }),
+      })
     )
-    .query(async ({ ctx, input }) => {
-      return compareMeasurementVersions(ctx.db, {
+    .query(async ({ ctx, input }) =>
+      compareMeasurementVersions(ctx.db, {
         versionId1: input.versionId1,
         versionId2: input.versionId2,
         teamId: ctx.teamId,
-      });
-    }),
+      })
+    ),
 });

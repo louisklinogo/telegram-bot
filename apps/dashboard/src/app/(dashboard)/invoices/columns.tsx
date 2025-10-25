@@ -45,21 +45,17 @@ type BadgeVariant = "default" | "secondary" | "outline" | "destructive";
 export const createColumns = (options?: CreateColumnsOptions): ColumnDef<InvoiceColumn>[] => [
   {
     accessorKey: "invoice_number",
-    header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          className="-ml-4 h-8"
-        >
-          Invoice #
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      );
-    },
-    cell: ({ row }) => {
-      return <span className="font-mono text-sm">{row.original.invoice_number}</span>;
-    },
+    header: ({ column }) => (
+      <Button
+        className="-ml-4 h-8"
+        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        variant="ghost"
+      >
+        Invoice #
+        <ArrowUpDown className="ml-2 h-4 w-4" />
+      </Button>
+    ),
+    cell: ({ row }) => <span className="font-mono text-sm">{row.original.invoice_number}</span>,
   },
   {
     accessorKey: "order",
@@ -70,7 +66,7 @@ export const createColumns = (options?: CreateColumnsOptions): ColumnDef<Invoice
         <div>
           <p className="font-medium">{invoice.order?.order_number || "Unknown Order"}</p>
           {invoice.order?.client && (
-            <p className="text-xs text-muted-foreground">{invoice.order.client.name}</p>
+            <p className="text-muted-foreground text-xs">{invoice.order.client.name}</p>
           )}
         </div>
       );
@@ -88,45 +84,37 @@ export const createColumns = (options?: CreateColumnsOptions): ColumnDef<Invoice
   },
   {
     accessorKey: "amount",
-    header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          className="-ml-4 h-8"
-        >
-          Amount
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      );
-    },
-    cell: ({ row }) => {
-      return <span className="font-medium">{formatCurrency(row.original.amount)}</span>;
-    },
+    header: ({ column }) => (
+      <Button
+        className="-ml-4 h-8"
+        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        variant="ghost"
+      >
+        Amount
+        <ArrowUpDown className="ml-2 h-4 w-4" />
+      </Button>
+    ),
+    cell: ({ row }) => <span className="font-medium">{formatCurrency(row.original.amount)}</span>,
   },
   {
     accessorKey: "created_at",
-    header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          className="-ml-4 h-8"
-        >
-          Created
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      );
-    },
-    cell: ({ row }) => {
-      return (
-        <span className="text-sm text-muted-foreground">
-          {formatDistanceToNow(new Date(row.original.created_at), {
-            addSuffix: true,
-          })}
-        </span>
-      );
-    },
+    header: ({ column }) => (
+      <Button
+        className="-ml-4 h-8"
+        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        variant="ghost"
+      >
+        Created
+        <ArrowUpDown className="ml-2 h-4 w-4" />
+      </Button>
+    ),
+    cell: ({ row }) => (
+      <span className="text-muted-foreground text-sm">
+        {formatDistanceToNow(new Date(row.original.created_at), {
+          addSuffix: true,
+        })}
+      </span>
+    ),
   },
   {
     id: "actions",
@@ -136,7 +124,7 @@ export const createColumns = (options?: CreateColumnsOptions): ColumnDef<Invoice
       return (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+            <Button className="h-8 w-8 p-0" size="sm" variant="ghost">
               <MoreVertical className="h-4 w-4" />
               <span className="sr-only">Open menu</span>
             </Button>

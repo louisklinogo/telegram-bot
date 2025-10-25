@@ -16,7 +16,7 @@ export async function getClients(supabase: SupabaseClient<Database>, teamId: str
 export async function getClientById(
   supabase: SupabaseClient<Database>,
   id: string,
-  teamId: string,
+  teamId: string
 ) {
   const { data, error } = await supabase
     .from("clients")
@@ -33,7 +33,7 @@ export async function getClientById(
 export async function searchClients(
   supabase: SupabaseClient<Database>,
   teamId: string,
-  searchTerm: string,
+  searchTerm: string
 ) {
   const { data, error } = await supabase
     .from("clients")
@@ -41,7 +41,7 @@ export async function searchClients(
     .eq("team_id", teamId)
     .is("deleted_at", null)
     .or(
-      `name.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%,phone.ilike.%${searchTerm}%,whatsapp.ilike.%${searchTerm}%`,
+      `name.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%,phone.ilike.%${searchTerm}%,whatsapp.ilike.%${searchTerm}%`
     )
     .order("created_at", { ascending: false });
 

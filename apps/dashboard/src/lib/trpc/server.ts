@@ -93,7 +93,7 @@ export function HydrateClient(props: { children: React.ReactNode }) {
   return React.createElement(
     HydrationBoundary as any,
     { state: dehydrate(queryClient) } as any,
-    props.children,
+    props.children
   );
 }
 

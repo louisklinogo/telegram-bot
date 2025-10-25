@@ -1,21 +1,21 @@
 "use client";
 
-import {
-  MdOutlineMonitor,
-  MdGridView,
-  MdInbox,
-  MdCreditCard,
-  MdListAlt,
-  MdReceiptLong,
-  MdPeople,
-  MdStraighten,
-  MdInventory2,
-  MdSettings,
-  MdExpandMore,
-} from "react-icons/md";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
+import {
+  MdCreditCard,
+  MdExpandMore,
+  MdGridView,
+  MdInbox,
+  MdInventory2,
+  MdListAlt,
+  MdOutlineMonitor,
+  MdPeople,
+  MdReceiptLong,
+  MdSettings,
+  MdStraighten,
+} from "react-icons/md";
 
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -38,7 +38,7 @@ export function Sidebar({ teams = [], currentTeamId }: SidebarProps) {
     <aside
       className={cn(
         "fixed top-0 left-0 z-50 hidden h-screen flex-col border-r bg-background transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] md:flex",
-        isExpanded ? "w-[240px]" : "w-[70px]",
+        isExpanded ? "w-[240px]" : "w-[70px]"
       )}
       onMouseEnter={() => setIsExpanded(true)}
       onMouseLeave={() => setIsExpanded(false)}
@@ -46,32 +46,32 @@ export function Sidebar({ teams = [], currentTeamId }: SidebarProps) {
       {/* Logo/Brand Header */}
       <div
         className={cn(
-          "absolute top-0 left-0 h-[70px] flex items-center bg-background border-b border-border transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] z-50",
-          isExpanded ? "w-full px-[22px]" : "w-[69px]",
+          "absolute top-0 left-0 z-50 flex h-[70px] items-center border-border border-b bg-background transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)]",
+          isExpanded ? "w-full px-[22px]" : "w-[69px]"
         )}
       >
         <Link
-          href="/"
           className={cn(
             "flex items-center gap-3 transition-none",
-            !isExpanded && "justify-center w-full",
+            !isExpanded && "w-full justify-center"
           )}
+          href="/"
         >
           <svg
-            width="26"
+            className="shrink-0"
+            fill="none"
             height="26"
             viewBox="0 0 26 26"
-            fill="none"
+            width="26"
             xmlns="http://www.w3.org/2000/svg"
-            className="shrink-0"
           >
-            <circle cx="13" cy="13" r="13" fill="currentColor" />
-            <text x="13" y="18" fontSize="14" fontWeight="600" fill="white" textAnchor="middle">
+            <circle cx="13" cy="13" fill="currentColor" r="13" />
+            <text fill="white" fontSize="14" fontWeight="600" textAnchor="middle" x="13" y="18">
               C
             </text>
           </svg>
           {isExpanded && (
-            <span className="text-sm font-semibold whitespace-nowrap">Cimantikós</span>
+            <span className="whitespace-nowrap font-semibold text-sm">Cimantikós</span>
           )}
         </Link>
       </div>
@@ -79,23 +79,23 @@ export function Sidebar({ teams = [], currentTeamId }: SidebarProps) {
       {/* Navigation */}
       <TooltipProvider delayDuration={0}>
         <ScrollArea className="flex-1 pt-[70px] pb-6">
-          <nav className="w-full mt-3">
+          <nav className="mt-3 w-full">
             <div className="flex flex-col gap-6">
               {NAV_SECTIONS.map((section) => (
-                <div key={section.title} className="flex flex-col gap-2">
+                <div className="flex flex-col gap-2" key={section.title}>
                   {isExpanded && (
-                    <p className="px-[17px] text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">
+                    <p className="mb-1 px-[17px] font-semibold text-[10px] text-muted-foreground uppercase tracking-wider">
                       {section.title}
                     </p>
                   )}
                   <div className="flex flex-col gap-2">
                     {section.items.map((item) => (
                       <SidebarLink
-                        key={item.href}
-                        item={item}
                         active={isLinkActive(item.href, pathname)}
                         expanded={isExpanded}
                         expandedItemHref={expandedItemHref}
+                        item={item}
+                        key={item.href}
                         onToggle={(href) =>
                           setExpandedItemHref((prev) => (prev === href ? null : href))
                         }
@@ -110,7 +110,7 @@ export function Sidebar({ teams = [], currentTeamId }: SidebarProps) {
       </TooltipProvider>
 
       {/* Team switcher (bottom-left) */}
-      <TeamDropdown isExpanded={isExpanded} teams={teams} currentTeamId={currentTeamId} />
+      <TeamDropdown currentTeamId={currentTeamId} isExpanded={isExpanded} teams={teams} />
     </aside>
   );
 }
@@ -136,55 +136,55 @@ function SidebarLink({ item, active, expanded, expandedItemHref, onToggle }: Sid
   const isItemExpanded = expanded && expandedItemHref === item.href;
 
   const linkContent = (
-    <Link prefetch={false} href={item.href} className="group relative block">
+    <Link className="group relative block" href={item.href} prefetch={false}>
       <div className="relative">
         {/* Background that expands */}
         <div
           className={cn(
-            "border border-transparent h-[40px] transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] ml-[15px] mr-[15px]",
-            active && "bg-accent border-border",
-            expanded ? "w-[calc(100%-30px)]" : "w-[40px]",
+            "mr-[15px] ml-[15px] h-[40px] border border-transparent transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)]",
+            active && "border-border bg-accent",
+            expanded ? "w-[calc(100%-30px)]" : "w-[40px]"
           )}
         />
 
         {/* Icon - Fixed position from left */}
-        <div className="absolute top-0 left-[15px] w-[40px] h-[40px] flex items-center justify-center text-muted-foreground group-hover:!text-primary pointer-events-none transition-colors">
-          <div className={cn(active && "text-primary")}> 
+        <div className="group-hover:!text-primary pointer-events-none absolute top-0 left-[15px] flex h-[40px] w-[40px] items-center justify-center text-muted-foreground transition-colors">
+          <div className={cn(active && "text-primary")}>
             {/* Material Sharp icons via react-icons; size fixed to 20px */}
-            <Icon size={20} className="shrink-0" />
+            <Icon className="shrink-0" size={20} />
           </div>
         </div>
 
         {/* Label - appears when expanded */}
         {expanded && (
-          <div className="absolute top-0 left-[55px] right-[15px] h-[40px] flex items-center pointer-events-none">
+          <div className="pointer-events-none absolute top-0 right-[15px] left-[55px] flex h-[40px] items-center">
             <span
               className={cn(
-                "text-sm font-medium transition-opacity duration-200 ease-in-out text-muted-foreground group-hover:text-primary",
-                "whitespace-nowrap overflow-hidden",
-                active && "text-primary",
+                "font-medium text-muted-foreground text-sm transition-opacity duration-200 ease-in-out group-hover:text-primary",
+                "overflow-hidden whitespace-nowrap",
+                active && "text-primary"
               )}
             >
               {item.title}
             </span>
-            <div className="ml-auto flex items-center gap-1 pointer-events-auto">
+            <div className="pointer-events-auto ml-auto flex items-center gap-1">
               {item.badge && (
-                <Badge variant="secondary" className="text-[10px] h-5">
+                <Badge className="h-5 text-[10px]" variant="secondary">
                   {item.badge}
                 </Badge>
               )}
               {hasChildren && (
                 <button
-                  type="button"
+                  className={cn(
+                    "flex h-6 w-6 items-center justify-center text-muted-foreground transition-transform hover:text-primary",
+                    isItemExpanded && "rotate-180"
+                  )}
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
                     onToggle?.(item.href);
                   }}
-                  className={cn(
-                    "w-6 h-6 flex items-center justify-center text-muted-foreground hover:text-primary transition-transform",
-                    isItemExpanded && "rotate-180",
-                  )}
+                  type="button"
                 >
                   <MdExpandMore size={16} />
                 </button>
@@ -201,16 +201,16 @@ function SidebarLink({ item, active, expanded, expandedItemHref, onToggle }: Sid
       <div className="flex flex-col">
         {linkContent}
         {hasChildren && isItemExpanded && (
-          <div className="mt-1 ml-[35px] mr-[15px] border-l border-border">
-            <div className="flex flex-col py-1 pl-3 gap-1">
+          <div className="mt-1 mr-[15px] ml-[35px] border-border border-l">
+            <div className="flex flex-col gap-1 py-1 pl-3">
               {(item.children ?? []).map((child) => (
                 <Link
+                  className={cn(
+                    "overflow-hidden whitespace-nowrap text-muted-foreground text-xs transition-colors hover:text-primary"
+                  )}
+                  href={child.href}
                   key={child.href}
                   prefetch={false}
-                  href={child.href}
-                  className={cn(
-                    "text-xs text-muted-foreground hover:text-primary transition-colors whitespace-nowrap overflow-hidden",
-                  )}
                 >
                   {child.title}
                 </Link>
@@ -225,11 +225,11 @@ function SidebarLink({ item, active, expanded, expandedItemHref, onToggle }: Sid
   return (
     <Tooltip>
       <TooltipTrigger asChild>{linkContent}</TooltipTrigger>
-      <TooltipContent side="right" className="text-xs">
+      <TooltipContent className="text-xs" side="right">
         <div className="flex items-center gap-2">
           <span>{item.title}</span>
           {item.badge && (
-            <Badge variant="secondary" className="text-[10px]">
+            <Badge className="text-[10px]" variant="secondary">
               {item.badge}
             </Badge>
           )}

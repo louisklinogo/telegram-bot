@@ -1,14 +1,14 @@
+import {
+  createClient,
+  deleteClient,
+  getClientById,
+  getClients,
+  getEnrichedClientById,
+  getEnrichedClients,
+  updateClient,
+} from "@Faworra/database/queries";
 import { z } from "zod";
 import { createTRPCRouter, teamProcedure } from "../init";
-import {
-  getClients,
-  getClientById,
-  getEnrichedClients,
-  getEnrichedClientById,
-  createClient,
-  updateClient,
-  deleteClient,
-} from "@Faworra/database/queries";
 
 // Validation schemas
 const clientInsertSchema = z.object({
@@ -40,7 +40,7 @@ export const clientsRouter = createTRPCRouter({
           limit: z.number().min(1).max(100).default(50),
           cursor: z.string().optional(), // cursor is the last client ID
         })
-        .optional(),
+        .optional()
     )
     .query(async ({ ctx, input }) => {
       const limit = input?.limit ?? 50;
@@ -52,7 +52,7 @@ export const clientsRouter = createTRPCRouter({
         cursor: input?.cursor,
       });
 
-      let nextCursor: string | undefined = undefined;
+      let nextCursor: string | undefined;
       if (clients.length > limit) {
         const nextItem = clients.pop(); // Remove the extra item
         nextCursor = nextItem!.id;
@@ -65,17 +65,17 @@ export const clientsRouter = createTRPCRouter({
     }),
 
   // Get a single client by ID
-  byId: teamProcedure.input(z.object({ id: z.string().uuid() })).query(async ({ ctx, input }) => {
-    return getClientById(ctx.db, input.id, ctx.teamId);
-  }),
+  byId: teamProcedure
+    .input(z.object({ id: z.string().uuid() }))
+    .query(async ({ ctx, input }) => getClientById(ctx.db, input.id, ctx.teamId)),
 
   // Create a new client
-  create: teamProcedure.input(clientInsertSchema).mutation(async ({ ctx, input }) => {
-    return createClient(ctx.db, {
+  create: teamProcedure.input(clientInsertSchema).mutation(async ({ ctx, input }) =>
+    createClient(ctx.db, {
       ...input,
       teamId: ctx.teamId,
-    });
-  }),
+    })
+  ),
 
   // Update an existing client
   update: teamProcedure.input(clientUpdateSchema).mutation(async ({ ctx, input }) => {
@@ -86,7 +86,5 @@ export const clientsRouter = createTRPCRouter({
   // Delete a client (soft delete)
   delete: teamProcedure
     .input(z.object({ id: z.string().uuid() }))
-    .mutation(async ({ ctx, input }) => {
-      return deleteClient(ctx.db, input.id, ctx.teamId);
-    }),
+    .mutation(async ({ ctx, input }) => deleteClient(ctx.db, input.id, ctx.teamId)),
 });

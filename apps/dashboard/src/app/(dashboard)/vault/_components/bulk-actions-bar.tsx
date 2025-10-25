@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import { Trash2, X } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { useState } from "react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -13,10 +13,10 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { useVaultStore } from "@/stores/vault-store";
-import { trpc } from "@/lib/trpc/client";
+import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
-import { motion, AnimatePresence } from "framer-motion";
+import { trpc } from "@/lib/trpc/client";
+import { useVaultStore } from "@/stores/vault-store";
 
 export function BulkActionsBar() {
   const { selectedDocuments, clearSelection } = useVaultStore();
@@ -73,32 +73,32 @@ export function BulkActionsBar() {
     <>
       <AnimatePresence>
         <motion.div
-          initial={{ y: 100, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
+          className="-translate-x-1/2 fixed bottom-6 left-1/2 z-50"
           exit={{ y: 100, opacity: 0 }}
+          initial={{ y: 100, opacity: 0 }}
           transition={{ type: "spring", stiffness: 300, damping: 30 }}
-          className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50"
         >
-          <div className="bg-background border shadow-lg rounded-lg p-4 flex items-center gap-4">
+          <div className="flex items-center gap-4 rounded-lg border bg-background p-4 shadow-lg">
             <div className="flex items-center gap-2">
-              <span className="text-sm font-medium">
+              <span className="font-medium text-sm">
                 {selectedCount} document{selectedCount > 1 ? "s" : ""} selected
               </span>
             </div>
 
             <div className="flex items-center gap-2">
               <Button
-                variant="destructive"
-                size="sm"
-                onClick={() => setShowDeleteDialog(true)}
                 disabled={deleteMutation.isPending}
+                onClick={() => setShowDeleteDialog(true)}
+                size="sm"
+                variant="destructive"
               >
-                <Trash2 className="h-4 w-4 mr-2" />
+                <Trash2 className="mr-2 h-4 w-4" />
                 Delete
               </Button>
 
-              <Button variant="ghost" size="sm" onClick={clearSelection}>
-                <X className="h-4 w-4 mr-2" />
+              <Button onClick={clearSelection} size="sm" variant="ghost">
+                <X className="mr-2 h-4 w-4" />
                 Clear
               </Button>
             </div>
@@ -106,7 +106,7 @@ export function BulkActionsBar() {
         </motion.div>
       </AnimatePresence>
 
-      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+      <AlertDialog onOpenChange={setShowDeleteDialog} open={showDeleteDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
@@ -120,9 +120,9 @@ export function BulkActionsBar() {
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
-              onClick={handleBulkDelete}
               className="bg-destructive text-destructive-foreground"
               disabled={deleteMutation.isPending}
+              onClick={handleBulkDelete}
             >
               {deleteMutation.isPending ? "Deleting..." : "Delete All"}
             </AlertDialogAction>

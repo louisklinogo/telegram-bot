@@ -22,7 +22,7 @@ export function TimeRangeInput({
   }, [value]);
 
   useEffect(() => {
-    if (!startTime || !stopTime) {
+    if (!(startTime && stopTime)) {
       return;
     }
 
@@ -41,31 +41,31 @@ export function TimeRangeInput({
   }, [startTime, stopTime]);
 
   return (
-    <div className="flex items-center w-full border border-input bg-background px-4 py-2">
-      <div className="flex items-center space-x-2 flex-1">
-        <Icons.Time className="w-5 h-5 text-muted-foreground" />
+    <div className="flex w-full items-center border border-input bg-background px-4 py-2">
+      <div className="flex flex-1 items-center space-x-2">
+        <Icons.Time className="h-5 w-5 text-muted-foreground" />
         <input
-          type="time"
-          value={startTime}
+          className="bg-transparent text-sm focus:outline-none"
           onChange={(e) => {
             setStartTime(e.target.value);
             onChange({ start: e.target.value, stop: stopTime });
           }}
-          className="bg-transparent focus:outline-none text-sm"
+          type="time"
+          value={startTime}
         />
       </div>
-      <div className="flex items-center justify-center flex-shrink-0 mx-4">
-        <Icons.ArrowRightAlt className="w-5 h-5 text-muted-foreground" />
+      <div className="mx-4 flex flex-shrink-0 items-center justify-center">
+        <Icons.ArrowRightAlt className="h-5 w-5 text-muted-foreground" />
       </div>
-      <div className="flex items-center space-x-2 flex-1 justify-end">
+      <div className="flex flex-1 items-center justify-end space-x-2">
         <input
-          type="time"
-          value={stopTime}
+          className="bg-transparent text-sm focus:outline-none"
           onChange={(e) => {
             setStopTime(e.target.value);
             onChange({ start: startTime, stop: e.target.value });
           }}
-          className="bg-transparent focus:outline-none text-sm"
+          type="time"
+          value={stopTime}
         />
         <span className="text-muted-foreground text-sm">{duration}</span>
       </div>

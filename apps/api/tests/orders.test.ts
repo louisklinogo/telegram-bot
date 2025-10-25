@@ -1,12 +1,12 @@
-import { describe, it, expect, beforeAll, afterAll } from "bun:test";
-import { eq } from "drizzle-orm";
-import { orders, teamDailyOrdersSummary } from "@Faworra/database/schema";
 import { createOrderWithItems } from "@Faworra/database/queries";
-import { 
-  getCompletedOrdersThisMonth, 
-  getPendingOrdersCount, 
-  getAverageOrderValue 
+import {
+  getAverageOrderValue,
+  getCompletedOrdersThisMonth,
+  getPendingOrdersCount,
 } from "@Faworra/database/queries/analytics";
+import { orders, teamDailyOrdersSummary } from "@Faworra/database/schema";
+import { afterAll, beforeAll, describe, expect, it } from "bun:test";
+import { eq } from "drizzle-orm";
 
 // Mock DB client (you'll need to set up your actual test DB)
 const db = {} as any; // Replace with actual test DB connection
@@ -70,10 +70,7 @@ describe("Orders Integration Tests", () => {
     });
 
     // Update to completed
-    await db
-      .update(orders)
-      .set({ status: "completed" })
-      .where(eq(orders.id, order.id));
+    await db.update(orders).set({ status: "completed" }).where(eq(orders.id, order.id));
 
     // Check analytics
     const completedCount = await getCompletedOrdersThisMonth(db, testTeamId);
@@ -93,15 +90,12 @@ describe("Orders Integration Tests", () => {
     });
 
     // Cancel the order
-    await db
-      .update(orders)
-      .set({ status: "cancelled" })
-      .where(eq(orders.id, order.id));
+    await db.update(orders).set({ status: "cancelled" }).where(eq(orders.id, order.id));
 
     // Cancelled orders should not count in pending or completed
     const pendingCount = await getPendingOrdersCount(db, testTeamId);
     const completedCount = await getCompletedOrdersThisMonth(db, testTeamId);
-    
+
     // These should reflect the cancelled status
     expect(typeof pendingCount).toBe("number");
     expect(typeof completedCount).toBe("number");

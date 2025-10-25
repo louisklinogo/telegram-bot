@@ -1,13 +1,13 @@
+import {
+  createCategory,
+  deleteCategory,
+  getCategoryById,
+  getTransactionCategories,
+  updateCategory,
+} from "@Faworra/database/queries";
+import { activities, and, eq, gte, transactions } from "@Faworra/database/schema";
 import { z } from "zod";
 import { createTRPCRouter, teamProcedure } from "../init";
-import {
-  getTransactionCategories,
-  getCategoryById,
-  createCategory,
-  updateCategory,
-  deleteCategory,
-} from "@Faworra/database/queries";
-import { activities, transactions, and, eq, gte } from "@Faworra/database/schema";
 
 const createSchema = z.object({
   name: z.string().min(1),
@@ -27,13 +27,13 @@ const createSchema = z.object({
 const updateSchema = createSchema.partial().extend({ id: z.string().uuid() });
 
 export const transactionCategoriesRouter = createTRPCRouter({
-  list: teamProcedure.query(async ({ ctx }) => {
-    return getTransactionCategories(ctx.db, { teamId: ctx.teamId });
-  }),
+  list: teamProcedure.query(async ({ ctx }) =>
+    getTransactionCategories(ctx.db, { teamId: ctx.teamId })
+  ),
 
-  byId: teamProcedure.input(z.object({ id: z.string().uuid() })).query(async ({ ctx, input }) => {
-    return getCategoryById(ctx.db, ctx.teamId, input.id);
-  }),
+  byId: teamProcedure
+    .input(z.object({ id: z.string().uuid() }))
+    .query(async ({ ctx, input }) => getCategoryById(ctx.db, ctx.teamId, input.id)),
 
   create: teamProcedure.input(createSchema).mutation(async ({ ctx, input }) => {
     const row = await createCategory(ctx.db, { teamId: ctx.teamId, ...input } as any);
@@ -49,8 +49,8 @@ export const transactionCategoriesRouter = createTRPCRouter({
           and(
             eq(transactions.teamId, ctx.teamId),
             eq(transactions.categorySlug, row.slug),
-            gte(transactions.date, sinceStr as any),
-          ),
+            gte(transactions.date, sinceStr as any)
+          )
         );
     }
     // Activity log
@@ -83,8 +83,8 @@ export const transactionCategoriesRouter = createTRPCRouter({
           and(
             eq(transactions.teamId, ctx.teamId),
             eq(transactions.categorySlug, row.slug),
-            gte(transactions.date, sinceStr as any),
-          ),
+            gte(transactions.date, sinceStr as any)
+          )
         );
     }
     // Activity log
@@ -121,7 +121,9 @@ export const transactionCategoriesRouter = createTRPCRouter({
     }),
 
   seedChildren: teamProcedure.mutation(async ({ ctx }) => {
-    const { seedCategoryHierarchy } = await import("@Faworra/database/queries/transaction-categories");
+    const { seedCategoryHierarchy } = await import(
+      "@Faworra/database/queries/transaction-categories"
+    );
     const result = await seedCategoryHierarchy(ctx.db, ctx.teamId);
     // Activity log
     await ctx.db.insert(activities).values({

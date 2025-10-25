@@ -6,7 +6,7 @@ export function ClientsHeader() {
   return (
     <div className="flex items-center justify-between">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight text-balance">Clients</h1>
+        <h1 className="text-balance font-bold text-3xl tracking-tight">Clients</h1>
         <p className="text-muted-foreground">Manage your clients and their information</p>
       </div>
       <CreateClientDialog>

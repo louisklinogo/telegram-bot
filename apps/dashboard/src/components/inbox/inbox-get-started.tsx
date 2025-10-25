@@ -7,20 +7,23 @@ import { ConnectChannelsModal } from "./connect-channels-modal";
 export function InboxGetStarted() {
   const [open, setOpen] = useState(false);
   return (
-    <div className="h-[calc(100vh-150px)] flex items-center justify-center px-6">
+    <div className="flex h-[calc(100vh-150px)] items-center justify-center px-6">
       <div className="w-full max-w-4xl">
-        <div className="text-center mb-12">
-          <h1 className="text-2xl font-semibold mb-2">Connect Your Communication Channels</h1>
-          <p className="text-sm text-muted-foreground">Connect WhatsApp, Instagram, and email to receive and manage customer messages in one place</p>
+        <div className="mb-12 text-center">
+          <h1 className="mb-2 font-semibold text-2xl">Connect Your Communication Channels</h1>
+          <p className="text-muted-foreground text-sm">
+            Connect WhatsApp, Instagram, and email to receive and manage customer messages in one
+            place
+          </p>
         </div>
 
         <div className="flex items-center justify-center">
-          <Button onClick={() => setOpen(true)} className="px-6" size="sm">
+          <Button className="px-6" onClick={() => setOpen(true)} size="sm">
             Connect channel
           </Button>
         </div>
 
-        <ConnectChannelsModal open={open} onOpenChange={setOpen} />
+        <ConnectChannelsModal onOpenChange={setOpen} open={open} />
       </div>
     </div>
   );

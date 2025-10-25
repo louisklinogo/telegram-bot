@@ -1,10 +1,10 @@
 "use client";
 
 import { useMemo } from "react";
-import type { FilterFieldDef } from "./types";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Control } from "./filter-controls";
+import type { FilterFieldDef } from "./types";
 
 type Pill = {
   field: FilterFieldDef;
@@ -19,14 +19,14 @@ export function FilterPills({ pills, trailing }: { pills: Pill[]; trailing?: Rea
       {pills.map((p) => (
         <Popover key={p.field.key}>
           <PopoverTrigger asChild>
-            <Button variant="secondary" size="sm" className="gap-2">
+            <Button className="gap-2" size="sm" variant="secondary">
               {p.field.label}
             </Button>
           </PopoverTrigger>
-          <PopoverContent align="start" className="w-auto p-3 space-y-2">
-            <Control field={p.field} value={p.value} onChange={p.onChange} />
+          <PopoverContent align="start" className="w-auto space-y-2 p-3">
+            <Control field={p.field} onChange={p.onChange} value={p.value} />
             <div className="flex justify-between pt-1">
-              <Button variant="ghost" size="sm" onClick={p.onRemove}>
+              <Button onClick={p.onRemove} size="sm" variant="ghost">
                 Remove
               </Button>
             </div>

@@ -1,16 +1,27 @@
 "use client";
 
-import { useMemo, useState, type ComponentType } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { WhatsappLogo, InstagramLogo as PhInstagramLogo, EnvelopeSimple, Info } from "phosphor-react";
-import { InstagramModal } from "./instagram-modal";
-import { WhatsAppModal } from "./whatsapp-modal";
-import { ConnectChannelProvider } from "./connect-channel-provider";
+import {
+  EnvelopeSimple,
+  Info,
+  InstagramLogo as PhInstagramLogo,
+  WhatsappLogo,
+} from "phosphor-react";
+import { type ComponentType, useMemo, useState } from "react";
+import { startBaileysSessionAction } from "@/actions/providers/start-baileys-session";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { ChannelDetailsSheet } from "./channel-details-sheet";
-import { startBaileysSessionAction } from "@/actions/providers/start-baileys-session";
+import { ConnectChannelProvider } from "./connect-channel-provider";
+import { InstagramModal } from "./instagram-modal";
+import { WhatsAppModal } from "./whatsapp-modal";
 
 type ConnectChannelsModalProps = {
   open: boolean;
@@ -60,7 +71,8 @@ export function ConnectChannelsModal({ open, onOpenChange }: ConnectChannelsModa
     {
       id: "whatsapp-baileys",
       name: "WhatsApp (Baileys)",
-      description: "Pair your phone via QR (Baileys). Self-hosted session for sending and receiving messages.",
+      description:
+        "Pair your phone via QR (Baileys). Self-hosted session for sending and receiving messages.",
       Logo: WhatsappLogo,
       action: startBaileysInstall,
       iconSize: 20,
@@ -68,7 +80,8 @@ export function ConnectChannelsModal({ open, onOpenChange }: ConnectChannelsModa
     {
       id: "whatsapp-cloud",
       name: "WhatsApp Cloud API",
-      description: "Official Meta Cloud API. No phone pairing; uses app tokens. Stable and scalable.",
+      description:
+        "Official Meta Cloud API. No phone pairing; uses app tokens. Stable and scalable.",
       Logo: WhatsappLogo,
       action: () => {},
       disabled: true, // placeholder
@@ -99,9 +112,9 @@ export function ConnectChannelsModal({ open, onOpenChange }: ConnectChannelsModa
   const filtered = useMemo(
     () =>
       providers.filter((p) =>
-        (p.name + " " + p.description).toLowerCase().includes(query.toLowerCase()),
+        (p.name + " " + p.description).toLowerCase().includes(query.toLowerCase())
       ),
-    [providers, query],
+    [providers, query]
   );
 
   const openDetails = (prov: Provider) => {
@@ -121,7 +134,7 @@ export function ConnectChannelsModal({ open, onOpenChange }: ConnectChannelsModa
 
   return (
     <>
-      <Dialog open={open} onOpenChange={onOpenChange}>
+      <Dialog onOpenChange={onOpenChange} open={open}>
         <DialogContent className="sm:max-w-2xl">
           <div className="p-4">
             <DialogHeader>
@@ -132,27 +145,27 @@ export function ConnectChannelsModal({ open, onOpenChange }: ConnectChannelsModa
             </DialogHeader>
 
             <div className="pt-4">
-              <div className="flex space-x-2 relative">
+              <div className="relative flex space-x-2">
                 <Input
-                  placeholder="Search provider..."
-                  type="search"
                   autoComplete="off"
                   autoCorrect="off"
-                  spellCheck={false}
-                  value={query}
                   onChange={(e) => setQuery(e.target.value)}
+                  placeholder="Search provider..."
+                  spellCheck={false}
+                  type="search"
+                  value={query}
                 />
               </div>
 
-              <div className="h-[430px] space-y-4 overflow-auto scrollbar-hide pt-2 mt-2">
+              <div className="scrollbar-hide mt-2 h-[430px] space-y-4 overflow-auto pt-2">
                 {filtered.map(({ id, name, description, Logo, action, disabled, iconSize }) => (
-                  <div key={id} className="flex justify-between">
+                  <div className="flex justify-between" key={id}>
                     <div className="flex items-center">
-                      <span className="inline-flex items-center justify-center w-6 h-6 text-foreground/80">
+                      <span className="inline-flex h-6 w-6 items-center justify-center text-foreground/80">
                         <Logo size={iconSize ?? 20} weight="duotone" />
                       </span>
-                      <div className="ml-4 space-y-1 cursor-default">
-                        <p className="text-sm font-medium leading-none">{name}</p>
+                      <div className="ml-4 cursor-default space-y-1">
+                        <p className="font-medium text-sm leading-none">{name}</p>
                         <span className="text-[#878787] text-xs">{description}</span>
                       </div>
                     </div>
@@ -160,27 +173,37 @@ export function ConnectChannelsModal({ open, onOpenChange }: ConnectChannelsModa
                     <div className="flex items-center gap-3">
                       <ConnectChannelProvider
                         id={id}
-                        provider={id as any}
-                        openWhatsApp={async () => {
-                          setBusyId(id);
-                          await action();
-                          setBusyId(null);
-                        }}
                         openInstagram={() => {
                           setBusyId(id);
                           action();
                           setBusyId(null);
                         }}
+                        openWhatsApp={async () => {
+                          setBusyId(id);
+                          await action();
+                          setBusyId(null);
+                        }}
+                        provider={id as any}
                       />
 
                       <TooltipProvider delayDuration={70}>
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <Button
-                              variant="outline"
+                              className="h-7 w-7 rounded-full"
+                              onClick={() =>
+                                openDetails({
+                                  id,
+                                  name,
+                                  description,
+                                  Logo,
+                                  action,
+                                  disabled,
+                                  iconSize,
+                                })
+                              }
                               size="icon"
-                              className="rounded-full w-7 h-7"
-                              onClick={() => openDetails({ id, name, description, Logo, action, disabled, iconSize })}
+                              variant="outline"
                             >
                               <Info size={16} weight="duotone" />
                             </Button>
@@ -195,9 +218,9 @@ export function ConnectChannelsModal({ open, onOpenChange }: ConnectChannelsModa
                 ))}
 
                 {filtered.length === 0 && (
-                  <div className="flex flex-col items-center justify-center min-h-[350px]">
-                    <p className="font-medium mb-2">No providers found</p>
-                    <p className="text-sm text-center text-[#878787]">
+                  <div className="flex min-h-[350px] flex-col items-center justify-center">
+                    <p className="mb-2 font-medium">No providers found</p>
+                    <p className="text-center text-[#878787] text-sm">
                       We couldn't find a provider matching your criteria.
                     </p>
                   </div>
@@ -212,9 +235,8 @@ export function ConnectChannelsModal({ open, onOpenChange }: ConnectChannelsModa
       <InstagramModal isOpen={showInstagramModal} onClose={() => setShowInstagramModal(false)} />
       {detailsChannel && (
         <ChannelDetailsSheet
-          open={detailsOpen}
-          onOpenChange={setDetailsOpen}
           channel={detailsChannel}
+          onDisconnect={() => setDetailsOpen(false)}
           onInstall={() => {
             if (detailsChannel?.id === "whatsapp-baileys") {
               // Trigger the same Baileys connect flow used by the list "Connect" button
@@ -226,7 +248,8 @@ export function ConnectChannelsModal({ open, onOpenChange }: ConnectChannelsModa
               setDetailsOpen(false);
             }
           }}
-          onDisconnect={() => setDetailsOpen(false)}
+          onOpenChange={setDetailsOpen}
+          open={detailsOpen}
         />
       )}
     </>

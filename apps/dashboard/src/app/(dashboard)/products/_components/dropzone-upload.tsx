@@ -14,12 +14,12 @@ export function DropzoneUpload({ onDrop }: { onDrop: (files: File[]) => Promise<
     <div className="space-y-2">
       <div
         {...getRootProps()}
-        className={`border border-dashed rounded-md px-4 text-sm min-h-[120px] flex items-center justify-center text-center ${isDragActive ? "bg-secondary" : "bg-background"}`}
+        className={`flex min-h-[120px] items-center justify-center rounded-md border border-dashed px-4 text-center text-sm ${isDragActive ? "bg-secondary" : "bg-background"}`}
       >
         <input {...getInputProps()} />
         <p className="text-muted-foreground">
           Drop your files here, or{" "}
-          <button type="button" onClick={open} className="underline">
+          <button className="underline" onClick={open} type="button">
             click to browse
           </button>
           .

@@ -1,9 +1,14 @@
 "use client";
 
 import type { ColumnDef } from "@tanstack/react-table";
-import { Button } from "@/components/ui/button";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { MoreHorizontal } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export type ProductRow = {
   product: {
@@ -37,13 +42,21 @@ export function createProductColumns(ctx: ColumnContext): ColumnDef<ProductRow>[
         <div className="flex items-center gap-2">
           {row.original.primaryImage ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={row.original.primaryImage || ""} alt="" className="h-8 w-8 rounded object-cover" />
+            <img
+              alt=""
+              className="h-8 w-8 rounded object-cover"
+              src={row.original.primaryImage || ""}
+            />
           ) : (
-            <div className="h-8 w-8 rounded bg-muted flex items-center justify-center text-[10px] text-muted-foreground">–</div>
+            <div className="flex h-8 w-8 items-center justify-center rounded bg-muted text-[10px] text-muted-foreground">
+              –
+            </div>
           )}
           <div className="min-w-0">
-            <div className="text-sm font-medium truncate">{row.original.product.name}</div>
-            <div className="text-xs text-muted-foreground">{row.original.variantsCount} variants</div>
+            <div className="truncate font-medium text-sm">{row.original.product.name}</div>
+            <div className="text-muted-foreground text-xs">
+              {row.original.variantsCount} variants
+            </div>
           </div>
         </div>
       ),
@@ -53,18 +66,32 @@ export function createProductColumns(ctx: ColumnContext): ColumnDef<ProductRow>[
       header: "Price",
       cell: ({ row }) => {
         const { priceMin, priceMax } = row.original;
-        if (priceMin == null && priceMax == null) return <span className="text-sm text-muted-foreground">-</span>;
+        if (priceMin == null && priceMax == null)
+          return <span className="text-muted-foreground text-sm">-</span>;
         if (priceMin != null && priceMax != null && priceMin !== priceMax) {
           return (
             <span className="text-sm">
-              {new Intl.NumberFormat(undefined, { style: "currency", currency: ctx.currencyCode }).format(priceMin)}
+              {new Intl.NumberFormat(undefined, {
+                style: "currency",
+                currency: ctx.currencyCode,
+              }).format(priceMin)}
               {" - "}
-              {new Intl.NumberFormat(undefined, { style: "currency", currency: ctx.currencyCode }).format(priceMax)}
+              {new Intl.NumberFormat(undefined, {
+                style: "currency",
+                currency: ctx.currencyCode,
+              }).format(priceMax)}
             </span>
           );
         }
         const v = priceMin ?? priceMax ?? 0;
-        return <span className="text-sm">{new Intl.NumberFormat(undefined, { style: "currency", currency: ctx.currencyCode }).format(v)}</span>;
+        return (
+          <span className="text-sm">
+            {new Intl.NumberFormat(undefined, {
+              style: "currency",
+              currency: ctx.currencyCode,
+            }).format(v)}
+          </span>
+        );
       },
     },
     {
@@ -78,7 +105,9 @@ export function createProductColumns(ctx: ColumnContext): ColumnDef<ProductRow>[
     {
       accessorKey: "product.status",
       header: "Status",
-      cell: ({ row }) => <span className="text-sm text-muted-foreground">{row.original.product.status}</span>,
+      cell: ({ row }) => (
+        <span className="text-muted-foreground text-sm">{row.original.product.status}</span>
+      ),
     },
     {
       id: "actions",
@@ -87,20 +116,27 @@ export function createProductColumns(ctx: ColumnContext): ColumnDef<ProductRow>[
       cell: ({ row }) => (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="sm">
+            <Button size="sm" variant="ghost">
               <MoreHorizontal className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem onSelect={() => ctx.onView(row.original)}>View details</DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => ctx.onView(row.original)}>
+              View details
+            </DropdownMenuItem>
             <DropdownMenuItem
-              onPointerEnter={() => ctx.onPrefetch?.(row.original)}
               onFocus={() => ctx.onPrefetch?.(row.original)}
+              onPointerEnter={() => ctx.onPrefetch?.(row.original)}
               onSelect={() => ctx.onEdit?.(row.original)}
             >
               Edit…
             </DropdownMenuItem>
-            <DropdownMenuItem className="text-destructive" onSelect={() => ctx.onDelete?.(row.original)}>Delete</DropdownMenuItem>
+            <DropdownMenuItem
+              className="text-destructive"
+              onSelect={() => ctx.onDelete?.(row.original)}
+            >
+              Delete
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       ),

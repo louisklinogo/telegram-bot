@@ -1,9 +1,9 @@
 #!/usr/bin/env bun
 
 import "dotenv/config";
+import { getSupabaseServiceClient } from "@Faworra/services";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { getSupabaseServiceClient } from "@Faworra/services";
 
 async function setupSchema() {
   console.log("🔧 Setting up Supabase schema...\n");

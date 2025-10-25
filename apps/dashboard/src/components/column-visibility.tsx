@@ -26,7 +26,7 @@ export function ColumnVisibility({ columns, onToggle }: ColumnVisibilityProps) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="sm" className="gap-2">
+        <Button className="gap-2" size="sm" variant="outline">
           <Settings2 className="h-4 w-4" />
           Columns
         </Button>
@@ -36,8 +36,8 @@ export function ColumnVisibility({ columns, onToggle }: ColumnVisibilityProps) {
         <DropdownMenuSeparator />
         {columns.map((column) => (
           <DropdownMenuCheckboxItem
-            key={column.id}
             checked={column.visible}
+            key={column.id}
             onCheckedChange={() => onToggle(column.id)}
           >
             {column.label}

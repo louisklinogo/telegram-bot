@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { createBrowserClient } from "@Faworra/supabase/client";
+import { useEffect, useState } from "react";
 
 export function useAuthReady() {
   const supabase = createBrowserClient();

@@ -22,28 +22,28 @@ const AnimatedSizeContainer = forwardRef<HTMLDivElement, AnimatedSizeContainerPr
       children,
       ...rest
     }: AnimatedSizeContainerProps,
-    forwardedRef,
+    forwardedRef
   ) => {
     const containerRef = useRef<HTMLDivElement>(null);
     const resizeObserverEntry = useResizeObserver(containerRef as React.RefObject<Element>);
 
     return (
       <motion.div
-        ref={forwardedRef}
-        className={cn("overflow-hidden", className)}
         animate={{
           width: width ? (resizeObserverEntry?.contentRect?.width ?? "auto") : "auto",
           height: height ? (resizeObserverEntry?.contentRect?.height ?? "auto") : "auto",
         }}
+        className={cn("overflow-hidden", className)}
+        ref={forwardedRef}
         transition={transition ?? { type: "spring", duration: 0.3 }}
         {...rest}
       >
-        <div ref={containerRef} className={cn(height && "h-max", width && "w-max")}>
+        <div className={cn(height && "h-max", width && "w-max")} ref={containerRef}>
           {children}
         </div>
       </motion.div>
     );
-  },
+  }
 );
 
 AnimatedSizeContainer.displayName = "AnimatedSizeContainer";

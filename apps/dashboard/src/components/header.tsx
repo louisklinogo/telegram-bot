@@ -4,10 +4,10 @@ import { UserMenu } from "@/components/sidebar/user-menu";
 
 export function Header() {
   return (
-    <header className="z-40 px-6 border-b h-[70px] flex justify-between items-center sticky top-0 bg-background">
+    <header className="sticky top-0 z-40 flex h-[70px] items-center justify-between border-b bg-background px-6">
       <div className="flex-1" />
 
-      <div className="flex items-center gap-2 ml-auto">
+      <div className="ml-auto flex items-center gap-2">
         <UserMenu />
       </div>
     </header>

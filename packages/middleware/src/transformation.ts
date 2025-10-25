@@ -1,5 +1,5 @@
-import type { MiddlewareHandler } from "hono";
 import type { ApiEnv } from "@faworra/api/types/hono-env";
+import type { MiddlewareHandler } from "hono";
 import { z } from "zod";
 
 // Transformation rule types
@@ -54,27 +54,27 @@ export class TransformUtils {
       /(--|\/\*|\*\/|;)/g,
       /(\bOR\b|\bAND\b)\s+\d+\s*=\s*\d+/gi,
     ];
-    
+
     let sanitized = input;
-    sqlPatterns.forEach(pattern => {
+    sqlPatterns.forEach((pattern) => {
       sanitized = sanitized.replace(pattern, "");
     });
-    
+
     return sanitized.trim();
   }
 
   /**
    * Transform phone numbers to consistent format
    */
-  static formatPhoneNumber(phone: string, countryCode: string = "GH"): string {
+  static formatPhoneNumber(phone: string, countryCode = "GH"): string {
     // Remove all non-digit characters
     const digits = phone.replace(/\D/g, "");
-    
+
     if (countryCode === "GH" && digits.length === 10) {
       // Ghana format: +233 XX XXX XXXX
       return `+233 ${digits.substring(1, 3)} ${digits.substring(3, 6)} ${digits.substring(6)}`;
     }
-    
+
     // Return original if cannot format
     return phone;
   }
@@ -89,10 +89,10 @@ export class TransformUtils {
   /**
    * Format currency amounts
    */
-  static formatCurrency(amount: number, currency: string = "GHS"): string {
+  static formatCurrency(amount: number, currency = "GHS"): string {
     return new Intl.NumberFormat("en-GH", {
       style: "currency",
-      currency: currency,
+      currency,
       minimumFractionDigits: 2,
     }).format(amount);
   }
@@ -131,7 +131,7 @@ export const CommonRules = {
 
   sanitizeSql: (field: string): TransformationRule => ({
     field,
-    type: "sanitize", 
+    type: "sanitize",
     rule: (value: string) => TransformUtils.sanitizeSql(value),
   }),
 
@@ -143,14 +143,13 @@ export const CommonRules = {
     errorMessage: "Invalid email format",
   }),
 
-  validatePhone: (field: string, countryCode: string = "GH"): TransformationRule => ({
+  validatePhone: (field: string, countryCode = "GH"): TransformationRule => ({
     field,
     type: "validate",
     rule: (value: string) => {
-      const phoneRegex = countryCode === "GH" 
-        ? /^(\+233|0)?[0-9]{9}$/ 
-        : /^[+]?[1-9][\d\s\-\(\)]{7,15}$/;
-      return phoneRegex.test(value.replace(/[\s\-\(\)]/g, ""));
+      const phoneRegex =
+        countryCode === "GH" ? /^(\+233|0)?[0-9]{9}$/ : /^[+]?[1-9][\d\s\-()]{7,15}$/;
+      return phoneRegex.test(value.replace(/[\s\-()]/g, ""));
     },
     errorMessage: `Invalid ${countryCode} phone number format`,
   }),
@@ -163,7 +162,7 @@ export const CommonRules = {
   }),
 
   // Transformation rules
-  formatPhone: (field: string, countryCode: string = "GH"): TransformationRule => ({
+  formatPhone: (field: string, countryCode = "GH"): TransformationRule => ({
     field,
     type: "transform",
     rule: (value: string) => TransformUtils.formatPhoneNumber(value, countryCode),
@@ -175,7 +174,7 @@ export const CommonRules = {
     rule: (value: string) => TransformUtils.normalizeEmail(value),
   }),
 
-  formatCurrency: (field: string, currency: string = "GHS"): TransformationRule => ({
+  formatCurrency: (field: string, currency = "GHS"): TransformationRule => ({
     field,
     type: "format",
     rule: (value: number) => TransformUtils.formatCurrency(value, currency),
@@ -192,7 +191,7 @@ export const CommonRules = {
     field,
     type: "transform",
     rule: (value: string | number) => {
-      const num = typeof value === "string" ? parseFloat(value) : value;
+      const num = typeof value === "string" ? Number.parseFloat(value) : value;
       return isNaN(num) ? 0 : num;
     },
   }),
@@ -218,12 +217,15 @@ export const createTransformationMiddleware = (
         const transformationResult = await transformRequestData(c, config.request);
         if (transformationResult.errors.length > 0) {
           transformationErrors = transformationResult.errors;
-          
+
           if (!config.skipOnError) {
-            return c.json({
-              error: "Request transformation failed",
-              details: transformationErrors,
-            }, 400);
+            return c.json(
+              {
+                error: "Request transformation failed",
+                details: transformationErrors,
+              },
+              400
+            );
           }
         }
       }
@@ -246,17 +248,19 @@ export const createTransformationMiddleware = (
           duration,
         });
       }
-
     } catch (error) {
       console.error("Transformation middleware error:", error);
-      
+
       if (!config.skipOnError) {
-        return c.json({
-          error: "Internal transformation error",
-          message: error instanceof Error ? error.message : "Unknown error",
-        }, 500);
+        return c.json(
+          {
+            error: "Internal transformation error",
+            message: error instanceof Error ? error.message : "Unknown error",
+          },
+          500
+        );
       }
-      
+
       // Continue without transformation if skipOnError is true
       await next();
     }
@@ -275,7 +279,7 @@ async function transformRequestData(
     if (config.body && c.req.method !== "GET") {
       const body = await c.req.json().catch(() => ({}));
       const transformedBody = applyTransformationRules(body, config.body, errors);
-      
+
       // Update request body (Hono-specific way)
       if (Object.keys(transformedBody).length > 0) {
         c.req.transformedBody = transformedBody;
@@ -291,9 +295,7 @@ async function transformRequestData(
 
     // Transform headers
     if (config.headers) {
-      const headers = Object.fromEntries(
-        Array.from(c.req.raw.headers.entries())
-      );
+      const headers = Object.fromEntries(Array.from(c.req.raw.headers.entries()));
       const transformedHeaders = applyTransformationRules(headers, config.headers, errors);
       c.req.transformedHeaders = transformedHeaders;
     }
@@ -304,27 +306,25 @@ async function transformRequestData(
       const transformedParams = applyTransformationRules(params, config.params, errors);
       c.req.transformedParams = transformedParams;
     }
-
   } catch (error) {
-    errors.push(`Request transformation error: ${error instanceof Error ? error.message : "Unknown error"}`);
+    errors.push(
+      `Request transformation error: ${error instanceof Error ? error.message : "Unknown error"}`
+    );
   }
 
   return { errors };
 }
 
 // Response data transformation
-async function transformResponseData(
-  c: any,
-  config: ResponseTransformConfig
-): Promise<void> {
+async function transformResponseData(c: any, config: ResponseTransformConfig): Promise<void> {
   try {
     // Get current response
     const response = await c.res.json().catch(() => null);
-    
+
     if (response && config.body) {
       const errors: string[] = [];
       const transformedResponse = applyTransformationRules(response, config.body, errors);
-      
+
       if (errors.length === 0) {
         c.res = c.json(transformedResponse);
       }
@@ -333,35 +333,29 @@ async function transformResponseData(
     // Add response headers
     if (config.headers) {
       Object.entries(config.headers).forEach(([key, value]) => {
-        const headerValue = typeof value === "function" 
-          ? value(c.req) 
-          : value;
+        const headerValue = typeof value === "function" ? value(c.req) : value;
         c.header(key, headerValue);
       });
     }
 
     // Modify status code if specified
     if (config.statusCode) {
-      const newStatus = typeof config.statusCode === "function"
-        ? config.statusCode(c.res.status)
-        : config.statusCode;
+      const newStatus =
+        typeof config.statusCode === "function"
+          ? config.statusCode(c.res.status)
+          : config.statusCode;
       c.status(newStatus);
     }
-
   } catch (error) {
     console.error("Response transformation error:", error);
   }
 }
 
 // Apply transformation rules to data
-function applyTransformationRules(
-  data: any,
-  rules: TransformationRule[],
-  errors: string[]
-): any {
+function applyTransformationRules(data: any, rules: TransformationRule[], errors: string[]): any {
   const result = { ...data };
 
-  rules.forEach(rule => {
+  rules.forEach((rule) => {
     try {
       const fieldExists = rule.field in result;
       const fieldValue = result[rule.field];
@@ -372,7 +366,7 @@ function applyTransformationRules(
       }
 
       // Skip if field doesn't exist and is required
-      if (!fieldExists && !rule.optional) {
+      if (!(fieldExists || rule.optional)) {
         errors.push(`Required field '${rule.field}' is missing`);
         return;
       }
@@ -390,10 +384,8 @@ function applyTransformationRules(
             if (!isValid) {
               errors.push(rule.errorMessage || `Validation failed for field '${rule.field}'`);
             }
-          } else if (rule.rule instanceof RegExp) {
-            if (!rule.rule.test(String(fieldValue))) {
-              errors.push(rule.errorMessage || `Pattern validation failed for field '${rule.field}'`);
-            }
+          } else if (rule.rule instanceof RegExp && !rule.rule.test(String(fieldValue))) {
+            errors.push(rule.errorMessage || `Pattern validation failed for field '${rule.field}'`);
           }
           break;
 
@@ -403,13 +395,17 @@ function applyTransformationRules(
           if (typeof rule.rule === "function") {
             result[rule.field] = rule.rule(fieldValue);
           } else if (rule.rule instanceof RegExp && typeof rule.rule === "string") {
-            result[rule.field] = String(fieldValue).replace(rule.rule as RegExp, rule.rule as string);
+            result[rule.field] = String(fieldValue).replace(
+              rule.rule as RegExp,
+              rule.rule as string
+            );
           }
           break;
       }
-
     } catch (error) {
-      errors.push(`Error processing field '${rule.field}': ${error instanceof Error ? error.message : "Unknown error"}`);
+      errors.push(
+        `Error processing field '${rule.field}': ${error instanceof Error ? error.message : "Unknown error"}`
+      );
     }
   });
 
@@ -455,7 +451,7 @@ export const PresetTransformations = {
     response: {
       body: [
         CommonRules.formatCurrency("amount"),
-        CommonRules.formatCurrency("deposit_amount"), 
+        CommonRules.formatCurrency("deposit_amount"),
         CommonRules.formatCurrency("total_price"),
         CommonRules.formatCurrency("balance_amount"),
       ],
@@ -468,13 +464,8 @@ export const PresetTransformations = {
    */
   fileUploadSanitization: createTransformationMiddleware({
     request: {
-      body: [
-        CommonRules.sanitizeFileName("filename"),
-        CommonRules.sanitizeHtml("description"),
-      ],
-      headers: [
-        CommonRules.sanitizeHtml("content-disposition"),
-      ],
+      body: [CommonRules.sanitizeFileName("filename"), CommonRules.sanitizeHtml("description")],
+      headers: [CommonRules.sanitizeHtml("content-disposition")],
     },
     logTransformations: true,
   }),

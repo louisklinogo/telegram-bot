@@ -16,11 +16,11 @@ const DialogOverlay = React.forwardRef<
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Overlay>
 >(({ className, ...props }, ref) => (
   <DialogPrimitive.Overlay
-    ref={ref}
     className={cn(
-      "fixed desktop:rounded-[10px] inset-0 z-50 bg-background/60 dark:bg-background/80 data-[state=closed]:animate-[dialog-overlay-hide_100ms] data-[state=open]:animate-[dialog-overlay-show_100ms]",
-      className,
+      "fixed inset-0 z-50 desktop:rounded-[10px] bg-background/60 data-[state=closed]:animate-[dialog-overlay-hide_100ms] data-[state=open]:animate-[dialog-overlay-show_100ms] dark:bg-background/80",
+      className
     )}
+    ref={ref}
     {...props}
   />
 ));
@@ -35,17 +35,17 @@ const DialogContent = React.forwardRef<
   <DialogPortal>
     <DialogOverlay />
     <DialogPrimitive.Content
-      ref={ref}
       className={cn(
-        "bg-background border-border border fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 max-h-[calc(100svh-10vw)] overflow-y-scroll w-[90vw] max-w-xl dark:p-px text-primary z-50 data-[state=closed]:animate-[dialog-content-hide_100ms] data-[state=open]:animate-[dialog-content-show_100ms]",
-        className,
+        "-translate-x-1/2 -translate-y-1/2 fixed top-1/2 left-1/2 z-50 max-h-[calc(100svh-10vw)] w-[90vw] max-w-xl overflow-y-scroll border border-border bg-background text-primary data-[state=closed]:animate-[dialog-content-hide_100ms] data-[state=open]:animate-[dialog-content-show_100ms] dark:p-px",
+        className
       )}
+      ref={ref}
       {...props}
     >
       {children}
 
       {!hideClose && (
-        <DialogPrimitive.Close className="absolute right-6 top-6 opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground">
+        <DialogPrimitive.Close className="absolute top-6 right-6 opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground">
           <Cross2Icon className="h-4 w-4" />
           <span className="sr-only">Close</span>
         </DialogPrimitive.Close>
@@ -62,11 +62,11 @@ const DialogContentFrameless = React.forwardRef<
   <DialogPortal>
     <DialogOverlay />
     <DialogPrimitive.Content
-      ref={ref}
       className={cn(
-        "fixed bg-background top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[90vw] max-w-xl border dark:border-none dark:p-px text-primary z-50 data-[state=closed]:animate-[dialog-content-hide_100ms] data-[state=open]:animate-[dialog-content-show_100ms]",
-        className,
+        "-translate-x-1/2 -translate-y-1/2 fixed top-1/2 left-1/2 z-50 w-[90vw] max-w-xl border bg-background text-primary data-[state=closed]:animate-[dialog-content-hide_100ms] data-[state=open]:animate-[dialog-content-show_100ms] dark:border-none dark:p-px",
+        className
       )}
+      ref={ref}
       {...props}
     >
       {children}
@@ -92,8 +92,8 @@ const DialogTitle = React.forwardRef<
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Title>
 >(({ className, ...props }, ref) => (
   <DialogPrimitive.Title
+    className={cn("mb-4 font-semibold text-lg leading-none tracking-tight", className)}
     ref={ref}
-    className={cn("text-lg font-semibold leading-none tracking-tight mb-4", className)}
     {...props}
   />
 ));
@@ -104,8 +104,8 @@ const DialogDescription = React.forwardRef<
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Description>
 >(({ className, ...props }, ref) => (
   <DialogPrimitive.Description
+    className={cn("text-muted-foreground text-sm", className)}
     ref={ref}
-    className={cn("text-sm text-muted-foreground", className)}
     {...props}
   />
 ));

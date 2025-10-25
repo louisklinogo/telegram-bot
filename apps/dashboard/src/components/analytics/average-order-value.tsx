@@ -1,9 +1,9 @@
 "use client";
 
-import { trpc } from "@/lib/trpc/client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useSuspenseQuery } from "@tanstack/react-query";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatAmount } from "@/lib/format-currency";
+import { trpc } from "@/lib/trpc/client";
 
 export function AverageOrderValue() {
   const [data] = trpc.analytics.averageOrderValue.useSuspenseQuery();
@@ -20,7 +20,7 @@ export function AverageOrderValue() {
       <CardContent className="pb-[34px]">
         <div className="flex flex-col gap-2">
           <div>Average Order Value</div>
-          <div className="text-sm text-muted-foreground">Per order</div>
+          <div className="text-muted-foreground text-sm">Per order</div>
         </div>
       </CardContent>
     </Card>

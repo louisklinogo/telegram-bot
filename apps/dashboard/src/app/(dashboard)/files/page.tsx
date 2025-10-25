@@ -25,23 +25,23 @@ export default function FilesPage() {
   return (
     <div className="px-6 py-6">
       <div className="mb-4 flex items-center justify-end gap-2">
-        <Button variant="outline" size="sm" className="gap-2">
+        <Button className="gap-2" size="sm" variant="outline">
           <Filter className="h-4 w-4" /> Filter
         </Button>
-        <Button size="sm" className="gap-2">
+        <Button className="gap-2" size="sm">
           <CloudUpload className="h-4 w-4" /> Upload
         </Button>
       </div>
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {fileCategories.map((category) => (
-          <Card key={category.title} className="border-muted">
+          <Card className="border-muted" key={category.title}>
             <CardHeader>
-              <CardTitle className="text-base font-semibold">{category.title}</CardTitle>
-              <p className="text-sm text-muted-foreground">{category.description}</p>
+              <CardTitle className="font-semibold text-base">{category.title}</CardTitle>
+              <p className="text-muted-foreground text-sm">{category.description}</p>
             </CardHeader>
             <CardContent className="flex items-center justify-between">
               <Badge variant="secondary">{category.count} files</Badge>
-              <Button variant="ghost" size="sm">
+              <Button size="sm" variant="ghost">
                 View
               </Button>
             </CardContent>

@@ -1,7 +1,7 @@
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
-import * as schema from "./schema";
 import { addQueryLog } from "./request-context";
+import * as schema from "./schema";
 
 const connectionString = process.env.DATABASE_URL || process.env.SUPABASE_DB_URL;
 
@@ -20,14 +20,17 @@ const client = postgres(connectionString, {
     undefined: null, // Transform undefined to null for Postgres
   },
   onnotice: () => {}, // Suppress notices
-  debug: process.env.DB_DEBUG === '1' ? (conn, q) => {
-    try {
-      const text = Array.isArray(q) ? q.join(' ') : String(q ?? '');
-      // Log query text only; durations captured at procedure level
-      console.debug(`[db][debug] ${text.slice(0, 500)}`);
-      addQueryLog({ sql: text, ms: 0 });
-    } catch {}
-  } : false,
+  debug:
+    process.env.DB_DEBUG === "1"
+      ? (conn, q) => {
+          try {
+            const text = Array.isArray(q) ? q.join(" ") : String(q ?? "");
+            // Log query text only; durations captured at procedure level
+            console.debug(`[db][debug] ${text.slice(0, 500)}`);
+            addQueryLog({ sql: text, ms: 0 });
+          } catch {}
+        }
+      : false,
 });
 
 // Create drizzle instance with schema and a before/after query hook
@@ -36,10 +39,12 @@ export const db = drizzle(client, {
   logger: {
     logQuery(query, params) {
       try {
-        const text = Array.isArray(query) ? query.join(' ') : String(query);
+        const text = Array.isArray(query) ? query.join(" ") : String(query);
         addQueryLog({ sql: text, ms: 0 });
-        if (process.env.DB_LOG_QUERIES === '1') {
-          console.debug(`[db] ${text.slice(0, 500)}${params?.length ? ` :: [${params.length}]` : ''}`);
+        if (process.env.DB_LOG_QUERIES === "1") {
+          console.debug(
+            `[db] ${text.slice(0, 500)}${params?.length ? ` :: [${params.length}]` : ""}`
+          );
         }
       } catch {}
     },

@@ -50,7 +50,7 @@ export function useKeyboardNavigation<T>({
       const start = Math.min(anchor, focusedIndex);
       const end = Math.max(anchor, focusedIndex);
       const rangeIds = items.slice(start, end + 1).map(getId);
-      
+
       for (const id of rangeIds) {
         onSelect(id, true);
       }

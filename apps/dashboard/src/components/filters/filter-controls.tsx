@@ -1,10 +1,10 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import type { FilterFieldDef } from "./types";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
+import { ComboboxMulti } from "@/components/ui/combobox-multi";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -12,7 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ComboboxMulti } from "@/components/ui/combobox-multi";
+import type { FilterFieldDef } from "./types";
 
 type CommonProps = {
   field: FilterFieldDef;
@@ -35,9 +35,9 @@ export function Control({ field, value, onChange }: CommonProps) {
     return (
       <Input
         autoFocus
+        onChange={(e) => setLocal(e.target.value)}
         placeholder={`Type ${field.label.toLowerCase()}…`}
         value={String(local ?? "")}
-        onChange={(e) => setLocal(e.target.value)}
       />
     );
   }
@@ -46,16 +46,16 @@ export function Control({ field, value, onChange }: CommonProps) {
     return (
       <div className="flex gap-2">
         <Button
-          variant={local === true ? "default" : "outline"}
-          size="sm"
           onClick={() => setLocal(true)}
+          size="sm"
+          variant={local === true ? "default" : "outline"}
         >
           Yes
         </Button>
         <Button
-          variant={local === false ? "default" : "outline"}
-          size="sm"
           onClick={() => setLocal(false)}
+          size="sm"
+          variant={local === false ? "default" : "outline"}
         >
           No
         </Button>
@@ -66,10 +66,7 @@ export function Control({ field, value, onChange }: CommonProps) {
   if (field.type === "select") {
     const opts = field.options ?? [];
     return (
-      <Select
-        value={local ?? ""}
-        onValueChange={(val) => setLocal(val || undefined)}
-      >
+      <Select onValueChange={(val) => setLocal(val || undefined)} value={local ?? ""}>
         <SelectTrigger className="h-8 w-[220px]">
           <SelectValue placeholder={`Select ${field.label.toLowerCase()}…`} />
         </SelectTrigger>
@@ -92,10 +89,10 @@ export function Control({ field, value, onChange }: CommonProps) {
       <div className="w-[240px]">
         <ComboboxMulti
           items={items}
-          values={vals}
           onChange={(ids) => setLocal(ids && ids.length ? ids : undefined)}
           placeholder={`Select ${field.label.toLowerCase()}…`}
           searchPlaceholder={`Search ${field.label.toLowerCase()}…`}
+          values={vals}
         />
       </div>
     );
@@ -107,19 +104,29 @@ export function Control({ field, value, onChange }: CommonProps) {
     return (
       <div className="flex items-center gap-2">
         <Input
-          type="number"
-          placeholder="Min"
           className="w-24"
+          onChange={(e) =>
+            setLocal({
+              ...(local ?? {}),
+              [minKey]: e.target.value ? Number(e.target.value) : undefined,
+            })
+          }
+          placeholder="Min"
+          type="number"
           value={local?.[minKey] ?? ""}
-          onChange={(e) => setLocal({ ...(local ?? {}), [minKey]: e.target.value ? Number(e.target.value) : undefined })}
         />
         <span className="text-muted-foreground text-xs">to</span>
         <Input
-          type="number"
-          placeholder="Max"
           className="w-24"
+          onChange={(e) =>
+            setLocal({
+              ...(local ?? {}),
+              [maxKey]: e.target.value ? Number(e.target.value) : undefined,
+            })
+          }
+          placeholder="Max"
+          type="number"
           value={local?.[maxKey] ?? ""}
-          onChange={(e) => setLocal({ ...(local ?? {}), [maxKey]: e.target.value ? Number(e.target.value) : undefined })}
         />
       </div>
     );
@@ -128,15 +135,17 @@ export function Control({ field, value, onChange }: CommonProps) {
   if (field.type === "date_range") {
     const fromKey = field.map?.start ?? "from";
     const toKey = field.map?.end ?? "to";
-    const selected = useMemo(() => ({
-      from: local?.[fromKey] ? new Date(local[fromKey]) : undefined,
-      to: local?.[toKey] ? new Date(local[toKey]) : undefined,
-    }), [local]);
+    const selected = useMemo(
+      () => ({
+        from: local?.[fromKey] ? new Date(local[fromKey]) : undefined,
+        to: local?.[toKey] ? new Date(local[toKey]) : undefined,
+      }),
+      [local]
+    );
     return (
       <Calendar
-        mode="range"
         initialFocus
-        selected={selected}
+        mode="range"
         onSelect={(range: any) => {
           setLocal({
             ...(local ?? {}),
@@ -144,9 +153,10 @@ export function Control({ field, value, onChange }: CommonProps) {
             [toKey]: range?.to ? range.to.toISOString().slice(0, 10) : undefined,
           });
         }}
+        selected={selected}
       />
     );
   }
 
-  return <div className="text-xs text-muted-foreground">Unsupported control</div>;
+  return <div className="text-muted-foreground text-xs">Unsupported control</div>;
 }

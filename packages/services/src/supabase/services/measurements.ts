@@ -61,7 +61,7 @@ export async function createMeasurement(input: CreateMeasurementInput): Promise<
 
   const payload = input.values.map(({ key, value }) => {
     const keyNormalized = key.toLowerCase();
-    const numeric = typeof value === "number" ? value : parseFloat(String(value));
+    const numeric = typeof value === "number" ? value : Number.parseFloat(String(value));
     const isNumericKey = NUMERIC_KEYS.has(keyNormalized) && !Number.isNaN(numeric);
 
     return {

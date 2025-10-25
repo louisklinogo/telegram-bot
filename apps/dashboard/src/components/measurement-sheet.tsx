@@ -1,14 +1,33 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { format } from "date-fns";
 import { CalendarIcon, History, Loader2, Ruler, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import { format } from "date-fns";
+import { DynamicMeasurementInput } from "@/components/measurement-input-dynamic";
+import { TagInput } from "@/components/tag-input";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Select,
@@ -26,22 +45,11 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { SubmitButton } from "@/components/ui/submit-button";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
+import { Textarea } from "@/components/ui/textarea";
 import { useCreateMeasurement, useUpdateMeasurement } from "@/hooks/use-measurement-mutations";
 import { useClients } from "@/hooks/use-supabase-data";
 import type { MeasurementWithClient } from "@/lib/supabase-queries";
-import { DynamicMeasurementInput } from "@/components/measurement-input-dynamic";
-import { TagInput } from "@/components/tag-input";
 
 // Zod schema for validation
 const measurementFormSchema = z.object({
@@ -126,7 +134,7 @@ export function MeasurementSheet({ open, onOpenChange, measurement }: Measuremen
   const onSubmit = async (values: MeasurementFormValues) => {
     try {
       // Convert date to ISO datetime string if provided
-      let takenAt: string | undefined = undefined;
+      let takenAt: string | undefined;
       if (values.taken_at) {
         const date = new Date(values.taken_at);
         if (!isNaN(date.getTime())) {
@@ -165,28 +173,30 @@ export function MeasurementSheet({ open, onOpenChange, measurement }: Measuremen
   };
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="flex flex-col overflow-hidden sm:max-w-[650px] p-0">
-        <SheetHeader className="px-6 pt-6 pb-0 flex-shrink-0">
+    <Sheet onOpenChange={onOpenChange} open={open}>
+      <SheetContent className="flex flex-col overflow-hidden p-0 sm:max-w-[650px]">
+        <SheetHeader className="flex-shrink-0 px-6 pt-6 pb-0">
           <div className="flex items-center gap-2">
-            <SheetTitle className="text-xl">{isEdit ? "Edit Measurement" : "New Measurement"}</SheetTitle>
+            <SheetTitle className="text-xl">
+              {isEdit ? "Edit Measurement" : "New Measurement"}
+            </SheetTitle>
             {isEdit && (measurement as any)?.version && (
-              <Badge variant="outline" className="text-xs">
+              <Badge className="text-xs" variant="outline">
                 v{(measurement as any).version}
               </Badge>
             )}
             {isEdit && (measurement as any)?.isActive && (
-              <Badge variant="default" className="text-xs">
+              <Badge className="text-xs" variant="default">
                 Active
               </Badge>
             )}
             {isEdit && (
               <Button
-                variant="outline"
-                size="sm"
                 onClick={() => setShowVersionHistory(!showVersionHistory)}
+                size="sm"
+                variant="outline"
               >
-                <History className="h-4 w-4 mr-1" />
+                <History className="mr-1 h-4 w-4" />
                 History
               </Button>
             )}
@@ -194,8 +204,8 @@ export function MeasurementSheet({ open, onOpenChange, measurement }: Measuremen
         </SheetHeader>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col flex-1 min-h-0">
-            <div className="flex-1 overflow-y-auto scrollbar-hide px-6 py-4">
+          <form className="flex min-h-0 flex-1 flex-col" onSubmit={form.handleSubmit(onSubmit)}>
+            <div className="scrollbar-hide flex-1 overflow-y-auto px-6 py-4">
               {/* Client Selection - Outside Accordion */}
               <div className="mb-6">
                 <FormField
@@ -203,10 +213,10 @@ export function MeasurementSheet({ open, onOpenChange, measurement }: Measuremen
                   name="client_id"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-xs text-muted-foreground font-normal">
+                      <FormLabel className="font-normal text-muted-foreground text-xs">
                         Client <span className="text-destructive">*</span>
                       </FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value} disabled={isEdit}>
+                      <Select disabled={isEdit} onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Select client" />
@@ -226,7 +236,7 @@ export function MeasurementSheet({ open, onOpenChange, measurement }: Measuremen
                 />
               </div>
 
-              <Accordion type="multiple" defaultValue={["measurements"]} className="space-y-6">
+              <Accordion className="space-y-6" defaultValue={["measurements"]} type="multiple">
                 {/* Measurements Section */}
                 <AccordionItem value="measurements">
                   <AccordionTrigger>Measurements</AccordionTrigger>
@@ -259,15 +269,15 @@ export function MeasurementSheet({ open, onOpenChange, measurement }: Measuremen
                           name="record_name"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel className="text-xs text-muted-foreground font-normal">
+                              <FormLabel className="font-normal text-muted-foreground text-xs">
                                 Record Name
                               </FormLabel>
                               <FormControl>
                                 <Input
                                   {...field}
-                                  value={field.value ?? ""}
-                                  placeholder="e.g., Wedding Kaftan 2024"
                                   autoComplete="off"
+                                  placeholder="e.g., Wedding Kaftan 2024"
+                                  value={field.value ?? ""}
                                 />
                               </FormControl>
                               <FormMessage />
@@ -280,16 +290,16 @@ export function MeasurementSheet({ open, onOpenChange, measurement }: Measuremen
                           name="taken_at"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel className="text-xs text-muted-foreground font-normal">
+                              <FormLabel className="font-normal text-muted-foreground text-xs">
                                 Date Taken
                               </FormLabel>
-                              <Popover open={isDatePickerOpen} onOpenChange={setIsDatePickerOpen}>
+                              <Popover onOpenChange={setIsDatePickerOpen} open={isDatePickerOpen}>
                                 <FormControl>
                                   <PopoverTrigger asChild>
                                     <Button
+                                      className="w-full justify-start text-left font-normal"
                                       type="button"
                                       variant="outline"
-                                      className="w-full justify-start text-left font-normal"
                                     >
                                       {field.value ? (
                                         format(new Date(field.value), "PPP")
@@ -300,10 +310,10 @@ export function MeasurementSheet({ open, onOpenChange, measurement }: Measuremen
                                     </Button>
                                   </PopoverTrigger>
                                 </FormControl>
-                                <PopoverContent className="w-auto p-0" align="end">
+                                <PopoverContent align="end" className="w-auto p-0">
                                   <Calendar
+                                    initialFocus
                                     mode="single"
-                                    selected={field.value ? new Date(field.value) : undefined}
                                     onSelect={(date) => {
                                       if (date) {
                                         field.onChange(date.toISOString());
@@ -312,7 +322,7 @@ export function MeasurementSheet({ open, onOpenChange, measurement }: Measuremen
                                       }
                                       setIsDatePickerOpen(false);
                                     }}
-                                    initialFocus
+                                    selected={field.value ? new Date(field.value) : undefined}
                                     toDate={new Date()}
                                   />
                                 </PopoverContent>
@@ -333,15 +343,15 @@ export function MeasurementSheet({ open, onOpenChange, measurement }: Measuremen
                         name="tags"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="text-xs text-muted-foreground font-normal">
+                            <FormLabel className="font-normal text-muted-foreground text-xs">
                               Tags
                             </FormLabel>
                             <FormControl>
                               <TagInput
-                                value={field.value || []}
                                 onChange={field.onChange}
                                 placeholder="Add tags (e.g., kaftan, formal, wedding)"
                                 suggestions={TAG_SUGGESTIONS}
+                                value={field.value || []}
                               />
                             </FormControl>
                             <FormDescription>
@@ -358,16 +368,16 @@ export function MeasurementSheet({ open, onOpenChange, measurement }: Measuremen
                         name="notes"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="text-xs text-muted-foreground font-normal">
+                            <FormLabel className="font-normal text-muted-foreground text-xs">
                               Notes
                             </FormLabel>
                             <FormControl>
                               <Textarea
                                 {...field}
-                                value={field.value ?? ""}
-                                placeholder="Additional notes about this measurement..."
-                                className="flex min-h-[80px] resize-none"
                                 autoComplete="off"
+                                className="flex min-h-[80px] resize-none"
+                                placeholder="Additional notes about this measurement..."
+                                value={field.value ?? ""}
                               />
                             </FormControl>
                             <FormMessage />
@@ -380,19 +390,19 @@ export function MeasurementSheet({ open, onOpenChange, measurement }: Measuremen
               </Accordion>
             </div>
 
-            <div className="flex-shrink-0 flex justify-end gap-4 px-6 py-4 border-t">
+            <div className="flex flex-shrink-0 justify-end gap-4 border-t px-6 py-4">
               <Button
+                disabled={isLoading}
+                onClick={() => onOpenChange(false)}
                 type="button"
                 variant="outline"
-                onClick={() => onOpenChange(false)}
-                disabled={isLoading}
               >
                 Cancel
               </Button>
               <SubmitButton
-                type="submit"
-                isSubmitting={isLoading}
                 disabled={!form.formState.isDirty}
+                isSubmitting={isLoading}
+                type="submit"
               >
                 {isEdit ? "Update" : "Create"}
               </SubmitButton>

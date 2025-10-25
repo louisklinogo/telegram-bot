@@ -25,7 +25,7 @@ export function ManageWhatsApp() {
 
   return (
     <>
-      <Button size="sm" variant="outline" onClick={openOrStart} disabled={loading}>
+      <Button disabled={loading} onClick={openOrStart} size="sm" variant="outline">
         {loading ? "Opening…" : "Manage WhatsApp"}
       </Button>
       <WhatsAppModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />

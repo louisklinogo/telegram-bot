@@ -1,13 +1,13 @@
 "use client";
 
+import { Check, Plus, X } from "lucide-react";
 import { useState } from "react";
-import { X, Plus, Check } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { trpc } from "@/lib/trpc/client";
 import { useToast } from "@/components/ui/use-toast";
+import { trpc } from "@/lib/trpc/client";
 
 type TagEditorProps = {
   documentId: string;
@@ -68,90 +68,90 @@ export function TagEditor({ documentId, initialTags = [], onUpdate }: TagEditorP
   };
 
   return (
-    <Popover open={isOpen} onOpenChange={setIsOpen}>
+    <Popover onOpenChange={setIsOpen} open={isOpen}>
       <PopoverTrigger asChild>
         <button
-          type="button"
-          className="inline-flex items-center gap-1 hover:opacity-70 transition-opacity"
+          className="inline-flex items-center gap-1 transition-opacity hover:opacity-70"
           onClick={(e) => {
             e.stopPropagation();
             setIsOpen(true);
           }}
+          type="button"
         >
           {initialTags && initialTags.length > 0 ? (
             <>
               {initialTags.slice(0, 3).map((tag) => (
-                <Badge key={tag} variant="secondary" className="text-xs">
+                <Badge className="text-xs" key={tag} variant="secondary">
                   {tag}
                 </Badge>
               ))}
               {initialTags.length > 3 && (
-                <Badge variant="secondary" className="text-xs">
+                <Badge className="text-xs" variant="secondary">
                   +{initialTags.length - 3}
                 </Badge>
               )}
             </>
           ) : (
-            <Badge variant="outline" className="text-xs">
+            <Badge className="text-xs" variant="outline">
               + Add tags
             </Badge>
           )}
         </button>
       </PopoverTrigger>
-      <PopoverContent className="w-80" align="start" onClick={(e) => e.stopPropagation()}>
+      <PopoverContent align="start" className="w-80" onClick={(e) => e.stopPropagation()}>
         <div className="space-y-4">
           <div>
-            <h4 className="font-medium text-sm mb-2">Edit Tags</h4>
-            <div className="flex flex-wrap gap-1 mb-3">
+            <h4 className="mb-2 font-medium text-sm">Edit Tags</h4>
+            <div className="mb-3 flex flex-wrap gap-1">
               {tags.map((tag) => (
-                <Badge key={tag} variant="secondary" className="text-xs">
+                <Badge className="text-xs" key={tag} variant="secondary">
                   {tag}
                   <button
-                    type="button"
-                    onClick={() => handleRemoveTag(tag)}
                     className="ml-1 hover:text-destructive"
+                    onClick={() => handleRemoveTag(tag)}
+                    type="button"
                   >
                     <X className="h-3 w-3" />
                   </button>
                 </Badge>
               ))}
               {tags.length === 0 && (
-                <span className="text-sm text-muted-foreground">No tags yet</span>
+                <span className="text-muted-foreground text-sm">No tags yet</span>
               )}
             </div>
           </div>
 
           <div className="flex gap-2">
             <Input
-              placeholder="Add new tag..."
-              value={newTag}
+              autoFocus
+              className="h-8 text-sm"
               onChange={(e) => setNewTag(e.target.value)}
               onKeyDown={handleKeyDown}
-              className="h-8 text-sm"
-              autoFocus
+              placeholder="Add new tag..."
+              value={newTag}
             />
-            <Button size="sm" variant="outline" onClick={handleAddTag} disabled={!newTag.trim()}>
+            <Button disabled={!newTag.trim()} onClick={handleAddTag} size="sm" variant="outline">
               <Plus className="h-4 w-4" />
             </Button>
           </div>
 
           <div className="flex justify-end gap-2">
             <Button
-              size="sm"
-              variant="outline"
               onClick={() => {
                 setTags(initialTags);
                 setIsOpen(false);
               }}
+              size="sm"
+              variant="outline"
             >
               Cancel
             </Button>
-            <Button size="sm" onClick={handleSave} disabled={updateMutation.isPending}>
+            <Button disabled={updateMutation.isPending} onClick={handleSave} size="sm">
               {updateMutation.isPending ? (
                 "Saving..."
               ) : (
                 <>
-                  <Check className="h-4 w-4 mr-1" />
+                  <Check className="mr-1 h-4 w-4" />
                   Save
                 </>
               )}

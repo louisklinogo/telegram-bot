@@ -1,6 +1,12 @@
 import "dotenv/config";
 import { db } from "@Faworra/database/client";
-import { products, productCategories, productCategoryMappings, transactionCategories, teams } from "@Faworra/database/schema";
+import {
+  productCategories,
+  productCategoryMappings,
+  products,
+  teams,
+  transactionCategories,
+} from "@Faworra/database/schema";
 import { and, desc, eq, isNull, sql } from "drizzle-orm";
 
 async function toTitle(slug: string) {
@@ -11,13 +17,23 @@ async function toTitle(slug: string) {
 }
 
 async function main() {
-  const teamRows = await db.select({ id: teams.id }).from(teams).orderBy(desc(teams.createdAt as any)).execute();
+  const teamRows = await db
+    .select({ id: teams.id })
+    .from(teams)
+    .orderBy(desc(teams.createdAt as any))
+    .execute();
   for (const team of teamRows) {
     const teamId = team.id as string;
     const distinct = await db
       .select({ slug: products.categorySlug })
       .from(products)
-      .where(and(eq(products.teamId, teamId), isNull(products.deletedAt), sql`${products.categorySlug} IS NOT NULL`))
+      .where(
+        and(
+          eq(products.teamId, teamId),
+          isNull(products.deletedAt),
+          sql`${products.categorySlug} IS NOT NULL`
+        )
+      )
       .groupBy(products.categorySlug);
 
     for (const row of distinct) {
@@ -36,12 +52,22 @@ async function main() {
         const trxCat = await db
           .select({ id: transactionCategories.id, name: transactionCategories.name })
           .from(transactionCategories)
-          .where(and(eq(transactionCategories.teamId, teamId), eq(transactionCategories.slug, slug)))
+          .where(
+            and(eq(transactionCategories.teamId, teamId), eq(transactionCategories.slug, slug))
+          )
           .limit(1);
         const name = trxCat[0]?.name || (await toTitle(slug));
         const [created] = await db
           .insert(productCategories)
-          .values({ teamId, name, slug, color: null, description: null, parentId: null, system: false })
+          .values({
+            teamId,
+            name,
+            slug,
+            color: null,
+            description: null,
+            parentId: null,
+            system: false,
+          })
           .returning({ id: productCategories.id });
         productCategoryId = created.id as string;
       }
@@ -55,7 +81,11 @@ async function main() {
       if (trxCat[0]) {
         await db
           .insert(productCategoryMappings)
-          .values({ teamId, productCategoryId: productCategoryId!, transactionCategoryId: trxCat[0].id as string })
+          .values({
+            teamId,
+            productCategoryId: productCategoryId!,
+            transactionCategoryId: trxCat[0].id as string,
+          })
           .onConflictDoNothing();
       }
     }

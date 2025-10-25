@@ -1,5 +1,5 @@
+import { getTeamById, getTransactionCategories } from "@Faworra/database/queries";
 import { db, getCurrentTeamId } from "@/lib/trpc/server";
-import { getTransactionCategories, getTeamById } from "@Faworra/database/queries";
 import { CategoriesTable } from "./_components/categories-table";
 
 export default async function TransactionCategoriesPage() {
@@ -11,8 +11,8 @@ export default async function TransactionCategoriesPage() {
   const defaultTaxType = mapCountryToTaxType(team?.country);
 
   return (
-    <div className="px-6 py-6 space-y-3">
-      <CategoriesTable initialCategories={categories as any} defaultTaxType={defaultTaxType} />
+    <div className="space-y-3 px-6 py-6">
+      <CategoriesTable defaultTaxType={defaultTaxType} initialCategories={categories as any} />
     </div>
   );
 }

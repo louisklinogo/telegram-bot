@@ -10,7 +10,8 @@ export function registerProductsRoutes(app: Hono<ApiEnv>) {
       const productId = form.get("productId");
       if (!val) return c.json({ error: "file is required" }, 400);
       if (!(val instanceof File)) return c.json({ error: "invalid file" }, 400);
-      if (!productId || typeof productId !== "string") return c.json({ error: "productId is required" }, 400);
+      if (!productId || typeof productId !== "string")
+        return c.json({ error: "productId is required" }, 400);
 
       const file = val as File;
       const maxBytes = 25 * 1024 * 1024; // 25MB limit
@@ -56,7 +57,8 @@ export function registerProductsRoutes(app: Hono<ApiEnv>) {
         url = String(form.get("url") || "");
         productId = String(form.get("productId") || "");
       }
-      if (!url || !/^https?:\/\//i.test(url)) return c.json({ error: "valid url is required" }, 400);
+      if (!(url && /^https?:\/\//i.test(url)))
+        return c.json({ error: "valid url is required" }, 400);
       if (!productId) return c.json({ error: "productId is required" }, 400);
 
       const teamId = c.get("teamId") as string;
@@ -71,17 +73,23 @@ export function registerProductsRoutes(app: Hono<ApiEnv>) {
 
       const contentType = resp.headers.get("content-type") || "application/octet-stream";
       const urlPath = (() => {
-        try { return new URL(url).pathname; } catch { return "/"; }
+        try {
+          return new URL(url).pathname;
+        } catch {
+          return "/";
+        }
       })();
       const baseName = urlPath.split("/").filter(Boolean).pop() || "file";
       const id = crypto.randomUUID();
       const safeName = `${id}_${baseName}`;
       const path = `${teamId}/${productId}/${safeName}`;
 
-      const { error: upErr } = await supabase.storage.from("product-media").upload(path, arrayBuffer, {
-        contentType,
-        upsert: false,
-      });
+      const { error: upErr } = await supabase.storage
+        .from("product-media")
+        .upload(path, arrayBuffer, {
+          contentType,
+          upsert: false,
+        });
       if (upErr) return c.json({ error: upErr.message }, 500);
       const { data: pub } = supabase.storage.from("product-media").getPublicUrl(path);
 

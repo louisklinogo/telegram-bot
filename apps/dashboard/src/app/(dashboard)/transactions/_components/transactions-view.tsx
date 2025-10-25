@@ -1,5 +1,7 @@
 "use client";
-import { useSuspenseInfiniteQuery, useQueryClient } from "@tanstack/react-query";
+import type { RouterOutputs } from "@Faworra/api/trpc/routers/_app";
+import { createBrowserClient } from "@Faworra/supabase/client";
+import { useQueryClient, useSuspenseInfiniteQuery } from "@tanstack/react-query";
 import {
   flexRender,
   getCoreRowModel,
@@ -9,14 +11,24 @@ import {
 } from "@tanstack/react-table";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { Download, Trash2 } from "lucide-react";
+import {
+  parseAsArrayOf,
+  parseAsBoolean,
+  parseAsInteger,
+  parseAsString,
+  useQueryState,
+  useQueryStates,
+} from "nuqs";
 import { useEffect, useId, useMemo, useRef, useState } from "react";
-import { parseAsArrayOf, parseAsBoolean, parseAsInteger, parseAsString, useQueryState, useQueryStates } from "nuqs";
 import { useInView } from "react-intersection-observer";
 import { AddTransactions } from "@/components/add-transactions";
-import { SearchInline } from "@/components/search-inline";
 import { BulkActions } from "@/components/bulk-actions";
 import { CreateAccountDialog } from "@/components/create-account-dialog";
 import { EmptyState } from "@/components/empty-state";
+import { FilterDropdown } from "@/components/filters/filter-dropdown";
+import { FilterToolbar } from "@/components/filters/filter-toolbar";
+import type { FilterFieldDef } from "@/components/filters/types";
+import { SearchInline } from "@/components/search-inline";
 import { TransactionDetailsSheet } from "@/components/transaction-details-sheet";
 import { TransactionSheet } from "@/components/transaction-sheet";
 import { TransactionsColumnVisibility } from "@/components/transactions-column-visibility";
@@ -36,14 +48,9 @@ import { useStickyColumns } from "@/hooks/use-sticky-columns";
 import { useTeamCurrency } from "@/hooks/use-team-currency";
 import { useTransactionParams } from "@/hooks/use-transaction-params";
 import { trpc } from "@/lib/trpc/client";
-import { createTransactionColumns, type TransactionRow } from "./transactions-columns";
-import { FilterToolbar } from "@/components/filters/filter-toolbar";
-import { FilterDropdown } from "@/components/filters/filter-dropdown";
-import type { FilterFieldDef } from "@/components/filters/types";
-import { TransactionsAnalyticsCarousel } from "./transactions-analytics-carousel";
 import { useTransactionsInvalidation } from "../_hooks/use-transactions-invalidation";
-import { createBrowserClient } from "@Faworra/supabase/client";
-import type { RouterOutputs } from "@Faworra/api/trpc/routers/_app";
+import { TransactionsAnalyticsCarousel } from "./transactions-analytics-carousel";
+import { createTransactionColumns, type TransactionRow } from "./transactions-columns";
 
 type FilterType = "all" | "payment" | "expense" | "refund" | "adjustment";
 
@@ -107,7 +114,7 @@ export function TransactionsView({
       attachments: parseAsString, // "include" | "exclude"
       recurring: parseAsBoolean,
     },
-    { shallow: true },
+    { shallow: true }
   );
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const selectedCount = selected.size;
@@ -115,9 +122,8 @@ export function TransactionsView({
   // Advanced filter state
   const rawType = (filters.type as string | undefined) ?? undefined;
   const allowedTypes = new Set<FilterType>(["payment", "expense", "refund", "adjustment"]);
-  const filterType: FilterType = rawType && allowedTypes.has(rawType as FilterType)
-    ? (rawType as FilterType)
-    : "all";
+  const filterType: FilterType =
+    rawType && allowedTypes.has(rawType as FilterType) ? (rawType as FilterType) : "all";
   const statuses: string[] = filters.statuses ?? [];
   const categories: string[] = filters.categories ?? [];
   const tags: string[] = filters.tags ?? [];
@@ -158,12 +164,15 @@ export function TransactionsView({
     const includeTags = columnVisibility?.tags !== false; // load tags only if column is visible
     const input: EnrichedListInput = {
       type: filterType === "all" ? undefined : filterType,
-      status: statusesSorted && statusesSorted.length ? (statusesSorted as EnrichedListInput["status"]) : undefined,
+      status:
+        statusesSorted && statusesSorted.length
+          ? (statusesSorted as EnrichedListInput["status"])
+          : undefined,
       categories: categoriesSorted && categoriesSorted.length ? categoriesSorted : undefined,
       tags: tagsSorted && tagsSorted.length ? tagsSorted : undefined,
       accounts: accountsSorted && accountsSorted.length ? accountsSorted : undefined,
       assignees: assigneesSorted && assigneesSorted.length ? assigneesSorted : undefined,
-      isRecurring: isRecurring,
+      isRecurring,
       search: q || undefined,
       startDate: startDate ? `${startDate}T00:00:00.000Z` : undefined,
       endDate: endDate ? `${endDate}T23:59:59.000Z` : undefined,
@@ -176,7 +185,7 @@ export function TransactionsView({
 
     // Remove undefined values to avoid issues
     const cleaned = Object.fromEntries(
-      Object.entries(input).filter(([, v]) => v !== undefined),
+      Object.entries(input).filter(([, v]) => v !== undefined)
     ) as EnrichedListInput;
 
     return cleaned;
@@ -210,21 +219,14 @@ export function TransactionsView({
     refetch,
     error: listError,
   } = useSuspenseInfiniteQuery({
-    queryKey: ["transactions.enrichedList", enrichedInput],
-    queryFn: async ({ pageParam }): Promise<EnrichedPage> => {
-      const result = await utils.client.transactions.enrichedList.query({
-        ...enrichedInput,
-        cursor: pageParam as Cursor | null,
-      });
-      return result as EnrichedPage;
-    },
-    getNextPageParam: (last) => last?.nextCursor ?? null,
-    initialPageParam: null as Cursor | null,
+    ...utils.transactions.enrichedList.infiniteQueryOptions(enrichedInput, {
+      getNextPageParam: (last: EnrichedPage) => last?.nextCursor ?? null,
+    }),
     initialData:
       initialTransactions && initialTransactions.length > 0
         ? ({
             pages: [{ items: initialTransactions, nextCursor: null } as EnrichedPage],
-            pageParams: [null as Cursor | null],
+            pageParams: [null],
           } as { pages: EnrichedPage[]; pageParams: Array<Cursor | null> })
         : undefined,
     staleTime: 15_000,
@@ -239,14 +241,17 @@ export function TransactionsView({
 
   const transactions = useMemo<EnrichedItem[]>(
     () => (infiniteData?.pages || []).flatMap((p) => p.items || []),
-    [infiniteData],
+    [infiniteData]
   );
 
-  const byId = useMemo(() => new Map<string, EnrichedItem>(transactions.map((r) => [r.transaction.id, r])), [transactions]);
+  const byId = useMemo(
+    () => new Map<string, EnrichedItem>(transactions.map((r) => [r.transaction.id, r])),
+    [transactions]
+  );
   const currencyCode = currency;
-  const hasActiveFilters = useMemo(() => {
-    return (
-    filterType !== "all" ||
+  const hasActiveFilters = useMemo(
+    () =>
+      filterType !== "all" ||
       Boolean(q) ||
       statuses.length > 0 ||
       categories.length > 0 ||
@@ -258,23 +263,23 @@ export function TransactionsView({
       amountMin != null ||
       amountMax != null ||
       Boolean(startDate) ||
-      Boolean(endDate)
-    );
-  }, [
-    filterType,
-    q,
-    statuses,
-    categories,
-    tags,
-    accounts,
-    assignees,
-    isRecurring,
-    hasAttachments,
+      Boolean(endDate),
+    [
+      filterType,
+      q,
+      statuses,
+      categories,
+      tags,
+      accounts,
+      assignees,
+      isRecurring,
+      hasAttachments,
       amountMin,
       amountMax,
-    startDate,
-    endDate,
-  ]);
+      startDate,
+      endDate,
+    ]
+  );
 
   // Options for filter pills (for supported controls)
   const typeOptions = useMemo(
@@ -284,7 +289,7 @@ export function TransactionsView({
       { value: "refund", label: "Refund" },
       { value: "adjustment", label: "Adjustment" },
     ],
-    [],
+    []
   );
   const statusOptionsPill = useMemo(
     () => [
@@ -293,7 +298,7 @@ export function TransactionsView({
       { value: "failed", label: "Failed" },
       { value: "cancelled", label: "Cancelled" },
     ],
-    [],
+    []
   );
 
   // Optional dynamic options (light queries; cached)
@@ -315,7 +320,10 @@ export function TransactionsView({
         key: "categories",
         label: "Category",
         type: "multi",
-        options: categoriesList.map((c: any) => ({ value: String(c.slug), label: String(c.name || c.slug) })),
+        options: categoriesList.map((c: any) => ({
+          value: String(c.slug),
+          label: String(c.name || c.slug),
+        })),
       },
       {
         key: "tags",
@@ -341,12 +349,22 @@ export function TransactionsView({
           label: String(m.fullName || m.email || "Unknown"),
         })),
       },
-      { key: "dateRange", label: "Date Range", type: "date_range", map: { start: "startDate", end: "endDate" } },
-      { key: "amountRange", label: "Amount", type: "number_range", map: { min: "amountMin", max: "amountMax" } },
+      {
+        key: "dateRange",
+        label: "Date Range",
+        type: "date_range",
+        map: { start: "startDate", end: "endDate" },
+      },
+      {
+        key: "amountRange",
+        label: "Amount",
+        type: "number_range",
+        map: { min: "amountMin", max: "amountMax" },
+      },
       { key: "hasAttachments", label: "Attachments", type: "boolean" },
       { key: "isRecurring", label: "Recurring", type: "boolean" },
     ],
-    [typeOptions, statusOptionsPill, categoriesList, tagsList, accountsList, membersList],
+    [typeOptions, statusOptionsPill, categoriesList, tagsList, accountsList, membersList]
   );
 
   const clearAllFilters = () => {
@@ -385,15 +403,12 @@ export function TransactionsView({
       accounts: (p.accounts as string[] | null) ?? null,
       assignees: (p.assignees as string[] | null) ?? null,
       recurring: typeof p.isRecurring === "boolean" ? p.isRecurring : null,
-      attachments:
-        p.hasAttachments === undefined ? null : p.hasAttachments ? "include" : "exclude",
+      attachments: p.hasAttachments === undefined ? null : p.hasAttachments ? "include" : "exclude",
       amount_range:
         p.amountMin != null || p.amountMax != null
-          ? [p.amountMin as number ?? 0, p.amountMax as number ?? 500000]
+          ? [(p.amountMin as number) ?? 0, (p.amountMax as number) ?? 500_000]
           : null,
-      start: p.startDate
-        ? new Date(p.startDate as string).toISOString().slice(0, 10)
-        : null,
+      start: p.startDate ? new Date(p.startDate as string).toISOString().slice(0, 10) : null,
       end: p.endDate ? new Date(p.endDate as string).toISOString().slice(0, 10) : null,
     });
   };
@@ -403,8 +418,8 @@ export function TransactionsView({
     { limit: 50 },
     {
       initialData: initialInvoices,
-      staleTime: 30000, // Don't refetch for 30 seconds
-    },
+      staleTime: 30_000, // Don't refetch for 30 seconds
+    }
   );
   const invoices = invoicesResult?.items ?? [];
 
@@ -430,30 +445,32 @@ export function TransactionsView({
       const id = vars?.transactionIds?.[0];
       const updates = vars?.updates ?? {};
       if (!id) return;
-      
-      await queryClient.cancelQueries({ queryKey: ["transactions.enrichedList", enrichedInput] });
+
+      const currentKey = utils.transactions.enrichedList.getQueryKey(enrichedInput, "infinite");
+      await queryClient.cancelQueries({ queryKey: currentKey });
       const prev = queryClient.getQueryData<{
         pages: Array<{ items: EnrichedItem[]; nextCursor?: string | null }>;
         pageParams: unknown[];
-      }>(["transactions.enrichedList", enrichedInput]);
-      
+      }>(currentKey);
+
       if (prev) {
         const next = {
           ...prev,
           pages: prev.pages.map((p) => ({
             ...p,
             items: (p.items || []).map((r) =>
-              r.transaction.id === id ? { ...r, transaction: { ...r.transaction, ...updates } } : r,
+              r.transaction.id === id ? { ...r, transaction: { ...r.transaction, ...updates } } : r
             ),
           })),
         };
-        queryClient.setQueryData(["transactions.enrichedList", enrichedInput], next);
+        queryClient.setQueryData(currentKey, next);
       }
       return { prev };
     },
     onError: (_err, _vars, ctx) => {
       if (ctx?.prev) {
-        queryClient.setQueryData(["transactions.enrichedList", enrichedInput], ctx.prev);
+        const currentKey = utils.transactions.enrichedList.getQueryKey(enrichedInput, "infinite");
+        queryClient.setQueryData(currentKey, ctx.prev);
       }
     },
     onSettled: async () => {
@@ -465,14 +482,15 @@ export function TransactionsView({
       type BulkDeleteVars = { transactionIds: string[] };
       const vars = variables as BulkDeleteVars;
       const ids = new Set(vars.transactionIds ?? []);
-      
+
       // Optimistically remove from current list
-      await queryClient.cancelQueries({ queryKey: ["transactions.enrichedList", enrichedInput] });
+      const currentKey = utils.transactions.enrichedList.getQueryKey(enrichedInput, "infinite");
+      await queryClient.cancelQueries({ queryKey: currentKey });
       const previous = queryClient.getQueryData<{
         pages: Array<{ items: EnrichedItem[]; nextCursor?: string | null }>;
         pageParams: unknown[];
-      }>(["transactions.enrichedList", enrichedInput]);
-      
+      }>(currentKey);
+
       if (previous) {
         const next = {
           ...previous,
@@ -481,18 +499,18 @@ export function TransactionsView({
             items: (p.items || []).filter((r) => !ids.has(r.transaction.id)),
           })),
         };
-        queryClient.setQueryData(["transactions.enrichedList", enrichedInput], next);
+        queryClient.setQueryData(currentKey, next);
       }
-      
+
       // Also update all cached filtered lists to avoid ghost rows when switching filters
       try {
         const entries = queryClient.getQueriesData<{
           pages: Array<{ items: EnrichedItem[]; nextCursor?: string | null }>;
           pageParams: unknown[];
         }>({ queryKey: ["transactions.enrichedList"] });
-        
+
         for (const [key, data] of entries) {
-          if (!data || !data.pages) continue;
+          if (!(data && data.pages)) continue;
           const next = {
             ...data,
             pages: data.pages.map((p) => ({
@@ -509,7 +527,8 @@ export function TransactionsView({
     },
     onError: (_err, _vars, ctx) => {
       if (ctx?.previous) {
-        queryClient.setQueryData(["transactions.enrichedList", enrichedInput], ctx.previous);
+        const currentKey = utils.transactions.enrichedList.getQueryKey(enrichedInput, "infinite");
+        queryClient.setQueryData(currentKey, ctx.previous);
       }
     },
     onSettled: async () => {
@@ -527,20 +546,27 @@ export function TransactionsView({
   // ✅ IMPROVED: Use Supabase real-time instead of polling
   useEffect(() => {
     if (!shouldPollForEnrichment) return;
-    
+
     const supabase = createBrowserClient();
     const channel = supabase
-      .channel('transactions-enrichment')
-      .on('postgres_changes', {
-        event: 'UPDATE',
-        schema: 'public',
-        table: 'transactions',
-      }, (payload) => {
-        // Only refetch if enrichment completed
-        if (payload.new && (payload.new as { enrichment_completed?: boolean }).enrichment_completed) {
-          refetch();
+      .channel("transactions-enrichment")
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "transactions",
+        },
+        (payload) => {
+          // Only refetch if enrichment completed
+          if (
+            payload.new &&
+            (payload.new as { enrichment_completed?: boolean }).enrichment_completed
+          ) {
+            refetch();
+          }
         }
-      })
+      )
       .subscribe();
 
     // Fallback timeout in case real-time fails
@@ -560,7 +586,7 @@ export function TransactionsView({
     if (rows.length === 0) setFocusedIndex(0);
     else if (focusedIndex > rows.length - 1) setFocusedIndex(rows.length - 1);
   }, [rows.length, focusedIndex]);
-  
+
   // Sticky columns offsets
   const { leftDate } = useStickyColumns();
 
@@ -574,7 +600,7 @@ export function TransactionsView({
         assignedUser: row.assignedUser,
         tags: row.tags,
       })),
-    [rows],
+    [rows]
   );
 
   // ✅ Table virtualization for performance with large datasets
@@ -590,19 +616,17 @@ export function TransactionsView({
   const virtualRows = rowVirtualizer.getVirtualItems();
   const totalSize = rowVirtualizer.getTotalSize();
   const paddingTop = virtualRows.length > 0 ? virtualRows[0]?.start || 0 : 0;
-  const paddingBottom = virtualRows.length > 0 
-    ? totalSize - (virtualRows[virtualRows.length - 1]?.end || 0) 
-    : 0;
+  const paddingBottom =
+    virtualRows.length > 0 ? totalSize - (virtualRows[virtualRows.length - 1]?.end || 0) : 0;
 
   const toggleRow = (id: string, checked: boolean) => {
     setRowSelection((prev) => {
       if (checked) {
         return { ...prev, [id]: true };
-      } else {
-        const next = { ...prev };
-        delete next[id];
-        return next;
       }
+      const next = { ...prev };
+      delete next[id];
+      return next;
     });
   };
 
@@ -626,7 +650,9 @@ export function TransactionsView({
     const headers = Object.keys(rows[0] || {});
     const csv = [
       headers.join(","),
-      ...rows.map((r) => headers.map((h) => JSON.stringify((r as Record<string, unknown>)[h] ?? "")).join(",")),
+      ...rows.map((r) =>
+        headers.map((h) => JSON.stringify((r as Record<string, unknown>)[h] ?? "")).join(",")
+      ),
     ].join("\n");
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
@@ -689,7 +715,7 @@ export function TransactionsView({
   };
 
   const submitAllocate = async () => {
-    if (!selectedTrx || !selectedInvoiceId || allocAmount <= 0) return;
+    if (!(selectedTrx && selectedInvoiceId) || allocAmount <= 0) return;
     await allocateMutation.mutateAsync({
       transactionId: selectedTrx.transaction.id,
       invoiceId: selectedInvoiceId,
@@ -799,7 +825,7 @@ export function TransactionsView({
   // Sync TanStack Table selection with local selected state
   useEffect(() => {
     const selectedIds = new Set(
-      table.getSelectedRowModel().rows.map((row) => row.original.transaction.id),
+      table.getSelectedRowModel().rows.map((row) => row.original.transaction.id)
     );
     setSelected(selectedIds);
   }, [rowSelection, table]);
@@ -820,18 +846,18 @@ export function TransactionsView({
 
       {/* Bulk selection bar (mobile fallback only) */}
       {selectedCount > 0 && (
-        <div className="sm:hidden mb-4 flex items-center justify-between border-b bg-muted/40 px-4 py-3">
+        <div className="mb-4 flex items-center justify-between border-b bg-muted/40 px-4 py-3 sm:hidden">
           <div className="flex items-center gap-3">
-            <span className="text-sm font-medium">Bulk edit</span>
+            <span className="font-medium text-sm">Bulk edit</span>
             <div className="h-4 w-px bg-border" />
-            <span className="text-sm text-muted-foreground">{selectedCount} selected</span>
+            <span className="text-muted-foreground text-sm">{selectedCount} selected</span>
           </div>
           <div className="flex items-center gap-2">
-            <Button size="sm" variant="outline" onClick={_handleBulkExport} className="gap-1">
+            <Button className="gap-1" onClick={_handleBulkExport} size="sm" variant="outline">
               <Download className="h-4 w-4" /> Export
             </Button>
             <BulkActions ids={Array.from(selected)} onComplete={() => setSelected(new Set())} />
-            <Button size="sm" variant="ghost" onClick={handleConfirmDelete} className="gap-1">
+            <Button className="gap-1" onClick={handleConfirmDelete} size="sm" variant="ghost">
               <Trash2 className="h-4 w-4" />
             </Button>
           </div>
@@ -839,35 +865,36 @@ export function TransactionsView({
       )}
 
       {/* Analytics carousel */}
-      <TransactionsAnalyticsCarousel initialStats={initialStats} initialSpending={initialSpending} />
+      <TransactionsAnalyticsCarousel
+        initialSpending={initialSpending}
+        initialStats={initialStats}
+      />
 
       <div>
         <div className="mb-4 space-y-4">
           {/* Row 1: Right-aligned toolbar (search, filter icon, column visibility, export, add) */}
-          <div className="hidden sm:grid grid-cols-[420px,1fr,auto] items-center gap-2 sticky top-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 px-1 py-1 rounded">
+          <div className="sticky top-0 z-10 hidden grid-cols-[420px,1fr,auto] items-center gap-2 rounded bg-background/95 px-1 py-1 backdrop-blur supports-[backdrop-filter]:bg-background/80 sm:grid">
             {/* Left column: reserved slot for bulk actions (fixed width) */}
             <div className="min-w-0">
               {selectedCount > 0 ? (
                 <div className="flex items-center gap-2">
-                  <span className="text-sm text-muted-foreground">{selectedCount} selected</span>
-                  <BulkActions ids={Array.from(selected)} onComplete={() => setSelected(new Set())} />
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="gap-1"
-                    onClick={_handleBulkExport}
-                  >
+                  <span className="text-muted-foreground text-sm">{selectedCount} selected</span>
+                  <BulkActions
+                    ids={Array.from(selected)}
+                    onComplete={() => setSelected(new Set())}
+                  />
+                  <Button className="gap-1" onClick={_handleBulkExport} size="sm" variant="outline">
                     <Download className="h-4 w-4" /> Export
                   </Button>
-                  <Button size="sm" variant="ghost" onClick={handleConfirmDelete} className="gap-1">
+                  <Button className="gap-1" onClick={handleConfirmDelete} size="sm" variant="ghost">
                     <Trash2 className="h-4 w-4" />
                   </Button>
-                  <Button size="sm" variant="ghost" onClick={() => setRowSelection({})}>
+                  <Button onClick={() => setRowSelection({})} size="sm" variant="ghost">
                     Clear
                   </Button>
                 </div>
               ) : (
-                <div className="opacity-0 pointer-events-none select-none h-9" />
+                <div className="pointer-events-none h-9 select-none opacity-0" />
               )}
             </div>
 
@@ -878,43 +905,43 @@ export function TransactionsView({
             <div className="flex items-center justify-end gap-2">
               <SearchInline />
               <FilterDropdown
-              values={{
-                statuses,
-                categories,
-                tags,
-                accounts,
-                assignees,
-                startDate,
-                endDate,
-                amountMin,
-                amountMax,
-                  attachments: hasAttachments === "any" ? undefined : hasAttachments === "with" ? "include" : "exclude",
-              }}
-              onChange={(n) => {
-                setFilters({
-                  statuses: n.statuses ?? null,
-                  categories: n.categories ?? null,
-                  tags: n.tags ?? null,
-                  accounts: n.accounts ?? null,
-                  assignees: n.assignees ?? null,
-                  start: n.startDate ?? null,
-                  end: n.endDate ?? null,
-                  amount_range:
-                    n.amountMin != null || n.amountMax != null
-                      ? [n.amountMin ?? 0, n.amountMax ?? 500000]
-                      : null,
+                onChange={(n) => {
+                  setFilters({
+                    statuses: n.statuses ?? null,
+                    categories: n.categories ?? null,
+                    tags: n.tags ?? null,
+                    accounts: n.accounts ?? null,
+                    assignees: n.assignees ?? null,
+                    start: n.startDate ?? null,
+                    end: n.endDate ?? null,
+                    amount_range:
+                      n.amountMin != null || n.amountMax != null
+                        ? [n.amountMin ?? 0, n.amountMax ?? 500_000]
+                        : null,
                     attachments: n.attachments ?? null,
-                });
-              }}
+                  });
+                }}
+                values={{
+                  statuses,
+                  categories,
+                  tags,
+                  accounts,
+                  assignees,
+                  startDate,
+                  endDate,
+                  amountMin,
+                  amountMax,
+                  attachments:
+                    hasAttachments === "any"
+                      ? undefined
+                      : hasAttachments === "with"
+                        ? "include"
+                        : "exclude",
+                }}
               />
               <TransactionsColumnVisibility columns={table.getAllColumns()} />
               {selectedCount === 0 && (
-                <Button
-                  variant="outline"
-                  size="icon"
-                  aria-label="Export"
-                  onClick={exportSelected}
-                >
+                <Button aria-label="Export" onClick={exportSelected} size="icon" variant="outline">
                   <Download className="h-4 w-4" />
                 </Button>
               )}
@@ -928,18 +955,6 @@ export function TransactionsView({
               <FilterToolbar
                 appearance="chip"
                 fields={filterFields}
-                values={{
-                  type: filterType === "all" ? undefined : filterType,
-                  statuses,
-                  categories,
-                  tags,
-                  accounts,
-                  assignees,
-                  dateRange: { startDate, endDate },
-                amountRange: { amountMin, amountMax },
-                  hasAttachments: hasAttachments === "any" ? undefined : hasAttachments === "with",
-                  isRecurring,
-                }}
                 onChange={(next) => {
                   setFilters({
                     type: (next.type as any) ?? null,
@@ -950,13 +965,14 @@ export function TransactionsView({
                     assignees: (next.assignees as any) ?? null,
                     start: (next as any).dateRange?.startDate ?? null,
                     end: (next as any).dateRange?.endDate ?? null,
-                  amount_range:
-                    (next as any).amountRange?.amountMin != null || (next as any).amountRange?.amountMax != null
-                      ? [
-                          (next as any).amountRange?.amountMin ?? 0,
-                          (next as any).amountRange?.amountMax ?? 500000,
-                        ]
-                      : null,
+                    amount_range:
+                      (next as any).amountRange?.amountMin != null ||
+                      (next as any).amountRange?.amountMax != null
+                        ? [
+                            (next as any).amountRange?.amountMin ?? 0,
+                            (next as any).amountRange?.amountMax ?? 500_000,
+                          ]
+                        : null,
                     attachments:
                       (next as any).hasAttachments === undefined
                         ? null
@@ -966,11 +982,23 @@ export function TransactionsView({
                     recurring: (next.isRecurring as any) ?? null,
                   });
                 }}
+                values={{
+                  type: filterType === "all" ? undefined : filterType,
+                  statuses,
+                  categories,
+                  tags,
+                  accounts,
+                  assignees,
+                  dateRange: { startDate, endDate },
+                  amountRange: { amountMin, amountMax },
+                  hasAttachments: hasAttachments === "any" ? undefined : hasAttachments === "with",
+                  isRecurring,
+                }}
               />
             </div>
             <div className="flex items-center gap-2">
               {hasActiveFilters && (
-                <Button variant="ghost" size="sm" onClick={clearAllFilters}>
+                <Button onClick={clearAllFilters} size="sm" variant="ghost">
                   Reset
                 </Button>
               )}
@@ -982,36 +1010,14 @@ export function TransactionsView({
 
         {listError ? (
           <EmptyState
-            title="Could not load results"
-            description="There was a problem applying the current filters."
             action={{ label: "Clear filters", onClick: clearAllFilters }}
+            description="There was a problem applying the current filters."
+            title="Could not load results"
           />
-        ) : !rows.length ? (
-          hasActiveFilters ? (
-            <EmptyState
-              title="No results"
-              description="Try another search, or adjust the filters."
-              action={{ label: "Clear filters", onClick: clearAllFilters }}
-            />
-          ) : accountsList.length === 0 ? (
-            <EmptyState
-              title="No transactions"
-              description="Connect or add an account to start importing transactions and unlock insights."
-              action={{ label: "Add account", onClick: () => setCreateAccountOpen(true) }}
-            />
-          ) : (
-            <EmptyState
-              title="No transactions"
-              description="Record your first transaction to get started."
-              action={{ label: "Record transaction", onClick: () => openParams() }}
-            />
-          )
-        ) : (
+        ) : rows.length ? (
           <div
-            ref={tableContainerRef}
-            className="relative overflow-auto max-h-[calc(100vh-400px)]"
-            role="application"
             aria-label="Transactions table keyboard navigation"
+            className="relative max-h-[calc(100vh-400px)] overflow-auto"
             onKeyDown={(e) => {
               if (!rows.length) return;
               if (e.key === "ArrowDown") {
@@ -1020,75 +1026,75 @@ export function TransactionsView({
                 setFocusedIndex(newIndex);
                 // Scroll to focused row if virtualized
                 if (tableData.length > 50) {
-                  rowVirtualizer.scrollToIndex(newIndex, { align: 'center' });
+                  rowVirtualizer.scrollToIndex(newIndex, { align: "center" });
                 }
               } else if (e.key === "ArrowUp") {
                 e.preventDefault();
                 const newIndex = Math.max(focusedIndex - 1, 0);
                 setFocusedIndex(newIndex);
                 if (tableData.length > 50) {
-                  rowVirtualizer.scrollToIndex(newIndex, { align: 'center' });
+                  rowVirtualizer.scrollToIndex(newIndex, { align: "center" });
                 }
-            } else if (e.key === "Home") {
-              e.preventDefault();
-              setFocusedIndex(0);
-              if (tableData.length > 50) {
-                rowVirtualizer.scrollToIndex(0);
-              }
-            } else if (e.key === "End") {
-              e.preventDefault();
-              setFocusedIndex(rows.length - 1);
-              if (tableData.length > 50) {
-                rowVirtualizer.scrollToIndex(rows.length - 1);
-              }
-            } else if (e.key === " " && e.shiftKey) {
-              e.preventDefault();
-              const anchor = lastAnchorIndex.current ?? focusedIndex;
-              const start = Math.min(anchor, focusedIndex);
-              const end = Math.max(anchor, focusedIndex);
-              const rangeIds = rows.slice(start, end + 1).map((r) => r.transaction.id);
-              setRowSelection((prev) => {
-                const next = { ...prev } as Record<string, boolean>;
-                for (const id of rangeIds) next[id] = true;
-                return next;
-              });
+              } else if (e.key === "Home") {
+                e.preventDefault();
+                setFocusedIndex(0);
+                if (tableData.length > 50) {
+                  rowVirtualizer.scrollToIndex(0);
+                }
+              } else if (e.key === "End") {
+                e.preventDefault();
+                setFocusedIndex(rows.length - 1);
+                if (tableData.length > 50) {
+                  rowVirtualizer.scrollToIndex(rows.length - 1);
+                }
+              } else if (e.key === " " && e.shiftKey) {
+                e.preventDefault();
+                const anchor = lastAnchorIndex.current ?? focusedIndex;
+                const start = Math.min(anchor, focusedIndex);
+                const end = Math.max(anchor, focusedIndex);
+                const rangeIds = rows.slice(start, end + 1).map((r) => r.transaction.id);
+                setRowSelection((prev) => {
+                  const next = { ...prev } as Record<string, boolean>;
+                  for (const id of rangeIds) next[id] = true;
+                  return next;
+                });
               } else if (e.key === " " || e.key === "Enter") {
                 e.preventDefault();
                 const id = rows[focusedIndex]?.transaction?.id;
                 if (id) toggleRow(id, !selected.has(id));
-              lastAnchorIndex.current = focusedIndex;
+                lastAnchorIndex.current = focusedIndex;
               }
             }}
+            ref={tableContainerRef}
+            role="application"
           >
             {isFetching && !isFetchingNextPage ? (
-              <div className="absolute left-0 right-0 top-0 h-0.5 bg-primary/70 animate-pulse z-20" />
+              <div className="absolute top-0 right-0 left-0 z-20 h-0.5 animate-pulse bg-primary/70" />
             ) : null}
             <Table className="min-w-[1200px]">
               <TableHeader className="sticky top-0 z-10 bg-background">
                 {table.getHeaderGroups().map((headerGroup) => (
                   <TableRow key={headerGroup.id}>
-                    {headerGroup.headers.map((header) => {
-                      return (
-                        <TableHead
-                          key={header.id}
-                          className={
-                            header.id === "select"
-                              ? "w-10 sticky left-0 z-10 bg-background"
-                              : header.id === "date"
-                                ? `w-36 sticky z-10 bg-background`
-                                : header.id === "actions"
-                                  ? "w-[100px]"
-                                  : ""
-                          }
-                          data-col-id={header.id === "select" ? "select" : undefined}
-                          style={header.id === "date" ? { left: leftDate } : undefined}
-                        >
-                          {header.isPlaceholder
-                            ? null
-                            : flexRender(header.column.columnDef.header, header.getContext())}
-                        </TableHead>
-                      );
-                    })}
+                    {headerGroup.headers.map((header) => (
+                      <TableHead
+                        className={
+                          header.id === "select"
+                            ? "sticky left-0 z-10 w-10 bg-background"
+                            : header.id === "date"
+                              ? "sticky z-10 w-36 bg-background"
+                              : header.id === "actions"
+                                ? "w-[100px]"
+                                : ""
+                        }
+                        data-col-id={header.id === "select" ? "select" : undefined}
+                        key={header.id}
+                        style={header.id === "date" ? { left: leftDate } : undefined}
+                      >
+                        {header.isPlaceholder
+                          ? null
+                          : flexRender(header.column.columnDef.header, header.getContext())}
+                      </TableHead>
+                    ))}
                   </TableRow>
                 ))}
               </TableHeader>
@@ -1100,15 +1106,20 @@ export function TransactionsView({
                         <td style={{ height: `${paddingTop}px` }} />
                       </tr>
                     )}
-                    {(tableData.length > 50 ? virtualRows : table.getRowModel().rows.map((_, idx) => ({ index: idx }))).map((virtualRow) => {
+                    {(tableData.length > 50
+                      ? virtualRows
+                      : table.getRowModel().rows.map((_, idx) => ({ index: idx }))
+                    ).map((virtualRow) => {
                       const row = table.getRowModel().rows[virtualRow.index];
                       if (!row) return null;
                       const idx = virtualRow.index;
                       return (
                         <TableRow
-                          key={row.id}
+                          className={
+                            "hover:bg-muted/50" + (idx === focusedIndex ? "bg-muted/40" : "")
+                          }
                           data-state={row.getIsSelected() && "selected"}
-                          className={"hover:bg-muted/50 " + (idx === focusedIndex ? "bg-muted/40" : "")}
+                          key={row.id}
                           onClick={(e) => {
                             setFocusedIndex(idx);
                             lastAnchorIndex.current = idx;
@@ -1123,25 +1134,23 @@ export function TransactionsView({
                             }
                           }}
                         >
-                          {row.getVisibleCells().map((cell) => {
-                            return (
-                              <TableCell
-                                key={cell.id}
-                                className={
-                                  cell.column.id === "select"
-                                    ? "sticky left-0 z-10 bg-background"
-                                    : cell.column.id === "date"
-                                      ? "font-medium sticky z-10 bg-background w-36"
-                                      : cell.column.id === "actions"
-                                        ? "pr-2"
-                                        : ""
-                                }
-                                style={cell.column.id === "date" ? { left: leftDate } : undefined}
-                              >
-                                {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                              </TableCell>
-                            );
-                          })}
+                          {row.getVisibleCells().map((cell) => (
+                            <TableCell
+                              className={
+                                cell.column.id === "select"
+                                  ? "sticky left-0 z-10 bg-background"
+                                  : cell.column.id === "date"
+                                    ? "sticky z-10 w-36 bg-background font-medium"
+                                    : cell.column.id === "actions"
+                                      ? "pr-2"
+                                      : ""
+                              }
+                              key={cell.id}
+                              style={cell.column.id === "date" ? { left: leftDate } : undefined}
+                            >
+                              {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                            </TableCell>
+                          ))}
                         </TableRow>
                       );
                     })}
@@ -1153,7 +1162,7 @@ export function TransactionsView({
                   </>
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={table.getAllColumns().length} className="h-24 text-center">
+                    <TableCell className="h-24 text-center" colSpan={table.getAllColumns().length}>
                       No results.
                     </TableCell>
                   </TableRow>
@@ -1161,6 +1170,24 @@ export function TransactionsView({
               </TableBody>
             </Table>
           </div>
+        ) : hasActiveFilters ? (
+          <EmptyState
+            action={{ label: "Clear filters", onClick: clearAllFilters }}
+            description="Try another search, or adjust the filters."
+            title="No results"
+          />
+        ) : accountsList.length === 0 ? (
+          <EmptyState
+            action={{ label: "Add account", onClick: () => setCreateAccountOpen(true) }}
+            description="Connect or add an account to start importing transactions and unlock insights."
+            title="No transactions"
+          />
+        ) : (
+          <EmptyState
+            action={{ label: "Record transaction", onClick: () => openParams() }}
+            description="Record your first transaction to get started."
+            title="No transactions"
+          />
         )}
         {/* Infinite scroll sentinel */}
         <div ref={loadMoreRef} />
@@ -1169,26 +1196,26 @@ export function TransactionsView({
       {/* No floating bottom bar; Reset lives on the pills row */}
 
       {/* Allocate Sheet */}
-      <Sheet open={allocateOpen} onOpenChange={setAllocateOpen}>
+      <Sheet onOpenChange={setAllocateOpen} open={allocateOpen}>
         <SheetContent>
           <SheetHeader>
             <SheetTitle>Allocate Payment</SheetTitle>
           </SheetHeader>
           <div className="space-y-4 py-4">
-            <div className="text-sm text-muted-foreground">
+            <div className="text-muted-foreground text-sm">
               Transaction: {selectedTrx?.transaction?.transactionNumber} • Amount:{" "}
               {selectedTrx?.transaction?.currency}
               {Number(selectedTrx?.transaction?.amount || 0).toLocaleString()}
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium" htmlFor={invoiceSelectId}>
+              <label className="font-medium text-sm" htmlFor={invoiceSelectId}>
                 Invoice
               </label>
               <select
-                id={invoiceSelectId}
-                value={selectedInvoiceId}
-                onChange={(e) => setSelectedInvoiceId(e.target.value)}
                 className="w-full rounded border px-3 py-2 text-sm"
+                id={invoiceSelectId}
+                onChange={(e) => setSelectedInvoiceId(e.target.value)}
+                value={selectedInvoiceId}
               >
                 <option value="">Select invoice…</option>
                 {invoices.map((r: any) => (
@@ -1200,29 +1227,29 @@ export function TransactionsView({
               </select>
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium" htmlFor={allocAmountId}>
+              <label className="font-medium text-sm" htmlFor={allocAmountId}>
                 Amount
               </label>
               <Input
                 id={allocAmountId}
-                type="number"
+                onChange={(e) => setAllocAmount(Number.parseFloat(e.target.value) || 0)}
                 step="0.01"
+                type="number"
                 value={allocAmount}
-                onChange={(e) => setAllocAmount(parseFloat(e.target.value) || 0)}
               />
             </div>
           </div>
           <SheetFooter>
             <Button
-              variant="outline"
-              onClick={() => setAllocateOpen(false)}
               disabled={allocateMutation.isPending}
+              onClick={() => setAllocateOpen(false)}
+              variant="outline"
             >
               Cancel
             </Button>
             <Button
-              onClick={submitAllocate}
               disabled={!selectedInvoiceId || allocAmount <= 0 || allocateMutation.isPending}
+              onClick={submitAllocate}
             >
               {allocateMutation.isPending ? "Allocating…" : "Allocate"}
             </Button>
@@ -1231,7 +1258,7 @@ export function TransactionsView({
       </Sheet>
 
       {/* Create Account Dialog */}
-      <CreateAccountDialog open={createAccountOpen} onOpenChange={setCreateAccountOpen} />
+      <CreateAccountDialog onOpenChange={setCreateAccountOpen} open={createAccountOpen} />
     </div>
   );
 }

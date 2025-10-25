@@ -14,7 +14,7 @@ function Skeleton({
         "bg-[length:200%_100%]",
         "rounded-none",
         animate && "animate-shimmer",
-        className,
+        className
       )}
       {...props}
     />

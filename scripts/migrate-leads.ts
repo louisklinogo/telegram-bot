@@ -1,6 +1,6 @@
-import { Client } from "pg";
 import fs from "fs";
 import path from "path";
+import { Client } from "pg";
 
 async function run() {
   const url = process.env.DATABASE_URL || process.env.SUPABASE_DB_URL;
@@ -12,7 +12,12 @@ async function run() {
   await client.connect();
   try {
     await client.query("BEGIN");
-    const files = ["0033_leads.sql", "0034_leads_rls.sql", "0035_leads_triggers.sql", "0036_leads_snapshots.sql"]; 
+    const files = [
+      "0033_leads.sql",
+      "0034_leads_rls.sql",
+      "0035_leads_triggers.sql",
+      "0036_leads_snapshots.sql",
+    ];
     for (const f of files) {
       const sqlFile = path.resolve(process.cwd(), "drizzle", "manual-migrations", f);
       console.log(`Applying migration: ${f}`);

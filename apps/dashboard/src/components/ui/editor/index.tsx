@@ -45,7 +45,7 @@ export function Editor({
 
   return (
     <>
-      <EditorContent editor={editor} className={className} tabIndex={tabIndex} />
+      <EditorContent className={className} editor={editor} tabIndex={tabIndex} />
       <BubbleMenu editor={editor} />
     </>
   );

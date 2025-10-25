@@ -1,5 +1,6 @@
 "use client";
 
+import { Label } from "@Faworra/ui/label";
 import { useState } from "react";
 import {
   Accordion,
@@ -8,7 +9,6 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
-import { Label } from "@Faworra/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Sheet, SheetContent, SheetHeader } from "@/components/ui/sheet";
 import { Switch } from "@/components/ui/switch";
@@ -44,34 +44,36 @@ export function ChannelDetailsSheet({
   });
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
+    <Sheet onOpenChange={onOpenChange} open={open}>
       <SheetContent>
         <SheetHeader>
-          <div className="flex items-center justify-between border-b border-border pb-2">
+          <div className="flex items-center justify-between border-border border-b pb-2">
             <div className="flex items-center space-x-2">
               <Logo />
               <div>
                 <div className="flex items-center space-x-2">
                   <h3 className="text-lg leading-none">{channel.name}</h3>
                   {channel.installed && (
-                    <div className="bg-green-600 text-[9px] dark:bg-green-300 rounded-full size-1" />
+                    <div className="size-1 rounded-full bg-green-600 text-[9px] dark:bg-green-300" />
                   )}
                 </div>
-                <span className="text-xs text-muted-foreground">{channel.category} • By Faworra</span>
+                <span className="text-muted-foreground text-xs">
+                  {channel.category} • By Faworra
+                </span>
               </div>
             </div>
 
             <div>
               {channel.installed ? (
-                <Button variant="outline" onClick={onDisconnect}>
+                <Button onClick={onDisconnect} variant="outline">
                   Disconnect
                 </Button>
               ) : (
                 <Button
-                  variant="outline"
                   className="border-primary"
-                  onClick={onInstall}
                   disabled={!channel.active}
+                  onClick={onInstall}
+                  variant="outline"
                 >
                   Connect
                 </Button>
@@ -81,8 +83,8 @@ export function ChannelDetailsSheet({
 
           <div className="mt-4">
             <ScrollArea className="h-[calc(100vh-200px)] pt-2" hideScrollbar>
-              <Accordion type="multiple" defaultValue={["description"]} className="mt-4">
-                <AccordionItem value="description" className="border-none">
+              <Accordion className="mt-4" defaultValue={["description"]} type="multiple">
+                <AccordionItem className="border-none" value="description">
                   <AccordionTrigger>How it works</AccordionTrigger>
                   <AccordionContent className="text-muted-foreground text-sm">
                     {channel.description}
@@ -93,10 +95,13 @@ export function ChannelDetailsSheet({
                           Connect by scanning a QR with the WhatsApp app on your phone. It’s the
                           fastest way to get started.
                         </p>
-                        <ul className="list-disc list-inside space-y-1">
+                        <ul className="list-inside list-disc space-y-1">
                           <li>Pair once and see messages in your inbox within minutes.</li>
                           <li>Works with your existing WhatsApp number.</li>
-                          <li>Keep the phone powered and online for a steady connection; we’ll prompt if re‑pairing is needed.</li>
+                          <li>
+                            Keep the phone powered and online for a steady connection; we’ll prompt
+                            if re‑pairing is needed.
+                          </li>
                         </ul>
                       </div>
                     )}
@@ -107,10 +112,13 @@ export function ChannelDetailsSheet({
                           Connect your Meta Business account — no phone required. Designed for
                           reliable, higher‑volume messaging.
                         </p>
-                        <ul className="list-disc list-inside space-y-1">
+                        <ul className="list-inside list-disc space-y-1">
                           <li>Device‑free and stable for teams as you grow.</li>
                           <li>You control access via Meta Business/App credentials.</li>
-                          <li>Some outbound messages may need approved templates — we guide you through it.</li>
+                          <li>
+                            Some outbound messages may need approved templates — we guide you
+                            through it.
+                          </li>
                         </ul>
                       </div>
                     )}
@@ -121,7 +129,7 @@ export function ChannelDetailsSheet({
                           Connect your Instagram Business account (linked to a Facebook Page) to
                           read and reply to DMs in Faworra.
                         </p>
-                        <ul className="list-disc list-inside space-y-1">
+                        <ul className="list-inside list-disc space-y-1">
                           <li>Handle DMs alongside WhatsApp and email in one place.</li>
                           <li>Supports text and media where Instagram allows.</li>
                           <li>We’ll remind you to refresh permissions when it’s time.</li>
@@ -135,7 +143,7 @@ export function ChannelDetailsSheet({
                           Sign in with Google to bring customer emails into your inbox — great for
                           quotes, orders and support threads.
                         </p>
-                        <ul className="list-disc list-inside space-y-1">
+                        <ul className="list-inside list-disc space-y-1">
                           <li>Organize emails right beside chats for full context.</li>
                           <li>Attachments import when available.</li>
                           <li>Currently read‑only; sending from Faworra can be added later.</li>
@@ -145,34 +153,47 @@ export function ChannelDetailsSheet({
                   </AccordionContent>
                 </AccordionItem>
 
-                <AccordionItem value="notes" className="border-none">
+                <AccordionItem className="border-none" value="notes">
                   <AccordionTrigger>Things to know</AccordionTrigger>
                   <AccordionContent className="text-muted-foreground text-sm">
                     {channel.id === "whatsapp-baileys" && (
                       <div className="space-y-2">
-                        <ul className="list-disc list-inside space-y-1">
+                        <ul className="list-inside list-disc space-y-1">
                           <li>Keep the paired phone powered and online for a steady connection.</li>
-                          <li>If the session pauses, we’ll prompt you to re‑scan the QR — it takes under a minute.</li>
-                          <li>Perfect for getting started quickly; you can move to the Cloud API as you scale.</li>
+                          <li>
+                            If the session pauses, we’ll prompt you to re‑scan the QR — it takes
+                            under a minute.
+                          </li>
+                          <li>
+                            Perfect for getting started quickly; you can move to the Cloud API as
+                            you scale.
+                          </li>
                         </ul>
                       </div>
                     )}
 
                     {channel.id === "whatsapp-cloud" && (
                       <div className="space-y-2">
-                        <ul className="list-disc list-inside space-y-1">
+                        <ul className="list-inside list-disc space-y-1">
                           <li>Connect a Meta Business/App — no phone pairing required.</li>
-                          <li>Some outbound messages may need approved templates; we’ll guide you.</li>
-                          <li>Reply to new inbound chats within 24 hours to keep the conversation open.</li>
+                          <li>
+                            Some outbound messages may need approved templates; we’ll guide you.
+                          </li>
+                          <li>
+                            Reply to new inbound chats within 24 hours to keep the conversation
+                            open.
+                          </li>
                         </ul>
                       </div>
                     )}
 
                     {channel.id === "instagram" && (
                       <div className="space-y-2">
-                        <ul className="list-disc list-inside space-y-1">
+                        <ul className="list-inside list-disc space-y-1">
                           <li>Requires an Instagram Business account linked to a Facebook Page.</li>
-                          <li>Permissions expire from time to time — we’ll remind you to refresh.</li>
+                          <li>
+                            Permissions expire from time to time — we’ll remind you to refresh.
+                          </li>
                           <li>Some reactions or content types may not sync due to API limits.</li>
                         </ul>
                       </div>
@@ -180,9 +201,12 @@ export function ChannelDetailsSheet({
 
                     {channel.id === "gmail" && (
                       <div className="space-y-2">
-                        <ul className="list-disc list-inside space-y-1">
+                        <ul className="list-inside list-disc space-y-1">
                           <li>You’ll see a Google consent screen — this is expected and safe.</li>
-                          <li>Emails sync into your inbox for context; replies still send from Gmail (for now).</li>
+                          <li>
+                            Emails sync into your inbox for context; replies still send from Gmail
+                            (for now).
+                          </li>
                           <li>Workspace admins may need to allow access depending on policy.</li>
                         </ul>
                       </div>
@@ -191,19 +215,19 @@ export function ChannelDetailsSheet({
                 </AccordionItem>
 
                 {channel.installed && (
-                  <AccordionItem value="settings" className="border-none">
+                  <AccordionItem className="border-none" value="settings">
                     <AccordionTrigger>Settings</AccordionTrigger>
                     <AccordionContent className="space-y-4">
                       <div className="flex items-center justify-between">
                         <div className="space-y-0.5">
                           <Label htmlFor="notifications">Message Notifications</Label>
-                          <p className="text-xs text-muted-foreground">
+                          <p className="text-muted-foreground text-xs">
                             Get notified when you receive new messages
                           </p>
                         </div>
                         <Switch
-                          id="notifications"
                           checked={settings.notifications}
+                          id="notifications"
                           onCheckedChange={(checked) =>
                             setSettings({ ...settings, notifications: checked })
                           }
@@ -213,13 +237,13 @@ export function ChannelDetailsSheet({
                       <div className="flex items-center justify-between">
                         <div className="space-y-0.5">
                           <Label htmlFor="autoReply">Auto-Reply</Label>
-                          <p className="text-xs text-muted-foreground">
+                          <p className="text-muted-foreground text-xs">
                             Send automatic replies when unavailable
                           </p>
                         </div>
                         <Switch
-                          id="autoReply"
                           checked={settings.autoReply}
+                          id="autoReply"
                           onCheckedChange={(checked) =>
                             setSettings({ ...settings, autoReply: checked })
                           }
@@ -229,13 +253,13 @@ export function ChannelDetailsSheet({
                       <div className="flex items-center justify-between">
                         <div className="space-y-0.5">
                           <Label htmlFor="readReceipts">Read Receipts</Label>
-                          <p className="text-xs text-muted-foreground">
+                          <p className="text-muted-foreground text-xs">
                             Let customers know when you've read their messages
                           </p>
                         </div>
                         <Switch
-                          id="readReceipts"
                           checked={settings.readReceipts}
+                          id="readReceipts"
                           onCheckedChange={(checked) =>
                             setSettings({ ...settings, readReceipts: checked })
                           }
@@ -247,11 +271,11 @@ export function ChannelDetailsSheet({
               </Accordion>
             </ScrollArea>
 
-            <div className="absolute bottom-4 pt-8 border-t border-border">
+            <div className="absolute bottom-4 border-border border-t pt-8">
               <p className="text-[10px] text-muted-foreground">
-                Faworra integrates with trusted communication platforms to help you manage
-                customer conversations efficiently. We maintain high security standards and never
-                share your data with third parties.
+                Faworra integrates with trusted communication platforms to help you manage customer
+                conversations efficiently. We maintain high security standards and never share your
+                data with third parties.
               </p>
             </div>
           </div>

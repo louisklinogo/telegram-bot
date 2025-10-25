@@ -1,7 +1,14 @@
 "use client";
 
+import {
+  parseAsArrayOf,
+  parseAsBoolean,
+  parseAsInteger,
+  parseAsString,
+  useQueryState,
+  useQueryStates,
+} from "nuqs";
 import { useMemo } from "react";
-import { parseAsArrayOf, parseAsBoolean, parseAsInteger, parseAsString, useQueryState, useQueryStates } from "nuqs";
 
 type FilterType = "all" | "payment" | "expense" | "refund" | "adjustment";
 
@@ -45,16 +52,15 @@ export function useTransactionsFilters(columnVisibility?: Record<string, boolean
       attachments: parseAsString,
       recurring: parseAsBoolean,
     },
-    { shallow: true },
+    { shallow: true }
   );
 
   // Parse filter values
   const rawType = (filters.type as string | undefined) ?? undefined;
   const allowedTypes = new Set<FilterType>(["payment", "expense", "refund", "adjustment"]);
-  const filterType: FilterType = rawType && allowedTypes.has(rawType as FilterType)
-    ? (rawType as FilterType)
-    : "all";
-  
+  const filterType: FilterType =
+    rawType && allowedTypes.has(rawType as FilterType) ? (rawType as FilterType) : "all";
+
   const statuses: string[] = filters.statuses ?? [];
   const categories: string[] = filters.categories ?? [];
   const tags: string[] = filters.tags ?? [];
@@ -81,15 +87,18 @@ export function useTransactionsFilters(columnVisibility?: Record<string, boolean
     const accountsSorted = sort(accounts);
     const assigneesSorted = sort(assignees);
     const includeTags = columnVisibility?.tags !== false;
-    
+
     const input: EnrichedListInput = {
       type: filterType === "all" ? undefined : filterType,
-      status: statusesSorted && statusesSorted.length ? (statusesSorted as EnrichedListInput["status"]) : undefined,
+      status:
+        statusesSorted && statusesSorted.length
+          ? (statusesSorted as EnrichedListInput["status"])
+          : undefined,
       categories: categoriesSorted && categoriesSorted.length ? categoriesSorted : undefined,
       tags: tagsSorted && tagsSorted.length ? tagsSorted : undefined,
       accounts: accountsSorted && accountsSorted.length ? accountsSorted : undefined,
       assignees: assigneesSorted && assigneesSorted.length ? assigneesSorted : undefined,
-      isRecurring: isRecurring,
+      isRecurring,
       search: q || undefined,
       startDate: startDate ? `${startDate}T00:00:00.000Z` : undefined,
       endDate: endDate ? `${endDate}T23:59:59.000Z` : undefined,
@@ -102,7 +111,7 @@ export function useTransactionsFilters(columnVisibility?: Record<string, boolean
 
     // Remove undefined values
     const cleaned = Object.fromEntries(
-      Object.entries(input).filter(([, v]) => v !== undefined),
+      Object.entries(input).filter(([, v]) => v !== undefined)
     ) as EnrichedListInput;
 
     return cleaned;
@@ -124,8 +133,8 @@ export function useTransactionsFilters(columnVisibility?: Record<string, boolean
   ]);
 
   // Check if any filters are active
-  const hasActiveFilters = useMemo(() => {
-    return (
+  const hasActiveFilters = useMemo(
+    () =>
       filterType !== "all" ||
       Boolean(q) ||
       statuses.length > 0 ||
@@ -138,23 +147,23 @@ export function useTransactionsFilters(columnVisibility?: Record<string, boolean
       amountMin != null ||
       amountMax != null ||
       Boolean(startDate) ||
-      Boolean(endDate)
-    );
-  }, [
-    filterType,
-    q,
-    statuses,
-    categories,
-    tags,
-    accounts,
-    assignees,
-    isRecurring,
-    hasAttachments,
-    amountMin,
-    amountMax,
-    startDate,
-    endDate,
-  ]);
+      Boolean(endDate),
+    [
+      filterType,
+      q,
+      statuses,
+      categories,
+      tags,
+      accounts,
+      assignees,
+      isRecurring,
+      hasAttachments,
+      amountMin,
+      amountMax,
+      startDate,
+      endDate,
+    ]
+  );
 
   const clearAllFilters = () => {
     setFilters({
@@ -182,15 +191,12 @@ export function useTransactionsFilters(columnVisibility?: Record<string, boolean
       accounts: (p.accounts as string[] | null) ?? null,
       assignees: (p.assignees as string[] | null) ?? null,
       recurring: typeof p.isRecurring === "boolean" ? p.isRecurring : null,
-      attachments:
-        p.hasAttachments === undefined ? null : p.hasAttachments ? "include" : "exclude",
+      attachments: p.hasAttachments === undefined ? null : p.hasAttachments ? "include" : "exclude",
       amount_range:
         p.amountMin != null || p.amountMax != null
-          ? [p.amountMin as number ?? 0, p.amountMax as number ?? 500000]
+          ? [(p.amountMin as number) ?? 0, (p.amountMax as number) ?? 500_000]
           : null,
-      start: p.startDate
-        ? new Date(p.startDate as string).toISOString().slice(0, 10)
-        : null,
+      start: p.startDate ? new Date(p.startDate as string).toISOString().slice(0, 10) : null,
       end: p.endDate ? new Date(p.endDate as string).toISOString().slice(0, 10) : null,
     });
   };

@@ -1,22 +1,22 @@
 import type { inferRouterInputs, inferRouterOutputs } from "@trpc/server";
 import { createTRPCRouter } from "../init";
-import { healthRouter } from "./health";
-import { communicationsRouter } from "./communications";
-import { clientsRouter } from "./clients";
-import { ordersRouter } from "./orders";
-import { invoicesRouter } from "./invoices";
-import { measurementsRouter } from "./measurements";
-import { teamsRouter } from "./teams";
-import { transactionsRouter } from "./transactions";
-import { transactionCategoriesRouter } from "./transaction-categories";
 import { analyticsRouter } from "./analytics";
+import { clientsRouter } from "./clients";
+import { communicationsRouter } from "./communications";
 import { documentsRouter } from "./documents";
-import { tagsRouter } from "./tags";
 import { financialAccountsRouter } from "./financial-accounts";
-import { transactionTagsRouter } from "./transaction-tags";
-import { productsRouter } from "./products";
-import { productCategoriesRouter } from "./product-categories";
+import { healthRouter } from "./health";
+import { invoicesRouter } from "./invoices";
 import { leadsRouter } from "./leads";
+import { measurementsRouter } from "./measurements";
+import { ordersRouter } from "./orders";
+import { productCategoriesRouter } from "./product-categories";
+import { productsRouter } from "./products";
+import { tagsRouter } from "./tags";
+import { teamsRouter } from "./teams";
+import { transactionCategoriesRouter } from "./transaction-categories";
+import { transactionTagsRouter } from "./transaction-tags";
+import { transactionsRouter } from "./transactions";
 
 export const appRouter = createTRPCRouter({
   health: healthRouter,

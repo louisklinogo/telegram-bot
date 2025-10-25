@@ -2,7 +2,7 @@
 
 import { format, isSameDay, isToday, isYesterday } from "date-fns";
 import { ArrowLeft, Image as ImageIcon, Paperclip, Send, Smile, X } from "lucide-react";
-import { WhatsappLogo, InstagramLogo } from "phosphor-react";
+import { InstagramLogo, WhatsappLogo } from "phosphor-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -10,10 +10,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { useRealtimeMessages } from "@/hooks/use-realtime-messages";
+import { trpc } from "@/lib/trpc/client";
 import { cn } from "@/lib/utils";
 import type { InboxMessage } from "@/types/inbox";
-import { trpc } from "@/lib/trpc/client";
-import { useRealtimeMessages } from "@/hooks/use-realtime-messages";
 
 interface InboxDetailsProps {
   message: InboxMessage | null;
@@ -57,7 +57,7 @@ export function InboxDetails({ message }: InboxDetailsProps) {
             body: form,
           });
           if (!upRes.ok) {
-            const err = await upRes.json().catch(() => ({} as Record<string, unknown>));
+            const err = await upRes.json().catch(() => ({}) as Record<string, unknown>);
             throw new Error((err as any)?.error || `Upload failed (${upRes.status})`);
           }
           const upJson = (await upRes.json()) as {
@@ -122,14 +122,13 @@ export function InboxDetails({ message }: InboxDetailsProps) {
     setAttachments((prev) => [...prev, ...files]);
   };
 
-  const getInitials = (name: string) => {
-    return name
+  const getInitials = (name: string) =>
+    name
       .split(" ")
       .map((n) => n[0])
       .join("")
       .toUpperCase()
       .slice(0, 2);
-  };
 
   // Group messages by date
   const groupedMessages = useMemo(() => {
@@ -137,7 +136,7 @@ export function InboxDetails({ message }: InboxDetailsProps) {
     let currentGroup: { date: Date; messages: typeof messages } | null = null;
 
     for (const msg of messages) {
-      if (!currentGroup || !isSameDay(currentGroup.date, msg.createdAt)) {
+      if (!(currentGroup && isSameDay(currentGroup.date, msg.createdAt))) {
         currentGroup = { date: msg.createdAt, messages: [] };
         groups.push(currentGroup);
       }
@@ -173,27 +172,30 @@ export function InboxDetails({ message }: InboxDetailsProps) {
               <div className="flex items-center gap-2">
                 <h3 className="font-semibold">{message.customerName}</h3>
                 {message.platform === "whatsapp" ? (
-                  <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 gap-1">
+                  <Badge
+                    className="gap-1 border-green-200 bg-green-50 text-green-700"
+                    variant="outline"
+                  >
                     <WhatsappLogo size={14} weight="duotone" />
                     WhatsApp
                   </Badge>
                 ) : (
                   <Badge
+                    className="gap-1 border-purple-200 bg-gradient-to-r from-purple-50 to-pink-50 text-purple-700"
                     variant="outline"
-                    className="bg-gradient-to-r from-purple-50 to-pink-50 text-purple-700 border-purple-200 gap-1"
                   >
                     <InstagramLogo size={14} weight="duotone" />
                     Instagram
                   </Badge>
                 )}
               </div>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-muted-foreground text-xs">
                 {message.phoneNumber || message.instagramHandle}
               </p>
             </div>
           </>
         ) : (
-          <div className="text-sm text-muted-foreground">Select a conversation</div>
+          <div className="text-muted-foreground text-sm">Select a conversation</div>
         )}
       </div>
 
@@ -201,10 +203,10 @@ export function InboxDetails({ message }: InboxDetailsProps) {
       <ScrollArea className="flex-1 p-4" hideScrollbar ref={scrollRef}>
         {isLoading ? (
           <div className="flex justify-center py-8">
-            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary" />
+            <div className="h-6 w-6 animate-spin rounded-full border-primary border-b-2" />
           </div>
         ) : messages.length === 0 ? (
-          <div className="flex items-center justify-center h-full text-center text-muted-foreground">
+          <div className="flex h-full items-center justify-center text-center text-muted-foreground">
             <div className="space-y-2">
               <p className="text-sm">No messages yet</p>
               <p className="text-xs">Start the conversation by sending a message</p>
@@ -213,10 +215,10 @@ export function InboxDetails({ message }: InboxDetailsProps) {
         ) : (
           <div className="space-y-6">
             {groupedMessages.map((group, groupIndex) => (
-              <div key={groupIndex} className="space-y-4">
+              <div className="space-y-4" key={groupIndex}>
                 {/* Date Separator */}
                 <div className="flex items-center justify-center">
-                  <div className="bg-muted px-3 py-1 rounded-full text-xs text-muted-foreground">
+                  <div className="rounded-full bg-muted px-3 py-1 text-muted-foreground text-xs">
                     {formatDateSeparator(group.date)}
                   </div>
                 </div>
@@ -228,14 +230,14 @@ export function InboxDetails({ message }: InboxDetailsProps) {
 
                   return (
                     <div
-                      key={msg.id}
                       className={cn(
                         "flex gap-2",
                         msg.direction === "in" ? "justify-start" : "justify-end"
                       )}
+                      key={msg.id}
                     >
                       {msg.direction === "in" && showAvatar && (
-                        <Avatar className="h-8 w-8 mt-1">
+                        <Avatar className="mt-1 h-8 w-8">
                           <AvatarImage src={message?.customerAvatar} />
                           <AvatarFallback className="text-xs">
                             {getInitials(message?.customerName || "?")}
@@ -247,12 +249,10 @@ export function InboxDetails({ message }: InboxDetailsProps) {
                       <div
                         className={cn(
                           "max-w-[70%] rounded-lg px-4 py-2",
-                          msg.direction === "in"
-                            ? "bg-muted"
-                            : "bg-primary text-primary-foreground"
+                          msg.direction === "in" ? "bg-muted" : "bg-primary text-primary-foreground"
                         )}
                       >
-                        <p className="text-sm whitespace-pre-wrap break-words">{msg.content}</p>
+                        <p className="whitespace-pre-wrap break-words text-sm">{msg.content}</p>
                         <div className="mt-1 flex items-center gap-1 text-xs opacity-70">
                           <span>{format(msg.createdAt, "HH:mm")}</span>
                           {msg.direction === "out" && (
@@ -273,17 +273,20 @@ export function InboxDetails({ message }: InboxDetailsProps) {
 
       {/* Input Footer */}
       <TooltipProvider>
-        <div className="border-t p-4 space-y-2">
+        <div className="space-y-2 border-t p-4">
           {attachments.length > 0 && (
             <div className="flex flex-wrap gap-2">
               {attachments.map((file, idx) => (
-                <div key={idx} className="flex items-center gap-2 bg-muted px-3 py-1 rounded-md text-xs">
-                  <span className="truncate max-w-[200px]">{file.name}</span>
+                <div
+                  className="flex items-center gap-2 rounded-md bg-muted px-3 py-1 text-xs"
+                  key={idx}
+                >
+                  <span className="max-w-[200px] truncate">{file.name}</span>
                   <button
-                    type="button"
-                    onClick={() => setAttachments((prev) => prev.filter((_, i) => i !== idx))}
-                    className="text-muted-foreground hover:text-foreground"
                     aria-label="Remove attachment"
+                    className="text-muted-foreground hover:text-foreground"
+                    onClick={() => setAttachments((prev) => prev.filter((_, i) => i !== idx))}
+                    type="button"
                   >
                     <X className="h-3 w-3" />
                   </button>
@@ -294,7 +297,7 @@ export function InboxDetails({ message }: InboxDetailsProps) {
           <div className="flex items-center gap-2">
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button variant="ghost" size="icon" disabled>
+                <Button disabled size="icon" variant="ghost">
                   <Smile className="h-5 w-5" />
                 </Button>
               </TooltipTrigger>
@@ -307,13 +310,13 @@ export function InboxDetails({ message }: InboxDetailsProps) {
               <TooltipTrigger asChild>
                 <div>
                   <input
+                    className="hidden"
+                    multiple
+                    onChange={onFileChange}
                     ref={fileInputRef}
                     type="file"
-                    multiple
-                    className="hidden"
-                    onChange={onFileChange}
                   />
-                  <Button variant="ghost" size="icon" onClick={onPickFile} disabled={uploading}>
+                  <Button disabled={uploading} onClick={onPickFile} size="icon" variant="ghost">
                     <Paperclip className="h-5 w-5" />
                   </Button>
                 </div>
@@ -324,9 +327,7 @@ export function InboxDetails({ message }: InboxDetailsProps) {
             </Tooltip>
 
             <Input
-              placeholder="Type a message..."
               className="flex-1"
-              value={text}
               onChange={(e) => setText(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
@@ -337,11 +338,13 @@ export function InboxDetails({ message }: InboxDetailsProps) {
                   send();
                 }
               }}
+              placeholder="Type a message..."
+              value={text}
             />
 
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button onClick={send} disabled={sendMessage.isPending || uploading || !threadId}>
+                <Button disabled={sendMessage.isPending || uploading || !threadId} onClick={send}>
                   <Send className="h-4 w-4" />
                 </Button>
               </TooltipTrigger>

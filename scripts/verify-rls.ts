@@ -1,4 +1,5 @@
 import "dotenv/config";
+
 /*
   RLS verification script (read-only)
   Usage:
@@ -7,9 +8,9 @@ import "dotenv/config";
     RLS_VERIFY_TEAM_ID=<uuid> to skip reading users.current_team_id
 */
 
-import { createClient } from "@supabase/supabase-js";
-import { readFileSync, existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
+import { createClient } from "@supabase/supabase-js";
 
 type TableCheck = {
   name: string;
@@ -23,7 +24,7 @@ let TOKEN =
 const TEAM_ID = process.env.RLS_VERIFY_TEAM_ID;
 
 async function main() {
-  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+  if (!(SUPABASE_URL && SUPABASE_ANON_KEY)) {
     console.error("Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY env.");
     process.exit(1);
   }
@@ -56,7 +57,7 @@ async function main() {
 
   if (!TOKEN) {
     console.error(
-      "Missing RLS_VERIFY_TOKEN. Provide a user access token via env, --token=..., or token.txt file.",
+      "Missing RLS_VERIFY_TOKEN. Provide a user access token via env, --token=..., or token.txt file."
     );
     process.exit(1);
   }
@@ -88,10 +89,10 @@ async function main() {
     }
   }
 
-  if (!teamId) {
-    console.warn("No team id detected; continuing without strict equality checks.");
-  } else {
+  if (teamId) {
     console.log("Using team:", teamId);
+  } else {
+    console.warn("No team id detected; continuing without strict equality checks.");
   }
 
   const checks: TableCheck[] = [

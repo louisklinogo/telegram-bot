@@ -1,10 +1,10 @@
-import type { MiddlewareHandler } from "hono";
 import type { ApiEnv } from "@faworra/api/types/hono-env";
-import { HTTPException } from "hono/http-exception";
 import { createLogger } from "@faworra/middleware/correlation-tracing";
+import type { MiddlewareHandler } from "hono";
+import { HTTPException } from "hono/http-exception";
 
 // Import OAuth service
-import { oauthApplicationService, type OAuthAccessToken } from "./oauth-applications";
+import { type OAuthAccessToken, oauthApplicationService } from "./oauth-applications";
 
 /**
  * OAuth Token Validation Middleware
@@ -27,7 +27,7 @@ export interface OAuthSession {
  */
 export const requireOAuthToken: MiddlewareHandler<ApiEnv> = async (c, next) => {
   const authHeader = c.req.header("authorization") || c.req.header("Authorization");
-  
+
   if (!authHeader) {
     throw new HTTPException(401, {
       message: "Authorization header required",
@@ -41,7 +41,7 @@ export const requireOAuthToken: MiddlewareHandler<ApiEnv> = async (c, next) => {
   }
 
   const token = authHeader.substring(7);
-  
+
   if (!token.startsWith("faw_access_token_")) {
     throw new HTTPException(401, {
       message: "Invalid OAuth access token format",
@@ -51,7 +51,7 @@ export const requireOAuthToken: MiddlewareHandler<ApiEnv> = async (c, next) => {
   try {
     // Validate the OAuth access token
     const accessToken = await oauthApplicationService.validateAccessToken(token);
-    
+
     if (!accessToken) {
       throw new HTTPException(401, {
         message: "Invalid or expired OAuth access token",
@@ -85,15 +85,14 @@ export const requireOAuthToken: MiddlewareHandler<ApiEnv> = async (c, next) => {
     });
 
     await next();
-    
   } catch (error) {
     if (error instanceof HTTPException) {
       throw error;
     }
-    
+
     const logger = createLogger(c);
     logger.error("OAuth token validation failed", error);
-    
+
     throw new HTTPException(401, {
       message: "OAuth token validation failed",
     });
@@ -107,7 +106,7 @@ export const requireOAuthToken: MiddlewareHandler<ApiEnv> = async (c, next) => {
 export const requireOAuthScopes = (requiredScopes: string[]): MiddlewareHandler<ApiEnv> => {
   return async (c, next) => {
     const oauthSession = c.get("oauthSession") as OAuthSession;
-    
+
     if (!oauthSession) {
       throw new HTTPException(401, {
         message: "OAuth session not found",
@@ -116,7 +115,7 @@ export const requireOAuthScopes = (requiredScopes: string[]): MiddlewareHandler<
 
     // Check if token has all required scopes
     const userScopes = oauthSession.scopes || [];
-    const missingScopes = requiredScopes.filter(scope => !userScopes.includes(scope));
+    const missingScopes = requiredScopes.filter((scope) => !userScopes.includes(scope));
 
     if (missingScopes.length > 0) {
       const logger = createLogger(c);
@@ -144,8 +143,8 @@ export const requireOAuthScopes = (requiredScopes: string[]): MiddlewareHandler<
  */
 export const requireAuth: MiddlewareHandler<ApiEnv> = async (c, next) => {
   const authHeader = c.req.header("authorization") || c.req.header("Authorization");
-  
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+
+  if (!(authHeader && authHeader.startsWith("Bearer "))) {
     throw new HTTPException(401, {
       message: "Authentication required",
     });
@@ -157,7 +156,7 @@ export const requireAuth: MiddlewareHandler<ApiEnv> = async (c, next) => {
     // Try OAuth token first
     if (token.startsWith("faw_access_token_")) {
       const accessToken = await oauthApplicationService.validateAccessToken(token);
-      
+
       if (accessToken) {
         const oauthSession: OAuthSession = {
           userId: accessToken.userId,
@@ -193,7 +192,6 @@ export const requireAuth: MiddlewareHandler<ApiEnv> = async (c, next) => {
     throw new HTTPException(401, {
       message: "Invalid authentication token",
     });
-
   } catch (error) {
     if (error instanceof HTTPException) {
       throw error;
@@ -214,7 +212,7 @@ export const requireAuth: MiddlewareHandler<ApiEnv> = async (c, next) => {
  */
 export const requireAdminScopes: MiddlewareHandler<ApiEnv> = requireOAuthScopes([
   "admin.read",
-  "admin.write"
+  "admin.write",
 ]);
 
 /**
@@ -223,7 +221,7 @@ export const requireAdminScopes: MiddlewareHandler<ApiEnv> = requireOAuthScopes(
  */
 export const requireReadScopes: MiddlewareHandler<ApiEnv> = requireOAuthScopes([
   "profile.read",
-  "teams.read"
+  "teams.read",
 ]);
 
 /**
@@ -233,7 +231,7 @@ export const requireReadScopes: MiddlewareHandler<ApiEnv> = requireOAuthScopes([
 export const requireWriteScopes: MiddlewareHandler<ApiEnv> = requireOAuthScopes([
   "profile.write",
   "teams.write",
-  "transactions.write"
+  "transactions.write",
 ]);
 
 /**
@@ -241,7 +239,7 @@ export const requireWriteScopes: MiddlewareHandler<ApiEnv> = requireOAuthScopes(
  * For transaction-related endpoints
  */
 export const requireTransactionScopes: MiddlewareHandler<ApiEnv> = requireOAuthScopes([
-  "transactions.read"
+  "transactions.read",
 ]);
 
 /**
@@ -249,24 +247,20 @@ export const requireTransactionScopes: MiddlewareHandler<ApiEnv> = requireOAuthS
  * For invoice-related endpoints
  */
 export const requireInvoiceScopes: MiddlewareHandler<ApiEnv> = requireOAuthScopes([
-  "invoices.read"
+  "invoices.read",
 ]);
 
 /**
  * Reports scopes middleware
  * For report generation endpoints
  */
-export const requireReportScopes: MiddlewareHandler<ApiEnv> = requireOAuthScopes([
-  "reports.read"
-]);
+export const requireReportScopes: MiddlewareHandler<ApiEnv> = requireOAuthScopes(["reports.read"]);
 
 /**
  * Files scopes middleware
  * For file upload/download endpoints
  */
-export const requireFileScopes: MiddlewareHandler<ApiEnv> = requireOAuthScopes([
-  "files.read"
-]);
+export const requireFileScopes: MiddlewareHandler<ApiEnv> = requireOAuthScopes(["files.read"]);
 
 /**
  * OAuth scope validation helper
@@ -274,22 +268,20 @@ export const requireFileScopes: MiddlewareHandler<ApiEnv> = requireOAuthScopes([
  */
 export const hasOAuthScopes = (c: any, requiredScopes: string[]): boolean => {
   const oauthSession = c.get("oauthSession") as OAuthSession;
-  
+
   if (!oauthSession) {
     return false;
   }
 
   const userScopes = oauthSession.scopes || [];
-  return requiredScopes.every(scope => userScopes.includes(scope));
+  return requiredScopes.every((scope) => userScopes.includes(scope));
 };
 
 /**
  * Get current OAuth session
  * Helper to get OAuth session data in handlers
  */
-export const getOAuthSession = (c: any): OAuthSession | null => {
-  return c.get("oauthSession") || null;
-};
+export const getOAuthSession = (c: any): OAuthSession | null => c.get("oauthSession") || null;
 
 /**
  * OAuth token introspection endpoint handler
@@ -334,7 +326,6 @@ export const introspectToken: MiddlewareHandler<ApiEnv> = async (c) => {
       iss: "https://api.faworra.com", // TODO: Use actual issuer URL
       token_type: "Bearer",
     });
-
   } catch (error) {
     const logger = createLogger(c);
     logger.error("Token introspection failed", error);

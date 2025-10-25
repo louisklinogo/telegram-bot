@@ -1,6 +1,6 @@
-import type React from "react";
 import type { Metadata } from "next";
-import { Inter, Instrument_Serif } from "next/font/google";
+import { Instrument_Serif, Inter } from "next/font/google";
+import type React from "react";
 import "./globals.css";
 
 const inter = Inter({
@@ -24,23 +24,22 @@ export const metadata: Metadata = {
     "Manage clients, orders, invoices, and transactions with unified WhatsApp, Instagram, and SMS integration. AI-powered business management for modern teams.",
 };
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${inter.variable} ${instrumentSerif.variable} antialiased`}>
+    <html className={`${inter.variable} ${instrumentSerif.variable} antialiased`} lang="en">
       <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link href="https://fonts.googleapis.com" rel="preconnect" />
+        <link crossOrigin="anonymous" href="https://fonts.gstatic.com" rel="preconnect" />
         <link
-          rel="stylesheet"
           href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+          rel="stylesheet"
         />
-        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:wght@400&display=swap" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Instrument+Serif:wght@400&display=swap"
+          rel="stylesheet"
+        />
       </head>
       <body className="font-sans antialiased">{children}</body>
     </html>
-  )
+  );
 }

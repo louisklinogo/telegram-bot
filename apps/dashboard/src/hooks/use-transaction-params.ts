@@ -12,7 +12,7 @@ export function useTransactionParams() {
     {
       // Prevent full rerenders/navigations; keep client-side state only
       shallow: true,
-    },
+    }
   );
 
   const isOpen = params.sheet === "create" || !!params.transactionId;
@@ -29,7 +29,7 @@ export function useTransactionParams() {
         });
       }
     },
-    [setParams],
+    [setParams]
   );
 
   const close = useCallback(() => {

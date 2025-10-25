@@ -54,7 +54,7 @@ export function ComboboxDropdown<T extends ComboboxItem>({
   const selectedItem = incomingSelectedItem ?? internalSelectedItem;
 
   const filteredItems = items.filter((item) =>
-    item.label.toLowerCase().includes(inputValue.toLowerCase()),
+    item.label.toLowerCase().includes(inputValue.toLowerCase())
   );
 
   const showCreate = onCreate && Boolean(inputValue) && !filteredItems.length;
@@ -62,10 +62,10 @@ export function ComboboxDropdown<T extends ComboboxItem>({
   const Component = (
     <Command loop shouldFilter={false}>
       <CommandInput
-        value={inputValue}
+        className="px-3"
         onValueChange={setInputValue}
         placeholder={searchPlaceholder ?? "Search item..."}
-        className="px-3"
+        value={inputValue}
       />
 
       <CommandGroup>
@@ -75,10 +75,9 @@ export function ComboboxDropdown<T extends ComboboxItem>({
 
             return (
               <CommandItem
-                disabled={item.disabled}
                 className={cn("cursor-pointer", className)}
+                disabled={item.disabled}
                 key={item.id}
-                value={item.id}
                 onSelect={(id) => {
                   const foundItem = items.find((item) => item.id === id);
 
@@ -90,6 +89,7 @@ export function ComboboxDropdown<T extends ComboboxItem>({
                   setInternalSelectedItem(foundItem);
                   setOpen(false);
                 }}
+                value={item.id}
               >
                 {renderListItem ? (
                   renderListItem({ isChecked, item })
@@ -110,16 +110,16 @@ export function ComboboxDropdown<T extends ComboboxItem>({
           {showCreate && (
             <CommandItem
               key={inputValue}
-              value={inputValue}
+              onMouseDown={(event) => {
+                event.preventDefault();
+                event.stopPropagation();
+              }}
               onSelect={() => {
                 onCreate(inputValue);
                 setOpen(false);
                 setInputValue("");
               }}
-              onMouseDown={(event) => {
-                event.preventDefault();
-                event.stopPropagation();
-              }}
+              value={inputValue}
             >
               {renderOnCreate ? renderOnCreate(inputValue) : null}
             </CommandItem>
@@ -134,23 +134,23 @@ export function ComboboxDropdown<T extends ComboboxItem>({
   }
 
   return (
-    <Popover open={open} onOpenChange={setOpen} modal>
-      <PopoverTrigger asChild disabled={disabled} className="w-full">
+    <Popover modal onOpenChange={setOpen} open={open}>
+      <PopoverTrigger asChild className="w-full" disabled={disabled}>
         <Button
-          variant="outline"
           aria-expanded={open}
-          className="w-full justify-between relative font-normal"
+          className="relative w-full justify-between font-normal"
+          variant="outline"
         >
           <span className="truncate text-ellipsis pr-3">
             {selectedItem ? (
-              <span className="items-center overflow-hidden whitespace-nowrap text-ellipsis block">
+              <span className="block items-center overflow-hidden text-ellipsis whitespace-nowrap">
                 {renderSelectedItem ? renderSelectedItem(selectedItem) : selectedItem.label}
               </span>
             ) : (
               (placeholder ?? "Select item...")
             )}
           </span>
-          <ChevronsUpDown className="size-4 opacity-50 absolute right-2" />
+          <ChevronsUpDown className="absolute right-2 size-4 opacity-50" />
         </Button>
       </PopoverTrigger>
 

@@ -1,9 +1,9 @@
 "use client";
 
-import { trpc } from "@/lib/trpc/client";
+import { useQueryClient } from "@tanstack/react-query";
 import { ComboboxDropdown } from "@/components/ui/combobox-dropdown";
 import { Spinner } from "@/components/ui/spinner";
-import { useQueryClient } from "@tanstack/react-query";
+import { trpc } from "@/lib/trpc/client";
 
 type Selected = {
   id: string;
@@ -41,7 +41,7 @@ function getColorFromName(name: string): string {
 function CategoryColor({ color }: { color?: string | null }) {
   return (
     <div
-      className="w-3 h-3 rounded-full flex-shrink-0"
+      className="h-3 w-3 flex-shrink-0 rounded-full"
       style={{ backgroundColor: color ?? "hsl(var(--muted-foreground))" }}
     />
   );
@@ -107,7 +107,7 @@ export function SelectCategory({ selected, onChange, headless, hideLoading }: Pr
 
   if (!selected && isLoading && !hideLoading) {
     return (
-      <div className="w-full h-full flex items-center justify-center">
+      <div className="flex h-full w-full items-center justify-center">
         <Spinner />
       </div>
     );
@@ -115,12 +115,9 @@ export function SelectCategory({ selected, onChange, headless, hideLoading }: Pr
 
   return (
     <ComboboxDropdown
-      headless={headless}
       disabled={createMutation.isPending}
-      placeholder="Select category"
-      searchPlaceholder="Search category"
+      headless={headless}
       items={categories}
-      selectedItem={selectedValue}
       onSelect={(item) => {
         onChange({
           id: item.id,
@@ -128,6 +125,9 @@ export function SelectCategory({ selected, onChange, headless, hideLoading }: Pr
           color: item.color,
         });
       }}
+      placeholder="Select category"
+      searchPlaceholder="Search category"
+      selectedItem={selectedValue}
       {...(!headless && {
         onCreate: (value) => {
           createMutation.mutate({
@@ -136,10 +136,10 @@ export function SelectCategory({ selected, onChange, headless, hideLoading }: Pr
           });
         },
       })}
-      renderSelectedItem={(selectedItem) => (
+      renderListItem={({ item }) => (
         <div className="flex items-center space-x-2">
-          <CategoryColor color={selectedItem.color} />
-          <span className="text-left truncate max-w-[90%]">{selectedItem.label}</span>
+          <CategoryColor color={item.color} />
+          <span className="line-clamp-1">{item.label}</span>
         </div>
       )}
       renderOnCreate={(value) => {
@@ -152,10 +152,10 @@ export function SelectCategory({ selected, onChange, headless, hideLoading }: Pr
           );
         }
       }}
-      renderListItem={({ item }) => (
+      renderSelectedItem={(selectedItem) => (
         <div className="flex items-center space-x-2">
-          <CategoryColor color={item.color} />
-          <span className="line-clamp-1">{item.label}</span>
+          <CategoryColor color={selectedItem.color} />
+          <span className="max-w-[90%] truncate text-left">{selectedItem.label}</span>
         </div>
       )}
     />

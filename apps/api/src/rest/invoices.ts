@@ -1,9 +1,9 @@
-import type { Hono } from "hono";
-import type { SupabaseClient } from "@supabase/supabase-js";
-import type { ApiEnv } from "../types/hono-env";
-import type { Database, TablesInsert } from "@Faworra/supabase/types";
 import { enqueueCommunicationOutbox } from "@Faworra/supabase/mutations";
+import type { Database, TablesInsert } from "@Faworra/supabase/types";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Hono } from "hono";
 import { z } from "zod";
+import type { ApiEnv } from "../types/hono-env";
 
 export function registerInvoicesRoutes(app: Hono<ApiEnv>) {
   // Record a payment for an invoice (creates a transaction and allocation)
@@ -101,7 +101,7 @@ export function registerInvoicesRoutes(app: Hono<ApiEnv>) {
       const { data: inv, error: iErr } = await supabase
         .from("invoices")
         .select(
-          `id, invoice_number, amount, due_date, invoice_url, team_id, order:orders(id, order_number, client:clients(name, whatsapp))`,
+          "id, invoice_number, amount, due_date, invoice_url, team_id, order:orders(id, order_number, client:clients(name, whatsapp))"
         )
         .eq("id", id)
         .eq("team_id", teamId)

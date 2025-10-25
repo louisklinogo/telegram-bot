@@ -1,12 +1,12 @@
 "use client";
 
-import { trpc } from "@/lib/trpc/client";
-import { FileText, Download } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { createBrowserClient } from "@Faworra/supabase/client";
-import { toast } from "sonner";
-import { formatFileSize } from "@/lib/upload";
 import { formatDistanceToNow } from "date-fns";
+import { Download, FileText } from "lucide-react";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { trpc } from "@/lib/trpc/client";
+import { formatFileSize } from "@/lib/upload";
 
 type RelatedDocumentsProps = {
   orderId?: string;
@@ -47,7 +47,7 @@ export function RelatedDocuments({ orderId, invoiceId, clientId }: RelatedDocume
     return (
       <div className="space-y-2">
         {[1, 2, 3].map((i) => (
-          <div key={i} className="h-16 bg-muted animate-pulse rounded-lg" />
+          <div className="h-16 animate-pulse rounded-lg bg-muted" key={i} />
         ))}
       </div>
     );
@@ -55,9 +55,9 @@ export function RelatedDocuments({ orderId, invoiceId, clientId }: RelatedDocume
 
   if (documents.length === 0) {
     return (
-      <div className="text-center py-8 border rounded-lg border-dashed">
-        <FileText className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
-        <p className="text-sm text-muted-foreground">No documents attached</p>
+      <div className="rounded-lg border border-dashed py-8 text-center">
+        <FileText className="mx-auto mb-2 h-8 w-8 text-muted-foreground" />
+        <p className="text-muted-foreground text-sm">No documents attached</p>
       </div>
     );
   }
@@ -66,20 +66,20 @@ export function RelatedDocuments({ orderId, invoiceId, clientId }: RelatedDocume
     <div className="space-y-2">
       {documents.map((document: any) => (
         <div
+          className="flex items-center justify-between rounded-lg border p-3 transition-colors hover:bg-accent"
           key={document.id}
-          className="flex items-center justify-between p-3 border rounded-lg hover:bg-accent transition-colors"
         >
-          <div className="flex items-center gap-3 flex-1 min-w-0">
-            <FileText className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium truncate">{document.name}</p>
-              <p className="text-xs text-muted-foreground">
+          <div className="flex min-w-0 flex-1 items-center gap-3">
+            <FileText className="h-4 w-4 flex-shrink-0 text-muted-foreground" />
+            <div className="min-w-0 flex-1">
+              <p className="truncate font-medium text-sm">{document.name}</p>
+              <p className="text-muted-foreground text-xs">
                 {formatFileSize(document.size)} •{" "}
                 {formatDistanceToNow(new Date(document.createdAt), { addSuffix: true })}
               </p>
             </div>
           </div>
-          <Button variant="ghost" size="sm" onClick={() => handleDownload(document)}>
+          <Button onClick={() => handleDownload(document)} size="sm" variant="ghost">
             <Download className="h-4 w-4" />
           </Button>
         </div>

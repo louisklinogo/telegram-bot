@@ -1,12 +1,13 @@
 "use client";
 
+import { Label } from "@Faworra/ui/label";
 import { useQuery } from "@tanstack/react-query";
 import { Plus, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { SubmitButton } from "@/components/ui/submit-button";
+import { Calendar } from "@/components/ui/calendar";
 import { Input } from "@/components/ui/input";
-import { Label } from "@Faworra/ui/label";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   Select,
   SelectContent,
@@ -14,16 +15,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Sheet,
-  SheetContent,
-  SheetFooter,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { SubmitButton } from "@/components/ui/submit-button";
 import { Textarea } from "@/components/ui/textarea";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
 import { useCreateOrder, useUpdateOrder } from "@/hooks/use-order-mutations";
 import { useClients } from "@/hooks/use-supabase-data";
 import { useTeamCurrency } from "@/hooks/use-team-currency";
@@ -52,7 +46,7 @@ export function OrderSheet({ open, onOpenChange, order }: OrderSheetProps) {
     { id: order?.id || "" },
     {
       enabled: !!order?.id && open,
-    },
+    }
   );
 
   const [formData, setFormData] = useState({
@@ -60,7 +54,9 @@ export function OrderSheet({ open, onOpenChange, order }: OrderSheetProps) {
     status: order?.status || "generated",
     notes: order?.notes || "",
     deposit_amount: order
-      ? parseFloat(String((order as any).deposit_amount || (order as any).depositAmount || "0"))
+      ? Number.parseFloat(
+          String((order as any).deposit_amount || (order as any).depositAmount || "0")
+        )
       : 0,
     due_date: order
       ? (() => {
@@ -80,9 +76,7 @@ export function OrderSheet({ open, onOpenChange, order }: OrderSheetProps) {
   // Order number is generated in the database trigger now.
 
   // Calculate totals
-  const calculateItemTotal = (quantity: number, unitCost: number) => {
-    return quantity * unitCost;
-  };
+  const calculateItemTotal = (quantity: number, unitCost: number) => quantity * unitCost;
 
   const totalPrice = items.reduce((sum, item) => sum + item.total_cost, 0);
   const balanceAmount = totalPrice - formData.deposit_amount;
@@ -96,7 +90,7 @@ export function OrderSheet({ open, onOpenChange, order }: OrderSheetProps) {
     if (field === "quantity" || field === "unit_cost") {
       newItems[index].total_cost = calculateItemTotal(
         newItems[index].quantity,
-        newItems[index].unit_cost,
+        newItems[index].unit_cost
       );
     }
 
@@ -176,8 +170,8 @@ export function OrderSheet({ open, onOpenChange, order }: OrderSheetProps) {
         client_id: order.client_id || "",
         status: order.status || "generated",
         notes: order.notes || "",
-        deposit_amount: parseFloat(
-          String((order as any).deposit_amount || (order as any).depositAmount || "0"),
+        deposit_amount: Number.parseFloat(
+          String((order as any).deposit_amount || (order as any).depositAmount || "0")
         ),
         due_date: (() => {
           const dateVal = (order as any).due_date || (order as any).dueDate;
@@ -191,9 +185,9 @@ export function OrderSheet({ open, onOpenChange, order }: OrderSheetProps) {
           detailItems.map((it) => ({
             name: it.name,
             quantity: Number(it.quantity || 0),
-            unit_cost: parseFloat(String(it.unitPrice || 0)),
-            total_cost: parseFloat(String(it.total || 0)),
-          })),
+            unit_cost: Number.parseFloat(String(it.unitPrice || 0)),
+            total_cost: Number.parseFloat(String(it.total || 0)),
+          }))
         );
       } else {
         setItems([{ name: "", quantity: 1, unit_cost: 0, total_cost: 0 }]);
@@ -202,224 +196,233 @@ export function OrderSheet({ open, onOpenChange, order }: OrderSheetProps) {
   }, [order, open, orderDetail]);
 
   return (
-    <Sheet open={open} onOpenChange={handleOpenChange}>
-      <SheetContent className="flex flex-col overflow-hidden sm:max-w-2xl p-0">
-        <SheetHeader className="px-6 pt-6 pb-0 flex-shrink-0">
+    <Sheet onOpenChange={handleOpenChange} open={open}>
+      <SheetContent className="flex flex-col overflow-hidden p-0 sm:max-w-2xl">
+        <SheetHeader className="flex-shrink-0 px-6 pt-6 pb-0">
           <SheetTitle>{isEdit ? "Edit Order" : "Create New Order"}</SheetTitle>
         </SheetHeader>
 
-        <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
-          <div className="flex-1 overflow-y-auto scrollbar-hide px-6 py-4">
+        <form className="flex min-h-0 flex-1 flex-col" onSubmit={handleSubmit}>
+          <div className="scrollbar-hide flex-1 overflow-y-auto px-6 py-4">
             <div className="space-y-6">
-          {/* Client Selection */}
-          <div className="space-y-2">
-            <Label htmlFor="client_id">Client</Label>
-            <Select
-              value={formData.client_id}
-              onValueChange={(value) => setFormData({ ...formData, client_id: value })}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select a client" />
-              </SelectTrigger>
-              <SelectContent>
-                {clients.map((client) => (
-                  <SelectItem key={client.id} value={client.id}>
-                    {client.name} {client.phone && `(${client.phone})`}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+              {/* Client Selection */}
+              <div className="space-y-2">
+                <Label htmlFor="client_id">Client</Label>
+                <Select
+                  onValueChange={(value) => setFormData({ ...formData, client_id: value })}
+                  value={formData.client_id}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a client" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {clients.map((client) => (
+                      <SelectItem key={client.id} value={client.id}>
+                        {client.name} {client.phone && `(${client.phone})`}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-          {/* Status */}
-          <div className="space-y-2">
-            <Label htmlFor="status">
-              Status <span className="text-destructive">*</span>
-            </Label>
-            <Select
-              value={formData.status}
-              onValueChange={(value) => setFormData({ ...formData, status: value })}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="generated">Generated</SelectItem>
-                <SelectItem value="in_progress">In progress</SelectItem>
-                <SelectItem value="completed">Completed</SelectItem>
-                <SelectItem value="cancelled">Cancelled</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+              {/* Status */}
+              <div className="space-y-2">
+                <Label htmlFor="status">
+                  Status <span className="text-destructive">*</span>
+                </Label>
+                <Select
+                  onValueChange={(value) => setFormData({ ...formData, status: value })}
+                  value={formData.status}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="generated">Generated</SelectItem>
+                    <SelectItem value="in_progress">In progress</SelectItem>
+                    <SelectItem value="completed">Completed</SelectItem>
+                    <SelectItem value="cancelled">Cancelled</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
 
-          {/* Due Date */}
-          <div className="space-y-2">
-            <Label>Due Date</Label>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button type="button" variant="outline" className="w-full justify-start">
-                  {formData.due_date
-                    ? new Date(formData.due_date).toLocaleDateString()
-                    : "Select due date"}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  mode="single"
-                  selected={formData.due_date ? new Date(formData.due_date) : undefined}
-                  onSelect={(date) => {
-                    setFormData({
-                      ...formData,
-                      due_date: date && date instanceof Date ? date.toISOString().split("T")[0] : "",
-                    });
-                  }}
-                  initialFocus
-                />
-              </PopoverContent>
-            </Popover>
-          </div>
+              {/* Due Date */}
+              <div className="space-y-2">
+                <Label>Due Date</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button className="w-full justify-start" type="button" variant="outline">
+                      {formData.due_date
+                        ? new Date(formData.due_date).toLocaleDateString()
+                        : "Select due date"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent align="start" className="w-auto p-0">
+                    <Calendar
+                      initialFocus
+                      mode="single"
+                      onSelect={(date) => {
+                        setFormData({
+                          ...formData,
+                          due_date:
+                            date && date instanceof Date ? date.toISOString().split("T")[0] : "",
+                        });
+                      }}
+                      selected={formData.due_date ? new Date(formData.due_date) : undefined}
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
 
-          {/* Items */}
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <Label>
-                Items <span className="text-destructive">*</span>
-              </Label>
-              <Button type="button" variant="outline" size="sm" onClick={addItem}>
-                <Plus className="mr-1 h-4 w-4" /> Add Item
-              </Button>
-            </div>
+              {/* Items */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <Label>
+                    Items <span className="text-destructive">*</span>
+                  </Label>
+                  <Button onClick={addItem} size="sm" type="button" variant="outline">
+                    <Plus className="mr-1 h-4 w-4" /> Add Item
+                  </Button>
+                </div>
 
-            <div className="space-y-3">
-              {items.map((item, index) => (
-                <div key={index} className="border p-3 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium">Item {index + 1}</span>
-                    {items.length > 1 && (
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => removeItem(index)}
-                      >
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
-                    )}
+                <div className="space-y-3">
+                  {items.map((item, index) => (
+                    <div className="space-y-3 border p-3" key={index}>
+                      <div className="flex items-center justify-between">
+                        <span className="font-medium text-sm">Item {index + 1}</span>
+                        {items.length > 1 && (
+                          <Button
+                            onClick={() => removeItem(index)}
+                            size="sm"
+                            type="button"
+                            variant="ghost"
+                          >
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        )}
+                      </div>
+
+                      <div className="grid gap-3">
+                        <div>
+                          <Label className="text-xs">Item Name</Label>
+                          <Input
+                            onChange={(e) => updateItem(index, "name", e.target.value)}
+                            placeholder="e.g., Kaftan"
+                            required
+                            value={item.name}
+                          />
+                        </div>
+
+                        <div className="grid grid-cols-3 gap-2">
+                          <div>
+                            <Label className="text-xs">Qty</Label>
+                            <Input
+                              min="1"
+                              onChange={(e) =>
+                                updateItem(index, "quantity", Number.parseInt(e.target.value) || 1)
+                              }
+                              type="number"
+                              value={item.quantity}
+                            />
+                          </div>
+                          <div>
+                            <Label className="text-xs">Unit Cost ({currency})</Label>
+                            <Input
+                              min="0"
+                              onChange={(e) =>
+                                updateItem(
+                                  index,
+                                  "unit_cost",
+                                  Number.parseFloat(e.target.value) || 0
+                                )
+                              }
+                              step="0.01"
+                              type="number"
+                              value={item.unit_cost}
+                            />
+                          </div>
+                          <div>
+                            <Label className="text-xs">Total ({currency})</Label>
+                            <Input
+                              className="bg-muted"
+                              disabled
+                              type="number"
+                              value={item.total_cost.toFixed(2)}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Payment Summary */}
+              <div className="space-y-3 border bg-muted/50 p-4">
+                <h4 className="font-medium text-sm">Payment Summary</h4>
+
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Total Price:</span>
+                    <span className="font-medium">
+                      {currency} {totalPrice.toFixed(2)}
+                    </span>
                   </div>
 
-                  <div className="grid gap-3">
-                    <div>
-                      <Label className="text-xs">Item Name</Label>
-                      <Input
-                        value={item.name}
-                        onChange={(e) => updateItem(index, "name", e.target.value)}
-                        placeholder="e.g., Kaftan"
-                        required
-                      />
-                    </div>
+                  <div>
+                    <Label className="text-xs" htmlFor="deposit_amount">
+                      Deposit Amount ({currency})
+                    </Label>
+                    <Input
+                      className="mt-1"
+                      id="deposit_amount"
+                      max={totalPrice}
+                      min="0"
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          deposit_amount: Number.parseFloat(e.target.value) || 0,
+                        })
+                      }
+                      step="0.01"
+                      type="number"
+                      value={formData.deposit_amount}
+                    />
+                  </div>
 
-                    <div className="grid grid-cols-3 gap-2">
-                      <div>
-                        <Label className="text-xs">Qty</Label>
-                        <Input
-                          type="number"
-                          min="1"
-                          value={item.quantity}
-                          onChange={(e) =>
-                            updateItem(index, "quantity", parseInt(e.target.value) || 1)
-                          }
-                        />
-                      </div>
-                      <div>
-                        <Label className="text-xs">Unit Cost ({currency})</Label>
-                        <Input
-                          type="number"
-                          min="0"
-                          step="0.01"
-                          value={item.unit_cost}
-                          onChange={(e) =>
-                            updateItem(index, "unit_cost", parseFloat(e.target.value) || 0)
-                          }
-                        />
-                      </div>
-                      <div>
-                        <Label className="text-xs">Total ({currency})</Label>
-                        <Input
-                          type="number"
-                          value={item.total_cost.toFixed(2)}
-                          disabled
-                          className="bg-muted"
-                        />
-                      </div>
-                    </div>
+                  <div className="flex justify-between border-t pt-2 text-sm">
+                    <span className="text-muted-foreground">Balance Due:</span>
+                    <span className="font-semibold">
+                      {currency} {balanceAmount.toFixed(2)}
+                    </span>
                   </div>
                 </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Payment Summary */}
-          <div className="border p-4 space-y-3 bg-muted/50">
-            <h4 className="font-medium text-sm">Payment Summary</h4>
-
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Total Price:</span>
-                <span className="font-medium">{currency} {totalPrice.toFixed(2)}</span>
               </div>
 
-              <div>
-                <Label htmlFor="deposit_amount" className="text-xs">
-                  Deposit Amount ({currency})
-                </Label>
-                <Input
-                  id="deposit_amount"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  max={totalPrice}
-                  value={formData.deposit_amount}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      deposit_amount: parseFloat(e.target.value) || 0,
-                    })
-                  }
-                  className="mt-1"
+              {/* Notes */}
+              <div className="space-y-2">
+                <Label htmlFor="notes">Notes</Label>
+                <Textarea
+                  id="notes"
+                  onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                  placeholder="Any additional notes about this order..."
+                  rows={6}
+                  value={formData.notes}
                 />
               </div>
-
-              <div className="flex justify-between text-sm pt-2 border-t">
-                <span className="text-muted-foreground">Balance Due:</span>
-                <span className="font-semibold">{currency} {balanceAmount.toFixed(2)}</span>
-              </div>
             </div>
           </div>
 
-          {/* Notes */}
-          <div className="space-y-2">
-            <Label htmlFor="notes">Notes</Label>
-            <Textarea
-              id="notes"
-              value={formData.notes}
-              onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-              placeholder="Any additional notes about this order..."
-              rows={6}
-            />
-            </div>
-          </div>
-          </div>
-
-          <div className="flex-shrink-0 flex justify-end gap-4 px-6 py-4 border-t">
+          <div className="flex flex-shrink-0 justify-end gap-4 border-t px-6 py-4">
             <Button
+              disabled={isLoading}
+              onClick={() => handleOpenChange(false)}
               type="button"
               variant="outline"
-              onClick={() => handleOpenChange(false)}
-              disabled={isLoading}
             >
               Cancel
             </Button>
-            <SubmitButton type="submit" isSubmitting={isLoading}>
+            <SubmitButton isSubmitting={isLoading} type="submit">
               {isEdit ? "Update Order" : "Create Order"}
             </SubmitButton>
           </div>

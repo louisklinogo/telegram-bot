@@ -1,8 +1,10 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-import { Sheet, SheetContent, SheetHeader } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
+import { Combobox, type Option } from "@/components/ui/combobox";
+import { Icons } from "@/components/ui/icons";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -11,13 +13,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Sheet, SheetContent, SheetHeader } from "@/components/ui/sheet";
+import { SubmitButton } from "@/components/ui/submit-button";
 import { Switch } from "@/components/ui/switch";
 import { trpc } from "@/lib/trpc/client";
-import { Icons } from "@/components/ui/icons";
-import { useRouter } from "next/navigation";
 import { InputColor } from "./input-color";
-import { Combobox, type Option } from "@/components/ui/combobox";
-import { SubmitButton } from "@/components/ui/submit-button";
 
 type CategoryNode = {
   id: string;
@@ -82,7 +82,7 @@ export function CategoryEditSheet({ open, onOpenChange, id, categories = [] }: P
   });
 
   const submit = async () => {
-    if (!id || !name.trim()) return;
+    if (!(id && name.trim())) return;
     await mutateAsync({
       id,
       name: name.trim(),
@@ -98,7 +98,9 @@ export function CategoryEditSheet({ open, onOpenChange, id, categories = [] }: P
 
   const flat = useMemo(() => flatten(categories), [categories]);
   const currentNode = useMemo(() => (id ? findNode(categories, id) : null), [categories, id]);
-  const hasChildren = Boolean(currentNode && currentNode.children && currentNode.children.length > 0);
+  const hasChildren = Boolean(
+    currentNode && currentNode.children && currentNode.children.length > 0
+  );
   const excludeIds = new Set<string>();
   if (id) {
     excludeIds.add(id);
@@ -109,84 +111,96 @@ export function CategoryEditSheet({ open, onOpenChange, id, categories = [] }: P
 
   const parentOptions: Option[] = useMemo(() => {
     const flat = flatten(categories);
-    return flat.map((opt) => ({ id: opt.id, name: `${"\u00A0".repeat(opt.depth * 2)}${opt.name}` }));
+    return flat.map((opt) => ({
+      id: opt.id,
+      name: `${"\u00A0".repeat(opt.depth * 2)}${opt.name}`,
+    }));
   }, [categories]);
 
   return (
-    <Sheet open={open} onOpenChange={(o) => onOpenChange(o)}>
+    <Sheet onOpenChange={(o) => onOpenChange(o)} open={open}>
       <SheetContent className="flex flex-col overflow-hidden p-0">
-        <SheetHeader className="px-6 pt-6 pb-2 flex items-center justify-between flex-row">
+        <SheetHeader className="flex flex-row items-center justify-between px-6 pt-6 pb-2">
           <h2 className="text-xl">Edit Category</h2>
           <div className="flex items-center gap-2">
             {id && (
               <Button
-                variant="ghost"
-                size="icon"
                 onClick={async () => {
                   if (!id) return;
                   if (window.confirm("Delete this category?")) {
                     await deleteMutation.mutateAsync({ id });
                   }
                 }}
+                size="icon"
                 title="Delete"
+                variant="ghost"
               >
                 <Icons.Delete className="size-5" />
               </Button>
             )}
             <Button
+              className="m-0 size-auto p-0 hover:bg-transparent"
+              onClick={() => onOpenChange(false)}
               size="icon"
               variant="ghost"
-              onClick={() => onOpenChange(false)}
-              className="p-0 m-0 size-auto hover:bg-transparent"
             >
               <Icons.Close className="size-5" />
             </Button>
           </div>
         </SheetHeader>
 
-        <div className="flex flex-col flex-1 min-h-0">
-          <div className="flex-1 overflow-y-auto scrollbar-hide px-6 py-4 space-y-4">
+        <div className="flex min-h-0 flex-1 flex-col">
+          <div className="scrollbar-hide flex-1 space-y-4 overflow-y-auto px-6 py-4">
             <div className="space-y-1">
-              <label className="text-xs text-muted-foreground">Name</label>
+              <label className="text-muted-foreground text-xs">Name</label>
               <InputColor
-                name={name}
                 color={color}
-                placeholder="Name"
+                name={name}
                 onChange={({ name: n, color: c }) => {
                   setName(n);
                   setColor(c);
                 }}
+                placeholder="Name"
               />
             </div>
 
             <div className="space-y-1">
-              <label className="text-xs text-muted-foreground">Parent Category (Optional)</label>
+              <label className="text-muted-foreground text-xs">Parent Category (Optional)</label>
               {hasChildren ? (
-                <div className="flex items-center space-x-2 p-3 py-2 border border-border bg-muted/50">
-                  <span className="text-sm text-muted-foreground">Cannot change parent - this category has children</span>
+                <div className="flex items-center space-x-2 border border-border bg-muted/50 p-3 py-2">
+                  <span className="text-muted-foreground text-sm">
+                    Cannot change parent - this category has children
+                  </span>
                 </div>
               ) : (
                 <Combobox
-                  options={parentOptions.filter((o) => !excludeIds.has(o.id))}
-                  value={parentOptions.find((o) => o.id === selectedParent)}
-                  onSelect={(opt) => setSelectedParent(opt?.id)}
-                  onRemove={() => setSelectedParent(undefined)}
-                  placeholder="Select parent category"
                   disabled={Boolean((data as any)?.system)}
+                  onRemove={() => setSelectedParent(undefined)}
+                  onSelect={(opt) => setSelectedParent(opt?.id)}
+                  options={parentOptions.filter((o) => !excludeIds.has(o.id))}
+                  placeholder="Select parent category"
                   showIcon={false}
+                  value={parentOptions.find((o) => o.id === selectedParent)}
                 />
               )}
             </div>
 
             <div className="space-y-1">
-              <label className="text-xs text-muted-foreground">Description</label>
-              <Input value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Description" />
+              <label className="text-muted-foreground text-xs">Description</label>
+              <Input
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="Description"
+                value={description}
+              />
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1">
-                <label className="text-xs text-muted-foreground">Tax Type</label>
-                <Select value={taxType ?? "none"} onValueChange={(v) => setTaxType(v === "none" ? undefined : v)}>
+                <label className="text-muted-foreground text-xs">Tax Type</label>
+                <Select
+                  onValueChange={(v) => setTaxType(v === "none" ? undefined : v)}
+                  value={taxType ?? "none"}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Select tax type" />
                   </SelectTrigger>
@@ -199,28 +213,45 @@ export function CategoryEditSheet({ open, onOpenChange, id, categories = [] }: P
                 </Select>
               </div>
               <div className="space-y-1">
-                <label className="text-xs text-muted-foreground">Tax Rate</label>
-                <Input value={taxRate} onChange={(e) => setTaxRate(e.target.value)} placeholder="Tax Rate" />
+                <label className="text-muted-foreground text-xs">Tax Rate</label>
+                <Input
+                  onChange={(e) => setTaxRate(e.target.value)}
+                  placeholder="Tax Rate"
+                  value={taxRate}
+                />
               </div>
             </div>
-            <div className="text-xs text-muted-foreground">For unsupported or internal tax logic.</div>
-
-            <div className="space-y-1">
-              <label className="text-xs text-muted-foreground">Report Code</label>
-              <Input value={taxReportingCode} onChange={(e) => setTaxReportingCode(e.target.value)} placeholder="Report Code" />
+            <div className="text-muted-foreground text-xs">
+              For unsupported or internal tax logic.
             </div>
 
-            <div className="border border-border p-3 mt-2 pt-1.5 flex items-center justify-between">
+            <div className="space-y-1">
+              <label className="text-muted-foreground text-xs">Report Code</label>
+              <Input
+                onChange={(e) => setTaxReportingCode(e.target.value)}
+                placeholder="Report Code"
+                value={taxReportingCode}
+              />
+            </div>
+
+            <div className="mt-2 flex items-center justify-between border border-border p-3 pt-1.5">
               <div>
-                <div className="text-xs text-muted-foreground">Exclude from Reports</div>
-                <div className="text-xs text-muted-foreground">Transactions in this category won't appear in financial reports</div>
+                <div className="text-muted-foreground text-xs">Exclude from Reports</div>
+                <div className="text-muted-foreground text-xs">
+                  Transactions in this category won't appear in financial reports
+                </div>
               </div>
               <Switch checked={excluded} onCheckedChange={setExcluded} />
             </div>
           </div>
 
-          <div className="mt-auto sticky bottom-0 bg-background px-6 py-4 border-t z-10">
-            <SubmitButton onClick={submit} disabled={!name.trim()} isSubmitting={isPending} className="w-full">
+          <div className="sticky bottom-0 z-10 mt-auto border-t bg-background px-6 py-4">
+            <SubmitButton
+              className="w-full"
+              disabled={!name.trim()}
+              isSubmitting={isPending}
+              onClick={submit}
+            >
               Update
             </SubmitButton>
           </div>

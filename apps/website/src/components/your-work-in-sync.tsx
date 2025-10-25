@@ -1,14 +1,14 @@
-import type React from "react"
+import type React from "react";
 
 interface YourWorkInSyncProps {
   /** Fixed width from Figma: 482px */
-  width?: number | string
+  width?: number | string;
   /** Fixed height from Figma: 300px */
-  height?: number | string
+  height?: number | string;
   /** Optional className to pass to root */
-  className?: string
+  className?: string;
   /** Theme palette */
-  theme?: "light" | "dark"
+  theme?: "light" | "dark";
 }
 
 /**
@@ -44,18 +44,20 @@ const YourWorkInSync: React.FC<YourWorkInSyncProps> = ({
           "--yws-bubble-white": "#ffffff",
           "--yws-border": "rgba(255,255,255,0.12)",
           "--yws-shadow": "rgba(0,0,0,0.24)",
-        } as React.CSSProperties)
+        } as React.CSSProperties);
 
   // Figma-exported assets
-  const imgFrame2147223205 = "/professional-woman-avatar-with-short-brown-hair-an.jpg"
-  const imgFrame2147223206 = "/professional-man-avatar-with-beard-and-glasses-loo.jpg"
-  const imgFrame2147223207 = "/professional-person-avatar-with-curly-hair-and-war.jpg"
+  const imgFrame2147223205 = "/professional-woman-avatar-with-short-brown-hair-an.jpg";
+  const imgFrame2147223206 = "/professional-man-avatar-with-beard-and-glasses-loo.jpg";
+  const imgFrame2147223207 = "/professional-person-avatar-with-curly-hair-and-war.jpg";
   const imgArrowUp =
-    "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='3' strokeLinecap='round' strokeLinejoin='round'%3E%3Cpath d='m5 12 7-7 7 7'/%3E%3Cpath d='M12 19V5'/%3E%3C/svg%3E"
+    "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='3' strokeLinecap='round' strokeLinejoin='round'%3E%3Cpath d='m5 12 7-7 7 7'/%3E%3Cpath d='M12 19V5'/%3E%3C/svg%3E";
 
   return (
     <div
+      aria-label="Chat conversation showing team collaboration sync"
       className={className}
+      role="img"
       style={
         {
           width,
@@ -65,8 +67,6 @@ const YourWorkInSync: React.FC<YourWorkInSyncProps> = ({
           ...themeVars,
         } as React.CSSProperties
       }
-      role="img"
-      aria-label="Chat conversation showing team collaboration sync"
     >
       {/* Root frame size 482×300 – content centered */}
       <div
@@ -80,7 +80,9 @@ const YourWorkInSync: React.FC<YourWorkInSyncProps> = ({
         }}
       >
         {/* Remove the flip transformation and position messages normally */}
-        <div style={{ width: "356px", height: "216px", position: "relative", transform: "scale(1.1)" }}>
+        <div
+          style={{ width: "356px", height: "216px", position: "relative", transform: "scale(1.1)" }}
+        >
           {/* Message 1: Left side with avatar */}
           <div
             style={{
@@ -297,8 +299,8 @@ const YourWorkInSync: React.FC<YourWorkInSyncProps> = ({
               }}
             >
               <img
-                src={imgArrowUp || "/placeholder.svg"}
                 alt="Send"
+                src={imgArrowUp || "/placeholder.svg"}
                 style={{
                   width: "20px",
                   height: "20px",
@@ -310,7 +312,7 @@ const YourWorkInSync: React.FC<YourWorkInSyncProps> = ({
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default YourWorkInSync
+export default YourWorkInSync;

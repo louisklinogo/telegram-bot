@@ -15,7 +15,7 @@ export async function updateClient(
   supabase: SupabaseClient<Database>,
   id: string,
   teamId: string,
-  updates: ClientUpdate,
+  updates: ClientUpdate
 ) {
   const { data, error } = await supabase
     .from("clients")

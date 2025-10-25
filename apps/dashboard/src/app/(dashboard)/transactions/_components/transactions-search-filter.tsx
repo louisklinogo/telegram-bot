@@ -1,20 +1,20 @@
 "use client";
 
-import { useEffect, useRef, useState, useMemo } from "react";
-import { trpc } from '@/lib/trpc/client';
-import { useHotkeys } from "react-hotkeys-hook";
 import { formatISO } from "date-fns";
-import { cn } from "@/lib/utils";
-import { Input } from "@/components/ui/input";
-import { Calendar } from "@/components/ui/calendar";
-import { Slider } from "@/components/ui/slider";
-import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useHotkeys } from "react-hotkeys-hook";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Icons } from "@/components/ui/icons";
+import { Input } from "@/components/ui/input";
+import { Separator } from "@/components/ui/separator";
+import { Slider } from "@/components/ui/slider";
+import { trpc } from "@/lib/trpc/client";
+import { cn } from "@/lib/utils";
 import { FilterList } from "./filter-list";
-import type { TransactionsSearchFilterProps, FilterState } from "./types";
+import type { FilterState, TransactionsSearchFilterProps } from "./types";
 
 type Props = TransactionsSearchFilterProps & {
   showSearchInput?: boolean;
@@ -23,7 +23,7 @@ type Props = TransactionsSearchFilterProps & {
 
 const PLACEHOLDERS = [
   "Software and taxes last month",
-  "Income last year", 
+  "Income last year",
   "Software last Q4",
   "From Google without receipt",
   "Search or filter",
@@ -48,11 +48,9 @@ function FilterSection({ title, icon: Icon, children }: FilterSectionProps) {
     <div className="space-y-3">
       <div className="flex items-center gap-2">
         <Icon className="h-4 w-4 text-muted-foreground" />
-        <span className="text-sm font-medium">{title}</span>
+        <span className="font-medium text-sm">{title}</span>
       </div>
-      <div className="space-y-2">
-        {children}
-      </div>
+      <div className="space-y-2">{children}</div>
     </div>
   );
 }
@@ -60,14 +58,10 @@ function FilterSection({ title, icon: Icon, children }: FilterSectionProps) {
 function FilterCheckbox({ id, label, checked, onCheckedChange }: FilterCheckboxProps) {
   return (
     <div className="flex items-center space-x-2">
-      <Checkbox
-        id={id}
-        checked={checked}
-        onCheckedChange={onCheckedChange}
-      />
+      <Checkbox checked={checked} id={id} onCheckedChange={onCheckedChange} />
       <label
+        className="cursor-pointer font-normal text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
         htmlFor={id}
-        className="text-sm font-normal cursor-pointer leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
       >
         {label}
       </label>
@@ -75,13 +69,20 @@ function FilterCheckbox({ id, label, checked, onCheckedChange }: FilterCheckboxP
   );
 }
 
-export function TransactionsSearchFilter({ value, onChange, onAskAI, currency = "GHS", showSearchInput = true, showFilterButton = true }: Props) {
+export function TransactionsSearchFilter({
+  value,
+  onChange,
+  onAskAI,
+  currency = "GHS",
+  showSearchInput = true,
+  showFilterButton = true,
+}: Props) {
   const [placeholder, setPlaceholder] = useState("");
   const [streaming, setStreaming] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
-  
+
   // Fetch filter data
   const { data: categories = [] } = trpc.transactionCategories.list.useQuery();
   const { data: tags = [] } = trpc.tags.list.useQuery();
@@ -95,20 +96,20 @@ export function TransactionsSearchFilter({ value, onChange, onAskAI, currency = 
 
   // Handle filter removal
   const handleRemoveFilter = (key: string, value?: string) => {
-    if (key === 'statuses' && value) {
-      const newStatuses = current.statuses?.filter(s => s !== value);
+    if (key === "statuses" && value) {
+      const newStatuses = current.statuses?.filter((s) => s !== value);
       patch({ statuses: newStatuses?.length ? newStatuses : undefined });
-    } else if (key === 'categories' && value) {
-      const newCategories = current.categories?.filter(c => c !== value);
+    } else if (key === "categories" && value) {
+      const newCategories = current.categories?.filter((c) => c !== value);
       patch({ categories: newCategories?.length ? newCategories : undefined });
-    } else if (key === 'tags' && value) {
-      const newTags = current.tags?.filter(t => t !== value);
+    } else if (key === "tags" && value) {
+      const newTags = current.tags?.filter((t) => t !== value);
       patch({ tags: newTags?.length ? newTags : undefined });
-    } else if (key === 'accounts' && value) {
-      const newAccounts = current.accounts?.filter(a => a !== value);
+    } else if (key === "accounts" && value) {
+      const newAccounts = current.accounts?.filter((a) => a !== value);
       patch({ accounts: newAccounts?.length ? newAccounts : undefined });
-    } else if (key === 'assignees' && value) {
-      const newAssignees = current.assignees?.filter(a => a !== value);
+    } else if (key === "assignees" && value) {
+      const newAssignees = current.assignees?.filter((a) => a !== value);
       patch({ assignees: newAssignees?.length ? newAssignees : undefined });
     } else {
       patch({ [key]: undefined });
@@ -117,7 +118,7 @@ export function TransactionsSearchFilter({ value, onChange, onAskAI, currency = 
 
   const handleClearAll = () => {
     onChange({ limit: 50 });
-    setPrompt('');
+    setPrompt("");
   };
 
   // Random placeholder
@@ -138,7 +139,7 @@ export function TransactionsSearchFilter({ value, onChange, onAskAI, currency = 
     {
       enableOnFormTags: true,
       enabled: Boolean(prompt) && isFocused,
-    },
+    }
   );
 
   useHotkeys("meta+s", (evt) => {
@@ -186,11 +187,11 @@ export function TransactionsSearchFilter({ value, onChange, onAskAI, currency = 
 
   // Check if we have active filters (excluding search and limit)
   const validFilters = Object.fromEntries(
-    Object.entries(current).filter(([key]) => key !== "search" && key !== "limit"),
+    Object.entries(current).filter(([key]) => key !== "search" && key !== "limit")
   );
   const hasValidFilters = Object.values(validFilters).some(
     (value) =>
-      value !== null && value !== undefined && (Array.isArray(value) ? value.length > 0 : true),
+      value !== null && value !== undefined && (Array.isArray(value) ? value.length > 0 : true)
   );
 
   return (
@@ -205,37 +206,37 @@ export function TransactionsSearchFilter({ value, onChange, onAskAI, currency = 
               handleSubmit();
             }}
           >
-            <Icons.Search className="absolute pointer-events-none left-3 top-[11px] h-4 w-4" />
+            <Icons.Search className="pointer-events-none absolute top-[11px] left-3 h-4 w-4" />
             <Input
-              ref={inputRef}
-              placeholder={placeholder}
-              className="pl-9 pr-4"
-              value={prompt}
+              autoCapitalize="none"
+              autoComplete="off"
+              autoCorrect="off"
+              className="pr-4 pl-9"
+              onBlur={() => setIsFocused(false)}
               onChange={handleSearch}
               onFocus={() => setIsFocused(true)}
-              onBlur={() => setIsFocused(false)}
-              autoComplete="off"
-              autoCapitalize="none"
-              autoCorrect="off"
+              placeholder={placeholder}
+              ref={inputRef}
               spellCheck="false"
+              value={prompt}
             />
           </form>
         )}
 
         {showFilterButton && (
           <Button
-            variant={isOpen ? "default" : "outline"}
-            size="sm"
-            onClick={() => setIsOpen(!isOpen)}
             className={cn(
               "transition-all duration-200",
               hasValidFilters && "bg-primary text-primary-foreground"
             )}
+            onClick={() => setIsOpen(!isOpen)}
+            size="sm"
+            variant={isOpen ? "default" : "outline"}
           >
             {streaming ? (
-              <Icons.Refresh className="h-4 w-4 animate-spin mr-2" />
+              <Icons.Refresh className="mr-2 h-4 w-4 animate-spin" />
             ) : (
-              <Icons.Filter className="h-4 w-4 mr-2" />
+              <Icons.Filter className="mr-2 h-4 w-4" />
             )}
             Filters
           </Button>
@@ -244,28 +245,22 @@ export function TransactionsSearchFilter({ value, onChange, onAskAI, currency = 
 
       {/* Applied Filters */}
       <FilterList
-        filters={current}
-        onRemoveFilter={handleRemoveFilter}
-        onClearAll={handleClearAll}
-        loading={streaming}
         currency={currency}
+        filters={current}
+        loading={streaming}
+        onClearAll={handleClearAll}
+        onRemoveFilter={handleRemoveFilter}
       />
 
       {/* Expandable Filter Section */}
       {isOpen && (
-        <div className="border rounded-lg p-6 bg-card animate-in slide-in-from-top-1 duration-200">
-          <div className="flex flex-wrap gap-4 sm:gap-6 lg:gap-8 items-start">
-            
-            <FilterSection title="Date Range" icon={Icons.CalendarMonth}>
-              <div className="w-full sm:w-[280px] min-w-[240px]">
+        <div className="slide-in-from-top-1 animate-in rounded-lg border bg-card p-6 duration-200">
+          <div className="flex flex-wrap items-start gap-4 sm:gap-6 lg:gap-8">
+            <FilterSection icon={Icons.CalendarMonth} title="Date Range">
+              <div className="w-full min-w-[240px] sm:w-[280px]">
                 <Calendar
-                  mode="range"
                   initialFocus
-                  toDate={new Date()}
-                  selected={{
-                    from: current.startDate ? new Date(current.startDate) : undefined,
-                    to: current.endDate ? new Date(current.endDate) : undefined,
-                  }}
+                  mode="range"
                   onSelect={(range) => {
                     if (!range) return;
 
@@ -280,46 +275,51 @@ export function TransactionsSearchFilter({ value, onChange, onAskAI, currency = 
 
                     patch(newRange);
                   }}
+                  selected={{
+                    from: current.startDate ? new Date(current.startDate) : undefined,
+                    to: current.endDate ? new Date(current.endDate) : undefined,
+                  }}
+                  toDate={new Date()}
                 />
               </div>
             </FilterSection>
 
-            <FilterSection title="Amount Range" icon={Icons.Currency}>
-              <div className="w-full sm:w-[200px] min-w-[180px] space-y-4">
+            <FilterSection icon={Icons.Currency} title="Amount Range">
+              <div className="w-full min-w-[180px] space-y-4 sm:w-[200px]">
                 <div className="flex items-center justify-between text-sm">
                   <span>Range</span>
                   <span className="text-muted-foreground">
-                    {currency} {current.amountMin || 0} - {currency} {current.amountMax || 10000}
+                    {currency} {current.amountMin || 0} - {currency} {current.amountMax || 10_000}
                   </span>
                 </div>
                 <Slider
-                  value={[current.amountMin || 0, current.amountMax || 10000]}
+                  className="w-full"
+                  max={10_000}
+                  min={0}
                   onValueChange={([min, max]) => {
                     patch({
                       amountMin: min > 0 ? min : undefined,
-                      amountMax: max < 10000 ? max : undefined,
+                      amountMax: max < 10_000 ? max : undefined,
                     });
                   }}
-                  max={10000}
-                  min={0}
                   step={50}
-                  className="w-full"
+                  value={[current.amountMin || 0, current.amountMax || 10_000]}
                 />
-                <div className="flex justify-between text-xs text-muted-foreground">
+                <div className="flex justify-between text-muted-foreground text-xs">
                   <span>{currency} 0</span>
                   <span>{currency} 10,000</span>
                 </div>
               </div>
             </FilterSection>
 
-            <FilterSection title="Status" icon={Icons.Status}>
-              <div className="w-full sm:w-[140px] min-w-[120px] space-y-2">
+            <FilterSection icon={Icons.Status} title="Status">
+              <div className="w-full min-w-[120px] space-y-2 sm:w-[140px]">
                 {(["completed", "pending", "failed", "cancelled"] as const).map((status) => (
                   <FilterCheckbox
-                    key={status}
-                    id={status}
-                    label={status.charAt(0).toUpperCase() + status.slice(1)}
                     checked={current.statuses?.includes(status) ?? false}
+                    id={status}
+                    key={status}
+                    label={status.charAt(0).toUpperCase() + status.slice(1)}
                     onCheckedChange={(checked) => {
                       const currentStatuses = current.statuses || [];
                       const newStatuses = checked
@@ -332,20 +332,20 @@ export function TransactionsSearchFilter({ value, onChange, onAskAI, currency = 
               </div>
             </FilterSection>
 
-            <FilterSection title="Attachments" icon={Icons.Attachments}>
-              <div className="w-full sm:w-[140px] min-w-[120px] space-y-2">
+            <FilterSection icon={Icons.Attachments} title="Attachments">
+              <div className="w-full min-w-[120px] space-y-2 sm:w-[140px]">
                 <FilterCheckbox
+                  checked={current.hasAttachments === true}
                   id="has-attachments"
                   label="Has attachments"
-                  checked={current.hasAttachments === true}
                   onCheckedChange={(checked) =>
                     patch({ hasAttachments: checked ? true : undefined })
                   }
                 />
                 <FilterCheckbox
+                  checked={current.hasAttachments === false}
                   id="no-attachments"
                   label="No attachments"
-                  checked={current.hasAttachments === false}
                   onCheckedChange={(checked) =>
                     patch({ hasAttachments: checked ? false : undefined })
                   }
@@ -353,15 +353,15 @@ export function TransactionsSearchFilter({ value, onChange, onAskAI, currency = 
               </div>
             </FilterSection>
 
-            <FilterSection title="Categories" icon={Icons.Category}>
-              <div className="w-full sm:w-[180px] min-w-[150px] max-h-[200px] overflow-y-auto space-y-2">
+            <FilterSection icon={Icons.Category} title="Categories">
+              <div className="max-h-[200px] w-full min-w-[150px] space-y-2 overflow-y-auto sm:w-[180px]">
                 {categories && categories.length > 0 ? (
                   categories.map((category: any) => (
                     <FilterCheckbox
-                      key={category.id}
-                      id={category.id}
-                      label={category.name}
                       checked={current.categories?.includes(category.slug) ?? false}
+                      id={category.id}
+                      key={category.id}
+                      label={category.name}
                       onCheckedChange={(checked) => {
                         const currentCategories = current.categories || [];
                         const newCategories = checked
@@ -372,20 +372,20 @@ export function TransactionsSearchFilter({ value, onChange, onAskAI, currency = 
                     />
                   ))
                 ) : (
-                  <p className="text-sm text-muted-foreground">No categories found</p>
+                  <p className="text-muted-foreground text-sm">No categories found</p>
                 )}
               </div>
             </FilterSection>
 
-            <FilterSection title="Tags" icon={Icons.Status}>
-              <div className="w-full sm:w-[160px] min-w-[140px] max-h-[200px] overflow-y-auto space-y-2">
+            <FilterSection icon={Icons.Status} title="Tags">
+              <div className="max-h-[200px] w-full min-w-[140px] space-y-2 overflow-y-auto sm:w-[160px]">
                 {tags && tags.length > 0 ? (
                   tags.map((tag: any) => (
                     <FilterCheckbox
-                      key={tag.id}
-                      id={tag.id}
-                      label={tag.name}
                       checked={current.tags?.includes(tag.id) ?? false}
+                      id={tag.id}
+                      key={tag.id}
+                      label={tag.name}
                       onCheckedChange={(checked) => {
                         const currentTags = current.tags || [];
                         const newTags = checked
@@ -396,20 +396,20 @@ export function TransactionsSearchFilter({ value, onChange, onAskAI, currency = 
                     />
                   ))
                 ) : (
-                  <p className="text-sm text-muted-foreground">No tags found</p>
+                  <p className="text-muted-foreground text-sm">No tags found</p>
                 )}
               </div>
             </FilterSection>
 
-            <FilterSection title="Accounts" icon={Icons.Accounts}>
-              <div className="w-full sm:w-[180px] min-w-[150px] max-h-[200px] overflow-y-auto space-y-2">
+            <FilterSection icon={Icons.Accounts} title="Accounts">
+              <div className="max-h-[200px] w-full min-w-[150px] space-y-2 overflow-y-auto sm:w-[180px]">
                 {financialAccounts && financialAccounts.length > 0 ? (
                   financialAccounts.map((account: any) => (
                     <FilterCheckbox
-                      key={account.id}
-                      id={account.id}
-                      label={`${account.name} (${account.currency})`}
                       checked={current.accounts?.includes(account.id) ?? false}
+                      id={account.id}
+                      key={account.id}
+                      label={`${account.name} (${account.currency})`}
                       onCheckedChange={(checked) => {
                         const currentAccounts = current.accounts || [];
                         const newAccounts = checked
@@ -420,20 +420,20 @@ export function TransactionsSearchFilter({ value, onChange, onAskAI, currency = 
                     />
                   ))
                 ) : (
-                  <p className="text-sm text-muted-foreground">No accounts found</p>
+                  <p className="text-muted-foreground text-sm">No accounts found</p>
                 )}
               </div>
             </FilterSection>
 
-            <FilterSection title="Assignees" icon={Icons.AccountCircle}>
-              <div className="w-full sm:w-[160px] min-w-[140px] max-h-[200px] overflow-y-auto space-y-2">
+            <FilterSection icon={Icons.AccountCircle} title="Assignees">
+              <div className="max-h-[200px] w-full min-w-[140px] space-y-2 overflow-y-auto sm:w-[160px]">
                 {teamMembers && teamMembers.length > 0 ? (
                   teamMembers.map((member: any) => (
                     <FilterCheckbox
-                      key={member.id}
-                      id={member.id}
-                      label={member.fullName || member.email || "Unknown"}
                       checked={current.assignees?.includes(member.id) ?? false}
+                      id={member.id}
+                      key={member.id}
+                      label={member.fullName || member.email || "Unknown"}
                       onCheckedChange={(checked) => {
                         const currentAssignees = current.assignees || [];
                         const newAssignees = checked
@@ -444,24 +444,21 @@ export function TransactionsSearchFilter({ value, onChange, onAskAI, currency = 
                     />
                   ))
                 ) : (
-                  <p className="text-sm text-muted-foreground">No team members found</p>
+                  <p className="text-muted-foreground text-sm">No team members found</p>
                 )}
               </div>
             </FilterSection>
 
-            <FilterSection title="Recurring" icon={Icons.Repeat}>
-              <div className="w-full sm:w-[120px] min-w-[100px] space-y-2">
+            <FilterSection icon={Icons.Repeat} title="Recurring">
+              <div className="w-full min-w-[100px] space-y-2 sm:w-[120px]">
                 <FilterCheckbox
+                  checked={current.isRecurring === true}
                   id="recurring-all"
                   label="All recurring"
-                  checked={current.isRecurring === true}
-                  onCheckedChange={(checked) =>
-                    patch({ isRecurring: checked ? true : undefined })
-                  }
+                  onCheckedChange={(checked) => patch({ isRecurring: checked ? true : undefined })}
                 />
               </div>
             </FilterSection>
-            
           </div>
         </div>
       )}

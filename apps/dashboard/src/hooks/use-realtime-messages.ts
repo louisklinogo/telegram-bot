@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
 import { createBrowserClient } from "@Faworra/supabase/client";
+import { useEffect, useState } from "react";
 import { trpc } from "@/lib/trpc/client";
 
 interface Message {

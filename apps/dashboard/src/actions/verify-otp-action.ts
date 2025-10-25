@@ -1,7 +1,7 @@
 "use server";
 
-import { createServerClient } from "@Faworra/supabase/server";
 import { upsertUserBasic } from "@Faworra/supabase/mutations";
+import { createServerClient } from "@Faworra/supabase/server";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { CookiePreferredSignInProvider } from "@/lib/cookies";
@@ -11,8 +11,8 @@ export async function verifyOtpAction(formData: FormData) {
   const token = String(formData.get("token") || "").trim();
   const redirectTo = String(formData.get("redirect_to") || "/");
 
-  if (!email || !token) {
-    redirect(`/login?error=otp_missing_params`);
+  if (!(email && token)) {
+    redirect("/login?error=otp_missing_params");
   }
 
   const supabase = await createServerClient();
@@ -27,7 +27,7 @@ export async function verifyOtpAction(formData: FormData) {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    redirect(`/login?error=no_user_after_otp`);
+    redirect("/login?error=no_user_after_otp");
   }
 
   (await cookies()).set(CookiePreferredSignInProvider, "otp", {

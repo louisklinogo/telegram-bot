@@ -4,7 +4,7 @@
  */
 
 export * from "./clients";
-export * from "./users";
-export * from "./invites";
 export * from "./communications";
+export * from "./invites";
 export * from "./providers";
+export * from "./users";

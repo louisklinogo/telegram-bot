@@ -7,7 +7,7 @@ type ClientInsert = Database["public"]["Tables"]["clients"]["Insert"];
 
 export async function enqueueCommunicationOutbox(
   supabase: SupabaseClient<Database>,
-  row: OutboxInsert,
+  row: OutboxInsert
 ) {
   return supabase.from("communication_outbox").insert(row);
 }
@@ -16,7 +16,7 @@ export async function updateCommunicationThread(
   supabase: SupabaseClient<Database>,
   id: string,
   teamId: string,
-  patch: ThreadUpdate,
+  patch: ThreadUpdate
 ) {
   return supabase.from("communication_threads").update(patch).eq("id", id).eq("team_id", teamId);
 }

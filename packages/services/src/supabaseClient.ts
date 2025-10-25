@@ -7,7 +7,7 @@ let serviceClient: SupabaseInstance | null = null;
 let anonClient: SupabaseInstance | null = null;
 
 const ensureEnv = () => {
-  if (!serviceClient && !anonClient) {
+  if (!(serviceClient || anonClient)) {
     validateEnvironmentVariables();
   }
   return getEnvConfig();

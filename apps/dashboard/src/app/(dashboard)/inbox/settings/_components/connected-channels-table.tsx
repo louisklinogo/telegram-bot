@@ -1,8 +1,17 @@
 "use client";
 
+import { EnvelopeSimple, type IconProps, InstagramLogo, WhatsappLogo } from "phosphor-react";
 import { useState } from "react";
-import { WhatsappLogo, InstagramLogo, EnvelopeSimple, type IconProps } from "phosphor-react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Icons } from "@/components/ui/icons";
 import {
   Table,
   TableBody,
@@ -11,15 +20,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Icons } from "@/components/ui/icons";
 import { trpc } from "@/lib/trpc/client";
 import { DisconnectChannelSheet } from "./disconnect-channel-sheet";
 
@@ -92,7 +92,7 @@ export function ConnectedChannelsTable({ initialAccounts }: Props) {
       <Card className="border-0">
         <CardContent className="pt-12 pb-12">
           <div className="text-center">
-            <div className="text-sm text-muted-foreground mb-4">No channels connected yet</div>
+            <div className="mb-4 text-muted-foreground text-sm">No channels connected yet</div>
             <Button asChild>
               <a href="/inbox">Connect a channel</a>
             </Button>
@@ -137,11 +137,13 @@ export function ConnectedChannelsTable({ initialAccounts }: Props) {
                       <TableCell>
                         <div className="flex items-center gap-2">
                           {Icon && <Icon size={20} weight="duotone" />}
-                          <span className="text-sm font-medium">{config?.name || account.provider}</span>
+                          <span className="font-medium text-sm">
+                            {config?.name || account.provider}
+                          </span>
                         </div>
                       </TableCell>
                       <TableCell>
-                        <span className="text-sm text-muted-foreground">{displayLabel}</span>
+                        <span className="text-muted-foreground text-sm">{displayLabel}</span>
                       </TableCell>
                       <TableCell>
                         <Badge variant={statusVariant[account.status] || "secondary"}>
@@ -149,27 +151,23 @@ export function ConnectedChannelsTable({ initialAccounts }: Props) {
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        <span className="text-xs text-muted-foreground">
+                        <span className="text-muted-foreground text-xs">
                           {new Date(account.createdAt).toLocaleDateString()}
                         </span>
                       </TableCell>
                       <TableCell className="text-right">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button
-                              size="icon"
-                              variant="ghost"
-                              aria-label="Actions"
-                            >
+                            <Button aria-label="Actions" size="icon" variant="ghost">
                               <Icons.MoreHoriz className="size-5" />
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                             <DropdownMenuItem
+                              disabled={reconnect.isPending}
                               onClick={() => {
                                 reconnect.mutate({ accountId: account.id });
                               }}
-                              disabled={reconnect.isPending}
                             >
                               Reconnect
                             </DropdownMenuItem>
@@ -194,17 +192,17 @@ export function ConnectedChannelsTable({ initialAccounts }: Props) {
       </Card>
 
       <DisconnectChannelSheet
-        open={disconnectId !== null}
-        onOpenChange={(open) => {
-          if (!open) setDisconnectId(null);
-        }}
-        provider={disconnectProvider}
+        isLoading={disconnect.isPending}
         onConfirm={async () => {
           if (disconnectId) {
             await disconnect.mutateAsync({ accountId: disconnectId });
           }
         }}
-        isLoading={disconnect.isPending}
+        onOpenChange={(open) => {
+          if (!open) setDisconnectId(null);
+        }}
+        open={disconnectId !== null}
+        provider={disconnectProvider}
       />
     </>
   );

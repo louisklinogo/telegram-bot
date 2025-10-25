@@ -83,7 +83,7 @@ async function assertNoCycle(
   db: DbClient,
   teamId: string,
   selfId: string,
-  newParentId: string | null | undefined,
+  newParentId: string | null | undefined
 ) {
   if (!newParentId) return;
   if (newParentId === selfId) throw new Error("Cannot set category as its own parent");
@@ -210,10 +210,7 @@ export async function seedCategoryHierarchy(db: DbClient, teamId: string) {
 
   type ChildDef = { name: string; excluded?: boolean };
   const childrenMap: Record<string, ChildDef[]> = {
-    income: [
-      { name: "Subscription Revenue" },
-      { name: "Shipping Income" },
-    ],
+    income: [{ name: "Subscription Revenue" }, { name: "Shipping Income" }],
     cogs: [
       { name: "Raw Materials" },
       { name: "Manufacturing / Assembly" },
@@ -232,11 +229,7 @@ export async function seedCategoryHierarchy(db: DbClient, teamId: string) {
       { name: "Domain / SSL" },
       { name: "Email Services" },
     ],
-    meals: [
-      { name: "Client Meals" },
-      { name: "Team Meals" },
-      { name: "Conferences / Events" },
-    ],
+    meals: [{ name: "Client Meals" }, { name: "Team Meals" }, { name: "Conferences / Events" }],
     equipment: [
       { name: "Hardware (Laptops)" },
       { name: "Tools" },
@@ -292,9 +285,7 @@ export async function seedCategoryHierarchy(db: DbClient, teamId: string) {
     if (!parent) continue; // parent must exist
     for (const def of list) {
       // check if a child with the same name already exists under this team
-      const existing = all.find(
-        (c) => (c.name as string).toLowerCase() === def.name.toLowerCase(),
-      );
+      const existing = all.find((c) => (c.name as string).toLowerCase() === def.name.toLowerCase());
       if (existing) {
         // ensure parent linkage is set
         if (existing.parentId !== parent.id) {

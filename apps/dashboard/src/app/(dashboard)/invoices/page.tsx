@@ -1,6 +1,6 @@
-import { redirect } from "next/navigation";
-import { getCurrentTeamId, db } from "@/lib/trpc/server";
 import { getInvoicesWithOrder } from "@Faworra/database/queries";
+import { redirect } from "next/navigation";
+import { db, getCurrentTeamId } from "@/lib/trpc/server";
 import { InvoicesView } from "./_components/invoices-view";
 
 export default async function InvoicesPage() {

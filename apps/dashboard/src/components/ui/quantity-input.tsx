@@ -50,33 +50,33 @@ export function QuantityInput({
   };
 
   return (
-    <div className={cn("group flex items-stretch transition-[box-shadow] font-mono", className)}>
+    <div className={cn("group flex items-stretch font-mono transition-[box-shadow]", className)}>
       <button
         aria-label="Decrease"
         className="flex items-center pr-[.325em]"
         disabled={value <= min}
         onPointerDown={handlePointerDown(-1)}
-        type="button"
         tabIndex={-1}
+        type="button"
       >
-        <Minus className="size-2" absoluteStrokeWidth strokeWidth={3.5} tabIndex={-1} />
+        <Minus absoluteStrokeWidth className="size-2" strokeWidth={3.5} tabIndex={-1} />
       </button>
       <div className="relative grid items-center justify-items-center text-center">
         <input
-          ref={inputRef}
-          className="flex w-full max-w-full text-center transition-colors file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 p-0 border-0 h-6 text-xs !bg-transparent border-b border-transparent focus:border-border [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
-          style={{ fontKerning: "none" }}
-          type="number"
-          min={min}
-          max={max}
           autoComplete="off"
-          step={step}
-          value={rawValue === "0" ? "" : rawValue}
-          placeholder={placeholder}
-          onInput={handleInput}
+          className="!bg-transparent flex h-6 w-full max-w-full border-0 border-transparent border-b p-0 text-center text-xs transition-colors [-moz-appearance:textfield] file:font-medium file:text-sm placeholder:text-muted-foreground focus:border-border focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+          inputMode="decimal"
+          max={max}
+          min={min}
           onBlur={onBlur}
           onFocus={onFocus}
-          inputMode="decimal"
+          onInput={handleInput}
+          placeholder={placeholder}
+          ref={inputRef}
+          step={step}
+          style={{ fontKerning: "none" }}
+          type="number"
+          value={rawValue === "0" ? "" : rawValue}
         />
       </div>
       <button
@@ -84,10 +84,10 @@ export function QuantityInput({
         className="flex items-center pl-[.325em]"
         disabled={value >= max}
         onPointerDown={handlePointerDown(1)}
-        type="button"
         tabIndex={-1}
+        type="button"
       >
-        <Plus className="size-2" absoluteStrokeWidth strokeWidth={3.5} tabIndex={-1} />
+        <Plus absoluteStrokeWidth className="size-2" strokeWidth={3.5} tabIndex={-1} />
       </button>
     </div>
   );

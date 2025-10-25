@@ -1,6 +1,6 @@
-import { Client } from "pg";
 import fs from "fs";
 import path from "path";
+import { Client } from "pg";
 
 async function run() {
   const url = process.env.DATABASE_URL || process.env.SUPABASE_DB_URL;
@@ -12,7 +12,12 @@ async function run() {
   await client.connect();
   try {
     await client.query("BEGIN");
-    const sqlFile = path.resolve(process.cwd(), "drizzle", "manual-migrations", "0029_product_categories.sql");
+    const sqlFile = path.resolve(
+      process.cwd(),
+      "drizzle",
+      "manual-migrations",
+      "0029_product_categories.sql"
+    );
     const content = fs.readFileSync(sqlFile, "utf8");
     await client.query(content);
     await client.query("COMMIT");

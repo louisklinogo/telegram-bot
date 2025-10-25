@@ -1,4 +1,4 @@
-import { eq, and, isNull, desc, sql, gte, ne } from "drizzle-orm";
+import { and, desc, eq, gte, isNull, ne, sql } from "drizzle-orm";
 import type { DbClient } from "../client";
 import { clients, orders, teamDailyOrdersSummary } from "../schema";
 
@@ -18,11 +18,7 @@ export async function getMostActiveClient(db: DbClient, teamId: string) {
     .from(orders)
     .innerJoin(clients, eq(orders.clientId, clients.id))
     .where(
-      and(
-        eq(orders.teamId, teamId),
-        isNull(orders.deletedAt),
-        gte(orders.createdAt, thirtyDaysAgo),
-      ),
+      and(eq(orders.teamId, teamId), isNull(orders.deletedAt), gte(orders.createdAt, thirtyDaysAgo))
     )
     .groupBy(orders.clientId, clients.name)
     .orderBy(desc(sql`count(${orders.id})`))
@@ -49,11 +45,7 @@ export async function getInactiveClientsCount(db: DbClient, teamId: string) {
     .select({ clientId: orders.clientId })
     .from(orders)
     .where(
-      and(
-        eq(orders.teamId, teamId),
-        isNull(orders.deletedAt),
-        gte(orders.createdAt, thirtyDaysAgo),
-      ),
+      and(eq(orders.teamId, teamId), isNull(orders.deletedAt), gte(orders.createdAt, thirtyDaysAgo))
     )
     .groupBy(orders.clientId);
 
@@ -80,11 +72,7 @@ export async function getTopRevenueClient(db: DbClient, teamId: string) {
     .from(orders)
     .innerJoin(clients, eq(orders.clientId, clients.id))
     .where(
-      and(
-        eq(orders.teamId, teamId),
-        isNull(orders.deletedAt),
-        gte(orders.createdAt, thirtyDaysAgo),
-      ),
+      and(eq(orders.teamId, teamId), isNull(orders.deletedAt), gte(orders.createdAt, thirtyDaysAgo))
     )
     .groupBy(orders.clientId, clients.name)
     .orderBy(desc(sql`sum(${orders.totalPrice})`))
@@ -109,8 +97,8 @@ export async function getNewClientsThisMonth(db: DbClient, teamId: string) {
       and(
         eq(clients.teamId, teamId),
         isNull(clients.deletedAt),
-        gte(clients.createdAt, startOfMonth),
-      ),
+        gte(clients.createdAt, startOfMonth)
+      )
     );
 
   return result[0]?.count || 0;
@@ -154,8 +142,8 @@ export async function getCompletedOrdersThisMonth(db: DbClient, teamId: string) 
     .where(
       and(
         eq(teamDailyOrdersSummary.teamId, teamId),
-        gte(teamDailyOrdersSummary.day, sql`(now() - interval '30 days')::date`),
-      ),
+        gte(teamDailyOrdersSummary.day, sql`(now() - interval '30 days')::date`)
+      )
     );
 
   return result[0]?.count || 0;

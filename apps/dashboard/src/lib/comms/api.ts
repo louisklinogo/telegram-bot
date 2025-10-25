@@ -16,6 +16,6 @@ export async function getThreads(status: "open" | "pending" | "resolved" | "snoo
 
 export async function getAccounts() {
   return fetchJSON<{ items: Array<{ id: string; provider: string; external_id: string }> }>(
-    `/communications/accounts`,
+    "/communications/accounts"
   );
 }

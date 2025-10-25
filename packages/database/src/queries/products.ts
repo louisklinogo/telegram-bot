@@ -1,10 +1,6 @@
-import { and, desc, eq, ilike, isNull, sql, sum, min, max } from "drizzle-orm";
+import { and, desc, eq, ilike, isNull, max, min, sql, sum } from "drizzle-orm";
 import type { DbClient } from "../client";
-import {
-  products,
-  productVariants,
-  productInventory,
-} from "../schema";
+import { productInventory, products, productVariants } from "../schema";
 
 export type ProductListParams = {
   teamId: string;
@@ -49,8 +45,8 @@ export async function getProductsEnriched(db: DbClient, params: ProductListParam
         search ? ilike(products.name, `%${search}%`) : sql`true`,
         cursor
           ? sql`${products.updatedAt} < ${cursor.updatedAt} OR (${products.updatedAt} = ${cursor.updatedAt} AND ${products.id} < ${cursor.id})`
-          : sql`true`,
-      ),
+          : sql`true`
+      )
     )
     .groupBy(products.id)
     .orderBy(desc(products.updatedAt), desc(products.id))

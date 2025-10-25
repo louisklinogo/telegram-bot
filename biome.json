@@ -7,9 +7,7 @@
   },
   "files": {
     "ignoreUnknown": true,
-    "experimentalScannerIgnores": [
-      "midday**"
-    ]
+    "experimentalScannerIgnores": ["midday**"]
   },
   "formatter": {
     "enabled": true,
@@ -44,7 +42,5 @@
       }
     }
   },
-  "extends": [
-    "ultracite"
-  ]
+  "extends": ["ultracite"]
 }

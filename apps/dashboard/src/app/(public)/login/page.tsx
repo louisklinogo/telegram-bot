@@ -1,19 +1,19 @@
 import { cookies, headers } from "next/headers";
-import { OTPSignIn } from "@/components/otp-sign-in";
+import Link from "next/link";
 import { GoogleSignIn } from "@/components/google-sign-in";
-import { CookiePreferredSignInProvider } from "@/lib/cookies";
+import { OTPSignIn } from "@/components/otp-sign-in";
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import Link from "next/link";
 import { Icons } from "@/components/ui/icons";
+import { CookiePreferredSignInProvider } from "@/lib/cookies";
 
 function AppleSignInPlaceholder() {
   return (
-    <div className="flex items-center justify-center gap-2 border rounded h-10 px-3 opacity-60">
+    <div className="flex h-10 items-center justify-center gap-2 rounded border px-3 opacity-60">
       {/* TODO: Implement Apple OAuth when keys are available */}
       <Icons.Apple /> <span>Continue with Apple</span>
     </div>
@@ -24,7 +24,7 @@ function GithubSignInPlaceholder() {
   return (
     <div className="opacity-60">
       {/* TODO: Implement GitHub OAuth if desired */}
-      <div className="flex items-center justify-center gap-2 border rounded h-10">
+      <div className="flex h-10 items-center justify-center gap-2 rounded border">
         <Icons.Github /> <span>Continue with GitHub (coming soon)</span>
       </div>
     </div>
@@ -33,7 +33,7 @@ function GithubSignInPlaceholder() {
 
 function WhatsAppSignInPlaceholder() {
   return (
-    <div className="flex items-center justify-center gap-2 border rounded h-10 px-3 opacity-60">
+    <div className="flex h-10 items-center justify-center gap-2 rounded border px-3 opacity-60">
       {/* TODO: Consider WhatsApp-based sign-in/number verification flow */}
       <Icons.WhatsApp className="h-9 w-10" />
       <span>Continue with WhatsApp</span>
@@ -50,30 +50,30 @@ export default async function LoginPage() {
   const Secondary = primary === "otp" ? GoogleSignIn : OTPSignIn;
 
   return (
-    <div className="min-h-screen flex">
+    <div className="flex min-h-screen">
       {/* Left hero (hidden on mobile) */}
-      <div className="hidden lg:block lg:w-1/2 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-zinc-900 dark:to-zinc-800" />
+      <div className="hidden bg-gradient-to-br from-gray-50 to-gray-100 lg:block lg:w-1/2 dark:from-zinc-900 dark:to-zinc-800" />
       {/* Right: form */}
-      <div className="w-full lg:w-1/2 relative">
+      <div className="relative w-full lg:w-1/2">
         <header className="absolute top-0 left-0 w-full p-6">
           <div className="flex items-center gap-2">
-            <Icons.FaworraBlack className="h-16 md:h-24 w-auto dark:hidden" />
-            <Icons.FaworraWhite className="h-16 md:h-24 w-auto hidden dark:block" />
+            <Icons.FaworraBlack className="h-16 w-auto md:h-24 dark:hidden" />
+            <Icons.FaworraWhite className="hidden h-16 w-auto md:h-24 dark:block" />
           </div>
         </header>
-        <div className="flex items-center justify-center min-h-screen p-6">
+        <div className="flex min-h-screen items-center justify-center p-6">
           <div className="w-full max-w-md space-y-6">
-            <div className="text-center space-y-2">
-              <h1 className="text-lg font-serif">Welcome</h1>
-              <p className="text-sm text-muted-foreground">Choose how you want to continue</p>
+            <div className="space-y-2 text-center">
+              <h1 className="font-serif text-lg">Welcome</h1>
+              <p className="text-muted-foreground text-sm">Choose how you want to continue</p>
             </div>
             <div className="space-y-4">
               <Primary />
               <div className="flex items-center justify-center">
-                <span className="text-xs text-muted-foreground">Or</span>
+                <span className="text-muted-foreground text-xs">Or</span>
               </div>
-              <Accordion type="single" collapsible className="w-full">
-                <AccordionItem value="more" className="border-0">
+              <Accordion className="w-full" collapsible type="single">
+                <AccordionItem className="border-0" value="more">
                   <AccordionTrigger className="justify-center text-sm">
                     Other options
                   </AccordionTrigger>
@@ -85,13 +85,13 @@ export default async function LoginPage() {
                 </AccordionItem>
               </Accordion>
             </div>
-            <div className="text-center text-xs text-muted-foreground">
+            <div className="text-center text-muted-foreground text-xs">
               By signing in you agree to our{" "}
-              <Link href="#" className="underline">
+              <Link className="underline" href="#">
                 Terms of service
               </Link>{" "}
               &{" "}
-              <Link href="#" className="underline">
+              <Link className="underline" href="#">
                 Privacy policy
               </Link>
             </div>

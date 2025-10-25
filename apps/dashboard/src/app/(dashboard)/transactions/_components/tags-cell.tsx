@@ -1,13 +1,20 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { Check, X } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
-import { cn } from "@/lib/utils";
-import { trpc } from "@/lib/trpc/client";
 import type { RouterOutputs } from "@Faworra/api/trpc/routers/_app";
+import { Check, X } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { Badge } from "@/components/ui/badge";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { trpc } from "@/lib/trpc/client";
+import { cn } from "@/lib/utils";
 
 type Tag = { id: string; name: string; color: string | null };
 
@@ -23,8 +30,8 @@ type TagsCellProps = {
 export function TagsCell({ transactionId, initialTags }: TagsCellProps) {
   const utils = trpc.useUtils();
   const [open, setOpen] = useState(false);
-  const { data: allTags = [] } = trpc.tags.list.useQuery(undefined, { 
-    enabled: open, 
+  const { data: allTags = [] } = trpc.tags.list.useQuery(undefined, {
+    enabled: open,
     staleTime: 60_000,
     gcTime: 300_000, // Keep in cache for 5 minutes
   });
@@ -37,7 +44,7 @@ export function TagsCell({ transactionId, initialTags }: TagsCellProps) {
       await utils.transactions.enrichedList.invalidate();
     },
   });
-  
+
   const removeTag = trpc.transactionTags.remove.useMutation({
     onSuccess: async () => {
       await utils.transactions.enrichedList.invalidate();
@@ -53,7 +60,7 @@ export function TagsCell({ transactionId, initialTags }: TagsCellProps) {
   type TagRow = RouterOutputs["tags"]["list"][number];
   const selectedTags = useMemo(
     () => (allTags as TagRow[]).filter((t) => local.has(t.id)),
-    [allTags, local],
+    [allTags, local]
   );
 
   // Keep local state in sync with incoming server data
@@ -71,7 +78,7 @@ export function TagsCell({ transactionId, initialTags }: TagsCellProps) {
     const q = inputValue.toLowerCase();
     return items.filter((i) => (i.name || "").toLowerCase().includes(q));
   }, [items, inputValue]);
-  
+
   const showCreate = Boolean(inputValue.trim()) && filtered.length === 0;
 
   const removeInline = (id: string) => {
@@ -86,30 +93,41 @@ export function TagsCell({ transactionId, initialTags }: TagsCellProps) {
 
   return (
     <div className="max-w-[260px]">
-      <Popover open={open} onOpenChange={(o) => { setOpen(o); if (!o) setInputValue(""); }}>
+      <Popover
+        onOpenChange={(o) => {
+          setOpen(o);
+          if (!o) setInputValue("");
+        }}
+        open={open}
+      >
         <PopoverTrigger asChild>
           <button
-            type="button"
-            className="w-full min-h-[24px] h-auto rounded-sm hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring px-1"
             aria-label="Edit tags"
+            className="h-auto min-h-[24px] w-full rounded-sm px-1 hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
             data-row-click-exempt
+            type="button"
           >
             {displayTags.length > 0 ? (
-              <div className="flex items-center gap-1 overflow-x-auto scrollbar-hide py-0.5">
+              <div className="scrollbar-hide flex items-center gap-1 overflow-x-auto py-0.5">
                 {displayTags.map((t) => (
-                  <span key={t.id} className="relative group flex-shrink-0" data-row-click-exempt>
-                    <Badge variant="tag-rounded" className="whitespace-nowrap pr-5">{t.name}</Badge>
+                  <span className="group relative flex-shrink-0" data-row-click-exempt key={t.id}>
+                    <Badge className="whitespace-nowrap pr-5" variant="tag-rounded">
+                      {t.name}
+                    </Badge>
                     <span
-                      role="button"
                       aria-label="Remove tag"
-                      className="absolute -top-1 -right-1 hidden group-hover:flex h-4 w-4 items-center justify-center rounded-full bg-muted text-muted-foreground hover:bg-foreground hover:text-background cursor-pointer"
+                      className="-top-1 -right-1 absolute hidden h-4 w-4 cursor-pointer items-center justify-center rounded-full bg-muted text-muted-foreground hover:bg-foreground hover:text-background group-hover:flex"
                       data-row-click-exempt
-                      onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
                       onClick={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
                         removeInline(t.id);
                       }}
+                      onMouseDown={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                      }}
+                      role="button"
                     >
                       <X className="h-3 w-3" />
                     </span>
@@ -119,22 +137,25 @@ export function TagsCell({ transactionId, initialTags }: TagsCellProps) {
             ) : null}
           </button>
         </PopoverTrigger>
-        <PopoverContent align="start" className="p-0 w-72" data-row-click-exempt>
+        <PopoverContent align="start" className="w-72 p-0" data-row-click-exempt>
           <Command loop shouldFilter={false}>
             <CommandInput
-              value={inputValue}
+              autoFocus
+              className="px-3"
               onValueChange={setInputValue}
               placeholder="Search..."
-              className="px-3"
-              autoFocus
+              value={inputValue}
             />
             <CommandGroup>
               <CommandList className="max-h-[225px] overflow-auto">
                 {filtered.map((t) => (
                   <CommandItem
+                    className="cursor-pointer"
                     key={t.id}
-                    value={t.id}
-                    onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                    }}
                     onSelect={(id) => {
                       const checked = local.has(id);
                       if (checked) {
@@ -149,18 +170,23 @@ export function TagsCell({ transactionId, initialTags }: TagsCellProps) {
                         setLocal((prev) => new Set(prev).add(id));
                         const found = items.find((it) => it.id === id);
                         if (found) {
-                          setDisplayTags((prev) => [...prev, { 
-                            id: found.id, 
-                            name: found.name, 
-                            color: found.color as string | null 
-                          }]);
+                          setDisplayTags((prev) => [
+                            ...prev,
+                            {
+                              id: found.id,
+                              name: found.name,
+                              color: found.color as string | null,
+                            },
+                          ]);
                         }
                         addTag.mutate({ transactionId, tagId: id });
                       }
                     }}
-                    className="cursor-pointer"
+                    value={t.id}
                   >
-                    <Check className={cn("mr-2 h-4 w-4", local.has(t.id) ? "opacity-100" : "opacity-0")} />
+                    <Check
+                      className={cn("mr-2 h-4 w-4", local.has(t.id) ? "opacity-100" : "opacity-0")}
+                    />
                     {t.name}
                   </CommandItem>
                 ))}
@@ -168,18 +194,24 @@ export function TagsCell({ transactionId, initialTags }: TagsCellProps) {
                 {showCreate && (
                   <CommandItem
                     key={inputValue}
-                    value={inputValue}
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                    }}
                     onSelect={async () => {
                       const name = inputValue.trim();
                       if (!name) return;
                       try {
                         const row = await createTag.mutateAsync({ name, color: null });
                         setLocal((prev) => new Set(prev).add(row.id as string));
-                        setDisplayTags((prev) => [...prev, { 
-                          id: row.id as string, 
-                          name: row.name as string, 
-                          color: (row as { color?: string | null }).color ?? null 
-                        }]);
+                        setDisplayTags((prev) => [
+                          ...prev,
+                          {
+                            id: row.id as string,
+                            name: row.name as string,
+                            color: (row as { color?: string | null }).color ?? null,
+                          },
+                        ]);
                         addTag.mutate({ transactionId, tagId: row.id as string });
                         setOpen(false);
                         setInputValue("");
@@ -187,7 +219,7 @@ export function TagsCell({ transactionId, initialTags }: TagsCellProps) {
                         // Error handled by mutation
                       }
                     }}
-                    onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                    value={inputValue}
                   >
                     Create "{inputValue}"
                   </CommandItem>

@@ -1,8 +1,8 @@
-import { createServerClient } from "@Faworra/supabase/server";
 import { upsertUserBasic } from "@Faworra/supabase/mutations";
-import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
+import { createServerClient } from "@Faworra/supabase/server";
 import { cookies } from "next/headers";
+import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 import { CookiePreferredSignInProvider } from "@/lib/cookies";
 
 export async function POST(req: NextRequest) {
@@ -12,14 +12,14 @@ export async function POST(req: NextRequest) {
   const returnTo = String(form.get("return_to") || "");
   const supabase = await createServerClient();
 
-  if (!email || !token) {
+  if (!(email && token)) {
     return NextResponse.json({ error: "email and token required" }, { status: 400 });
   }
 
   const { error } = await supabase.auth.verifyOtp({ email, token, type: "email" });
   if (error) {
     return NextResponse.redirect(
-      new URL(`/login?error=otp_failed&reason=${encodeURIComponent(error.message)}`, req.url),
+      new URL(`/login?error=otp_failed&reason=${encodeURIComponent(error.message)}`, req.url)
     );
   }
 
@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
   } = await supabase.auth.getUser();
   const url = new URL(req.url);
   if (!user) {
-    return NextResponse.redirect(new URL(`/login?error=no_user_after_otp`, url.origin));
+    return NextResponse.redirect(new URL("/login?error=no_user_after_otp", url.origin));
   }
 
   // Remember provider preference
@@ -43,8 +43,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.redirect(
       new URL(
         `/login?error=user_creation_failed&reason=${encodeURIComponent(upsertError.message)}`,
-        url.origin,
-      ),
+        url.origin
+      )
     );
   }
 

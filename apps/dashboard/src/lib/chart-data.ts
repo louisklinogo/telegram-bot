@@ -113,7 +113,9 @@ export function calculateDashboardStats(orders: OrderWithClient[], invoices: Inv
     .filter((inv) => inv.status !== "paid")
     .reduce((sum, inv) => sum + inv.amount, 0);
 
-  const activeOrders = orders.filter((order) => String(order.status).toLowerCase() !== "completed").length;
+  const activeOrders = orders.filter(
+    (order) => String(order.status).toLowerCase() !== "completed"
+  ).length;
 
   const thirtyDaysAgo = new Date();
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);

@@ -49,7 +49,7 @@ const Carousel = React.forwardRef<
       ...opts,
       axis: orientation === "horizontal" ? "x" : "y",
     },
-    plugins,
+    plugins
   );
   const [canScrollPrev, setCanScrollPrev] = React.useState(false);
   const [canScrollNext, setCanScrollNext] = React.useState(false);
@@ -75,11 +75,11 @@ const Carousel = React.forwardRef<
     (index: number) => {
       api?.scrollTo(index);
     },
-    [api],
+    [api]
   );
 
   React.useEffect(() => {
-    if (!api || !setApi) {
+    if (!(api && setApi)) {
       return;
     }
 
@@ -104,7 +104,7 @@ const Carousel = React.forwardRef<
     <CarouselContext.Provider
       value={{
         carouselRef,
-        api: api,
+        api,
         opts,
         orientation: orientation || (opts?.axis === "y" ? "vertical" : "horizontal"),
         scrollPrev,
@@ -115,9 +115,9 @@ const Carousel = React.forwardRef<
       }}
     >
       <div
-        ref={ref}
-        className={cn("relative", className)}
         aria-roledescription="carousel"
+        className={cn("relative", className)}
+        ref={ref}
         {...props}
       >
         {children}
@@ -132,19 +132,19 @@ const CarouselContent = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HT
     const { carouselRef, orientation } = useCarousel();
 
     return (
-      <div ref={carouselRef} className="overflow-hidden">
+      <div className="overflow-hidden" ref={carouselRef}>
         <div
-          ref={ref}
           className={cn(
             "flex",
             orientation === "horizontal" ? "-ml-4" : "-mt-4 flex-col",
-            className,
+            className
           )}
+          ref={ref}
           {...props}
         />
       </div>
     );
-  },
+  }
 );
 CarouselContent.displayName = "CarouselContent";
 
@@ -154,18 +154,18 @@ const CarouselItem = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLD
 
     return (
       <div
-        ref={ref}
-        role="group"
         aria-roledescription="slide"
         className={cn(
           "min-w-0 shrink-0 grow-0 basis-full",
           orientation === "horizontal" ? "pl-4" : "pt-4",
-          className,
+          className
         )}
+        ref={ref}
+        role="group"
         {...props}
       />
     );
-  },
+  }
 );
 CarouselItem.displayName = "CarouselItem";
 
@@ -175,18 +175,18 @@ const CarouselPrevious = React.forwardRef<HTMLButtonElement, React.ComponentProp
 
     return (
       <Button
-        ref={ref}
-        variant={variant}
-        size={size}
         className={cn(
           "absolute h-8 w-8 rounded-full",
           orientation === "horizontal"
-            ? "-left-12 top-1/2 -translate-y-1/2"
-            : "-top-12 left-1/2 -translate-x-1/2 rotate-90",
-          className,
+            ? "-left-12 -translate-y-1/2 top-1/2"
+            : "-top-12 -translate-x-1/2 left-1/2 rotate-90",
+          className
         )}
         disabled={!canScrollPrev}
         onClick={scrollPrev}
+        ref={ref}
+        size={size}
+        variant={variant}
         {...props}
       >
         <Icons.ChevronLeft className="h-6 w-6" />
@@ -194,7 +194,7 @@ const CarouselPrevious = React.forwardRef<HTMLButtonElement, React.ComponentProp
         <span className="sr-only">Previous slide</span>
       </Button>
     );
-  },
+  }
 );
 CarouselPrevious.displayName = "CarouselPrevious";
 
@@ -204,25 +204,25 @@ const CarouselNext = React.forwardRef<HTMLButtonElement, React.ComponentProps<ty
 
     return (
       <Button
-        ref={ref}
-        variant={variant}
-        size={size}
         className={cn(
           "absolute h-8 w-8 rounded-full",
           orientation === "horizontal"
-            ? "-right-12 top-1/2 -translate-y-1/2"
-            : "-bottom-12 left-1/2 -translate-x-1/2 rotate-90",
-          className,
+            ? "-right-12 -translate-y-1/2 top-1/2"
+            : "-bottom-12 -translate-x-1/2 left-1/2 rotate-90",
+          className
         )}
         disabled={!canScrollNext}
         onClick={scrollNext}
+        ref={ref}
+        size={size}
+        variant={variant}
         {...props}
       >
         <Icons.ChevronRight className="h-6 w-6" />
         <span className="sr-only">Next slide</span>
       </Button>
     );
-  },
+  }
 );
 CarouselNext.displayName = "CarouselNext";
 

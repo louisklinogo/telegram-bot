@@ -14,9 +14,9 @@ type EmptyStateProps = {
 export function EmptyState({ title, description, action }: EmptyStateProps) {
   return (
     <div className="flex items-center justify-center">
-      <div className="flex flex-col items-center mt-40">
-        <div className="text-center mb-6 space-y-2">
-          <h2 className="text-lg font-medium text-balance">{title}</h2>
+      <div className="mt-40 flex flex-col items-center">
+        <div className="mb-6 space-y-2 text-center">
+          <h2 className="text-balance font-medium text-lg">{title}</h2>
           {typeof description === "string" ? (
             <p className="text-muted-foreground text-sm">{description}</p>
           ) : (
@@ -25,7 +25,7 @@ export function EmptyState({ title, description, action }: EmptyStateProps) {
         </div>
 
         {action && (
-          <Button variant="outline" onClick={action.onClick}>
+          <Button onClick={action.onClick} variant="outline">
             {action.label}
           </Button>
         )}

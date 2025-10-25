@@ -15,7 +15,10 @@ export type RequestContext = {
 
 const als = new AsyncLocalStorage<RequestContext>();
 
-export function runWithRequestContext<T>(ctx: Omit<RequestContext, "queries" | "queryCount">, fn: () => Promise<T> | T): Promise<T> | T {
+export function runWithRequestContext<T>(
+  ctx: Omit<RequestContext, "queries" | "queryCount">,
+  fn: () => Promise<T> | T
+): Promise<T> | T {
   const initial: RequestContext = { ...ctx, queries: [], queryCount: 0 };
   return als.run(initial, fn as any);
 }

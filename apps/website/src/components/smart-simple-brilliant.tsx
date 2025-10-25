@@ -1,14 +1,14 @@
-import type React from "react"
+import type React from "react";
 
 interface SmartSimpleBrilliantProps {
   /** Fixed width from Figma: 482px */
-  width?: number | string
+  width?: number | string;
   /** Fixed height from Figma: 300px */
-  height?: number | string
+  height?: number | string;
   /** Optional className to pass to root */
-  className?: string
+  className?: string;
   /** Theme palette */
-  theme?: "light" | "dark"
+  theme?: "light" | "dark";
 }
 
 /**
@@ -38,17 +38,19 @@ const SmartSimpleBrilliant: React.FC<SmartSimpleBrilliantProps> = ({
           "--ssb-border": "rgba(255,255,255,0.16)",
           "--ssb-inner-border": "rgba(255,255,255,0.12)",
           "--ssb-shadow": "rgba(0,0,0,0.28)",
-        } as React.CSSProperties)
+        } as React.CSSProperties);
 
   // Figma-exported SVG assets used for small icons
-  const img = "http://localhost:3845/assets/1b1e60b441119fb176db990a3c7fe2670a764855.svg"
-  const img1 = "http://localhost:3845/assets/a502f04ccfc3811f304b58a3a982a5b6fa070e91.svg"
-  const img2 = "http://localhost:3845/assets/9c07375bf3b9f1f1d8a0a24447829eb6f54fa928.svg"
-  const img3 = "http://localhost:3845/assets/19500d66798ef5ea9dc9d5f971cd0e9c29674bd3.svg"
+  const img = "http://localhost:3845/assets/1b1e60b441119fb176db990a3c7fe2670a764855.svg";
+  const img1 = "http://localhost:3845/assets/a502f04ccfc3811f304b58a3a982a5b6fa070e91.svg";
+  const img2 = "http://localhost:3845/assets/9c07375bf3b9f1f1d8a0a24447829eb6f54fa928.svg";
+  const img3 = "http://localhost:3845/assets/19500d66798ef5ea9dc9d5f971cd0e9c29674bd3.svg";
 
   return (
     <div
+      aria-label="Two calendar cards with colored event rows"
       className={className}
+      role="img"
       style={
         {
           width,
@@ -61,8 +63,6 @@ const SmartSimpleBrilliant: React.FC<SmartSimpleBrilliantProps> = ({
           ...themeVars,
         } as React.CSSProperties
       }
-      role="img"
-      aria-label="Two calendar cards with colored event rows"
     >
       <div
         style={{
@@ -99,26 +99,50 @@ const SmartSimpleBrilliant: React.FC<SmartSimpleBrilliantProps> = ({
                 <div style={{ padding: "4.5px", width: "100%" }}>
                   <div style={{ display: "flex", gap: "3px", alignItems: "center" }}>
                     <span
-                      style={{ fontFamily: "Inter, sans-serif", fontWeight: 500, fontSize: "9px", color: "#92400E" }}
+                      style={{
+                        fontFamily: "Inter, sans-serif",
+                        fontWeight: 500,
+                        fontSize: "9px",
+                        color: "#92400E",
+                      }}
                     >
                       2:00
                     </span>
                     <span
-                      style={{ fontFamily: "Inter, sans-serif", fontWeight: 500, fontSize: "9px", color: "#92400E" }}
+                      style={{
+                        fontFamily: "Inter, sans-serif",
+                        fontWeight: 500,
+                        fontSize: "9px",
+                        color: "#92400E",
+                      }}
                     >
                       PM
                     </span>
                     <div style={{ background: "#92400E", padding: "1.5px", borderRadius: "100px" }}>
-                      <div style={{ width: "8px", height: "8px", overflow: "hidden", position: "relative" }}>
+                      <div
+                        style={{
+                          width: "8px",
+                          height: "8px",
+                          overflow: "hidden",
+                          position: "relative",
+                        }}
+                      >
                         <img
-                          src={img || "/placeholder.svg"}
                           alt="video"
+                          src={img || "/placeholder.svg"}
                           style={{ position: "absolute", inset: "20% 10% 20% 10%" }}
                         />
                       </div>
                     </div>
                   </div>
-                  <div style={{ fontFamily: "Inter, sans-serif", fontWeight: 600, fontSize: "9px", color: "#92400E" }}>
+                  <div
+                    style={{
+                      fontFamily: "Inter, sans-serif",
+                      fontWeight: 600,
+                      fontSize: "9px",
+                      color: "#92400E",
+                    }}
+                  >
                     1:1 with Heather
                   </div>
                 </div>
@@ -140,26 +164,50 @@ const SmartSimpleBrilliant: React.FC<SmartSimpleBrilliantProps> = ({
                 <div style={{ padding: "4.5px", width: "100%" }}>
                   <div style={{ display: "flex", gap: "3px", alignItems: "center" }}>
                     <span
-                      style={{ fontFamily: "Inter, sans-serif", fontWeight: 500, fontSize: "9px", color: "#0C4A6E" }}
+                      style={{
+                        fontFamily: "Inter, sans-serif",
+                        fontWeight: 500,
+                        fontSize: "9px",
+                        color: "#0C4A6E",
+                      }}
                     >
                       2:00
                     </span>
                     <span
-                      style={{ fontFamily: "Inter, sans-serif", fontWeight: 500, fontSize: "9px", color: "#0C4A6E" }}
+                      style={{
+                        fontFamily: "Inter, sans-serif",
+                        fontWeight: 500,
+                        fontSize: "9px",
+                        color: "#0C4A6E",
+                      }}
                     >
                       PM
                     </span>
                     <div style={{ background: "#0C4A6E", padding: "1.5px", borderRadius: "100px" }}>
-                      <div style={{ width: "8px", height: "8px", overflow: "hidden", position: "relative" }}>
+                      <div
+                        style={{
+                          width: "8px",
+                          height: "8px",
+                          overflow: "hidden",
+                          position: "relative",
+                        }}
+                      >
                         <img
-                          src={img1 || "/placeholder.svg"}
                           alt="video"
+                          src={img1 || "/placeholder.svg"}
                           style={{ position: "absolute", inset: "20% 10% 20% 10%" }}
                         />
                       </div>
                     </div>
                   </div>
-                  <div style={{ fontFamily: "Inter, sans-serif", fontWeight: 600, fontSize: "9px", color: "#0C4A6E" }}>
+                  <div
+                    style={{
+                      fontFamily: "Inter, sans-serif",
+                      fontWeight: 600,
+                      fontSize: "9px",
+                      color: "#0C4A6E",
+                    }}
+                  >
                     Concept Design Review II
                   </div>
                 </div>
@@ -181,17 +229,34 @@ const SmartSimpleBrilliant: React.FC<SmartSimpleBrilliantProps> = ({
                 <div style={{ padding: "4.5px", width: "100%" }}>
                   <div style={{ display: "flex", gap: "3px", alignItems: "center" }}>
                     <span
-                      style={{ fontFamily: "Inter, sans-serif", fontWeight: 500, fontSize: "9px", color: "#064E3B" }}
+                      style={{
+                        fontFamily: "Inter, sans-serif",
+                        fontWeight: 500,
+                        fontSize: "9px",
+                        color: "#064E3B",
+                      }}
                     >
                       9:00
                     </span>
                     <span
-                      style={{ fontFamily: "Inter, sans-serif", fontWeight: 500, fontSize: "9px", color: "#064E3B" }}
+                      style={{
+                        fontFamily: "Inter, sans-serif",
+                        fontWeight: 500,
+                        fontSize: "9px",
+                        color: "#064E3B",
+                      }}
                     >
                       AM
                     </span>
                   </div>
-                  <div style={{ fontFamily: "Inter, sans-serif", fontWeight: 600, fontSize: "9px", color: "#064E3B" }}>
+                  <div
+                    style={{
+                      fontFamily: "Inter, sans-serif",
+                      fontWeight: 600,
+                      fontSize: "9px",
+                      color: "#064E3B",
+                    }}
+                  >
                     Webinar: Figma ...
                   </div>
                 </div>
@@ -228,26 +293,50 @@ const SmartSimpleBrilliant: React.FC<SmartSimpleBrilliantProps> = ({
                 <div style={{ padding: "4.5px", width: "100%" }}>
                   <div style={{ display: "flex", gap: "3px", alignItems: "center" }}>
                     <span
-                      style={{ fontFamily: "Inter, sans-serif", fontWeight: 500, fontSize: "9px", color: "#581C87" }}
+                      style={{
+                        fontFamily: "Inter, sans-serif",
+                        fontWeight: 500,
+                        fontSize: "9px",
+                        color: "#581C87",
+                      }}
                     >
                       11:00
                     </span>
                     <span
-                      style={{ fontFamily: "Inter, sans-serif", fontWeight: 500, fontSize: "9px", color: "#581C87" }}
+                      style={{
+                        fontFamily: "Inter, sans-serif",
+                        fontWeight: 500,
+                        fontSize: "9px",
+                        color: "#581C87",
+                      }}
                     >
                       AM
                     </span>
                     <div style={{ background: "#581C87", padding: "1.5px", borderRadius: "100px" }}>
-                      <div style={{ width: "8px", height: "8px", overflow: "hidden", position: "relative" }}>
+                      <div
+                        style={{
+                          width: "8px",
+                          height: "8px",
+                          overflow: "hidden",
+                          position: "relative",
+                        }}
+                      >
                         <img
-                          src={img2 || "/placeholder.svg"}
                           alt="video"
+                          src={img2 || "/placeholder.svg"}
                           style={{ position: "absolute", inset: "20% 10% 20% 10%" }}
                         />
                       </div>
                     </div>
                   </div>
-                  <div style={{ fontFamily: "Inter, sans-serif", fontWeight: 600, fontSize: "9px", color: "#581C87" }}>
+                  <div
+                    style={{
+                      fontFamily: "Inter, sans-serif",
+                      fontWeight: 600,
+                      fontSize: "9px",
+                      color: "#581C87",
+                    }}
+                  >
                     Onboarding Presentation
                   </div>
                 </div>
@@ -269,26 +358,50 @@ const SmartSimpleBrilliant: React.FC<SmartSimpleBrilliantProps> = ({
                 <div style={{ padding: "4.5px", width: "100%" }}>
                   <div style={{ display: "flex", gap: "3px", alignItems: "center" }}>
                     <span
-                      style={{ fontFamily: "Inter, sans-serif", fontWeight: 500, fontSize: "9px", color: "#BE123C" }}
+                      style={{
+                        fontFamily: "Inter, sans-serif",
+                        fontWeight: 500,
+                        fontSize: "9px",
+                        color: "#BE123C",
+                      }}
                     >
                       4:00
                     </span>
                     <span
-                      style={{ fontFamily: "Inter, sans-serif", fontWeight: 500, fontSize: "9px", color: "#BE123C" }}
+                      style={{
+                        fontFamily: "Inter, sans-serif",
+                        fontWeight: 500,
+                        fontSize: "9px",
+                        color: "#BE123C",
+                      }}
                     >
                       PM
                     </span>
                     <div style={{ background: "#BE123C", padding: "1.5px", borderRadius: "100px" }}>
-                      <div style={{ width: "8px", height: "8px", overflow: "hidden", position: "relative" }}>
+                      <div
+                        style={{
+                          width: "8px",
+                          height: "8px",
+                          overflow: "hidden",
+                          position: "relative",
+                        }}
+                      >
                         <img
-                          src={img3 || "/placeholder.svg"}
                           alt="video"
+                          src={img3 || "/placeholder.svg"}
                           style={{ position: "absolute", inset: "20% 10% 20% 10%" }}
                         />
                       </div>
                     </div>
                   </div>
-                  <div style={{ fontFamily: "Inter, sans-serif", fontWeight: 600, fontSize: "9px", color: "#BE123C" }}>
+                  <div
+                    style={{
+                      fontFamily: "Inter, sans-serif",
+                      fontWeight: 600,
+                      fontSize: "9px",
+                      color: "#BE123C",
+                    }}
+                  >
                     🍷 Happy Hour
                   </div>
                 </div>
@@ -310,17 +423,34 @@ const SmartSimpleBrilliant: React.FC<SmartSimpleBrilliantProps> = ({
                 <div style={{ padding: "4.5px", width: "100%" }}>
                   <div style={{ display: "flex", gap: "3px", alignItems: "center" }}>
                     <span
-                      style={{ fontFamily: "Inter, sans-serif", fontWeight: 500, fontSize: "9px", color: "#581C87" }}
+                      style={{
+                        fontFamily: "Inter, sans-serif",
+                        fontWeight: 500,
+                        fontSize: "9px",
+                        color: "#581C87",
+                      }}
                     >
                       11:00
                     </span>
                     <span
-                      style={{ fontFamily: "Inter, sans-serif", fontWeight: 500, fontSize: "9px", color: "#581C87" }}
+                      style={{
+                        fontFamily: "Inter, sans-serif",
+                        fontWeight: 500,
+                        fontSize: "9px",
+                        color: "#581C87",
+                      }}
                     >
                       AM
                     </span>
                   </div>
-                  <div style={{ fontFamily: "Inter, sans-serif", fontWeight: 600, fontSize: "9px", color: "#581C87" }}>
+                  <div
+                    style={{
+                      fontFamily: "Inter, sans-serif",
+                      fontWeight: 600,
+                      fontSize: "9px",
+                      color: "#581C87",
+                    }}
+                  >
                     🍔 New Employee Welcome Lunch!
                   </div>
                 </div>
@@ -330,7 +460,7 @@ const SmartSimpleBrilliant: React.FC<SmartSimpleBrilliantProps> = ({
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default SmartSimpleBrilliant
+export default SmartSimpleBrilliant;

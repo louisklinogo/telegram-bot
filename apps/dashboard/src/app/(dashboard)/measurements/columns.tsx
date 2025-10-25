@@ -32,7 +32,7 @@ export const createColumns = (options?: CreateColumnsOptions): ColumnDef<Measure
         <div className="space-y-1">
           <p className="font-medium text-sm">{measurement.client?.name || "Unknown Client"}</p>
           {measurement.record_name && (
-            <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+            <p className="flex items-center gap-1.5 text-muted-foreground text-xs">
               <Ruler className="h-3 w-3" />
               {measurement.record_name}
             </p>
@@ -48,7 +48,7 @@ export const createColumns = (options?: CreateColumnsOptions): ColumnDef<Measure
       const measurements = (row.original as any).measurements as Record<string, string> | null;
       if (!measurements || Object.keys(measurements).length === 0) {
         return (
-          <span className="text-xs text-muted-foreground italic">No measurements recorded</span>
+          <span className="text-muted-foreground text-xs italic">No measurements recorded</span>
         );
       }
 
@@ -57,15 +57,15 @@ export const createColumns = (options?: CreateColumnsOptions): ColumnDef<Measure
       return (
         <div className="space-y-1">
           {entries.map(([key, value]) => (
-            <div key={key} className="flex items-baseline gap-1.5 text-xs">
-              <span className="text-muted-foreground capitalize min-w-[80px]">
+            <div className="flex items-baseline gap-1.5 text-xs" key={key}>
+              <span className="min-w-[80px] text-muted-foreground capitalize">
                 {key.replace(/_/g, " ")}:
               </span>
               <span className="font-mono font-semibold">{value}"</span>
             </div>
           ))}
           {Object.keys(measurements).length > 3 && (
-            <p className="text-xs text-muted-foreground italic">
+            <p className="text-muted-foreground text-xs italic">
               +{Object.keys(measurements).length - 3} more...
             </p>
           )}
@@ -75,24 +75,22 @@ export const createColumns = (options?: CreateColumnsOptions): ColumnDef<Measure
   },
   {
     accessorKey: "taken_at",
-    header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          className="-ml-4 h-8"
-        >
-          Taken
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      );
-    },
+    header: ({ column }) => (
+      <Button
+        className="-ml-4 h-8"
+        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        variant="ghost"
+      >
+        Taken
+        <ArrowUpDown className="ml-2 h-4 w-4" />
+      </Button>
+    ),
     cell: ({ row }) => {
       const takenAt = row.original.taken_at;
       if (!takenAt) return <span className="text-muted-foreground text-sm">Not specified</span>;
 
       return (
-        <span className="text-sm text-muted-foreground">
+        <span className="text-muted-foreground text-sm">
           {formatDistanceToNow(new Date(takenAt), {
             addSuffix: true,
           })}
@@ -102,27 +100,23 @@ export const createColumns = (options?: CreateColumnsOptions): ColumnDef<Measure
   },
   {
     accessorKey: "created_at",
-    header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          className="-ml-4 h-8"
-        >
-          Created
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      );
-    },
-    cell: ({ row }) => {
-      return (
-        <span className="text-sm text-muted-foreground">
-          {formatDistanceToNow(new Date(row.original.created_at), {
-            addSuffix: true,
-          })}
-        </span>
-      );
-    },
+    header: ({ column }) => (
+      <Button
+        className="-ml-4 h-8"
+        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        variant="ghost"
+      >
+        Created
+        <ArrowUpDown className="ml-2 h-4 w-4" />
+      </Button>
+    ),
+    cell: ({ row }) => (
+      <span className="text-muted-foreground text-sm">
+        {formatDistanceToNow(new Date(row.original.created_at), {
+          addSuffix: true,
+        })}
+      </span>
+    ),
   },
   {
     id: "actions",
@@ -132,7 +126,7 @@ export const createColumns = (options?: CreateColumnsOptions): ColumnDef<Measure
       return (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+            <Button className="h-8 w-8 p-0" size="sm" variant="ghost">
               <MoreVertical className="h-4 w-4" />
               <span className="sr-only">Open menu</span>
             </Button>
@@ -145,8 +139,8 @@ export const createColumns = (options?: CreateColumnsOptions): ColumnDef<Measure
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem
-              onClick={() => options?.onDelete?.(measurement)}
               className="text-destructive"
+              onClick={() => options?.onDelete?.(measurement)}
             >
               Delete measurement
             </DropdownMenuItem>

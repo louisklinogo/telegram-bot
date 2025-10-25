@@ -15,26 +15,26 @@ export function InputColor({ name, color, placeholder, onChange }: Props) {
   return (
     <div className="relative">
       <span
-        className="absolute left-3 top-1/2 -translate-y-1/2 h-3 w-3 rounded-sm border"
-        style={{ backgroundColor: color }}
-        role="button"
         aria-label="Pick color"
+        className="-translate-y-1/2 absolute top-1/2 left-3 h-3 w-3 rounded-sm border"
         onClick={() => colorRef.current?.click()}
+        role="button"
+        style={{ backgroundColor: color }}
       />
       <input
+        aria-hidden
+        className="sr-only"
+        onChange={(e) => onChange({ name, color: e.target.value })}
         ref={colorRef}
+        tabIndex={-1}
         type="color"
         value={color}
-        onChange={(e) => onChange({ name, color: e.target.value })}
-        className="sr-only"
-        aria-hidden
-        tabIndex={-1}
       />
       <Input
-        value={name}
+        className="pl-8"
         onChange={(e) => onChange({ name: e.target.value, color })}
         placeholder={placeholder}
-        className="pl-8"
+        value={name}
       />
     </div>
   );

@@ -15,7 +15,7 @@ export function formatCurrency(
     showSymbol?: boolean; // Show "GHS" prefix (default: true)
     showDecimals?: boolean; // Show decimal places (default: true)
     shortFormat?: boolean; // Use compact format for large numbers (default: false)
-  },
+  }
 ): string {
   const { showSymbol = true, showDecimals = true, shortFormat = false } = options || {};
 
@@ -25,7 +25,7 @@ export function formatCurrency(
   }
 
   // Convert to number
-  const numAmount = typeof amount === "string" ? parseFloat(amount) : amount;
+  const numAmount = typeof amount === "string" ? Number.parseFloat(amount) : amount;
 
   // Handle invalid numbers
   if (isNaN(numAmount)) {
@@ -60,7 +60,7 @@ export function formatCurrency(
 export function parseCurrency(value: string): number {
   // Remove currency symbols and whitespace
   const cleaned = value.replace(/GHS|₵|,|\s/g, "").trim();
-  const parsed = parseFloat(cleaned);
+  const parsed = Number.parseFloat(cleaned);
   return isNaN(parsed) ? 0 : parsed;
 }
 
@@ -85,8 +85,8 @@ export function isValidCurrencyAmount(value: string | number): boolean {
  * @returns Balance amount
  */
 export function calculateBalance(total: number | string, deposit: number | string): number {
-  const totalNum = typeof total === "string" ? parseFloat(total) : total;
-  const depositNum = typeof deposit === "string" ? parseFloat(deposit) : deposit;
+  const totalNum = typeof total === "string" ? Number.parseFloat(total) : total;
+  const depositNum = typeof deposit === "string" ? Number.parseFloat(deposit) : deposit;
 
   if (isNaN(totalNum) || isNaN(depositNum)) {
     return 0;

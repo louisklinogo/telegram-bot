@@ -1,8 +1,8 @@
 "use client";
 
-import { trpc } from "@/lib/trpc/client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useSuspenseQuery } from "@tanstack/react-query";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { trpc } from "@/lib/trpc/client";
 
 export function NewClientsThisMonth() {
   const [data] = trpc.analytics.newClientsThisMonth.useSuspenseQuery();
@@ -16,7 +16,7 @@ export function NewClientsThisMonth() {
       <CardContent className="pb-[34px]">
         <div className="flex flex-col gap-2">
           <div>New Clients</div>
-          <div className="text-sm text-muted-foreground">Added this month</div>
+          <div className="text-muted-foreground text-sm">Added this month</div>
         </div>
       </CardContent>
     </Card>

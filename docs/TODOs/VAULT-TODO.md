@@ -12,7 +12,7 @@
 - ❌ URLs expire after 30 days but not tracked
 
 **Midday Implementation:**
-- Custom short links (e.g., `app.cimantikos.com/s/abc123`)
+- Custom short links (e.g., `app.Faworra.com/s/abc123`)
 - Branded download page showing:
   - Company logo
   - "TeamName has shared a file with you"
@@ -59,7 +59,7 @@ export const shortLinksRouter = createTRPCRouter({
       // 2. Create Supabase signed URL
       // 3. Generate short ID (nanoid)
       // 4. Store in short_links table
-      // 5. Return: app.cimantikos.com/s/{shortId}
+      // 5. Return: app.Faworra.com/s/{shortId}
     }),
   
   get: publicProcedure

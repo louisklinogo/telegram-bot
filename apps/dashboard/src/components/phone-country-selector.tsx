@@ -1,7 +1,9 @@
-'use client';
+"use client";
 
-import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
+import { CaretSortIcon, CheckIcon } from "@radix-ui/react-icons";
+import * as React from "react";
+import { useEffect } from "react";
+import { Button } from "@/components/ui/button";
 import {
   Command,
   CommandEmpty,
@@ -9,12 +11,10 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
-} from '@/components/ui/command';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CaretSortIcon, CheckIcon } from '@radix-ui/react-icons';
-import * as React from 'react';
-import { useEffect } from 'react';
-import countryCodes from '@/constants/country-codes.json';
+} from "@/components/ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import countryCodes from "@/constants/country-codes.json" with { type: "json" };
+import { cn } from "@/lib/utils";
 
 type Country = {
   name: string;
@@ -27,7 +27,7 @@ type Props = {
   onSelect: (dialCode: string, countryName: string) => void;
 };
 
-export function PhoneCountrySelector({ defaultValue = '', onSelect }: Props) {
+export function PhoneCountrySelector({ defaultValue = "", onSelect }: Props) {
   const [open, setOpen] = React.useState(false);
   const [value, setValue] = React.useState(defaultValue);
 
@@ -44,46 +44,46 @@ export function PhoneCountrySelector({ defaultValue = '', onSelect }: Props) {
   );
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover onOpenChange={setOpen} open={open}>
       <PopoverTrigger asChild>
         <Button
+          aria-expanded={open}
+          className="w-20 justify-between px-2 font-normal"
           type="button"
           variant="outline"
-          aria-expanded={open}
-          className="w-20 justify-between font-normal px-2"
         >
-          {value ? selected?.dial_code : '+1'}
+          {value ? selected?.dial_code : "+1"}
           <CaretSortIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[280px] p-0 z-[60]" align="start" portal={true}>
+      <PopoverContent align="start" className="z-[60] w-[280px] p-0" portal={true}>
         <Command loop>
           <CommandInput
-            placeholder="Search country or code..."
-            className="h-9 px-2"
             autoComplete="off"
+            className="h-9 px-2"
+            placeholder="Search country or code..."
           />
           <CommandEmpty>No country found.</CommandEmpty>
           <CommandGroup>
-            <CommandList className="overflow-y-auto max-h-[280px] pt-2">
+            <CommandList className="max-h-[280px] overflow-y-auto pt-2">
               {countries.map((country) => (
                 <CommandItem
                   key={country.code}
-                  value={`${country.name} ${country.dial_code}`}
                   onSelect={() => {
                     setValue(country.dial_code);
                     onSelect?.(country.dial_code, country.name);
                     setOpen(false);
                   }}
+                  value={`${country.name} ${country.dial_code}`}
                 >
                   <span className="flex-1">
                     {country.name}
-                    <span className="ml-2 text-sm text-muted-foreground">{country.dial_code}</span>
+                    <span className="ml-2 text-muted-foreground text-sm">{country.dial_code}</span>
                   </span>
                   <CheckIcon
                     className={cn(
-                      'h-4 w-4',
-                      value === country.dial_code ? 'opacity-100' : 'opacity-0'
+                      "h-4 w-4",
+                      value === country.dial_code ? "opacity-100" : "opacity-0"
                     )}
                   />
                 </CommandItem>

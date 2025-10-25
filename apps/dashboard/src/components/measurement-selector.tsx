@@ -1,7 +1,9 @@
 "use client";
 
+import { CaretSortIcon, CheckIcon } from "@radix-ui/react-icons";
+import { Scissors } from "lucide-react";
+import * as React from "react";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 import {
   Command,
   CommandEmpty,
@@ -11,9 +13,7 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CaretSortIcon, CheckIcon } from "@radix-ui/react-icons";
-import { Scissors } from "lucide-react";
-import * as React from "react";
+import { cn } from "@/lib/utils";
 
 // All available measurements from schema
 const MEASUREMENTS = [
@@ -72,15 +72,15 @@ export function MeasurementSelector({
   const availableMeasurements = MEASUREMENTS.filter((m) => !usedMeasurements.includes(m.key));
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover onOpenChange={setOpen} open={open}>
       <PopoverTrigger asChild>
         <Button
-          variant="outline"
-          role="combobox"
           aria-expanded={open}
-          className="w-full justify-between font-normal truncate"
+          className="w-full justify-between truncate font-normal"
+          role="combobox"
+          variant="outline"
         >
-          <span className="truncate flex items-center gap-2">
+          <span className="flex items-center gap-2 truncate">
             {value && selected ? (
               <>
                 <Scissors className="h-3.5 w-3.5 text-muted-foreground" />
@@ -93,37 +93,37 @@ export function MeasurementSelector({
           <CaretSortIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[300px] p-0" align="start">
+      <PopoverContent align="start" className="w-[300px] p-0">
         <Command loop>
           <CommandInput
-            placeholder="Search measurement..."
-            className="h-9 px-2"
             autoComplete="off"
+            className="h-9 px-2"
+            placeholder="Search measurement..."
           />
           <CommandEmpty>No measurement found.</CommandEmpty>
           <CommandGroup>
-            <CommandList className="overflow-y-auto max-h-[300px] pt-2">
+            <CommandList className="max-h-[300px] overflow-y-auto pt-2">
               {availableMeasurements.map((measurement) => (
                 <CommandItem
+                  className="flex flex-col items-start py-2"
                   key={measurement.key}
-                  value={`${measurement.label} ${measurement.description}`}
                   onSelect={() => {
                     onSelect(measurement.key, measurement.label);
                     setOpen(false);
                   }}
-                  className="flex flex-col items-start py-2"
+                  value={`${measurement.label} ${measurement.description}`}
                 >
-                  <div className="flex items-center w-full">
+                  <div className="flex w-full items-center">
                     <Scissors className="mr-2 h-4 w-4 text-muted-foreground" />
                     <span className="font-medium">{measurement.label}</span>
                     <CheckIcon
                       className={cn(
                         "ml-auto h-4 w-4",
-                        value === measurement.key ? "opacity-100" : "opacity-0",
+                        value === measurement.key ? "opacity-100" : "opacity-0"
                       )}
                     />
                   </div>
-                  <span className="text-xs text-muted-foreground ml-6">
+                  <span className="ml-6 text-muted-foreground text-xs">
                     {measurement.description}
                   </span>
                 </CommandItem>

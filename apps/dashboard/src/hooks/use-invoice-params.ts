@@ -1,6 +1,6 @@
 "use client";
 
-import { useQueryState, parseAsString, parseAsStringEnum } from "nuqs";
+import { parseAsString, parseAsStringEnum, useQueryState } from "nuqs";
 
 /**
  * URL state management for invoice sheet
@@ -9,7 +9,7 @@ import { useQueryState, parseAsString, parseAsStringEnum } from "nuqs";
 export function useInvoiceParams() {
   const [type, setType] = useQueryState(
     "type",
-    parseAsStringEnum(["create", "edit", "view"]).withDefault("view"),
+    parseAsStringEnum(["create", "edit", "view"]).withDefault("view")
   );
 
   const [invoiceId, setInvoiceId] = useQueryState("invoiceId", parseAsString);

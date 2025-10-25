@@ -1,7 +1,9 @@
 "use client";
 
+import { formatISO } from "date-fns";
+import { Calendar as CalendarIcon, Filter } from "lucide-react";
 import { useState } from "react";
-import { Filter, Calendar as CalendarIcon } from "lucide-react";
+import { Calendar } from "@/components/ui/calendar";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -14,10 +16,8 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Calendar } from "@/components/ui/calendar";
 import { useVaultParams } from "@/hooks/use-vault-params";
 import { trpc } from "@/lib/trpc/client";
-import { formatISO } from "date-fns";
 import { cn } from "@/lib/utils";
 
 export function VaultSearchFilter() {
@@ -32,21 +32,21 @@ export function VaultSearchFilter() {
   const hasValidFilters = Boolean(params.tags?.length || params.start || params.end);
 
   return (
-    <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
+    <DropdownMenu onOpenChange={setIsOpen} open={isOpen}>
       <DropdownMenuTrigger asChild>
         <button
-          type="button"
           className={cn(
             "opacity-50 transition-opacity duration-300 hover:opacity-100",
             hasValidFilters && "opacity-100",
-            isOpen && "opacity-100",
+            isOpen && "opacity-100"
           )}
+          type="button"
         >
           <Filter className="h-4 w-4" />
         </button>
       </DropdownMenuTrigger>
 
-      <DropdownMenuContent className="w-[350px]" align="end" sideOffset={10} side="bottom">
+      <DropdownMenuContent align="end" className="w-[350px]" side="bottom" sideOffset={10}>
         <DropdownMenuGroup>
           <DropdownMenuSub>
             <DropdownMenuSubTrigger>
@@ -54,19 +54,10 @@ export function VaultSearchFilter() {
               <span>Date</span>
             </DropdownMenuSubTrigger>
             <DropdownMenuPortal>
-              <DropdownMenuSubContent sideOffset={14} alignOffset={-4} className="p-0">
+              <DropdownMenuSubContent alignOffset={-4} className="p-0" sideOffset={14}>
                 <Calendar
-                  mode="range"
                   initialFocus
-                  toDate={new Date()}
-                  selected={
-                    params.start || params.end
-                      ? {
-                          from: params.start ? new Date(params.start) : undefined,
-                          to: params.end ? new Date(params.end) : undefined,
-                        }
-                      : undefined
-                  }
+                  mode="range"
                   onSelect={(range) => {
                     if (!range) return;
 
@@ -81,6 +72,15 @@ export function VaultSearchFilter() {
 
                     setParams(newRange);
                   }}
+                  selected={
+                    params.start || params.end
+                      ? {
+                          from: params.start ? new Date(params.start) : undefined,
+                          to: params.end ? new Date(params.end) : undefined,
+                        }
+                      : undefined
+                  }
+                  toDate={new Date()}
                 />
               </DropdownMenuSubContent>
             </DropdownMenuPortal>
@@ -95,14 +95,14 @@ export function VaultSearchFilter() {
             </DropdownMenuSubTrigger>
             <DropdownMenuPortal>
               <DropdownMenuSubContent
-                sideOffset={14}
                 alignOffset={-4}
-                className="p-0 max-h-[300px] overflow-y-auto"
+                className="max-h-[300px] overflow-y-auto p-0"
+                sideOffset={14}
               >
                 {allTags.map(({ tag }) => (
                   <DropdownMenuCheckboxItem
-                    key={tag}
                     checked={params.tags?.includes(tag)}
+                    key={tag}
                     onCheckedChange={() => {
                       setParams({
                         tags: params.tags?.includes(tag)

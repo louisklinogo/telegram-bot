@@ -1,10 +1,10 @@
 "use client";
 
 import { createBrowserClient } from "@Faworra/supabase/client";
-import { Button } from "@/components/ui/button";
-import { Icons } from "@/components/ui/icons";
 import { useSearchParams } from "next/navigation";
 import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Icons } from "@/components/ui/icons";
 
 export function GoogleSignIn() {
   const [loading, setLoading] = useState(false);
@@ -32,7 +32,7 @@ export function GoogleSignIn() {
   };
 
   return (
-    <Button onClick={onClick} disabled={loading} className="w-full" variant="default">
+    <Button className="w-full" disabled={loading} onClick={onClick} variant="default">
       <div className="flex items-center gap-2">
         <Icons.Google />
         <span>{loading ? "Redirecting..." : "Continue with Google"}</span>

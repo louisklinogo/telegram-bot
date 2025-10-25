@@ -1,6 +1,6 @@
 import { and, desc, eq, isNull, sql } from "drizzle-orm";
 import type { DbClient } from "../client";
-import { measurements, clients } from "../schema";
+import { clients, measurements } from "../schema";
 
 /**
  * Get measurements with client info (supports pagination and versioning)
@@ -13,7 +13,7 @@ export async function getMeasurementsWithClient(
     limit?: number;
     offset?: number;
     activeOnly?: boolean; // Filter to show only active versions
-  },
+  }
 ) {
   const { teamId, limit = 50, offset = 0, activeOnly = false } = params;
 
@@ -40,7 +40,7 @@ export async function getMeasurementById(db: DbClient, id: string, teamId: strin
     .from(measurements)
     .leftJoin(clients, eq(measurements.clientId, clients.id))
     .where(
-      and(eq(measurements.id, id), eq(measurements.teamId, teamId), isNull(measurements.deletedAt)),
+      and(eq(measurements.id, id), eq(measurements.teamId, teamId), isNull(measurements.deletedAt))
     )
     .limit(1);
   return rows[0] || null;
@@ -71,7 +71,7 @@ export async function updateMeasurement(
   db: DbClient,
   id: string,
   teamId: string,
-  data: Partial<typeof measurements.$inferInsert>,
+  data: Partial<typeof measurements.$inferInsert>
 ) {
   const res = await db
     .update(measurements)
@@ -102,7 +102,7 @@ export async function getMeasurementVersions(
   params: {
     teamId: string;
     measurementGroupId: string;
-  },
+  }
 ) {
   const { teamId, measurementGroupId } = params;
 
@@ -114,8 +114,8 @@ export async function getMeasurementVersions(
       and(
         eq(measurements.teamId, teamId),
         eq(measurements.measurementGroupId, measurementGroupId),
-        isNull(measurements.deletedAt),
-      ),
+        isNull(measurements.deletedAt)
+      )
     )
     .orderBy(desc(measurements.version));
 }
@@ -125,7 +125,7 @@ export async function getMeasurementVersions(
  */
 export async function getActiveMeasurement(
   db: DbClient,
-  params: { teamId: string; clientId: string },
+  params: { teamId: string; clientId: string }
 ) {
   const { teamId, clientId } = params;
 
@@ -138,8 +138,8 @@ export async function getActiveMeasurement(
         eq(measurements.teamId, teamId),
         eq(measurements.clientId, clientId),
         eq(measurements.isActive, true),
-        isNull(measurements.deletedAt),
-      ),
+        isNull(measurements.deletedAt)
+      )
     )
     .limit(1);
 
@@ -151,7 +151,7 @@ export async function getActiveMeasurement(
  */
 export async function getMeasurementHistory(
   db: DbClient,
-  params: { teamId: string; clientId: string },
+  params: { teamId: string; clientId: string }
 ) {
   const { teamId, clientId } = params;
 
@@ -163,8 +163,8 @@ export async function getMeasurementHistory(
       and(
         eq(measurements.teamId, teamId),
         eq(measurements.clientId, clientId),
-        isNull(measurements.deletedAt),
-      ),
+        isNull(measurements.deletedAt)
+      )
     )
     .orderBy(desc(measurements.createdAt));
 }
@@ -180,7 +180,7 @@ export async function createMeasurementVersion(
     teamId: string;
     newData?: Partial<typeof measurements.$inferInsert>;
     setAsActive?: boolean;
-  },
+  }
 ) {
   const { existingMeasurementId, teamId, newData = {}, setAsActive = true } = params;
 
@@ -201,8 +201,8 @@ export async function createMeasurementVersion(
         and(
           eq(measurements.teamId, teamId),
           eq(measurements.measurementGroupId, existingMeas.measurementGroupId),
-          isNull(measurements.deletedAt),
-        ),
+          isNull(measurements.deletedAt)
+        )
       );
   }
 
@@ -234,7 +234,7 @@ export async function createMeasurementVersion(
  */
 export async function setActiveMeasurementVersion(
   db: DbClient,
-  params: { measurementId: string; teamId: string },
+  params: { measurementId: string; teamId: string }
 ) {
   const { measurementId, teamId } = params;
 
@@ -257,8 +257,8 @@ export async function setActiveMeasurementVersion(
       and(
         eq(measurements.teamId, teamId),
         eq(measurements.measurementGroupId, groupId),
-        isNull(measurements.deletedAt),
-      ),
+        isNull(measurements.deletedAt)
+      )
     );
 
   // Activate the specified one
@@ -280,14 +280,14 @@ export async function compareMeasurementVersions(
     versionId1: string;
     versionId2: string;
     teamId: string;
-  },
+  }
 ) {
   const { versionId1, versionId2, teamId } = params;
 
   const v1 = await getMeasurementById(db, versionId1, teamId);
   const v2 = await getMeasurementById(db, versionId2, teamId);
 
-  if (!v1?.measurement || !v2?.measurement) {
+  if (!(v1?.measurement && v2?.measurement)) {
     throw new Error("One or both measurements not found");
   }
 

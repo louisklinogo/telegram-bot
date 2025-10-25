@@ -1,15 +1,15 @@
 "use client";
 
-import { zodResolver } from "@hookform/resolvers/zod";
 import { createBrowserClient } from "@Faworra/supabase/client";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useSearchParams } from "next/navigation";
 import { useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { verifyOtpAction } from "@/actions/verify-otp-action";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 
 const formSchema = z.object({ email: z.string().email() });
 
@@ -56,32 +56,32 @@ export function OTPSignIn() {
   if (sent) {
     const redirectPath = `/${returnTo || ""}`;
     return (
-      <form action={verifyOtpAction} ref={formRef} className="flex flex-col items-center gap-3">
-        <input type="hidden" name="email" value={email} />
-        <input type="hidden" name="redirect_to" value={redirectPath} />
-        <input type="hidden" name="token" ref={tokenInputRef} />
-        <div className="h-[62px] w-full flex items-center justify-center">
+      <form action={verifyOtpAction} className="flex flex-col items-center gap-3" ref={formRef}>
+        <input name="email" type="hidden" value={email} />
+        <input name="redirect_to" type="hidden" value={redirectPath} />
+        <input name="token" ref={tokenInputRef} type="hidden" />
+        <div className="flex h-[62px] w-full items-center justify-center">
           <InputOTP
-            maxLength={6}
             autoFocus
-            onComplete={onComplete}
             disabled={verifying}
+            maxLength={6}
+            onComplete={onComplete}
             render={({ slots }) => (
               <InputOTPGroup>
                 {slots.map((slot, i) => (
-                  <InputOTPSlot key={i} {...slot} className="w-[48px] h-[48px]" />
+                  <InputOTPSlot key={i} {...slot} className="h-[48px] w-[48px]" />
                 ))}
               </InputOTPGroup>
             )}
           />
         </div>
-        <div className="text-sm text-muted-foreground">Enter the 6-digit code sent to {email}</div>
+        <div className="text-muted-foreground text-sm">Enter the 6-digit code sent to {email}</div>
         <Button
-          variant="ghost"
+          disabled={verifying}
+          onClick={() => setSent(false)}
           size="sm"
           type="button"
-          onClick={() => setSent(false)}
-          disabled={verifying}
+          variant="ghost"
         >
           Resend code
         </Button>
@@ -90,16 +90,16 @@ export function OTPSignIn() {
   }
 
   return (
-    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3">
+    <form className="space-y-3" onSubmit={form.handleSubmit(onSubmit)}>
       <Input
-        type="email"
         placeholder="you@example.com"
+        type="email"
         {...form.register("email")}
         autoCapitalize="false"
         autoCorrect="false"
         spellCheck={false as any}
       />
-      <Button type="submit" className="w-full" disabled={loading}>
+      <Button className="w-full" disabled={loading} type="submit">
         {loading ? "Sending..." : "Continue"}
       </Button>
     </form>

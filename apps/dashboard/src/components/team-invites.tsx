@@ -1,12 +1,12 @@
 "use client";
 
-import { useState } from "react";
 import { createBrowserClient } from "@Faworra/supabase/client";
 import { createUserInvite } from "@Faworra/supabase/mutations";
+import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { trpc } from "@/lib/trpc/client";
-import { useQuery } from "@tanstack/react-query";
 
 export function TeamInvites() {
   const [emails, setEmails] = useState("");
@@ -40,15 +40,15 @@ export function TeamInvites() {
   return (
     <div className="space-y-2">
       <Input
+        onChange={(e) => setEmails(e.target.value)}
         placeholder="Emails, comma separated"
         value={emails}
-        onChange={(e) => setEmails(e.target.value)}
       />
       <div className="flex items-center gap-2">
-        <Button size="sm" onClick={sendInvites} disabled={sending || !emails.trim()}>
+        <Button disabled={sending || !emails.trim()} onClick={sendInvites} size="sm">
           Invite
         </Button>
-        {result && <span className="text-xs text-muted-foreground">{result}</span>}
+        {result && <span className="text-muted-foreground text-xs">{result}</span>}
       </div>
     </div>
   );

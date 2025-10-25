@@ -1,9 +1,9 @@
 "use client";
 
+import { X } from "lucide-react";
+import { type KeyboardEvent, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { X } from "lucide-react";
-import { useState, KeyboardEvent } from "react";
 
 type TagInputProps = {
   value: string[];
@@ -23,7 +23,7 @@ export function TagInput({
 
   const filteredSuggestions = suggestions.filter(
     (suggestion) =>
-      suggestion.toLowerCase().includes(inputValue.toLowerCase()) && !value.includes(suggestion),
+      suggestion.toLowerCase().includes(inputValue.toLowerCase()) && !value.includes(suggestion)
   );
 
   const addTag = (tag: string) => {
@@ -52,14 +52,14 @@ export function TagInput({
 
   return (
     <div className="relative">
-      <div className="flex flex-wrap gap-2 mb-2">
+      <div className="mb-2 flex flex-wrap gap-2">
         {value.map((tag) => (
-          <Badge key={tag} variant="secondary" className="gap-1 pr-1">
+          <Badge className="gap-1 pr-1" key={tag} variant="secondary">
             <span>{tag}</span>
             <button
-              type="button"
+              className="rounded-full p-0.5 hover:bg-muted"
               onClick={() => removeTag(tag)}
-              className="hover:bg-muted rounded-full p-0.5"
+              type="button"
             >
               <X className="h-3 w-3" />
             </button>
@@ -68,26 +68,26 @@ export function TagInput({
       </div>
 
       <Input
-        value={inputValue}
+        autoComplete="off"
+        onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
         onChange={(e) => {
           setInputValue(e.target.value);
           setShowSuggestions(e.target.value.length > 0);
         }}
-        onKeyDown={handleKeyDown}
         onFocus={() => setShowSuggestions(inputValue.length > 0)}
-        onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+        onKeyDown={handleKeyDown}
         placeholder={placeholder}
-        autoComplete="off"
+        value={inputValue}
       />
 
       {showSuggestions && filteredSuggestions.length > 0 && (
-        <div className="absolute z-50 w-full mt-1 bg-popover border border-border rounded-md shadow-md max-h-48 overflow-y-auto">
+        <div className="absolute z-50 mt-1 max-h-48 w-full overflow-y-auto rounded-md border border-border bg-popover shadow-md">
           {filteredSuggestions.map((suggestion) => (
             <button
+              className="w-full px-3 py-2 text-left text-sm hover:bg-muted"
               key={suggestion}
-              type="button"
               onClick={() => addTag(suggestion)}
-              className="w-full text-left px-3 py-2 hover:bg-muted text-sm"
+              type="button"
             >
               {suggestion}
             </button>
@@ -95,7 +95,7 @@ export function TagInput({
         </div>
       )}
 
-      <p className="text-xs text-muted-foreground mt-1">Press Enter to add, Backspace to remove</p>
+      <p className="mt-1 text-muted-foreground text-xs">Press Enter to add, Backspace to remove</p>
     </div>
   );
 }

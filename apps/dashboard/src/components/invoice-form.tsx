@@ -1,20 +1,20 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { Plus, Trash2, Loader2, Send, Save, CheckCircle2 } from "lucide-react";
-import { trpc } from "@/lib/trpc/client";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@Faworra/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { useToast } from "@/components/ui/use-toast";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { CheckCircle2, Loader2, Plus, Save, Send, Trash2 } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
 import { CustomerSelect } from "@/components/invoice/customer-select";
 import { InvoiceLogo } from "@/components/invoice/invoice-logo";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
+import { Input } from "@/components/ui/input";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Textarea } from "@/components/ui/textarea";
+import { useToast } from "@/components/ui/use-toast";
+import { trpc } from "@/lib/trpc/client";
 
 const invoiceFormSchema = z.object({
   invoiceNumber: z.string().min(1, "Invoice number is required"),
@@ -36,7 +36,7 @@ const invoiceFormSchema = z.object({
         unitPrice: z.number().min(0),
         total: z.number().min(0),
         orderItemId: z.string().optional(),
-      }),
+      })
     )
     .min(1),
 });
@@ -59,13 +59,13 @@ export function InvoiceForm({ invoiceId, orderId, onSuccess }: InvoiceFormProps)
   const { data: defaultSettings, isLoading: loadingDefaults } =
     trpc.invoices.defaultSettings.useQuery(
       orderId ? { orderId } : undefined,
-      { enabled: !invoiceId }, // Only load for new invoices
+      { enabled: !invoiceId } // Only load for new invoices
     );
 
   // Load existing invoice for edit
   const { data: existingInvoice, isLoading: loadingInvoice } = trpc.invoices.getWithItems.useQuery(
     { id: invoiceId! },
-    { enabled: !!invoiceId },
+    { enabled: !!invoiceId }
   );
 
   const form = useForm<z.infer<typeof invoiceFormSchema>>({
@@ -259,7 +259,7 @@ export function InvoiceForm({ invoiceId, orderId, onSuccess }: InvoiceFormProps)
 
       updateMutation.mutate(payload as any);
     },
-    [invoiceId, existingInvoice, updateMutation],
+    [invoiceId, existingInvoice, updateMutation]
   );
 
   // Watch form changes for auto-save
@@ -280,7 +280,7 @@ export function InvoiceForm({ invoiceId, orderId, onSuccess }: InvoiceFormProps)
         } catch (error) {
           // Validation errors are fine, don't auto-save
         }
-      }, 10000); // 10 second debounce
+      }, 10_000); // 10 second debounce
     });
 
     return () => {
@@ -329,51 +329,51 @@ export function InvoiceForm({ invoiceId, orderId, onSuccess }: InvoiceFormProps)
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-8 py-6">
+    <form className="space-y-8 py-6" onSubmit={handleSubmit(onSubmit)}>
       {/* Invoice Preview Header */}
       <div className="space-y-6">
         {/* Logo & Invoice Number */}
         <div className="flex items-start justify-between">
           <InvoiceLogo
             logoUrl={watch("logoUrl")}
-            onUpload={(url) => setValue("logoUrl", url)}
             onRemove={() => setValue("logoUrl", undefined)}
+            onUpload={(url) => setValue("logoUrl", url)}
           />
 
-          <div className="text-right space-y-2">
+          <div className="space-y-2 text-right">
             <div>
-              <Label className="text-xs text-muted-foreground">Invoice Number</Label>
+              <Label className="text-muted-foreground text-xs">Invoice Number</Label>
               <Input
                 {...form.register("invoiceNumber")}
-                readOnly
                 className="bg-muted text-right font-mono"
+                readOnly
               />
             </div>
             <div>
-              <Label className="text-xs text-muted-foreground">Due Date</Label>
+              <Label className="text-muted-foreground text-xs">Due Date</Label>
               <Popover>
                 <PopoverTrigger asChild>
-                  <Button type="button" variant="outline" className="w-full justify-end">
+                  <Button className="w-full justify-end" type="button" variant="outline">
                     {(() => {
                       const d = form.watch("dueDate");
                       return d ? new Date(d as string).toLocaleDateString() : "Select date";
                     })()}
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="end">
+                <PopoverContent align="end" className="w-auto p-0">
                   <Calendar
+                    initialFocus
                     mode="single"
-                    selected={((): Date | undefined => {
-                      const d = form.watch("dueDate");
-                      return d ? new Date(d as string) : undefined;
-                    })()}
                     onSelect={(date) => {
                       form.setValue(
                         "dueDate",
                         date && date instanceof Date ? date.toISOString().split("T")[0] : ""
                       );
                     }}
-                    initialFocus
+                    selected={((): Date | undefined => {
+                      const d = form.watch("dueDate");
+                      return d ? new Date(d as string) : undefined;
+                    })()}
                   />
                 </PopoverContent>
               </Popover>
@@ -382,32 +382,32 @@ export function InvoiceForm({ invoiceId, orderId, onSuccess }: InvoiceFormProps)
         </div>
 
         {/* From & To */}
-        <div className="grid grid-cols-2 gap-8 pt-4 border-t">
+        <div className="grid grid-cols-2 gap-8 border-t pt-4">
           <div>
-            <Label className="text-sm font-semibold mb-3 block">From</Label>
+            <Label className="mb-3 block font-semibold text-sm">From</Label>
             <div className="space-y-2">
               <Input
-                placeholder="Business Name"
-                defaultValue="FaworraClothing"
                 className="font-medium"
+                defaultValue="FaworraClothing"
+                placeholder="Business Name"
               />
-              <Input placeholder="Address" defaultValue="Accra, Ghana" />
-              <Input placeholder="Phone" defaultValue="+233 XXX XXX XXX" />
+              <Input defaultValue="Accra, Ghana" placeholder="Address" />
+              <Input defaultValue="+233 XXX XXX XXX" placeholder="Phone" />
             </div>
           </div>
 
           <div>
-            <Label className="text-sm font-semibold mb-3 block">Bill To</Label>
+            <Label className="mb-3 block font-semibold text-sm">Bill To</Label>
             <div className="space-y-2">
               <CustomerSelect
-                value={watch("clientId")}
                 onSelect={(clientId, clientName) => {
                   setValue("clientId", clientId);
                   setValue("clientName", clientName);
                 }}
+                value={watch("clientId")}
               />
               {watch("clientName") && (
-                <div className="text-sm text-muted-foreground pt-2">
+                <div className="pt-2 text-muted-foreground text-sm">
                   <p className="font-medium text-foreground">{watch("clientName")}</p>
                 </div>
               )}
@@ -418,28 +418,28 @@ export function InvoiceForm({ invoiceId, orderId, onSuccess }: InvoiceFormProps)
 
       {/* Line Items */}
       <div className="border-t pt-6">
-        <div className="flex items-center justify-between mb-4">
-          <Label className="text-base font-semibold">Items</Label>
-          <Button type="button" size="sm" variant="outline" onClick={addItem} className="gap-1">
+        <div className="mb-4 flex items-center justify-between">
+          <Label className="font-semibold text-base">Items</Label>
+          <Button className="gap-1" onClick={addItem} size="sm" type="button" variant="outline">
             <Plus className="h-3 w-3" /> Add Line
           </Button>
         </div>
 
         <div className="space-y-2">
           {/* Header */}
-          <div className="grid grid-cols-[2fr_80px_100px_100px_40px] gap-3 text-xs font-medium text-muted-foreground pb-2">
+          <div className="grid grid-cols-[2fr_80px_100px_100px_40px] gap-3 pb-2 font-medium text-muted-foreground text-xs">
             <div>Description</div>
             <div className="text-right">Qty</div>
             <div className="text-right">Price</div>
             <div className="text-right">Amount</div>
-            <div></div>
+            <div />
           </div>
 
           {/* Items */}
           {items.map((item, index) => (
             <div
+              className="grid grid-cols-[2fr_80px_100px_100px_40px] items-center gap-3"
               key={index}
-              className="grid grid-cols-[2fr_80px_100px_100px_40px] gap-3 items-center"
             >
               <Input
                 placeholder="Item name"
@@ -448,39 +448,39 @@ export function InvoiceForm({ invoiceId, orderId, onSuccess }: InvoiceFormProps)
               />
 
               <Input
-                type="number"
                 min="1"
                 placeholder="1"
+                type="number"
                 {...form.register(`items.${index}.quantity`, { valueAsNumber: true })}
+                className="h-9 text-right"
                 onChange={(e) => {
                   form.setValue(`items.${index}.quantity`, Number.parseInt(e.target.value) || 1);
                   updateItemTotal(index);
                 }}
-                className="h-9 text-right"
               />
 
               <Input
-                type="number"
                 min="0"
-                step="0.01"
                 placeholder="0.00"
+                step="0.01"
+                type="number"
                 {...form.register(`items.${index}.unitPrice`, { valueAsNumber: true })}
+                className="h-9 text-right font-mono"
                 onChange={(e) => {
                   form.setValue(`items.${index}.unitPrice`, Number.parseFloat(e.target.value) || 0);
                   updateItemTotal(index);
                 }}
-                className="h-9 text-right font-mono"
               />
 
               <div className="text-right font-mono text-sm">₵{item.total.toFixed(2)}</div>
 
               <Button
+                className="h-9 w-9"
+                disabled={items.length === 1}
+                onClick={() => removeItem(index)}
+                size="icon"
                 type="button"
                 variant="ghost"
-                size="icon"
-                onClick={() => removeItem(index)}
-                disabled={items.length === 1}
-                className="h-9 w-9"
               >
                 <Trash2 className="h-3.5 w-3.5" />
               </Button>
@@ -488,11 +488,11 @@ export function InvoiceForm({ invoiceId, orderId, onSuccess }: InvoiceFormProps)
           ))}
         </div>
 
-        {errors.items && <p className="text-sm text-destructive mt-2">{errors.items.message}</p>}
+        {errors.items && <p className="mt-2 text-destructive text-sm">{errors.items.message}</p>}
       </div>
 
       {/* Totals */}
-      <div className="border-t pt-6 space-y-3">
+      <div className="space-y-3 border-t pt-6">
         <div className="flex justify-end">
           <div className="w-80 space-y-3">
             <div className="flex justify-between text-sm">
@@ -500,37 +500,37 @@ export function InvoiceForm({ invoiceId, orderId, onSuccess }: InvoiceFormProps)
               <span className="font-mono">₵{subtotal.toFixed(2)}</span>
             </div>
 
-            <div className="flex justify-between items-center gap-4">
-              <Label htmlFor="tax" className="text-sm text-muted-foreground">
+            <div className="flex items-center justify-between gap-4">
+              <Label className="text-muted-foreground text-sm" htmlFor="tax">
                 Tax
               </Label>
               <Input
                 id="tax"
-                type="number"
                 min="0"
-                step="0.01"
                 placeholder="0.00"
+                step="0.01"
+                type="number"
                 {...form.register("tax", { valueAsNumber: true })}
                 className="h-8 w-32 text-right font-mono"
               />
             </div>
 
-            <div className="flex justify-between items-center gap-4">
-              <Label htmlFor="discount" className="text-sm text-muted-foreground">
+            <div className="flex items-center justify-between gap-4">
+              <Label className="text-muted-foreground text-sm" htmlFor="discount">
                 Discount
               </Label>
               <Input
                 id="discount"
-                type="number"
                 min="0"
-                step="0.01"
                 placeholder="0.00"
+                step="0.01"
+                type="number"
                 {...form.register("discount", { valueAsNumber: true })}
                 className="h-8 w-32 text-right font-mono"
               />
             </div>
 
-            <div className="flex justify-between text-base font-bold pt-3 border-t">
+            <div className="flex justify-between border-t pt-3 font-bold text-base">
               <span>Total</span>
               <span className="font-mono">₵{watch("amount").toFixed(2)}</span>
             </div>
@@ -540,31 +540,31 @@ export function InvoiceForm({ invoiceId, orderId, onSuccess }: InvoiceFormProps)
 
       {/* Notes */}
       <div className="border-t pt-6">
-        <Label htmlFor="notes" className="text-sm font-semibold mb-2 block">
+        <Label className="mb-2 block font-semibold text-sm" htmlFor="notes">
           Notes
         </Label>
         <Textarea
           id="notes"
-          rows={4}
           placeholder="Payment terms, delivery instructions, thank you message..."
+          rows={4}
           {...form.register("notes")}
           className="resize-none"
         />
-        <p className="text-xs text-muted-foreground mt-2">
+        <p className="mt-2 text-muted-foreground text-xs">
           Add any relevant notes or terms for this invoice
         </p>
       </div>
 
       {/* Actions */}
-      <div className="flex gap-3 justify-between pt-6 border-t sticky bottom-0 bg-background pb-2">
+      <div className="sticky bottom-0 flex justify-between gap-3 border-t bg-background pt-6 pb-2">
         <div className="flex items-center gap-2">
           {invoiceId && existingInvoice?.invoice?.status === "draft" && (
             <Button
+              className="gap-2"
+              disabled={sendMutation.isPending}
+              onClick={() => sendMutation.mutate({ id: invoiceId })}
               type="button"
               variant="secondary"
-              onClick={() => sendMutation.mutate({ id: invoiceId })}
-              disabled={sendMutation.isPending}
-              className="gap-2"
             >
               {sendMutation.isPending ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -577,7 +577,7 @@ export function InvoiceForm({ invoiceId, orderId, onSuccess }: InvoiceFormProps)
 
           {/* Auto-save indicator */}
           {invoiceId && existingInvoice?.invoice?.status === "draft" && (
-            <div className="text-sm text-muted-foreground flex items-center gap-1.5">
+            <div className="flex items-center gap-1.5 text-muted-foreground text-sm">
               {autoSaveStatus === "saving" && (
                 <>
                   <Loader2 className="h-3 w-3 animate-spin" />
@@ -594,9 +594,9 @@ export function InvoiceForm({ invoiceId, orderId, onSuccess }: InvoiceFormProps)
           )}
         </div>
 
-        <div className="flex gap-3 ml-auto">
-          <Button type="submit" disabled={isSaving} size="lg" className="min-w-[150px]">
-            {isSaving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+        <div className="ml-auto flex gap-3">
+          <Button className="min-w-[150px]" disabled={isSaving} size="lg" type="submit">
+            {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             {invoiceId ? "Save Changes" : "Create Invoice"}
           </Button>
         </div>

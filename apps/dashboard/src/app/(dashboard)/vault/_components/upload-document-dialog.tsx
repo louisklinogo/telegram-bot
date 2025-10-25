@@ -1,8 +1,15 @@
 "use client";
 
+import { createBrowserClient } from "@Faworra/supabase/client";
+import { File, FolderOpen, Upload, X } from "lucide-react";
 import { useState } from "react";
-import { Upload, X, File, FolderOpen } from "lucide-react";
+import { useDropzone } from "react-dropzone";
+import { toast } from "sonner";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
 import {
   Sheet,
   SheetContent,
@@ -11,18 +18,11 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { useDropzone } from "react-dropzone";
-import { cn } from "@/lib/utils";
-import { FolderSelector } from "./folder-selector";
-import { DocumentRelationsSelector } from "./document-relations-selector";
-import { createBrowserClient } from "@Faworra/supabase/client";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Separator } from "@/components/ui/separator";
-import { resumableUpload } from "@/lib/upload";
 import { trpc } from "@/lib/trpc/client";
-import { toast } from "sonner";
+import { resumableUpload } from "@/lib/upload";
+import { cn } from "@/lib/utils";
+import { DocumentRelationsSelector } from "./document-relations-selector";
+import { FolderSelector } from "./folder-selector";
 
 type UploadDocumentDialogProps = {
   teamId: string;
@@ -78,7 +78,7 @@ export function UploadDocumentDialog({ teamId, trigger }: UploadDocumentDialogPr
             onProgress: () => {}, // TODO: Add progress tracking
           });
           return { ...result, file };
-        }),
+        })
       );
 
       // Create document records
@@ -89,12 +89,12 @@ export function UploadDocumentDialog({ teamId, trigger }: UploadDocumentDialogPr
             pathTokens: [...basePath, result.filename],
             mimeType: result.file.type,
             size: result.file.size,
-            tags: tags,
+            tags,
             orderId: relations.orderId,
             invoiceId: relations.invoiceId,
             clientId: relations.clientId,
-          }),
-        ),
+          })
+        )
       );
 
       toast.success(`${selectedFiles.length} file(s) uploaded successfully`);
@@ -114,10 +114,10 @@ export function UploadDocumentDialog({ teamId, trigger }: UploadDocumentDialogPr
   };
 
   return (
-    <Sheet open={isOpen} onOpenChange={setIsOpen}>
+    <Sheet onOpenChange={setIsOpen} open={isOpen}>
       <SheetTrigger asChild>
         {trigger || (
-          <Button variant="outline" size="sm" className="gap-2">
+          <Button className="gap-2" size="sm" variant="outline">
             <Upload className="h-4 w-4" />
             Upload
           </Button>
@@ -125,43 +125,43 @@ export function UploadDocumentDialog({ teamId, trigger }: UploadDocumentDialogPr
       </SheetTrigger>
 
       <SheetContent side="right" title="Upload Documents">
-        <div className="flex flex-col h-full">
+        <div className="flex h-full flex-col">
           <SheetHeader className="pb-6">
             <SheetTitle>Upload Documents</SheetTitle>
             <SheetDescription>Upload files and organize them in your vault</SheetDescription>
           </SheetHeader>
 
-          <ScrollArea className="flex-1 -mx-6 px-6">
+          <ScrollArea className="-mx-6 flex-1 px-6">
             <div className="space-y-6 pb-6">
               {/* File Drop Zone */}
               <div className="space-y-3">
                 <div>
-                  <p className="text-sm font-medium mb-2">Files</p>
+                  <p className="mb-2 font-medium text-sm">Files</p>
                   <div
                     {...getRootProps()}
                     className={cn(
-                      "border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors",
+                      "cursor-pointer rounded-lg border-2 border-dashed p-6 text-center transition-colors",
                       isDragActive
                         ? "border-primary bg-accent"
                         : "border-border hover:border-primary/50",
-                      selectedFiles.length > 0 && "border-primary/30 bg-accent/50",
+                      selectedFiles.length > 0 && "border-primary/30 bg-accent/50"
                     )}
                   >
                     <input {...getInputProps()} />
                     <Upload
                       className={cn(
-                        "h-6 w-6 mx-auto mb-2",
-                        selectedFiles.length > 0 ? "text-primary" : "text-muted-foreground",
+                        "mx-auto mb-2 h-6 w-6",
+                        selectedFiles.length > 0 ? "text-primary" : "text-muted-foreground"
                       )}
                     />
-                    <p className="text-sm font-medium">
+                    <p className="font-medium text-sm">
                       {isDragActive
                         ? "Drop files here..."
                         : selectedFiles.length > 0
                           ? "Add more files"
                           : "Click to browse or drag files"}
                     </p>
-                    <p className="text-xs text-muted-foreground mt-1">
+                    <p className="mt-1 text-muted-foreground text-xs">
                       Max 5MB per file, up to 25 files
                     </p>
                   </div>
@@ -171,12 +171,12 @@ export function UploadDocumentDialog({ teamId, trigger }: UploadDocumentDialogPr
                 {selectedFiles.length > 0 && (
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
-                      <p className="text-sm font-medium">{selectedFiles.length} file(s)</p>
+                      <p className="font-medium text-sm">{selectedFiles.length} file(s)</p>
                       <Button
-                        variant="ghost"
-                        size="sm"
+                        className="h-auto p-0 text-muted-foreground text-xs hover:text-destructive"
                         onClick={() => setSelectedFiles([])}
-                        className="h-auto p-0 text-xs text-muted-foreground hover:text-destructive"
+                        size="sm"
+                        variant="ghost"
                       >
                         Clear all
                       </Button>
@@ -184,23 +184,23 @@ export function UploadDocumentDialog({ teamId, trigger }: UploadDocumentDialogPr
                     <div className="space-y-1.5">
                       {selectedFiles.map((file, index) => (
                         <div
+                          className="group flex items-center justify-between rounded-lg border p-2.5 transition-colors hover:bg-accent/50"
                           key={index}
-                          className="flex items-center justify-between p-2.5 border rounded-lg hover:bg-accent/50 transition-colors group"
                         >
-                          <div className="flex items-center gap-2.5 flex-1 min-w-0">
+                          <div className="flex min-w-0 flex-1 items-center gap-2.5">
                             <File className="h-4 w-4 flex-shrink-0 text-muted-foreground" />
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm truncate">{file.name}</p>
-                              <p className="text-xs text-muted-foreground">
+                            <div className="min-w-0 flex-1">
+                              <p className="truncate text-sm">{file.name}</p>
+                              <p className="text-muted-foreground text-xs">
                                 {(file.size / 1024).toFixed(1)} KB
                               </p>
                             </div>
                           </div>
                           <Button
-                            variant="ghost"
-                            size="sm"
+                            className="h-auto p-1 opacity-0 group-hover:opacity-100"
                             onClick={() => removeFile(index)}
-                            className="opacity-0 group-hover:opacity-100 h-auto p-1"
+                            size="sm"
+                            variant="ghost"
                           >
                             <X className="h-3.5 w-3.5" />
                           </Button>
@@ -217,28 +217,27 @@ export function UploadDocumentDialog({ teamId, trigger }: UploadDocumentDialogPr
               <div className="space-y-4">
                 <div className="flex items-center gap-2">
                   <FolderOpen className="h-4 w-4 text-muted-foreground" />
-                  <p className="text-sm font-medium">Organization</p>
+                  <p className="font-medium text-sm">Organization</p>
                 </div>
 
-                <FolderSelector value={folderPath} onChange={setFolderPath} />
+                <FolderSelector onChange={setFolderPath} value={folderPath} />
               </div>
 
               <Separator />
 
               {/* Relations */}
               <div className="space-y-4">
-                <p className="text-sm font-medium">Link to Records (Optional)</p>
-                <DocumentRelationsSelector value={relations} onChange={setRelations} />
+                <p className="font-medium text-sm">Link to Records (Optional)</p>
+                <DocumentRelationsSelector onChange={setRelations} value={relations} />
               </div>
 
               <Separator />
 
               {/* Tags */}
               <div className="space-y-2">
-                <p className="text-sm font-medium">Tags (Optional)</p>
+                <p className="font-medium text-sm">Tags (Optional)</p>
                 <div className="flex gap-2">
                   <Input
-                    placeholder="Add tags (press Enter)..."
                     onKeyDown={(e) => {
                       if (e.key === "Enter") {
                         e.preventDefault();
@@ -249,6 +248,7 @@ export function UploadDocumentDialog({ teamId, trigger }: UploadDocumentDialogPr
                         }
                       }
                     }}
+                    placeholder="Add tags (press Enter)..."
                   />
                 </div>
                 {tags.length > 0 && (
@@ -257,9 +257,9 @@ export function UploadDocumentDialog({ teamId, trigger }: UploadDocumentDialogPr
                       <Badge key={tag} variant="secondary">
                         {tag}
                         <button
-                          type="button"
-                          onClick={() => setTags(tags.filter((t) => t !== tag))}
                           className="ml-1 hover:text-destructive"
+                          onClick={() => setTags(tags.filter((t) => t !== tag))}
+                          type="button"
                         >
                           <X className="h-3 w-3" />
                         </button>
@@ -272,20 +272,20 @@ export function UploadDocumentDialog({ teamId, trigger }: UploadDocumentDialogPr
           </ScrollArea>
 
           {/* Footer Actions */}
-          <div className="pt-6 -mx-6 px-6 border-t">
+          <div className="-mx-6 border-t px-6 pt-6">
             <div className="flex gap-3">
               <Button
-                variant="outline"
-                onClick={() => setIsOpen(false)}
-                disabled={isUploading}
                 className="flex-1"
+                disabled={isUploading}
+                onClick={() => setIsOpen(false)}
+                variant="outline"
               >
                 Cancel
               </Button>
               <Button
-                onClick={handleUpload}
-                disabled={selectedFiles.length === 0 || isUploading}
                 className="flex-1"
+                disabled={selectedFiles.length === 0 || isUploading}
+                onClick={handleUpload}
               >
                 {isUploading
                   ? "Uploading..."

@@ -1,6 +1,5 @@
+import { eq, financialAccounts } from "@Faworra/database/schema";
 import { db, getCurrentTeamId } from "@/lib/trpc/server";
-import { financialAccounts } from "@Faworra/database/schema";
-import { eq } from "@Faworra/database/schema";
 import { AccountsView } from "./_components/accounts-view";
 
 export default async function AccountsSettingsPage() {

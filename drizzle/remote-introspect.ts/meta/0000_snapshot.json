@@ -5673,12 +5673,26 @@
     },
     "public.transaction_frequency": {
       "name": "transaction_frequency",
-      "values": ["weekly", "biweekly", "monthly", "semi_monthly", "annually", "irregular"],
+      "values": [
+        "weekly",
+        "biweekly",
+        "monthly",
+        "semi_monthly",
+        "annually",
+        "irregular"
+      ],
       "schema": "public"
     },
     "public.transaction_method": {
       "name": "transaction_method",
-      "values": ["cash", "bank_transfer", "mobile_money", "card", "cheque", "other"],
+      "values": [
+        "cash",
+        "bank_transfer",
+        "mobile_money",
+        "card",
+        "cheque",
+        "other"
+      ],
       "schema": "public"
     },
     "public.transaction_status": {

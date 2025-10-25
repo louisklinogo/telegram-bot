@@ -1,14 +1,14 @@
+import {
+  createDocument,
+  deleteDocument,
+  getAllDocumentTags,
+  getDocumentById,
+  getDocumentStats,
+  getDocuments,
+  updateDocument,
+} from "@Faworra/database/queries";
 import { z } from "zod";
 import { createTRPCRouter, teamProcedure } from "../init";
-import {
-  getDocuments,
-  getDocumentById,
-  createDocument,
-  updateDocument,
-  deleteDocument,
-  getDocumentStats,
-  getAllDocumentTags,
-} from "@Faworra/database/queries";
 
 // Validation schemas
 const documentCreateSchema = z.object({
@@ -69,53 +69,51 @@ export const documentsRouter = createTRPCRouter({
   }),
 
   // Get single document by ID
-  getById: teamProcedure
-    .input(z.object({ id: z.string().uuid() }))
-    .query(async ({ ctx, input }) => {
-      return getDocumentById(ctx.db, {
-        id: input.id,
-        teamId: ctx.teamId,
-      });
-    }),
+  getById: teamProcedure.input(z.object({ id: z.string().uuid() })).query(async ({ ctx, input }) =>
+    getDocumentById(ctx.db, {
+      id: input.id,
+      teamId: ctx.teamId,
+    })
+  ),
 
   // Create new document record (after file upload to storage)
-  create: teamProcedure.input(documentCreateSchema).mutation(async ({ ctx, input }) => {
-    return createDocument(ctx.db, {
+  create: teamProcedure.input(documentCreateSchema).mutation(async ({ ctx, input }) =>
+    createDocument(ctx.db, {
       ...input,
       teamId: ctx.teamId,
       uploadedBy: ctx.userId,
-    });
-  }),
+    })
+  ),
 
   // Update document metadata/tags
-  update: teamProcedure.input(documentUpdateSchema).mutation(async ({ ctx, input }) => {
-    return updateDocument(ctx.db, {
+  update: teamProcedure.input(documentUpdateSchema).mutation(async ({ ctx, input }) =>
+    updateDocument(ctx.db, {
       ...input,
       teamId: ctx.teamId,
-    });
-  }),
+    })
+  ),
 
   // Soft delete document
   delete: teamProcedure
     .input(z.object({ id: z.string().uuid() }))
-    .mutation(async ({ ctx, input }) => {
-      return deleteDocument(ctx.db, {
+    .mutation(async ({ ctx, input }) =>
+      deleteDocument(ctx.db, {
         id: input.id,
         teamId: ctx.teamId,
-      });
-    }),
+      })
+    ),
 
   // Get document statistics
-  stats: teamProcedure.query(async ({ ctx }) => {
-    return getDocumentStats(ctx.db, {
+  stats: teamProcedure.query(async ({ ctx }) =>
+    getDocumentStats(ctx.db, {
       teamId: ctx.teamId,
-    });
-  }),
+    })
+  ),
 
   // Get all tags with usage count
-  tags: teamProcedure.query(async ({ ctx }) => {
-    return getAllDocumentTags(ctx.db, {
+  tags: teamProcedure.query(async ({ ctx }) =>
+    getAllDocumentTags(ctx.db, {
       teamId: ctx.teamId,
-    });
-  }),
+    })
+  ),
 });

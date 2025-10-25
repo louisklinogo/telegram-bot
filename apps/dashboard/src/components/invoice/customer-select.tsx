@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
 import { Check, ChevronsUpDown } from "lucide-react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Command,
@@ -37,13 +37,13 @@ export function CustomerSelect({ value, onSelect }: CustomerSelectProps) {
   const selectedClient = clients.find((client: any) => client.id === value);
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover onOpenChange={setOpen} open={open}>
       <PopoverTrigger asChild>
         <Button
-          variant="outline"
-          role="combobox"
           aria-expanded={open}
           className="w-full justify-between"
+          role="combobox"
+          variant="outline"
         >
           {selectedClient?.name || "Select customer..."}
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -58,22 +58,22 @@ export function CustomerSelect({ value, onSelect }: CustomerSelectProps) {
               {clients.map((client: any) => (
                 <CommandItem
                   key={client.id}
-                  value={client.name}
                   onSelect={() => {
                     onSelect(client.id, client.name);
                     setOpen(false);
                   }}
+                  value={client.name}
                 >
                   <Check
                     className={cn(
                       "mr-2 h-4 w-4",
-                      value === client.id ? "opacity-100" : "opacity-0",
+                      value === client.id ? "opacity-100" : "opacity-0"
                     )}
                   />
                   <div className="flex flex-col">
                     <span className="font-medium">{client.name}</span>
                     {client.email && (
-                      <span className="text-xs text-muted-foreground">{client.email}</span>
+                      <span className="text-muted-foreground text-xs">{client.email}</span>
                     )}
                   </div>
                 </CommandItem>

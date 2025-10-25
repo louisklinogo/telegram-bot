@@ -1,5 +1,5 @@
-import type { MiddlewareHandler } from "hono";
 import type { ApiEnv } from "@faworra/api/types/hono-env";
+import type { MiddlewareHandler } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { z } from "zod";
 
@@ -39,9 +39,9 @@ export function parseAPIError(error: unknown): ApiError {
     };
   }
 
-  return { 
-    code: "unknown", 
-    message: "An unknown error occurred" 
+  return {
+    code: "unknown",
+    message: "An unknown error occurred",
   };
 }
 
@@ -49,25 +49,25 @@ export function parseAPIError(error: unknown): ApiError {
 export const ErrorCodes = {
   // Authentication errors
   UNAUTHORIZED: "unauthorized",
-  FORBIDDEN: "forbidden", 
+  FORBIDDEN: "forbidden",
   INVALID_CREDENTIALS: "invalid_credentials",
   TOKEN_EXPIRED: "token_expired",
-  
+
   // Validation errors
   VALIDATION_ERROR: "validation_error",
   MISSING_REQUIRED_FIELD: "missing_required_field",
   INVALID_FORMAT: "invalid_format",
-  
+
   // Business logic errors
   RESOURCE_NOT_FOUND: "resource_not_found",
   RESOURCE_CONFLICT: "resource_conflict",
   INSUFFICIENT_PERMISSIONS: "insufficient_permissions",
-  
+
   // System errors
   INTERNAL_SERVER_ERROR: "internal_server_error",
   SERVICE_UNAVAILABLE: "service_unavailable",
   RATE_LIMIT_EXCEEDED: "rate_limit_exceeded",
-  
+
   // External service errors (like Midday's bank connections)
   EXTERNAL_SERVICE_ERROR: "external_service_error",
   CONNECTION_FAILED: "connection_failed",
@@ -84,38 +84,38 @@ export function createValidationError(errors: any[]): ValidationError {
 }
 
 // HTTP Exception helpers (following Midday's patterns)
-export function throwUnauthorized(message: string = "Unauthorized"): never {
-  throw new HTTPException(401, { 
+export function throwUnauthorized(message = "Unauthorized"): never {
+  throw new HTTPException(401, {
     message,
   });
 }
 
-export function throwForbidden(message: string = "Forbidden"): never {
-  throw new HTTPException(403, { 
+export function throwForbidden(message = "Forbidden"): never {
+  throw new HTTPException(403, {
     message,
   });
 }
 
-export function throwNotFound(message: string = "Resource not found"): never {
-  throw new HTTPException(404, { 
+export function throwNotFound(message = "Resource not found"): never {
+  throw new HTTPException(404, {
     message,
   });
 }
 
-export function throwValidationError(message: string = "Validation failed"): never {
-  throw new HTTPException(422, { 
+export function throwValidationError(message = "Validation failed"): never {
+  throw new HTTPException(422, {
     message,
   });
 }
 
-export function throwRateLimitExceeded(message: string = "Rate limit exceeded"): never {
-  throw new HTTPException(429, { 
+export function throwRateLimitExceeded(message = "Rate limit exceeded"): never {
+  throw new HTTPException(429, {
     message,
   });
 }
 
-export function throwInternalError(message: string = "Internal server error"): never {
-  throw new HTTPException(500, { 
+export function throwInternalError(message = "Internal server error"): never {
+  throw new HTTPException(500, {
     message,
   });
 }
@@ -126,12 +126,12 @@ export const globalErrorHandler: MiddlewareHandler<ApiEnv> = async (c, next) => 
     await next();
   } catch (error) {
     console.error("Global error handler:", error);
-    
+
     // Handle HTTPException (from Hono)
     if (error instanceof HTTPException) {
       const status = error.status;
       const message = error.message;
-      
+
       // Map HTTP status to error code
       let code: string;
       switch (status) {
@@ -158,15 +158,15 @@ export const globalErrorHandler: MiddlewareHandler<ApiEnv> = async (c, next) => 
           code = ErrorCodes.INTERNAL_SERVER_ERROR;
           break;
       }
-      
+
       return c.json(createApiError(code, message), status);
     }
-    
+
     // Handle validation errors (Zod/OpenAPI)
     if (error && typeof error === "object" && "errors" in error) {
       return c.json(createValidationError((error as any).errors), 422);
     }
-    
+
     // Handle unknown errors
     const apiError = parseAPIError(error);
     return c.json(apiError, 500);
@@ -176,10 +176,7 @@ export const globalErrorHandler: MiddlewareHandler<ApiEnv> = async (c, next) => 
 // OpenAPI validation error hook (Midday's exact pattern)
 export const openApiErrorHook = (result: any, c: any) => {
   if (!result.success) {
-    return c.json(
-      createValidationError(result.error.errors), 
-      422
-    );
+    return c.json(createValidationError(result.error.errors), 422);
   }
 };
 
@@ -190,32 +187,32 @@ export const validateRequest = (requiredFields: string[] = []): MiddlewareHandle
       try {
         const body = await c.req.json();
         const errors: string[] = [];
-        
+
         // Check required fields
         for (const field of requiredFields) {
-          if (!body || !(field in body) || body[field] === null || body[field] === undefined) {
+          if (!(body && field in body) || body[field] === null || body[field] === undefined) {
             errors.push(`Required field '${field}' is missing`);
           }
         }
-        
+
         if (errors.length > 0) {
-          throw new HTTPException(422, { 
-            message: "Validation failed"
+          throw new HTTPException(422, {
+            message: "Validation failed",
           });
         }
-        
+
         // Store validated body
         c.set("validatedBody", body);
       } catch (error) {
         if (error instanceof HTTPException) {
           throw error;
         }
-        throw new HTTPException(400, { 
-          message: "Invalid JSON body" 
+        throw new HTTPException(400, {
+          message: "Invalid JSON body",
         });
       }
     }
-    
+
     await next();
   };
 };
@@ -226,16 +223,13 @@ export const healthCheck = async (): Promise<{ status: string; timestamp: string
   try {
     // Example: await checkDatabase();
     // Example: await checkExternalServices();
-    
+
     return {
       status: "ok",
       timestamp: new Date().toISOString(),
     };
   } catch (error) {
-    throw createApiError(
-      ErrorCodes.SERVICE_UNAVAILABLE,
-      "Health check failed"
-    );
+    throw createApiError(ErrorCodes.SERVICE_UNAVAILABLE, "Health check failed");
   }
 };
 
@@ -255,26 +249,26 @@ export default {
   ErrorSchema,
   GeneralErrorSchema,
   ValidationErrorSchema,
-  
+
   // Error utilities
   parseAPIError,
   createApiError,
   createValidationError,
   ErrorCodes,
-  
+
   // HTTP helpers
   throwUnauthorized,
-  throwForbidden, 
+  throwForbidden,
   throwNotFound,
   throwValidationError,
   throwRateLimitExceeded,
   throwInternalError,
-  
+
   // Middleware
   globalErrorHandler,
   openApiErrorHook,
   validateRequest,
-  
+
   // Health check
   healthCheck,
   healthCheckHandler,

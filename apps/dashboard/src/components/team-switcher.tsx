@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -38,7 +38,7 @@ export function TeamSwitcher() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="sm">
+        <Button size="sm" variant="outline">
           {label}
         </Button>
       </DropdownMenuTrigger>

@@ -2,14 +2,27 @@
 
 import { useSuspenseInfiniteQuery } from "@tanstack/react-query";
 import { Filter, MoreVertical, Plus, Search, X } from "lucide-react";
-import { useState, useEffect, useMemo } from "react";
 import { useQueryState } from "nuqs";
+import Papa from "papaparse";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { useInView } from "react-intersection-observer";
+import { toast } from "sonner";
+import { InactiveClients } from "@/components/analytics/inactive-clients";
+import { MostActiveClient } from "@/components/analytics/most-active-client";
+import { NewClientsThisMonth } from "@/components/analytics/new-clients-this-month";
+import { TopRevenueClient } from "@/components/analytics/top-revenue-client";
+import { BulkActionsBar } from "@/components/bulk-actions-bar";
 import { ClientSheet } from "@/components/client-sheet";
-import { LoadMore } from "@/components/load-more";
+import { ColumnVisibility } from "@/components/column-visibility";
+import { CSVUpload } from "@/components/csv-upload";
 import { DeleteClientDialog } from "@/components/delete-client-dialog";
+import { EmptyState } from "@/components/empty-state";
+import { type FilterOptions, FilterSheet } from "@/components/filter-sheet";
+import { LoadMore } from "@/components/load-more";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -27,26 +40,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { trpc } from "@/lib/trpc/client";
-import { EmptyState } from "@/components/empty-state";
-import { MostActiveClient } from "@/components/analytics/most-active-client";
-import { InactiveClients } from "@/components/analytics/inactive-clients";
-import { TopRevenueClient } from "@/components/analytics/top-revenue-client";
-import { NewClientsThisMonth } from "@/components/analytics/new-clients-this-month";
-import { ColumnVisibility } from "@/components/column-visibility";
-import { useTableScroll } from "@/hooks/use-table-scroll";
-import { Checkbox } from "@/components/ui/checkbox";
-import { BulkActionsBar } from "@/components/bulk-actions-bar";
-import { FilterSheet, type FilterOptions } from "@/components/filter-sheet";
-import { CSVUpload } from "@/components/csv-upload";
-import { Badge } from "@/components/ui/badge";
-import Papa from "papaparse";
-import { toast } from "sonner";
-import { Suspense } from "react";
 import { useCreateClient } from "@/hooks/use-client-mutations";
-import { cn } from "@/lib/utils";
+import { useTableScroll } from "@/hooks/use-table-scroll";
 import { useTeamCurrency } from "@/hooks/use-team-currency";
 import { formatAmount } from "@/lib/format-currency";
+import { trpc } from "@/lib/trpc/client";
+import { cn } from "@/lib/utils";
 
 type Client = {
   id: string;
@@ -123,7 +122,7 @@ export function ClientsView({ initialClients = [] }: ClientsViewProps) {
   // Save column visibility to localStorage
   const handleToggleColumn = (columnId: string) => {
     const updated = columns.map((col: any) =>
-      col.id === columnId ? { ...col, visible: !col.visible } : col,
+      col.id === columnId ? { ...col, visible: !col.visible } : col
     );
     setColumns(updated);
     if (typeof window !== "undefined") {
@@ -173,9 +172,7 @@ export function ClientsView({ initialClients = [] }: ClientsViewProps) {
     });
 
   // Flatten all pages into single array
-  const clients = useMemo(() => {
-    return data?.pages.flatMap((page: any) => page.items) ?? [];
-  }, [data]);
+  const clients = useMemo(() => data?.pages.flatMap((page: any) => page.items) ?? [], [data]);
 
   // Client-side filtering (search, tags, advanced filters)
   const filteredClients = useMemo(() => {
@@ -189,7 +186,7 @@ export function ClientsView({ initialClients = [] }: ClientsViewProps) {
           c.name?.toLowerCase().includes(searchLower) ||
           c.email?.toLowerCase().includes(searchLower) ||
           c.phone?.includes(search) ||
-          c.whatsapp?.includes(search),
+          c.whatsapp?.includes(search)
       );
     }
 
@@ -201,14 +198,14 @@ export function ClientsView({ initialClients = [] }: ClientsViewProps) {
     // Apply referral source filter
     if (activeFilters.referralSource) {
       result = result.filter(
-        (c: any) => c.referralSource?.toLowerCase() === activeFilters.referralSource?.toLowerCase(),
+        (c: any) => c.referralSource?.toLowerCase() === activeFilters.referralSource?.toLowerCase()
       );
     }
 
     // Apply has orders filter
     if (activeFilters.hasOrders !== undefined) {
       result = result.filter((c: any) =>
-        activeFilters.hasOrders ? (c.ordersCount || 0) > 0 : (c.ordersCount || 0) === 0,
+        activeFilters.hasOrders ? (c.ordersCount || 0) > 0 : (c.ordersCount || 0) === 0
       );
     }
 
@@ -319,7 +316,7 @@ export function ClientsView({ initialClients = [] }: ClientsViewProps) {
 
     navigator.clipboard.writeText(text);
     toast.success(
-      `Copied ${selectedIds.size} client${selectedIds.size > 1 ? "s" : ""} to clipboard`,
+      `Copied ${selectedIds.size} client${selectedIds.size > 1 ? "s" : ""} to clipboard`
     );
   };
 
@@ -365,7 +362,7 @@ export function ClientsView({ initialClients = [] }: ClientsViewProps) {
 
     for (const row of data) {
       // Validate required fields
-      if (!row.name || !row.whatsapp) {
+      if (!(row.name && row.whatsapp)) {
         errorCount++;
         errors.push(`Row missing required fields: ${row.name || "Unknown"}`);
         continue;
@@ -405,7 +402,7 @@ export function ClientsView({ initialClients = [] }: ClientsViewProps) {
     }
     if (errorCount > 0) {
       toast.error(
-        `Failed to import ${errorCount} client${errorCount > 1 ? "s" : ""}. Check console for details.`,
+        `Failed to import ${errorCount} client${errorCount > 1 ? "s" : ""}. Check console for details.`
       );
       console.error("Import errors:", errors);
     }
@@ -415,12 +412,12 @@ export function ClientsView({ initialClients = [] }: ClientsViewProps) {
   const AnalyticsCardSkeleton = () => (
     <Card>
       <CardHeader className="pb-3">
-        <div className="h-8 w-32 bg-muted animate-pulse rounded" />
+        <div className="h-8 w-32 animate-pulse rounded bg-muted" />
       </CardHeader>
       <CardContent className="pb-[34px]">
         <div className="flex flex-col gap-2">
-          <div className="h-4 w-24 bg-muted animate-pulse rounded" />
-          <div className="h-4 w-40 bg-muted animate-pulse rounded" />
+          <div className="h-4 w-24 animate-pulse rounded bg-muted" />
+          <div className="h-4 w-40 animate-pulse rounded bg-muted" />
         </div>
       </CardContent>
     </Card>
@@ -430,7 +427,7 @@ export function ClientsView({ initialClients = [] }: ClientsViewProps) {
     <>
       <div className="flex flex-col gap-6">
         {/* Analytics Cards Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 pt-6">
+        <div className="grid grid-cols-1 gap-4 pt-6 sm:grid-cols-2 sm:gap-6 lg:grid-cols-4">
           <Suspense fallback={<AnalyticsCardSkeleton />}>
             <MostActiveClient />
           </Suspense>
@@ -448,37 +445,37 @@ export function ClientsView({ initialClients = [] }: ClientsViewProps) {
         {/* Toolbar */}
         <div className="flex flex-col gap-4">
           <div className="flex items-center justify-between gap-4">
-            <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <div className="relative max-w-md flex-1">
+              <Search className="-translate-y-1/2 absolute top-1/2 left-3 h-4 w-4 text-muted-foreground" />
               <Input
+                className="pl-10"
+                onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search clients by name, email, or phone..."
                 value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="pl-10"
               />
             </div>
 
             <div className="flex items-center gap-2">
               <ColumnVisibility columns={columns} onToggle={handleToggleColumn} />
               <Button
-                variant="outline"
-                size="sm"
                 className="gap-2"
                 onClick={() => setFilterSheetOpen(true)}
+                size="sm"
+                variant="outline"
               >
                 <Filter className="h-4 w-4" />
                 Filters
                 {Object.keys(activeFilters).length > 0 && (
                   <Badge
+                    className="ml-1 flex h-5 w-5 items-center justify-center rounded-full p-0"
                     variant="secondary"
-                    className="ml-1 h-5 w-5 rounded-full p-0 flex items-center justify-center"
                   >
                     {Object.keys(activeFilters).length}
                   </Badge>
                 )}
               </Button>
               <CSVUpload onUpload={handleCSVUpload} />
-              <Button size="sm" className="gap-2" onClick={handleAddNew}>
+              <Button className="gap-2" onClick={handleAddNew} size="sm">
                 <Plus className="h-4 w-4" /> Add Client
               </Button>
             </div>
@@ -487,13 +484,13 @@ export function ClientsView({ initialClients = [] }: ClientsViewProps) {
           {/* Active tag filter */}
           {tagFilter && (
             <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground">Filtered by tag:</span>
-              <Badge variant="secondary" className="gap-1 pr-1">
+              <span className="text-muted-foreground text-sm">Filtered by tag:</span>
+              <Badge className="gap-1 pr-1" variant="secondary">
                 <span>{tagFilter}</span>
                 <button
-                  type="button"
+                  className="rounded-full p-0.5 hover:bg-muted"
                   onClick={() => setTagFilter("")}
-                  className="hover:bg-muted rounded-full p-0.5"
+                  type="button"
                 >
                   <X className="h-3 w-3" />
                 </button>
@@ -506,8 +503,6 @@ export function ClientsView({ initialClients = [] }: ClientsViewProps) {
         {filteredClients.length === 0 &&
           (search || tagFilter || Object.keys(activeFilters).length > 0) && (
             <EmptyState
-              title="No results"
-              description="Try another search, or adjusting the filters"
               action={{
                 label: "Clear filters",
                 onClick: () => {
@@ -516,22 +511,24 @@ export function ClientsView({ initialClients = [] }: ClientsViewProps) {
                   setActiveFilters({});
                 },
               }}
+              description="Try another search, or adjusting the filters"
+              title="No results"
             />
           )}
 
         {filteredClients.length === 0 && !search && !tagFilter && (
           <EmptyState
-            title="No customers"
+            action={{
+              label: "Create customer",
+              onClick: handleAddNew,
+            }}
             description={
               <>
                 You haven't created any customers yet. <br />
                 Go ahead and create your first one.
               </>
             }
-            action={{
-              label: "Create customer",
-              onClick: handleAddNew,
-            }}
+            title="No customers"
           />
         )}
 
@@ -540,29 +537,29 @@ export function ClientsView({ initialClients = [] }: ClientsViewProps) {
           <Card className="relative">
             {/* Left gradient */}
             {tableScroll.canScrollLeft && (
-              <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-background to-transparent z-[15] pointer-events-none" />
+              <div className="pointer-events-none absolute top-0 bottom-0 left-0 z-[15] w-8 bg-gradient-to-r from-background to-transparent" />
             )}
 
             {/* Right gradient */}
             {tableScroll.canScrollRight && (
-              <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-background to-transparent z-[15] pointer-events-none" />
+              <div className="pointer-events-none absolute top-0 right-0 bottom-0 z-[15] w-8 bg-gradient-to-l from-background to-transparent" />
             )}
 
-            <div ref={tableScroll.containerRef} className="overflow-x-auto scrollbar-hide">
+            <div className="scrollbar-hide overflow-x-auto" ref={tableScroll.containerRef}>
               <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead className="w-[50px]">
                       <Checkbox
+                        aria-label="Select all"
                         checked={
                           selectedIds.size === filteredClients.length && filteredClients.length > 0
                         }
                         onCheckedChange={handleSelectAll}
-                        aria-label="Select all"
                       />
                     </TableHead>
                     {isColumnVisible("name") && (
-                      <TableHead className="sticky left-[50px] bg-background z-20">Name</TableHead>
+                      <TableHead className="sticky left-[50px] z-20 bg-background">Name</TableHead>
                     )}
                     {isColumnVisible("phone") && <TableHead>Phone</TableHead>}
                     {isColumnVisible("whatsapp") && <TableHead>WhatsApp</TableHead>}
@@ -570,7 +567,7 @@ export function ClientsView({ initialClients = [] }: ClientsViewProps) {
                     {isColumnVisible("revenue") && <TableHead>Revenue</TableHead>}
                     {isColumnVisible("tags") && <TableHead>Tags</TableHead>}
                     {isColumnVisible("lastOrder") && <TableHead>Last Order</TableHead>}
-                    <TableHead className="sticky right-0 bg-background z-20 w-[50px]"></TableHead>
+                    <TableHead className="sticky right-0 z-20 w-[50px] bg-background" />
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -578,30 +575,30 @@ export function ClientsView({ initialClients = [] }: ClientsViewProps) {
                     const isSelected = selectedIds.has(client.id);
                     return (
                       <TableRow
-                        key={client.id}
                         className="cursor-pointer"
+                        key={client.id}
                         onClick={(e) => {
                           // Don't trigger if clicking on action menu or links
                           const target = e.target as HTMLElement;
-                          if (!target.closest("button") && !target.closest("a")) {
+                          if (!(target.closest("button") || target.closest("a"))) {
                             handleEdit(client);
                           }
                         }}
                       >
                         <TableCell onClick={(e) => e.stopPropagation()}>
                           <Checkbox
+                            aria-label={`Select ${client.name}`}
                             checked={selectedIds.has(client.id)}
                             onCheckedChange={(checked) =>
                               handleSelectOne(client.id, checked as boolean)
                             }
-                            aria-label={`Select ${client.name}`}
                           />
                         </TableCell>
                         {isColumnVisible("name") && (
                           <TableCell className="sticky left-[50px] z-20">
                             <div className="font-medium">{client.name}</div>
                             {client.notes && (
-                              <div className="text-xs text-muted-foreground line-clamp-1 max-w-[200px]">
+                              <div className="line-clamp-1 max-w-[200px] text-muted-foreground text-xs">
                                 {client.notes}
                               </div>
                             )}
@@ -625,8 +622,8 @@ export function ClientsView({ initialClients = [] }: ClientsViewProps) {
                           <TableCell>
                             {client.ordersCount && client.ordersCount > 0 ? (
                               <a
-                                href={`/orders?client=${client.id}`}
                                 className="text-primary hover:underline"
+                                href={`/orders?client=${client.id}`}
                                 onClick={(e) => e.stopPropagation()}
                               >
                                 {client.ordersCount}
@@ -643,29 +640,31 @@ export function ClientsView({ initialClients = [] }: ClientsViewProps) {
                                 {formatAmount({ currency, amount: Number(client.totalRevenue) })}
                               </span>
                             ) : (
-                              <span className="text-muted-foreground">{formatAmount({ currency, amount: 0 })}</span>
+                              <span className="text-muted-foreground">
+                                {formatAmount({ currency, amount: 0 })}
+                              </span>
                             )}
                           </TableCell>
                         )}
                         {isColumnVisible("tags") && (
                           <TableCell>
                             {client.tags && client.tags.length > 0 ? (
-                              <div className="flex gap-1 flex-wrap">
+                              <div className="flex flex-wrap gap-1">
                                 {client.tags.slice(0, 2).map((tag: string, idx: number) => (
                                   <Badge
+                                    className="cursor-pointer text-xs hover:opacity-80"
                                     key={idx}
-                                    variant={tagFilter === tag ? "default" : "secondary"}
-                                    className="text-xs cursor-pointer hover:opacity-80"
                                     onClick={(e) => {
                                       e.stopPropagation();
                                       handleTagClick(tag);
                                     }}
+                                    variant={tagFilter === tag ? "default" : "secondary"}
                                   >
                                     {tag}
                                   </Badge>
                                 ))}
                                 {client.tags.length > 2 && (
-                                  <Badge variant="outline" className="text-xs">
+                                  <Badge className="text-xs" variant="outline">
                                     +{client.tags.length - 2}
                                   </Badge>
                                 )}
@@ -689,7 +688,7 @@ export function ClientsView({ initialClients = [] }: ClientsViewProps) {
                         <TableCell className="sticky right-0 z-20">
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon" className="h-8 w-8">
+                              <Button className="h-8 w-8" size="icon" variant="ghost">
                                 <MoreVertical className="h-4 w-4" />
                               </Button>
                             </DropdownMenuTrigger>
@@ -703,8 +702,8 @@ export function ClientsView({ initialClients = [] }: ClientsViewProps) {
                               <DropdownMenuItem>View Measurements</DropdownMenuItem>
                               <DropdownMenuSeparator />
                               <DropdownMenuItem
-                                onClick={() => handleDelete(client)}
                                 className="text-destructive"
+                                onClick={() => handleDelete(client)}
                               >
                                 Delete Client
                               </DropdownMenuItem>
@@ -719,15 +718,13 @@ export function ClientsView({ initialClients = [] }: ClientsViewProps) {
             </div>
 
             {/* Load more trigger */}
-            <LoadMore ref={ref} hasNextPage={hasNextPage} isFetchingNextPage={isFetchingNextPage} />
+            <LoadMore hasNextPage={hasNextPage} isFetchingNextPage={isFetchingNextPage} ref={ref} />
           </Card>
         )}
       </div>
 
       {/* Sheet for Create/Edit */}
       <ClientSheet
-        open={sheetOpen}
-        onOpenChange={handleCloseSheet}
         client={
           selectedClient
             ? {
@@ -747,31 +744,33 @@ export function ClientsView({ initialClients = [] }: ClientsViewProps) {
               }
             : null
         }
+        onOpenChange={handleCloseSheet}
+        open={sheetOpen}
       />
 
       {/* Delete Dialog */}
       {clientToDelete && (
         <DeleteClientDialog
-          open={deleteDialogOpen}
-          onOpenChange={setDeleteDialogOpen}
           client={clientToDelete}
+          onOpenChange={setDeleteDialogOpen}
+          open={deleteDialogOpen}
         />
       )}
 
       {/* Bulk Actions Bar */}
       <BulkActionsBar
-        selectedCount={selectedIds.size}
-        onDelete={handleBulkDelete}
-        onCopy={handleBulkCopy}
-        onExport={handleBulkExport}
         onClear={() => setSelectedIds(new Set())}
+        onCopy={handleBulkCopy}
+        onDelete={handleBulkDelete}
+        onExport={handleBulkExport}
+        selectedCount={selectedIds.size}
       />
 
       {/* Filter Sheet */}
       <FilterSheet
-        open={filterSheetOpen}
-        onOpenChange={setFilterSheetOpen}
         onApplyFilters={setActiveFilters}
+        onOpenChange={setFilterSheetOpen}
+        open={filterSheetOpen}
       />
     </>
   );

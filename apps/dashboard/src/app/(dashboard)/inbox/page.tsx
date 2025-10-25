@@ -1,9 +1,9 @@
+import { getThreadsByStatus } from "@Faworra/database/queries";
 import { createServerClient } from "@Faworra/supabase/server";
 import { redirect } from "next/navigation";
 import { InboxGetStarted } from "@/components/inbox/inbox-get-started";
 import { InboxView } from "@/components/inbox/inbox-view";
-import { getCurrentTeamId, db } from "@/lib/trpc/server";
-import { getThreadsByStatus } from "@Faworra/database/queries";
+import { db, getCurrentTeamId } from "@/lib/trpc/server";
 
 export default async function InboxPage() {
   const teamId = await getCurrentTeamId();

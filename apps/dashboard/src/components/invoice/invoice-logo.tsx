@@ -1,10 +1,10 @@
 "use client";
 
+import { Loader2, Upload, X } from "lucide-react";
 import { useState } from "react";
-import { Upload, X, Loader2 } from "lucide-react";
+import { deleteLogo, uploadLogo } from "@/actions/upload-logo";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
-import { uploadLogo, deleteLogo } from "@/actions/upload-logo";
 
 interface InvoiceLogoProps {
   logoUrl?: string | null;
@@ -89,26 +89,26 @@ export function InvoiceLogo({ logoUrl, onUpload, onRemove }: InvoiceLogoProps) {
   };
 
   return (
-    <div className="relative h-20 w-20 group">
-      <label htmlFor="logo-upload" className="block h-full w-full cursor-pointer">
+    <div className="group relative h-20 w-20">
+      <label className="block h-full w-full cursor-pointer" htmlFor="logo-upload">
         {logoUrl ? (
           <div className="relative h-full w-full">
-            <img src={logoUrl} alt="Invoice logo" className="h-full w-full object-contain" />
+            <img alt="Invoice logo" className="h-full w-full object-contain" src={logoUrl} />
             <button
-              type="button"
-              className="absolute inset-0 bg-black/50 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+              className="absolute inset-0 flex items-center justify-center bg-black/50 text-white opacity-0 transition-opacity group-hover:opacity-100"
               onClick={(e) => {
                 e.preventDefault();
                 handleRemove();
               }}
+              type="button"
             >
               <X className="h-5 w-5" />
             </button>
           </div>
         ) : (
-          <div className="h-full w-full border-2 border-dashed border-muted-foreground/25 rounded-md flex items-center justify-center hover:border-muted-foreground/50 transition-colors bg-muted/10">
+          <div className="flex h-full w-full items-center justify-center rounded-md border-2 border-muted-foreground/25 border-dashed bg-muted/10 transition-colors hover:border-muted-foreground/50">
             {isUploading ? (
-              <Loader2 className="h-8 w-8 text-muted-foreground/50 animate-spin" />
+              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground/50" />
             ) : (
               <Upload className="h-8 w-8 text-muted-foreground/50" />
             )}
@@ -117,12 +117,12 @@ export function InvoiceLogo({ logoUrl, onUpload, onRemove }: InvoiceLogoProps) {
       </label>
 
       <input
-        id="logo-upload"
-        type="file"
         accept="image/jpeg,image/jpg,image/png"
         className="hidden"
-        onChange={handleUpload}
         disabled={isUploading}
+        id="logo-upload"
+        onChange={handleUpload}
+        type="file"
       />
     </div>
   );

@@ -1,10 +1,10 @@
-import type { MiddlewareHandler } from "hono";
-import type { ApiEnv } from "../../types/hono-env";
-import { createClient, createAdminClient } from "../../services/supabase";
-import { RateLimiters } from "@Faworra/middleware/rate-limiter";
-import { trackAuthEvent, AuthEvents } from "@Faworra/analytics/auth-events";
-import { apiKeyService } from "@Faworra/auth/api-keys";
+import { AuthEvents, trackAuthEvent } from "@Faworra/analytics/auth-events";
 import type { ApiKey } from "@Faworra/auth/api-keys";
+import { apiKeyService } from "@Faworra/auth/api-keys";
+import { RateLimiters } from "@Faworra/middleware/rate-limiter";
+import type { MiddlewareHandler } from "hono";
+import { createAdminClient, createClient } from "../../services/supabase";
+import type { ApiEnv } from "../../types/hono-env";
 
 export interface AuthSession {
   userId: string;
@@ -22,7 +22,7 @@ export interface AuthSession {
 export const requireAuthTeam: MiddlewareHandler<ApiEnv> = async (c, next) => {
   const authHeader = c.req.header("authorization") || c.req.header("Authorization");
   const token = authHeader?.startsWith("Bearer ") ? authHeader.substring(7) : undefined;
-  
+
   if (!token) {
     await trackAuthEvent({
       event: "SignIn.Failed",
@@ -37,27 +37,26 @@ export const requireAuthTeam: MiddlewareHandler<ApiEnv> = async (c, next) => {
   // Handle API Keys (faw_api_*)
   if (token.startsWith("faw_api_")) {
     const validation = await apiKeyService.validateApiKey(token);
-    
-    if (!validation.valid || !validation.apiKey) {
+
+    if (!(validation.valid && validation.apiKey)) {
       await trackAuthEvent({
         event: "SignIn.Failed",
         error: validation.error || "Invalid API key",
         errorType: "invalid_api_key",
       });
-      return c.json({ 
-        error: "Invalid API key", 
-        details: validation.error 
-      }, 401);
+      return c.json(
+        {
+          error: "Invalid API key",
+          details: validation.error,
+        },
+        401
+      );
     }
 
     const apiKey = validation.apiKey;
-    
+
     // Track API key usage in analytics
-    await trackAuthEvent(AuthEvents.apiKeyUsed(
-      apiKey.userId, 
-      apiKey.teamId, 
-      apiKey.scopes
-    ));
+    await trackAuthEvent(AuthEvents.apiKeyUsed(apiKey.userId, apiKey.teamId, apiKey.scopes));
 
     // Log detailed API key usage for monitoring
     const startTime = Date.now();
@@ -76,7 +75,7 @@ export const requireAuthTeam: MiddlewareHandler<ApiEnv> = async (c, next) => {
       scopes: apiKey.scopes,
       apiKey,
     };
-  } 
+  }
   // Handle JWT tokens (existing logic)
   else {
     const supabase = createClient();
@@ -91,7 +90,7 @@ export const requireAuthTeam: MiddlewareHandler<ApiEnv> = async (c, next) => {
       });
       return c.json({ error: "Invalid token" }, 401);
     }
-    
+
     const userId = userRes.user.id;
 
     const { data: uRow, error: uErr } = await admin
@@ -99,9 +98,9 @@ export const requireAuthTeam: MiddlewareHandler<ApiEnv> = async (c, next) => {
       .select("current_team_id")
       .eq("id", userId)
       .maybeSingle<{ current_team_id: string | null }>();
-      
+
     if (uErr) return c.json({ error: uErr.message }, 500);
-    
+
     const teamId = uRow?.current_team_id || null;
     if (!teamId) {
       await trackAuthEvent({
@@ -137,7 +136,7 @@ export const requireAuthTeam: MiddlewareHandler<ApiEnv> = async (c, next) => {
   c.set("teamId", session.teamId);
   c.set("session", session);
   c.set("supabaseAdmin", createAdminClient());
-  
+
   // Log API key usage after request completion
   if (session.type === "api_key" && session.apiKey) {
     const originalNext = next;
@@ -148,25 +147,25 @@ export const requireAuthTeam: MiddlewareHandler<ApiEnv> = async (c, next) => {
         // Log usage after response
         const startTime = c.get("apiKeyUsageStart") as number;
         const responseTime = Date.now() - startTime;
-        
-        await apiKeyService.logUsage(session.apiKey!.id, session.teamId, {
-          endpoint: c.req.path,
-          method: c.req.method,
-          statusCode: c.res.status || 200,
-          ipAddress: c.req.header("x-forwarded-for") || 
-                    c.req.header("x-real-ip") || 
-                    "unknown",
-          userAgent: c.req.header("user-agent"),
-          responseTimeMs: responseTime,
-        }).catch(err => {
-          console.error("Failed to log API key usage:", err);
-        });
+
+        await apiKeyService
+          .logUsage(session.apiKey!.id, session.teamId, {
+            endpoint: c.req.path,
+            method: c.req.method,
+            statusCode: c.res.status || 200,
+            ipAddress: c.req.header("x-forwarded-for") || c.req.header("x-real-ip") || "unknown",
+            userAgent: c.req.header("user-agent"),
+            responseTimeMs: responseTime,
+          })
+          .catch((err) => {
+            console.error("Failed to log API key usage:", err);
+          });
       }
     };
-    
+
     return wrappedNext();
   }
-  
+
   return next();
 };
 
@@ -174,20 +173,20 @@ export const requireAuthTeam: MiddlewareHandler<ApiEnv> = async (c, next) => {
 export const requireScopes = (requiredScopes: string[]): MiddlewareHandler<ApiEnv> => {
   return async (c, next) => {
     const session = c.get("session") as AuthSession;
-    
+
     // JWT tokens have full access (backward compatibility)
     if (session.type === "jwt") {
       return next();
     }
-    
+
     // Check if API key has required scopes
     if (session.type === "api_key") {
       const userScopes = session.scopes || [];
-      const hasAllScopes = requiredScopes.every(scope => userScopes.includes(scope));
-      
+      const hasAllScopes = requiredScopes.every((scope) => userScopes.includes(scope));
+
       if (!hasAllScopes) {
-        const missingScopes = requiredScopes.filter(scope => !userScopes.includes(scope));
-        
+        const missingScopes = requiredScopes.filter((scope) => !userScopes.includes(scope));
+
         await trackAuthEvent({
           event: "SignIn.Failed",
           userId: session.userId,
@@ -199,16 +198,19 @@ export const requireScopes = (requiredScopes: string[]): MiddlewareHandler<ApiEn
             missing: missingScopes,
           },
         });
-        
-        return c.json({ 
-          error: "Insufficient permissions",
-          required: requiredScopes,
-          granted: userScopes,
-          missing: missingScopes,
-        }, 403);
+
+        return c.json(
+          {
+            error: "Insufficient permissions",
+            required: requiredScopes,
+            granted: userScopes,
+            missing: missingScopes,
+          },
+          403
+        );
       }
     }
-    
+
     return next();
   };
 };
@@ -217,7 +219,7 @@ export const requireScopes = (requiredScopes: string[]): MiddlewareHandler<ApiEn
 export const requireAuthTeamWithRateLimit: MiddlewareHandler<ApiEnv> = async (c, next) => {
   // Apply rate limiting first
   await RateLimiters.authenticated(c, next);
-  
+
   // Then apply auth
   return requireAuthTeam(c, async () => {
     await next();

@@ -1,7 +1,7 @@
-import type { MiddlewareHandler } from "hono";
 import type { ApiEnv } from "@faworra/api/types/hono-env";
-import { secureHeaders } from "hono/secure-headers";
+import type { MiddlewareHandler } from "hono";
 import { cors } from "hono/cors";
+import { secureHeaders } from "hono/secure-headers";
 
 /**
  * Midday's exact security approach - simple and battle-tested
@@ -14,7 +14,7 @@ export const corsMiddleware = cors({
   allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
   allowHeaders: [
     "Authorization",
-    "Content-Type", 
+    "Content-Type",
     "accept-language",
     "x-trpc-source",
     "x-user-locale",
@@ -22,7 +22,7 @@ export const corsMiddleware = cors({
     "x-user-country",
   ],
   exposeHeaders: ["Content-Length"],
-  maxAge: 86400, // 24 hours (Midday's exact setting)
+  maxAge: 86_400, // 24 hours (Midday's exact setting)
 });
 
 // Midday's exact security headers (uses Hono's defaults)

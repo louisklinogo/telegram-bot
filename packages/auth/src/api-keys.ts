@@ -1,8 +1,8 @@
-import crypto from "crypto";
-import bcrypt from "bcryptjs";
-import { createClient } from "@supabase/supabase-js";
-import type { Database } from "@Faworra/supabase/types";
 import { apiKeyCache } from "@Faworra/cache/api-key-cache";
+import type { Database } from "@Faworra/supabase/types";
+import { createClient } from "@supabase/supabase-js";
+import bcrypt from "bcryptjs";
+import crypto from "crypto";
 
 // Supabase client (you might want to move this to a shared location)
 const supabase = createClient<Database>(
@@ -48,19 +48,19 @@ export interface ApiKeyValidationResult {
 export const ApiKeyScopes = {
   // Read operations
   "read:users": "Read user information",
-  "read:teams": "Read team information", 
+  "read:teams": "Read team information",
   "read:data": "Read application data",
-  
+
   // Write operations
   "write:users": "Create and update users",
   "write:teams": "Create and update teams",
   "write:data": "Create and update application data",
-  
+
   // Admin operations
   "admin:users": "Manage users (delete, roles)",
   "admin:teams": "Manage teams (delete, settings)",
   "admin:system": "System administration",
-  
+
   // Special scopes
   "webhook:receive": "Receive webhook notifications",
   "export:data": "Export data in various formats",
@@ -74,18 +74,18 @@ export class ApiKeyService {
    */
   async generateApiKey(params: CreateApiKeyParams): Promise<ApiKey> {
     const { teamId, userId, name, scopes, expiresInDays = 365 } = params;
-    
+
     // Generate secure token with faw_api_ prefix
     const randomBytes = crypto.randomBytes(32);
-    const key = `faw_api_${randomBytes.toString('base64url')}`;
-    
+    const key = `faw_api_${randomBytes.toString("base64url")}`;
+
     // Hash token for secure storage (like Midday)
     const hashedToken = await bcrypt.hash(key, 12);
-    
+
     // Calculate expiration date
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + expiresInDays);
-    
+
     // Create API key in database
     const apiKey = await this.createApiKeyInDb({
       teamId,
@@ -95,13 +95,13 @@ export class ApiKeyService {
       scopes,
       expiresAt,
     });
-    
+
     return {
       ...apiKey,
       token: key, // Only return plaintext token once during creation
     };
   }
-  
+
   /**
    * Validate an API key token
    */
@@ -109,11 +109,11 @@ export class ApiKeyService {
     if (!token.startsWith("faw_api_")) {
       return { valid: false, error: "Invalid token format" };
     }
-    
+
     try {
       // Create a hash of the token for cache key (don't store plaintext)
-      const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
-      
+      const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
+
       // Check cache first
       const cached = await apiKeyCache.get(tokenHash);
       if (cached) {
@@ -121,42 +121,41 @@ export class ApiKeyService {
         this.updateLastUsedAsync(cached.id);
         return { valid: true, apiKey: cached };
       }
-      
+
       // Get active API keys from database
       const activeApiKeys = await this.getActiveApiKeys();
-      
+
       for (const apiKey of activeApiKeys) {
         const isValid = await bcrypt.compare(token, apiKey.hashedToken);
-        
+
         if (isValid) {
           // Check if expired
           if (new Date() > apiKey.expiresAt) {
             return { valid: false, error: "API key expired" };
           }
-          
+
           // Check if revoked
           if (apiKey.revoked) {
             return { valid: false, error: "API key revoked" };
           }
-          
+
           // Update last used timestamp
           await this.updateApiKeyLastUsed(apiKey.id);
-          
+
           // Cache result for future requests
           await apiKeyCache.set(tokenHash, apiKey);
-          
+
           return { valid: true, apiKey };
         }
       }
-      
+
       return { valid: false, error: "Invalid API key" };
-      
     } catch (error) {
       console.error("API key validation error:", error);
       return { valid: false, error: "Validation failed" };
     }
   }
-  
+
   /**
    * Revoke an API key
    */
@@ -165,33 +164,33 @@ export class ApiKeyService {
     // Clear from cache
     await apiKeyCache.deleteByApiKeyId(apiKeyId);
   }
-  
+
   /**
    * List API keys for a team
    */
-  async listApiKeys(teamId: string): Promise<Omit<ApiKey, 'token' | 'hashedToken'>[]> {
+  async listApiKeys(teamId: string): Promise<Omit<ApiKey, "token" | "hashedToken">[]> {
     return this.getApiKeysByTeam(teamId);
   }
-  
+
   /**
    * Update API key (name, scopes, etc.)
    */
   async updateApiKey(
-    apiKeyId: string, 
-    updates: Partial<Pick<ApiKey, 'name' | 'scopes'>>
+    apiKeyId: string,
+    updates: Partial<Pick<ApiKey, "name" | "scopes">>
   ): Promise<void> {
     await this.updateApiKeyInDb(apiKeyId, updates);
     // Clear cache to force refresh
     await apiKeyCache.deleteByApiKeyId(apiKeyId);
   }
-  
+
   /**
    * Check if scopes are valid
    */
   validateScopes(scopes: string[]): { valid: boolean; invalid: string[] } {
     const validScopes = Object.keys(ApiKeyScopes);
-    const invalid = scopes.filter(scope => !validScopes.includes(scope));
-    
+    const invalid = scopes.filter((scope) => !validScopes.includes(scope));
+
     return {
       valid: invalid.length === 0,
       invalid,
@@ -201,36 +200,38 @@ export class ApiKeyService {
   /**
    * Log API key usage for analytics
    */
-  async logUsage(apiKeyId: string, teamId: string, usage: {
-    endpoint: string;
-    method: string;
-    statusCode: number;
-    ipAddress?: string;
-    userAgent?: string;
-    requestSizeBytes?: number;
-    responseSizeBytes?: number;
-    responseTimeMs?: number;
-  }): Promise<void> {
+  async logUsage(
+    apiKeyId: string,
+    teamId: string,
+    usage: {
+      endpoint: string;
+      method: string;
+      statusCode: number;
+      ipAddress?: string;
+      userAgent?: string;
+      requestSizeBytes?: number;
+      responseSizeBytes?: number;
+      responseTimeMs?: number;
+    }
+  ): Promise<void> {
     try {
-      await supabase
-        .from("api_key_usage")
-        .insert({
-          api_key_id: apiKeyId,
-          team_id: teamId,
-          endpoint: usage.endpoint,
-          method: usage.method,
-          status_code: usage.statusCode,
-          ip_address: usage.ipAddress,
-          user_agent: usage.userAgent,
-          request_size_bytes: usage.requestSizeBytes,
-          response_size_bytes: usage.responseSizeBytes,
-          response_time_ms: usage.responseTimeMs,
-        });
+      await supabase.from("api_key_usage").insert({
+        api_key_id: apiKeyId,
+        team_id: teamId,
+        endpoint: usage.endpoint,
+        method: usage.method,
+        status_code: usage.statusCode,
+        ip_address: usage.ipAddress,
+        user_agent: usage.userAgent,
+        request_size_bytes: usage.requestSizeBytes,
+        response_size_bytes: usage.responseSizeBytes,
+        response_time_ms: usage.responseTimeMs,
+      });
     } catch (error) {
       console.error("Failed to log API key usage:", error);
     }
   }
-  
+
   // Private methods for database operations
   private async createApiKeyInDb(data: {
     teamId: string;
@@ -239,7 +240,7 @@ export class ApiKeyService {
     hashedToken: string;
     scopes: string[];
     expiresAt: Date;
-  }): Promise<Omit<ApiKey, 'token'>> {
+  }): Promise<Omit<ApiKey, "token">> {
     const { data: result, error } = await supabase
       .from("api_keys")
       .insert({
@@ -273,7 +274,7 @@ export class ApiKeyService {
       lastUsedAt: result.last_used_at ? new Date(result.last_used_at) : undefined,
     };
   }
-  
+
   private async getActiveApiKeys(): Promise<ApiKey[]> {
     const { data, error } = await supabase
       .from("api_keys")
@@ -313,15 +314,17 @@ export class ApiKeyService {
       createdAt: new Date(row.created_at),
       updatedAt: new Date(row.updated_at),
       token: "", // Never return actual token
-      user: row.users ? {
-        id: row.users.id,
-        email: row.users.email ?? undefined,
-        fullName: row.users.full_name ?? undefined,
-      } : undefined,
+      user: row.users
+        ? {
+            id: row.users.id,
+            email: row.users.email ?? undefined,
+            fullName: row.users.full_name ?? undefined,
+          }
+        : undefined,
     }));
   }
-  
-  private async getApiKeysByTeam(teamId: string): Promise<Omit<ApiKey, 'token' | 'hashedToken'>[]> {
+
+  private async getApiKeysByTeam(teamId: string): Promise<Omit<ApiKey, "token" | "hashedToken">[]> {
     const { data, error } = await supabase
       .from("api_keys")
       .select(`
@@ -355,31 +358,30 @@ export class ApiKeyService {
       revoked: !row.is_active,
       createdAt: new Date(row.created_at),
       updatedAt: new Date(row.updated_at),
-      user: row.users ? {
-        id: row.users.id,
-        email: row.users.email ?? undefined,
-        fullName: row.users.full_name ?? undefined,
-      } : undefined,
+      user: row.users
+        ? {
+            id: row.users.id,
+            email: row.users.email ?? undefined,
+            fullName: row.users.full_name ?? undefined,
+          }
+        : undefined,
     }));
   }
-  
+
   private async updateApiKeyInDb(apiKeyId: string, updates: Partial<ApiKey>): Promise<void> {
     const dbUpdates: any = {};
-    
+
     if (updates.name) dbUpdates.name = updates.name;
     if (updates.scopes) dbUpdates.scopes = updates.scopes;
     if (updates.revoked !== undefined) dbUpdates.is_active = !updates.revoked;
-    
-    const { error } = await supabase
-      .from("api_keys")
-      .update(dbUpdates)
-      .eq("id", apiKeyId);
+
+    const { error } = await supabase.from("api_keys").update(dbUpdates).eq("id", apiKeyId);
 
     if (error) {
       throw new Error(`Failed to update API key: ${error.message}`);
     }
   }
-  
+
   private async updateApiKeyLastUsed(apiKeyId: string): Promise<void> {
     const { error } = await supabase
       .from("api_keys")
@@ -390,14 +392,14 @@ export class ApiKeyService {
       console.error("Failed to update API key last used:", error);
     }
   }
-  
+
   private updateLastUsedAsync(apiKeyId: string): void {
     // Fire and forget - don't wait for this update
-    this.updateApiKeyLastUsed(apiKeyId).catch(error => {
+    this.updateApiKeyLastUsed(apiKeyId).catch((error) => {
       console.error("Failed to update API key last used:", error);
     });
   }
-  
+
   /**
    * Get cache statistics for monitoring
    */

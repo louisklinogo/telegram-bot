@@ -1,7 +1,6 @@
 import { and, desc, eq, sql } from "drizzle-orm";
 import type { DbClient } from "../client";
-import { productCategories, productCategoryMappings } from "../schema";
-import { transactionCategories } from "../schema";
+import { productCategories, productCategoryMappings, transactionCategories } from "../schema";
 
 export type CreateProductCategoryParams = {
   teamId: string;
@@ -103,7 +102,7 @@ export async function createProductCategory(db: DbClient, params: CreateProductC
 export async function updateProductCategory(
   db: DbClient,
   teamId: string,
-  params: UpdateProductCategoryParams,
+  params: UpdateProductCategoryParams
 ) {
   const { id, name, color, description, parentId, system } = params;
   const current = await getProductCategoryById(db, teamId, id);
@@ -145,7 +144,7 @@ export async function deleteProductCategory(db: DbClient, teamId: string, id: st
 // Mapping helpers
 export async function upsertProductCategoryMapping(
   db: DbClient,
-  params: { teamId: string; productCategoryId: string; transactionCategoryId: string },
+  params: { teamId: string; productCategoryId: string; transactionCategoryId: string }
 ) {
   const { teamId, productCategoryId, transactionCategoryId } = params;
   const [row] = await db
@@ -161,7 +160,7 @@ export async function upsertProductCategoryMapping(
 
 export async function removeProductCategoryMapping(
   db: DbClient,
-  params: { teamId: string; productCategoryId: string },
+  params: { teamId: string; productCategoryId: string }
 ) {
   const { teamId, productCategoryId } = params;
   const [row] = await db
@@ -169,8 +168,8 @@ export async function removeProductCategoryMapping(
     .where(
       and(
         eq(productCategoryMappings.teamId, teamId),
-        eq(productCategoryMappings.productCategoryId, productCategoryId),
-      ),
+        eq(productCategoryMappings.productCategoryId, productCategoryId)
+      )
     )
     .returning();
   return row;

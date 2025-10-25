@@ -1,6 +1,6 @@
+import type { Database } from "@Faworra/supabase/types";
 import { createServerClient as createSSRClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
-import type { Database } from "@Faworra/supabase/types";
 
 type CreateClientOptions = {
   admin?: boolean;
@@ -49,13 +49,13 @@ const originalWarn = console.warn;
 const originalLog = console.log;
 console.warn = (...args: any[]) => {
   const match = args.find((arg) =>
-    typeof arg === "string" ? IGNORE_WARNINGS.some((w) => arg.includes(w)) : false,
+    typeof arg === "string" ? IGNORE_WARNINGS.some((w) => arg.includes(w)) : false
   );
   if (!match) originalWarn(...args);
 };
 console.log = (...args: any[]) => {
   const match = args.find((arg) =>
-    typeof arg === "string" ? IGNORE_WARNINGS.some((w) => arg.includes(w)) : false,
+    typeof arg === "string" ? IGNORE_WARNINGS.some((w) => arg.includes(w)) : false
   );
   if (!match) originalLog(...args);
 };

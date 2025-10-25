@@ -6,8 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { formatDateUTC } from "@/lib/date";
 import { Skeleton } from "@/components/ui/skeleton";
+import { formatDateUTC } from "@/lib/date";
 import type { MeasurementWithClient, OrderWithClient } from "@/lib/supabase-queries";
 
 interface WidgetsProps {
@@ -81,16 +81,16 @@ export function Widgets({
       {/* Stat Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {statCards.map((stat) => (
-          <Link key={stat.title} href={stat.href}>
-            <Card className="hover:shadow-md transition-all duration-200 cursor-pointer">
+          <Link href={stat.href} key={stat.title}>
+            <Card className="cursor-pointer transition-all duration-200 hover:shadow-md">
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
+                <CardTitle className="font-medium text-muted-foreground text-sm">
                   {stat.title}
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{stat.format(stat.value)}</div>
-                <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
+                <div className="font-bold text-2xl">{stat.format(stat.value)}</div>
+                <div className="mt-1 flex items-center gap-1 text-muted-foreground text-xs">
                   <TrendingUp className="h-3 w-3" />
                   {stat.trend}
                 </div>
@@ -107,36 +107,36 @@ export function Widgets({
           <CardHeader className="flex flex-row items-center justify-between">
             <div>
               <CardTitle>Recent Orders</CardTitle>
-              <p className="text-sm text-muted-foreground mt-1">Latest tailoring orders</p>
+              <p className="mt-1 text-muted-foreground text-sm">Latest tailoring orders</p>
             </div>
-            <Button variant="ghost" size="sm" asChild>
-              <Link href="/orders" className="gap-2">
+            <Button asChild size="sm" variant="ghost">
+              <Link className="gap-2" href="/orders">
                 View all <ArrowRight className="h-4 w-4" />
               </Link>
             </Button>
           </CardHeader>
           <CardContent>
             {recentOrders.length === 0 ? (
-              <div className="text-center py-8">
-                <p className="text-sm text-muted-foreground">No recent orders</p>
+              <div className="py-8 text-center">
+                <p className="text-muted-foreground text-sm">No recent orders</p>
               </div>
             ) : (
               <div className="space-y-4">
                 {recentOrders.slice(0, 5).map((order, index) => (
                   <div key={order.id}>
                     <Link href={`/orders/${order.id}`}>
-                      <div className="flex items-center justify-between hover:bg-accent/50 rounded-md p-2 -mx-2 transition-colors cursor-pointer">
+                      <div className="-mx-2 flex cursor-pointer items-center justify-between rounded-md p-2 transition-colors hover:bg-accent/50">
                         <div className="space-y-1">
-                          <p className="text-sm font-medium">
+                          <p className="font-medium text-sm">
                             {order.client?.name || "Unknown Client"}
                           </p>
-                          <p className="text-xs text-muted-foreground">{order.order_number}</p>
+                          <p className="text-muted-foreground text-xs">{order.order_number}</p>
                         </div>
-                        <div className="text-right space-y-1">
-                          <p className="text-sm font-semibold">
+                        <div className="space-y-1 text-right">
+                          <p className="font-semibold text-sm">
                             ₵{order.total_price.toLocaleString()}
                           </p>
-                          <Badge variant="secondary" className="text-xs">
+                          <Badge className="text-xs" variant="secondary">
                             {order.status}
                           </Badge>
                         </div>
@@ -155,37 +155,37 @@ export function Widgets({
           <CardHeader className="flex flex-row items-center justify-between">
             <div>
               <CardTitle>Recent Measurements</CardTitle>
-              <p className="text-sm text-muted-foreground mt-1">Latest client measurements</p>
+              <p className="mt-1 text-muted-foreground text-sm">Latest client measurements</p>
             </div>
-            <Button variant="ghost" size="sm" asChild>
-              <Link href="/measurements" className="gap-2">
+            <Button asChild size="sm" variant="ghost">
+              <Link className="gap-2" href="/measurements">
                 View all <ArrowRight className="h-4 w-4" />
               </Link>
             </Button>
           </CardHeader>
           <CardContent>
             {recentMeasurements.length === 0 ? (
-              <div className="text-center py-8">
-                <p className="text-sm text-muted-foreground">No recent measurements</p>
+              <div className="py-8 text-center">
+                <p className="text-muted-foreground text-sm">No recent measurements</p>
               </div>
             ) : (
               <div className="space-y-4">
                 {recentMeasurements.slice(0, 5).map((measurement, index) => (
                   <div key={measurement.id}>
-                    <Link href={`/measurements`}>
-                      <div className="flex items-center justify-between hover:bg-accent/50 rounded-md p-2 -mx-2 transition-colors cursor-pointer">
+                    <Link href={"/measurements"}>
+                      <div className="-mx-2 flex cursor-pointer items-center justify-between rounded-md p-2 transition-colors hover:bg-accent/50">
                         <div className="space-y-1">
-                          <p className="text-sm font-medium">
+                          <p className="font-medium text-sm">
                             {measurement.client?.name || "Unknown Client"}
                           </p>
-                          <p className="text-xs text-muted-foreground">
+                          <p className="text-muted-foreground text-xs">
                             {formatDateUTC(
                               ((measurement as any).taken_at ||
-                                (measurement as any).created_at) as any,
+                                (measurement as any).created_at) as any
                             )}
                           </p>
                         </div>
-                        <Badge variant="secondary" className="text-xs">
+                        <Badge className="text-xs" variant="secondary">
                           {
                             ((measurement as any).garment_type ||
                               (measurement as any).garmentType) as any

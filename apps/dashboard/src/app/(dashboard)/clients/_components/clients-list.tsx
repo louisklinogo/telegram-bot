@@ -21,7 +21,7 @@ export function ClientsList() {
           client.name.toLowerCase().includes(search.toLowerCase()) ||
           client.email?.toLowerCase().includes(search.toLowerCase()) ||
           client.phone?.includes(search) ||
-          client.whatsapp.includes(search),
+          client.whatsapp.includes(search)
       )
     : clients;
 
@@ -29,12 +29,12 @@ export function ClientsList() {
     <div className="space-y-4">
       <Card className="p-4">
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Search className="-translate-y-1/2 absolute top-1/2 left-3 h-4 w-4 text-muted-foreground" />
           <Input
+            className="pl-10"
+            onChange={(e) => setSearch(e.target.value)}
             placeholder="Search clients..."
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-10"
           />
         </div>
       </Card>
@@ -50,7 +50,7 @@ export function ClientsList() {
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {filteredClients.map((client: any) => (
-            <ClientCard key={client.id} client={client} />
+            <ClientCard client={client} key={client.id} />
           ))}
         </div>
       )}

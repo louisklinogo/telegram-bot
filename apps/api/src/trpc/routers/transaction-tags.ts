@@ -1,8 +1,7 @@
-import { z } from "zod";
+import { and, eq, tags, transactions, transactionTags } from "@Faworra/database/schema";
 import { TRPCError } from "@trpc/server";
+import { z } from "zod";
 import { createTRPCRouter, teamProcedure } from "../init";
-import { and, eq } from "@Faworra/database/schema";
-import { transactions, tags, transactionTags } from "@Faworra/database/schema";
 
 export const transactionTagsRouter = createTRPCRouter({
   add: teamProcedure
@@ -39,8 +38,8 @@ export const transactionTagsRouter = createTRPCRouter({
           and(
             eq(transactionTags.teamId, ctx.teamId),
             eq(transactionTags.transactionId, input.transactionId),
-            eq(transactionTags.tagId, input.tagId),
-          ),
+            eq(transactionTags.tagId, input.tagId)
+          )
         );
       return { ok: true } as const;
     }),

@@ -50,7 +50,7 @@ async function runMigration() {
     console.log("📦 Step 2: Creating Schema V2 tables...");
     const createScript = fs.readFileSync(
       path.join(process.cwd(), "scripts", "schema-v2-create-tables.sql"),
-      "utf-8",
+      "utf-8"
     );
     await db.execute(sql.raw(createScript));
     console.log("✅ Schema V2 tables created\n");
@@ -59,7 +59,7 @@ async function runMigration() {
     console.log("📦 Step 3: Seeding sample data...");
     const seedScript = fs.readFileSync(
       path.join(process.cwd(), "scripts", "schema-v2-seed-sample-data.sql"),
-      "utf-8",
+      "utf-8"
     );
     await db.execute(sql.raw(seedScript));
     console.log("✅ Sample data seeded\n");

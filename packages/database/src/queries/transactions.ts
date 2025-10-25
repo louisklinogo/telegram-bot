@@ -1,6 +1,6 @@
-import { and, desc, eq, isNull, sql, lt, or, gte, lte } from "drizzle-orm";
+import { and, desc, eq, gte, isNull, lt, lte, or, sql } from "drizzle-orm";
 import type { DbClient } from "../client";
-import { transactions, clients, transactionCategories } from "../schema";
+import { clients, transactionCategories, transactions } from "../schema";
 
 export async function getTransactionsWithClient(
   db: DbClient,
@@ -9,7 +9,7 @@ export async function getTransactionsWithClient(
     type?: "payment" | "expense" | "refund" | "adjustment";
     limit?: number;
     cursor?: { transactionDate: Date | null; id: string } | null;
-  },
+  }
 ) {
   const { teamId, type, limit = 50, cursor } = params;
   return await db
@@ -26,17 +26,20 @@ export async function getTransactionsWithClient(
               lt(transactions.transactionDate, cursor.transactionDate),
               and(
                 eq(transactions.transactionDate, cursor.transactionDate),
-                lt(transactions.id, cursor.id),
-              ),
+                lt(transactions.id, cursor.id)
+              )
             )
-          : sql`true`,
-      ),
+          : sql`true`
+      )
     )
     .orderBy(desc(transactions.transactionDate), desc(transactions.id))
     .limit(limit);
 }
 
-export async function getTransactionStats(db: DbClient, params: { teamId: string; startDate?: Date; endDate?: Date }) {
+export async function getTransactionStats(
+  db: DbClient,
+  params: { teamId: string; startDate?: Date; endDate?: Date }
+) {
   const { teamId, startDate, endDate } = params;
   const startStr = startDate ? startDate.toISOString().slice(0, 10) : null;
   const endStr = endDate ? endDate.toISOString().slice(0, 10) : null;
@@ -80,7 +83,7 @@ export async function getTransactionStats(db: DbClient, params: { teamId: string
 
 export async function getSpendingByCategory(
   db: DbClient,
-  params: { teamId: string; startDate?: Date; endDate?: Date; limit?: number },
+  params: { teamId: string; startDate?: Date; endDate?: Date; limit?: number }
 ) {
   const { teamId, startDate, endDate, limit = 12 } = params;
   const startStr = startDate ? startDate.toISOString().slice(0, 10) : null;
@@ -98,8 +101,8 @@ export async function getSpendingByCategory(
       transactionCategories,
       and(
         eq(transactions.teamId, transactionCategories.teamId),
-        eq(transactions.categorySlug, transactionCategories.slug),
-      ),
+        eq(transactions.categorySlug, transactionCategories.slug)
+      )
     )
     .where(
       and(
@@ -111,8 +114,8 @@ export async function getSpendingByCategory(
         // Exclude categories marked as excluded; keep uncategorized
         or(isNull(transactionCategories.id), eq(transactionCategories.excluded, false)),
         startStr ? gte(transactions.date, startStr as any) : sql`true`,
-        endStr ? lte(transactions.date, endStr as any) : sql`true`,
-      ),
+        endStr ? lte(transactions.date, endStr as any) : sql`true`
+      )
     )
     .groupBy(transactions.categorySlug, transactionCategories.name, transactionCategories.color)
     .orderBy(desc(sql`SUM(${transactions.amount})`))
@@ -129,7 +132,7 @@ export async function getSpendingByCategory(
 // Lightweight recent transactions for analytics card
 export async function getRecentTransactionsLite(
   db: DbClient,
-  params: { teamId: string; startDate?: Date; endDate?: Date; limit?: number },
+  params: { teamId: string; startDate?: Date; endDate?: Date; limit?: number }
 ) {
   const { teamId, startDate, endDate, limit = 8 } = params;
   const startStr = startDate ? startDate.toISOString().slice(0, 10) : null;
@@ -152,8 +155,8 @@ export async function getRecentTransactionsLite(
         eq(transactions.teamId, teamId),
         isNull(transactions.deletedAt),
         startStr ? gte(transactions.date, startStr as any) : sql`true`,
-        endStr ? lte(transactions.date, endStr as any) : sql`true`,
-      ),
+        endStr ? lte(transactions.date, endStr as any) : sql`true`
+      )
     )
     .orderBy(desc(transactions.date), desc(transactions.id))
     .limit(limit);

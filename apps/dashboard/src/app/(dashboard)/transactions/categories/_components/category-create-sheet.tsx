@@ -1,8 +1,21 @@
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
-import { Sheet, SheetContent } from "@/components/ui/sheet";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
 import { Button } from "@/components/ui/button";
+import { Combobox, type Option } from "@/components/ui/combobox";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Icons } from "@/components/ui/icons";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -11,17 +24,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
+import { SubmitButton } from "@/components/ui/submit-button";
 import { Switch } from "@/components/ui/switch";
 import { trpc } from "@/lib/trpc/client";
-import { Icons } from "@/components/ui/icons";
-import { useRouter } from "next/navigation";
 import { InputColor } from "./input-color";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { SubmitButton } from "@/components/ui/submit-button";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Combobox, type Option } from "@/components/ui/combobox";
 
 type CategoryNode = {
   id: string;
@@ -105,43 +112,43 @@ export function CategoryCreateSheet({
         id: opt.id,
         name: `${"\u00A0".repeat(opt.depth * 2)}${opt.name}`,
       })),
-    [flatOptions],
+    [flatOptions]
   );
 
   return (
-    <Sheet open={open} onOpenChange={(o) => onOpenChange(o)}>
+    <Sheet onOpenChange={(o) => onOpenChange(o)} open={open}>
       <SheetContent className="flex flex-col overflow-hidden p-0">
-        <div className="px-6 pt-6 pb-2 flex-shrink-0 flex flex-row items-center justify-between">
-          <h2 className="text-base font-semibold">Create Category</h2>
+        <div className="flex flex-shrink-0 flex-row items-center justify-between px-6 pt-6 pb-2">
+          <h2 className="font-semibold text-base">Create Category</h2>
           <Button
+            aria-label="Close"
+            className="m-0 size-auto p-0 hover:bg-transparent"
+            onClick={() => onOpenChange(false)}
             size="icon"
             variant="ghost"
-            onClick={() => onOpenChange(false)}
-            className="p-0 m-0 size-auto hover:bg-transparent"
-            aria-label="Close"
           >
             <Icons.Close className="size-5" />
           </Button>
         </div>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col flex-1 min-h-0">
-            <div className="flex-1 overflow-y-auto scrollbar-hide px-6 py-4 space-y-4">
+          <form className="flex min-h-0 flex-1 flex-col" onSubmit={form.handleSubmit(onSubmit)}>
+            <div className="scrollbar-hide flex-1 space-y-4 overflow-y-auto px-6 py-4">
               <FormField
                 control={form.control}
                 name="name"
                 render={() => (
                   <FormItem className="space-y-1">
-                    <FormLabel className="text-xs text-muted-foreground">Name</FormLabel>
+                    <FormLabel className="text-muted-foreground text-xs">Name</FormLabel>
                     <FormControl>
                       <InputColor
-                        name={form.watch("name")}
                         color={form.watch("color")}
-                        placeholder="Name"
+                        name={form.watch("name")}
                         onChange={({ name, color }) => {
                           form.setValue("name", name, { shouldValidate: true });
                           form.setValue("color", color);
                         }}
+                        placeholder="Name"
                       />
                     </FormControl>
                     <FormMessage />
@@ -154,15 +161,17 @@ export function CategoryCreateSheet({
                 name="parentId"
                 render={({ field }) => (
                   <FormItem className="space-y-1">
-                    <FormLabel className="text-xs text-muted-foreground">Parent Category (Optional)</FormLabel>
+                    <FormLabel className="text-muted-foreground text-xs">
+                      Parent Category (Optional)
+                    </FormLabel>
                     <FormControl>
                       <Combobox
-                        options={parentOptions}
-                        value={parentOptions.find((o) => o.id === field.value)}
-                        onSelect={(opt) => field.onChange(opt?.id)}
                         onRemove={() => field.onChange(undefined)}
+                        onSelect={(opt) => field.onChange(opt?.id)}
+                        options={parentOptions}
                         placeholder="Select parent category"
                         showIcon={false}
+                        value={parentOptions.find((o) => o.id === field.value)}
                       />
                     </FormControl>
                     <FormMessage />
@@ -175,7 +184,7 @@ export function CategoryCreateSheet({
                 name="description"
                 render={({ field }) => (
                   <FormItem className="space-y-1">
-                    <FormLabel className="text-xs text-muted-foreground">Description</FormLabel>
+                    <FormLabel className="text-muted-foreground text-xs">Description</FormLabel>
                     <FormControl>
                       <Input {...field} placeholder="Description" />
                     </FormControl>
@@ -189,11 +198,11 @@ export function CategoryCreateSheet({
                   name="taxType"
                   render={({ field }) => (
                     <FormItem className="space-y-1">
-                      <FormLabel className="text-xs text-muted-foreground">Tax Type</FormLabel>
+                      <FormLabel className="text-muted-foreground text-xs">Tax Type</FormLabel>
                       <FormControl>
                         <Select
-                          value={field.value ?? "none"}
                           onValueChange={(v) => field.onChange(v === "none" ? undefined : v)}
+                          value={field.value ?? "none"}
                         >
                           <SelectTrigger>
                             <SelectValue placeholder="Select tax type" />
@@ -215,26 +224,28 @@ export function CategoryCreateSheet({
                   name="taxRate"
                   render={({ field }) => (
                     <FormItem className="space-y-1">
-                      <FormLabel className="text-xs text-muted-foreground">Tax Rate</FormLabel>
+                      <FormLabel className="text-muted-foreground text-xs">Tax Rate</FormLabel>
                       <FormControl>
                         <Input
-                          value={(field.value as any) ?? ""}
                           onChange={(e) => field.onChange(e.target.value)}
                           placeholder="Tax Rate"
+                          value={(field.value as any) ?? ""}
                         />
                       </FormControl>
                     </FormItem>
                   )}
                 />
               </div>
-              <div className="text-xs text-muted-foreground">For unsupported or internal tax logic.</div>
+              <div className="text-muted-foreground text-xs">
+                For unsupported or internal tax logic.
+              </div>
 
               <FormField
                 control={form.control}
                 name="taxReportingCode"
                 render={({ field }) => (
                   <FormItem className="space-y-1">
-                    <FormLabel className="text-xs text-muted-foreground">Report Code</FormLabel>
+                    <FormLabel className="text-muted-foreground text-xs">Report Code</FormLabel>
                     <FormControl>
                       <Input {...field} placeholder="Report Code" />
                     </FormControl>
@@ -247,11 +258,13 @@ export function CategoryCreateSheet({
                 name="excluded"
                 render={({ field }) => (
                   <FormItem className="space-y-1">
-                    <div className="border border-border p-3 mt-2 pt-1.5">
+                    <div className="mt-2 border border-border p-3 pt-1.5">
                       <div className="flex items-center justify-between space-x-2">
                         <div className="space-y-0.5">
-                          <FormLabel className="text-xs text-muted-foreground">Exclude from Reports</FormLabel>
-                          <div className="text-xs text-muted-foreground">
+                          <FormLabel className="text-muted-foreground text-xs">
+                            Exclude from Reports
+                          </FormLabel>
+                          <div className="text-muted-foreground text-xs">
                             Transactions in this category won't appear in financial reports
                           </div>
                         </div>
@@ -265,8 +278,8 @@ export function CategoryCreateSheet({
               />
             </div>
 
-            <div className="mt-auto sticky bottom-0 bg-background px-6 py-4 border-t z-10">
-              <SubmitButton type="submit" className="w-full" isSubmitting={isPending}>
+            <div className="sticky bottom-0 z-10 mt-auto border-t bg-background px-6 py-4">
+              <SubmitButton className="w-full" isSubmitting={isPending} type="submit">
                 Create
               </SubmitButton>
             </div>

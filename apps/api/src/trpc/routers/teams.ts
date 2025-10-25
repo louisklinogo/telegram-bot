@@ -1,11 +1,10 @@
+import { getTeamMembers } from "@Faworra/database/queries";
+// Import Drizzle helpers from database schema to ensure single-module type identity
+import { and, eq, teams, users, usersOnTeam } from "@Faworra/database/schema";
+import { createClient } from "@supabase/supabase-js";
+import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "../init";
-import { TRPCError } from "@trpc/server";
-import { createClient } from "@supabase/supabase-js";
-// Import Drizzle helpers from database schema to ensure single-module type identity
-import { and, eq } from "@Faworra/database/schema";
-import { teams, users, usersOnTeam } from "@Faworra/database/schema";
-import { getTeamMembers } from "@Faworra/database/queries";
 
 export const teamsRouter = createTRPCRouter({
   // List teams for the authenticated user
@@ -24,7 +23,8 @@ export const teamsRouter = createTRPCRouter({
       where: (u, { eq }) => eq(u.id, ctx.userId!),
     });
     const teamId = row?.currentTeamId ?? null;
-    if (!teamId) return { teamId: null as string | null, baseCurrency: undefined as string | undefined };
+    if (!teamId)
+      return { teamId: null as string | null, baseCurrency: undefined as string | undefined };
     const settings = await ctx.db
       .select({ baseCurrency: teams.baseCurrency })
       .from(teams)
@@ -64,7 +64,7 @@ export const teamsRouter = createTRPCRouter({
     .input(
       z.object({
         name: z.string().min(1).max(255),
-      }),
+      })
     )
     .mutation(async ({ ctx, input }) => {
       // ctx.userId is guaranteed by protectedProcedure
@@ -78,7 +78,7 @@ export const teamsRouter = createTRPCRouter({
             persistSession: false,
             autoRefreshToken: false,
           },
-        },
+        }
       );
 
       // Ensure a user profile row exists (FK required by users_on_team)

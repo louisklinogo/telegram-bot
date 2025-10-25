@@ -58,7 +58,7 @@ export function ThreadView({ threadId }: { threadId: string | null }) {
   };
 
   const linkExisting = async (clientId: string) => {
-    if (!threadId || !clientId) return;
+    if (!(threadId && clientId)) return;
     const base = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
     await fetch(`${base}/communications/threads/${threadId}/promote`, {
       method: "POST",
@@ -80,7 +80,7 @@ export function ThreadView({ threadId }: { threadId: string | null }) {
   };
 
   const send = async () => {
-    if (!threadId || !text.trim()) return;
+    if (!(threadId && text.trim())) return;
     setSending(true);
     const clientMessageId =
       typeof crypto !== "undefined" && (crypto as any).randomUUID
@@ -110,36 +110,36 @@ export function ThreadView({ threadId }: { threadId: string | null }) {
 
   if (!threadId)
     return (
-      <div className="p-6 text-sm text-neutral-500">Select a conversation to view messages</div>
+      <div className="p-6 text-neutral-500 text-sm">Select a conversation to view messages</div>
     );
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex h-full flex-col">
       <ContactLinkBar
-        threadId={threadId}
-        state={linkState}
-        onRefresh={fetchLinkSuggestion}
-        onLink={linkExisting}
         onCreate={createClient}
+        onLink={linkExisting}
+        onRefresh={fetchLinkSuggestion}
+        state={linkState}
+        threadId={threadId}
       />
-      <div className="flex-1 border rounded p-3 overflow-auto space-y-2">
+      <div className="flex-1 space-y-2 overflow-auto rounded border p-3">
         {messages.length === 0 ? (
-          <div className="text-sm text-neutral-500">No messages yet</div>
+          <div className="text-neutral-500 text-sm">No messages yet</div>
         ) : (
           messages.map((m) => (
             <div
+              className={`max-w-[70%] rounded p-2 ${m.direction === "out" ? "ml-auto border border-green-100 bg-green-50" : "mr-auto border bg-white"}`}
               key={m.id}
-              className={`max-w-[70%] p-2 rounded ${m.direction === "out" ? "ml-auto bg-green-50 border border-green-100" : "mr-auto bg-white border"}`}
             >
-              <div className="text-sm whitespace-pre-wrap">{m.content || ""}</div>
+              <div className="whitespace-pre-wrap text-sm">{m.content || ""}</div>
               {Array.isArray(m.attachments) && m.attachments.length > 0 && (
                 <div className="mt-2 space-y-2">
                   {m.attachments.map((a) => (
-                    <AttachmentItem key={a.id} attachment={a} />
+                    <AttachmentItem attachment={a} key={a.id} />
                   ))}
                 </div>
               )}
-              <div className="flex items-center gap-2 text-[10px] text-neutral-500 mt-1">
+              <div className="mt-1 flex items-center gap-2 text-[10px] text-neutral-500">
                 <span>{new Date(m.sent_at || m.created_at).toLocaleString()}</span>
                 {m.direction === "out" && <Ticks message={m} />}
               </div>
@@ -149,15 +149,15 @@ export function ThreadView({ threadId }: { threadId: string | null }) {
       </div>
       <div className="mt-3 flex gap-2">
         <input
-          value={text}
+          className="flex-1 rounded border px-3 py-2 text-sm"
           onChange={(e) => setText(e.target.value)}
           placeholder="Type a message"
-          className="flex-1 border rounded px-3 py-2 text-sm"
+          value={text}
         />
         <button
-          onClick={send}
+          className="rounded border bg-black px-4 py-2 text-sm text-white disabled:opacity-50"
           disabled={sending}
-          className="border rounded px-4 py-2 text-sm bg-black text-white disabled:opacity-50"
+          onClick={send}
         >
           {sending ? "Sending..." : "Send"}
         </button>
@@ -185,20 +185,20 @@ function AttachmentItem({ attachment }: { attachment: Attachment }) {
   };
   const isImage = (attachment.content_type || "").startsWith("image/");
   return (
-    <div className="border rounded p-2 bg-white">
+    <div className="rounded border bg-white p-2">
       {url && isImage ? (
-        <img src={url} alt="attachment" className="max-h-64 rounded" />
+        <img alt="attachment" className="max-h-64 rounded" src={url} />
       ) : (
-        <button onClick={fetchUrl} className="text-blue-600 text-xs underline">
+        <button className="text-blue-600 text-xs underline" onClick={fetchUrl}>
           {url ? "Open" : "Load attachment"}
         </button>
       )}
       {url && !isImage && (
         <a
-          href={url}
-          target="_blank"
-          rel="noreferrer"
           className="ml-2 text-blue-600 text-xs underline"
+          href={url}
+          rel="noreferrer"
+          target="_blank"
         >
           Download
         </a>
@@ -221,32 +221,32 @@ function ContactLinkBar({
   onCreate: (name?: string) => void;
 }) {
   if (!threadId) return null;
-  if (!state) return <div className="mb-2 text-xs text-neutral-500">Loading contact...</div>;
-  if (state.loading) return <div className="mb-2 text-xs text-neutral-500">Finding contact...</div>;
+  if (!state) return <div className="mb-2 text-neutral-500 text-xs">Loading contact...</div>;
+  if (state.loading) return <div className="mb-2 text-neutral-500 text-xs">Finding contact...</div>;
   if (state.linkedClientId)
     return (
       <div className="mb-2 text-xs">
         Linked to client •{" "}
-        <button onClick={onRefresh} className="underline">
+        <button className="underline" onClick={onRefresh}>
           refresh
         </button>
       </div>
     );
   const [first] = state.suggestions || [];
   return (
-    <div className="mb-2 p-2 border rounded bg-amber-50 text-xs flex items-center gap-2">
+    <div className="mb-2 flex items-center gap-2 rounded border bg-amber-50 p-2 text-xs">
       <span>No client linked</span>
       {first ? (
         <>
           <span className="text-neutral-600">Suggest:</span>
-          <button onClick={() => onLink(first.id)} className="px-2 py-1 border rounded bg-white">
+          <button className="rounded border bg-white px-2 py-1" onClick={() => onLink(first.id)}>
             Link {first.name}
           </button>
         </>
       ) : null}
       <button
+        className="rounded border bg-white px-2 py-1"
         onClick={() => onCreate(state.external)}
-        className="px-2 py-1 border rounded bg-white"
       >
         Create client
       </button>

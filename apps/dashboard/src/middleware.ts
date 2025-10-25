@@ -42,7 +42,7 @@ export async function middleware(request: NextRequest) {
   } = await supabase.auth.getSession();
 
   // If not authenticated and not visiting a public route, redirect to /login with return_to
-  if (!session && !isPublicRoute) {
+  if (!(session || isPublicRoute)) {
     const loginUrl = new URL("/login", url.origin);
     const encoded = `${pathname}${url.search}`.replace(/^\/+/, "");
     if (encoded) loginUrl.searchParams.set("return_to", encoded);

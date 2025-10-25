@@ -40,9 +40,15 @@
       "@Faworra/middleware/*": ["../../packages/middleware/src/*"],
 
       "@Faworra/supabase/*": ["../../packages/supabase/src/*"],
-      "@Faworra/supabase/server": ["../../packages/supabase/src/client/server.ts"],
-      "@Faworra/supabase/client": ["../../packages/supabase/src/client/index.ts"],
-      "@Faworra/supabase/browser": ["../../packages/supabase/src/client/browser.ts"],
+      "@Faworra/supabase/server": [
+        "../../packages/supabase/src/client/server.ts"
+      ],
+      "@Faworra/supabase/client": [
+        "../../packages/supabase/src/client/index.ts"
+      ],
+      "@Faworra/supabase/browser": [
+        "../../packages/supabase/src/client/browser.ts"
+      ],
 
       "@Faworra/schemas": ["../../packages/schemas/src/index.ts"],
       "@Faworra/schemas/*": ["../../packages/schemas/src/*"],

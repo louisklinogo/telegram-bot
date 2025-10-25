@@ -27,17 +27,21 @@ export class ApiKeyCache {
     sets: 0,
     deletes: 0,
   };
-  
+
   private readonly defaultTTL: number;
   private cleanupInterval: NodeJS.Timeout;
 
-  constructor(defaultTTL: number = 30 * 60 * 1000) { // 30 minutes like Midday
+  constructor(defaultTTL: number = 30 * 60 * 1000) {
+    // 30 minutes like Midday
     this.defaultTTL = defaultTTL;
-    
+
     // Start cleanup interval every 5 minutes
-    this.cleanupInterval = setInterval(() => {
-      this.cleanup();
-    }, 5 * 60 * 1000);
+    this.cleanupInterval = setInterval(
+      () => {
+        this.cleanup();
+      },
+      5 * 60 * 1000
+    );
   }
 
   /**
@@ -45,7 +49,7 @@ export class ApiKeyCache {
    */
   async get(tokenHash: string): Promise<ApiKey | null> {
     const entry = this.cache.get(tokenHash);
-    
+
     if (!entry) {
       this.stats.misses++;
       return null;
@@ -68,13 +72,13 @@ export class ApiKeyCache {
   async set(tokenHash: string, apiKey: ApiKey, ttl?: number): Promise<void> {
     // Don't cache the plaintext token
     const { token, ...cacheableApiKey } = apiKey;
-    
+
     this.cache.set(tokenHash, {
       data: cacheableApiKey as ApiKey,
       timestamp: Date.now(),
       ttl: ttl || this.defaultTTL,
     });
-    
+
     this.stats.sets++;
   }
 
@@ -93,14 +97,14 @@ export class ApiKeyCache {
    */
   async deleteByApiKeyId(apiKeyId: string): Promise<void> {
     let deletedCount = 0;
-    
+
     for (const [tokenHash, entry] of this.cache.entries()) {
       if (entry.data.id === apiKeyId) {
         this.cache.delete(tokenHash);
         deletedCount++;
       }
     }
-    
+
     this.stats.deletes += deletedCount;
   }
 
@@ -109,14 +113,14 @@ export class ApiKeyCache {
    */
   async deleteByTeamId(teamId: string): Promise<void> {
     let deletedCount = 0;
-    
+
     for (const [tokenHash, entry] of this.cache.entries()) {
       if (entry.data.teamId === teamId) {
         this.cache.delete(tokenHash);
         deletedCount++;
       }
     }
-    
+
     this.stats.deletes += deletedCount;
   }
 
@@ -126,13 +130,13 @@ export class ApiKeyCache {
   async exists(tokenHash: string): Promise<boolean> {
     const entry = this.cache.get(tokenHash);
     if (!entry) return false;
-    
+
     // Check if expired
     if (Date.now() > entry.timestamp + entry.ttl) {
       this.cache.delete(tokenHash);
       return false;
     }
-    
+
     return true;
   }
 
@@ -162,14 +166,14 @@ export class ApiKeyCache {
   private cleanup(): void {
     const now = Date.now();
     let cleanedCount = 0;
-    
+
     for (const [tokenHash, entry] of this.cache.entries()) {
       if (now > entry.timestamp + entry.ttl) {
         this.cache.delete(tokenHash);
         cleanedCount++;
       }
     }
-    
+
     if (cleanedCount > 0) {
       console.log(`🧹 Cleaned up ${cleanedCount} expired cache entries`);
     }
@@ -188,10 +192,10 @@ export class ApiKeyCache {
 export const apiKeyCache = new ApiKeyCache();
 
 // Graceful shutdown
-process.on('SIGTERM', () => {
+process.on("SIGTERM", () => {
   apiKeyCache.destroy();
 });
 
-process.on('SIGINT', () => {
+process.on("SIGINT", () => {
   apiKeyCache.destroy();
 });

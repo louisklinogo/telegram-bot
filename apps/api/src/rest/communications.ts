@@ -1,16 +1,12 @@
-import type { Hono } from "hono";
-import type { ApiEnv } from "../types/hono-env";
-import type { Database, TablesUpdate } from "@Faworra/supabase/types";
+import { SendMessageSchema, SendThreadMediaSchema, SendThreadTextSchema } from "@Faworra/schemas";
 import {
-  enqueueCommunicationOutbox,
   createClientBasic,
+  enqueueCommunicationOutbox,
   updateCommunicationThread,
 } from "@Faworra/supabase/mutations";
-import {
-  SendMessageSchema,
-  SendThreadMediaSchema,
-  SendThreadTextSchema,
-} from "@Faworra/schemas";
+import type { Database, TablesUpdate } from "@Faworra/supabase/types";
+import type { Hono } from "hono";
+import type { ApiEnv } from "../types/hono-env";
 
 export function registerCommunicationsRoutes(app: Hono<ApiEnv>) {
   // Upload media to storage (server-side) and return storage path
@@ -71,7 +67,7 @@ export function registerCommunicationsRoutes(app: Hono<ApiEnv>) {
     let query = supabase
       .from("communication_threads")
       .select(
-        "id, external_contact_id, last_message_at, status, account:communication_accounts(provider), contact:clients(id, name, whatsapp)",
+        "id, external_contact_id, last_message_at, status, account:communication_accounts(provider), contact:clients(id, name, whatsapp)"
       )
       .eq("team_id", teamId)
       .order("last_message_at", { ascending: false, nullsFirst: false })
@@ -89,7 +85,7 @@ export function registerCommunicationsRoutes(app: Hono<ApiEnv>) {
       const baseQ = supabase
         .from("communication_threads")
         .select(
-          "id, external_contact_id, last_message_at, status, account:communication_accounts(provider), contact:clients(id, name, whatsapp)",
+          "id, external_contact_id, last_message_at, status, account:communication_accounts(provider), contact:clients(id, name, whatsapp)"
         )
         .eq("team_id", teamId)
         .order("last_message_at", { ascending: false, nullsFirst: false })
@@ -349,7 +345,7 @@ export function registerCommunicationsRoutes(app: Hono<ApiEnv>) {
         supabase,
         id,
         thread.team_id,
-        updatePayload,
+        updatePayload
       );
       if (uErr) return c.json({ error: uErr.message }, 500);
       return c.json({ linked: true, clientId: finalClientId });

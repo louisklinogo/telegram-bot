@@ -1,35 +1,42 @@
 "use client";
 
-import React, { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Input } from "@/components/ui/input";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { 
-  Search, 
-  ExternalLink, 
-  Shield, 
-  Key, 
-  Code2, 
-  BookOpen, 
-  Zap,
-  Star,
-  Download,
-  Globe,
-  Users,
-  BarChart3,
-  Check,
+import {
   AlertCircle,
   ArrowRight,
-  GitBranch,
+  BarChart3,
+  BookOpen,
+  Check,
+  Code2,
   Database,
+  Download,
+  ExternalLink,
   FileText,
-  Settings
+  GitBranch,
+  Globe,
+  Key,
+  Search,
+  Settings,
+  Shield,
+  Star,
+  Users,
+  Zap,
 } from "lucide-react";
+import React, { useState } from "react";
 import { toast } from "sonner";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 /**
  * OAuth Developer Portal
@@ -54,8 +61,8 @@ interface OAuthApp {
   rating: number;
   totalInstalls: number;
   lastUpdated: string;
-  status: 'approved' | 'pending' | 'rejected';
-  pricing: 'free' | 'paid' | 'freemium';
+  status: "approved" | "pending" | "rejected";
+  pricing: "free" | "paid" | "freemium";
 }
 
 interface OAuthDeveloperPortalProps {
@@ -65,33 +72,33 @@ interface OAuthDeveloperPortalProps {
 }
 
 const CATEGORIES = [
-  'All',
-  'Analytics', 
-  'Accounting',
-  'CRM',
-  'Marketing',
-  'Productivity',
-  'Communication',
-  'Integration',
-  'Security',
-  'Reporting'
+  "All",
+  "Analytics",
+  "Accounting",
+  "CRM",
+  "Marketing",
+  "Productivity",
+  "Communication",
+  "Integration",
+  "Security",
+  "Reporting",
 ];
 
 const SCOPE_DESCRIPTIONS = {
-  'profile.read': 'Access basic profile information',
-  'profile.write': 'Update profile information',
-  'teams.read': 'View team information',
-  'teams.write': 'Manage teams and members',
-  'transactions.read': 'View financial transactions',
-  'transactions.write': 'Create and manage transactions',
-  'invoices.read': 'Access invoice data',
-  'invoices.write': 'Create and manage invoices',
-  'reports.read': 'Generate financial reports',
-  'files.read': 'Access files and documents',
-  'files.write': 'Upload and manage files',
-  'analytics.read': 'View analytics and insights',
-  'admin.read': 'Full read access to all data',
-  'admin.write': 'Full administrative access'
+  "profile.read": "Access basic profile information",
+  "profile.write": "Update profile information",
+  "teams.read": "View team information",
+  "teams.write": "Manage teams and members",
+  "transactions.read": "View financial transactions",
+  "transactions.write": "Create and manage transactions",
+  "invoices.read": "Access invoice data",
+  "invoices.write": "Create and manage invoices",
+  "reports.read": "Generate financial reports",
+  "files.read": "Access files and documents",
+  "files.write": "Upload and manage files",
+  "analytics.read": "View analytics and insights",
+  "admin.read": "Full read access to all data",
+  "admin.write": "Full administrative access",
 };
 
 export function OAuthDeveloperPortal({
@@ -103,38 +110,37 @@ export function OAuthDeveloperPortal({
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [selectedApp, setSelectedApp] = useState<OAuthApp | null>(null);
 
-  const filteredApps = applications.filter(app => {
-    const matchesSearch = app.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         app.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         app.developerName.toLowerCase().includes(searchQuery.toLowerCase());
+  const filteredApps = applications.filter((app) => {
+    const matchesSearch =
+      app.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      app.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      app.developerName.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesCategory = selectedCategory === "All" || app.category === selectedCategory;
-    return matchesSearch && matchesCategory && app.status === 'approved';
+    return matchesSearch && matchesCategory && app.status === "approved";
   });
 
-  const featuredApps = applications.filter(app => 
-    app.status === 'approved' && app.rating >= 4.5 && app.totalInstalls > 100
-  ).slice(0, 6);
+  const featuredApps = applications
+    .filter((app) => app.status === "approved" && app.rating >= 4.5 && app.totalInstalls > 100)
+    .slice(0, 6);
 
   return (
     <div className="min-h-screen bg-background">
       {/* Hero Section */}
       <div className="border-b bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20">
         <div className="container mx-auto px-6 py-16">
-          <div className="text-center space-y-4 max-w-3xl mx-auto">
-            <h1 className="text-4xl font-bold">
-              Faworra Developer Portal
-            </h1>
-            <p className="text-xl text-muted-foreground">
-              Discover integrations that extend Faworra's capabilities. 
-              Connect your favorite tools and automate your financial workflows.
+          <div className="mx-auto max-w-3xl space-y-4 text-center">
+            <h1 className="font-bold text-4xl">Faworra Developer Portal</h1>
+            <p className="text-muted-foreground text-xl">
+              Discover integrations that extend Faworra's capabilities. Connect your favorite tools
+              and automate your financial workflows.
             </p>
             <div className="flex items-center justify-center space-x-4 pt-4">
               <Button size="lg">
-                <Code2 className="h-5 w-5 mr-2" />
+                <Code2 className="mr-2 h-5 w-5" />
                 Browse Integrations
               </Button>
-              <Button variant="outline" size="lg">
-                <BookOpen className="h-5 w-5 mr-2" />
+              <Button size="lg" variant="outline">
+                <BookOpen className="mr-2 h-5 w-5" />
                 Developer Docs
               </Button>
             </div>
@@ -146,35 +152,38 @@ export function OAuthDeveloperPortal({
         {/* Featured Apps */}
         {featuredApps.length > 0 && (
           <section className="mb-12">
-            <div className="flex items-center justify-between mb-6">
+            <div className="mb-6 flex items-center justify-between">
               <div>
-                <h2 className="text-2xl font-semibold">Featured Integrations</h2>
+                <h2 className="font-semibold text-2xl">Featured Integrations</h2>
                 <p className="text-muted-foreground">Popular and highly-rated applications</p>
               </div>
               <Button variant="outline">View All</Button>
             </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
               {featuredApps.map((app) => (
-                <Card key={app.id} className="group hover:shadow-lg transition-shadow cursor-pointer">
+                <Card
+                  className="group cursor-pointer transition-shadow hover:shadow-lg"
+                  key={app.id}
+                >
                   <CardHeader className="pb-4">
                     <div className="flex items-start justify-between">
                       <div className="flex items-center space-x-3">
                         <Avatar className="h-12 w-12">
-                          <AvatarImage src={app.logoUrl} alt={app.name} />
+                          <AvatarImage alt={app.name} src={app.logoUrl} />
                           <AvatarFallback>{app.name.charAt(0)}</AvatarFallback>
                         </Avatar>
                         <div className="flex-1">
                           <div className="flex items-center space-x-2">
                             <CardTitle className="text-lg">{app.name}</CardTitle>
                             {app.isVerified && (
-                              <Badge variant="secondary" className="text-xs">
-                                <Check className="h-3 w-3 mr-1" />
+                              <Badge className="text-xs" variant="secondary">
+                                <Check className="mr-1 h-3 w-3" />
                                 Verified
                               </Badge>
                             )}
                           </div>
-                          <p className="text-sm text-muted-foreground">{app.developerName}</p>
+                          <p className="text-muted-foreground text-sm">{app.developerName}</p>
                         </div>
                       </div>
                       <Badge variant="outline">{app.pricing}</Badge>
@@ -182,10 +191,8 @@ export function OAuthDeveloperPortal({
                   </CardHeader>
 
                   <CardContent className="space-y-4">
-                    <p className="text-sm text-muted-foreground line-clamp-2">
-                      {app.description}
-                    </p>
-                    
+                    <p className="line-clamp-2 text-muted-foreground text-sm">{app.description}</p>
+
                     <div className="flex items-center justify-between text-sm">
                       <div className="flex items-center space-x-1">
                         <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
@@ -198,18 +205,10 @@ export function OAuthDeveloperPortal({
                     </div>
 
                     <div className="flex space-x-2">
-                      <Button 
-                        size="sm" 
-                        className="flex-1"
-                        onClick={() => setSelectedApp(app)}
-                      >
+                      <Button className="flex-1" onClick={() => setSelectedApp(app)} size="sm">
                         View Details
                       </Button>
-                      <Button 
-                        size="sm" 
-                        variant="outline"
-                        onClick={() => onInstallApp(app.id)}
-                      >
+                      <Button onClick={() => onInstallApp(app.id)} size="sm" variant="outline">
                         Install
                       </Button>
                     </div>
@@ -221,24 +220,24 @@ export function OAuthDeveloperPortal({
         )}
 
         {/* Search and Filter */}
-        <div className="flex flex-col md:flex-row gap-4 mb-8">
+        <div className="mb-8 flex flex-col gap-4 md:flex-row">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+            <Search className="absolute top-3 left-3 h-4 w-4 text-muted-foreground" />
             <Input
+              className="pl-10"
+              onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search integrations..."
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
             />
           </div>
           <div className="flex space-x-2 overflow-x-auto">
             {CATEGORIES.map((category) => (
               <Button
-                key={category}
-                variant={selectedCategory === category ? "default" : "outline"}
-                size="sm"
-                onClick={() => setSelectedCategory(category)}
                 className="whitespace-nowrap"
+                key={category}
+                onClick={() => setSelectedCategory(category)}
+                size="sm"
+                variant={selectedCategory === category ? "default" : "outline"}
               >
                 {category}
               </Button>
@@ -247,43 +246,41 @@ export function OAuthDeveloperPortal({
         </div>
 
         {/* Applications Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
           {filteredApps.map((app) => (
-            <Card key={app.id} className="group hover:shadow-lg transition-shadow">
+            <Card className="group transition-shadow hover:shadow-lg" key={app.id}>
               <CardHeader className="pb-4">
                 <div className="flex items-start justify-between">
                   <div className="flex items-center space-x-3">
                     <Avatar className="h-10 w-10">
-                      <AvatarImage src={app.logoUrl} alt={app.name} />
+                      <AvatarImage alt={app.name} src={app.logoUrl} />
                       <AvatarFallback>{app.name.charAt(0)}</AvatarFallback>
                     </Avatar>
                     <div className="flex-1">
                       <div className="flex items-center space-x-2">
                         <CardTitle className="text-base">{app.name}</CardTitle>
-                        {app.isVerified && (
-                          <Check className="h-4 w-4 text-green-600" />
-                        )}
+                        {app.isVerified && <Check className="h-4 w-4 text-green-600" />}
                       </div>
-                      <p className="text-xs text-muted-foreground">{app.developerName}</p>
+                      <p className="text-muted-foreground text-xs">{app.developerName}</p>
                     </div>
                   </div>
-                  <Badge variant="outline" className="text-xs">{app.category}</Badge>
+                  <Badge className="text-xs" variant="outline">
+                    {app.category}
+                  </Badge>
                 </div>
               </CardHeader>
 
               <CardContent className="space-y-4">
-                <p className="text-sm text-muted-foreground line-clamp-2">
-                  {app.description}
-                </p>
-                
+                <p className="line-clamp-2 text-muted-foreground text-sm">{app.description}</p>
+
                 <div className="flex flex-wrap gap-1">
                   {app.tags.slice(0, 3).map((tag) => (
-                    <Badge key={tag} variant="secondary" className="text-xs">
+                    <Badge className="text-xs" key={tag} variant="secondary">
                       {tag}
                     </Badge>
                   ))}
                   {app.tags.length > 3 && (
-                    <Badge variant="outline" className="text-xs">
+                    <Badge className="text-xs" variant="outline">
                       +{app.tags.length - 3}
                     </Badge>
                   )}
@@ -300,18 +297,15 @@ export function OAuthDeveloperPortal({
                 </div>
 
                 <div className="flex space-x-2">
-                  <Button 
-                    size="sm" 
-                    variant="outline"
+                  <Button
                     className="flex-1"
                     onClick={() => setSelectedApp(app)}
+                    size="sm"
+                    variant="outline"
                   >
                     Details
                   </Button>
-                  <Button 
-                    size="sm"
-                    onClick={() => onInstallApp(app.id)}
-                  >
+                  <Button onClick={() => onInstallApp(app.id)} size="sm">
                     Install
                   </Button>
                 </div>
@@ -321,11 +315,11 @@ export function OAuthDeveloperPortal({
         </div>
 
         {filteredApps.length === 0 && (
-          <div className="text-center py-12">
-            <div className="mx-auto w-16 h-16 bg-muted rounded-full flex items-center justify-center mb-4">
+          <div className="py-12 text-center">
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-muted">
               <Search className="h-8 w-8 text-muted-foreground" />
             </div>
-            <h3 className="text-lg font-semibold mb-2">No integrations found</h3>
+            <h3 className="mb-2 font-semibold text-lg">No integrations found</h3>
             <p className="text-muted-foreground">
               Try adjusting your search or browse different categories
             </p>
@@ -334,29 +328,29 @@ export function OAuthDeveloperPortal({
 
         {/* App Detail Modal */}
         {selectedApp && (
-          <Dialog open={true} onOpenChange={() => setSelectedApp(null)}>
-            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <Dialog onOpenChange={() => setSelectedApp(null)} open={true}>
+            <DialogContent className="max-h-[90vh] max-w-4xl overflow-y-auto">
               <div className="space-y-6">
                 {/* Header */}
                 <div className="flex items-start space-x-4">
                   <Avatar className="h-16 w-16">
-                    <AvatarImage src={selectedApp.logoUrl} alt={selectedApp.name} />
+                    <AvatarImage alt={selectedApp.name} src={selectedApp.logoUrl} />
                     <AvatarFallback className="text-lg">
                       {selectedApp.name.charAt(0)}
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex-1">
-                    <div className="flex items-center space-x-2 mb-2">
-                      <h2 className="text-2xl font-bold">{selectedApp.name}</h2>
+                    <div className="mb-2 flex items-center space-x-2">
+                      <h2 className="font-bold text-2xl">{selectedApp.name}</h2>
                       {selectedApp.isVerified && (
                         <Badge variant="secondary">
-                          <Check className="h-3 w-3 mr-1" />
+                          <Check className="mr-1 h-3 w-3" />
                           Verified
                         </Badge>
                       )}
                       <Badge variant="outline">{selectedApp.pricing}</Badge>
                     </div>
-                    <p className="text-muted-foreground mb-3">{selectedApp.developerName}</p>
+                    <p className="mb-3 text-muted-foreground">{selectedApp.developerName}</p>
                     <div className="flex items-center space-x-4 text-sm">
                       <div className="flex items-center space-x-1">
                         <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
@@ -368,10 +362,10 @@ export function OAuthDeveloperPortal({
                       </div>
                       {selectedApp.website && (
                         <a
-                          href={selectedApp.website}
-                          target="_blank"
-                          rel="noopener noreferrer"
                           className="flex items-center space-x-1 text-blue-600 hover:underline"
+                          href={selectedApp.website}
+                          rel="noopener noreferrer"
+                          target="_blank"
                         >
                           <ExternalLink className="h-4 w-4" />
                           <span>Website</span>
@@ -379,47 +373,47 @@ export function OAuthDeveloperPortal({
                       )}
                     </div>
                   </div>
-                  <Button onClick={() => onInstallApp(selectedApp.id)}>
-                    Install Integration
-                  </Button>
+                  <Button onClick={() => onInstallApp(selectedApp.id)}>Install Integration</Button>
                 </div>
 
-                <Tabs defaultValue="overview" className="w-full">
+                <Tabs className="w-full" defaultValue="overview">
                   <TabsList className="grid w-full grid-cols-4">
                     <TabsTrigger value="overview">Overview</TabsTrigger>
                     <TabsTrigger value="permissions">Permissions</TabsTrigger>
                     <TabsTrigger value="screenshots">Screenshots</TabsTrigger>
                     <TabsTrigger value="developer">Developer</TabsTrigger>
                   </TabsList>
-                  
-                  <TabsContent value="overview" className="space-y-4">
+
+                  <TabsContent className="space-y-4" value="overview">
                     <div>
-                      <h3 className="font-semibold mb-2">Description</h3>
-                      <p className="text-muted-foreground whitespace-pre-wrap">
+                      <h3 className="mb-2 font-semibold">Description</h3>
+                      <p className="whitespace-pre-wrap text-muted-foreground">
                         {selectedApp.overview}
                       </p>
                     </div>
-                    
+
                     <div>
-                      <h3 className="font-semibold mb-2">Category & Tags</h3>
+                      <h3 className="mb-2 font-semibold">Category & Tags</h3>
                       <div className="flex flex-wrap gap-2">
                         <Badge>{selectedApp.category}</Badge>
                         {selectedApp.tags.map((tag) => (
-                          <Badge key={tag} variant="secondary">{tag}</Badge>
+                          <Badge key={tag} variant="secondary">
+                            {tag}
+                          </Badge>
                         ))}
                       </div>
                     </div>
                   </TabsContent>
 
-                  <TabsContent value="permissions" className="space-y-4">
-                    <div className="bg-yellow-50 dark:bg-yellow-950/20 p-4 rounded-lg">
+                  <TabsContent className="space-y-4" value="permissions">
+                    <div className="rounded-lg bg-yellow-50 p-4 dark:bg-yellow-950/20">
                       <div className="flex items-start space-x-2">
-                        <AlertCircle className="h-5 w-5 text-yellow-600 mt-0.5" />
+                        <AlertCircle className="mt-0.5 h-5 w-5 text-yellow-600" />
                         <div>
                           <h4 className="font-medium text-yellow-800 dark:text-yellow-200">
                             Permission Overview
                           </h4>
-                          <p className="text-sm text-yellow-700 dark:text-yellow-300 mt-1">
+                          <p className="mt-1 text-sm text-yellow-700 dark:text-yellow-300">
                             This application requests access to the following data and capabilities.
                           </p>
                         </div>
@@ -428,13 +422,16 @@ export function OAuthDeveloperPortal({
 
                     <div className="space-y-3">
                       {selectedApp.scopes.map((scope) => (
-                        <div key={scope} className="flex items-start space-x-3 p-3 border rounded-lg">
-                          <Shield className="h-5 w-5 text-blue-600 mt-0.5" />
+                        <div
+                          className="flex items-start space-x-3 rounded-lg border p-3"
+                          key={scope}
+                        >
+                          <Shield className="mt-0.5 h-5 w-5 text-blue-600" />
                           <div className="flex-1">
                             <div className="font-medium text-sm">{scope}</div>
-                            <div className="text-xs text-muted-foreground mt-1">
-                              {SCOPE_DESCRIPTIONS[scope as keyof typeof SCOPE_DESCRIPTIONS] || 
-                               'Access to specific functionality'}
+                            <div className="mt-1 text-muted-foreground text-xs">
+                              {SCOPE_DESCRIPTIONS[scope as keyof typeof SCOPE_DESCRIPTIONS] ||
+                                "Access to specific functionality"}
                             </div>
                           </div>
                         </div>
@@ -442,29 +439,29 @@ export function OAuthDeveloperPortal({
                     </div>
                   </TabsContent>
 
-                  <TabsContent value="screenshots" className="space-y-4">
+                  <TabsContent className="space-y-4" value="screenshots">
                     {selectedApp.screenshots.length > 0 ? (
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                         {selectedApp.screenshots.map((screenshot, index) => (
-                          <div key={index} className="border rounded-lg overflow-hidden">
-                            <img 
-                              src={screenshot} 
+                          <div className="overflow-hidden rounded-lg border" key={index}>
+                            <img
                               alt={`${selectedApp.name} screenshot ${index + 1}`}
-                              className="w-full h-48 object-cover"
+                              className="h-48 w-full object-cover"
+                              src={screenshot}
                             />
                           </div>
                         ))}
                       </div>
                     ) : (
-                      <div className="text-center py-8 text-muted-foreground">
+                      <div className="py-8 text-center text-muted-foreground">
                         No screenshots available
                       </div>
                     )}
                   </TabsContent>
 
-                  <TabsContent value="developer" className="space-y-4">
+                  <TabsContent className="space-y-4" value="developer">
                     <div>
-                      <h3 className="font-semibold mb-2">Developer Information</h3>
+                      <h3 className="mb-2 font-semibold">Developer Information</h3>
                       <div className="space-y-3 text-sm">
                         <div className="flex justify-between">
                           <span className="text-muted-foreground">Developer:</span>
@@ -487,13 +484,13 @@ export function OAuthDeveloperPortal({
 
                     {selectedApp.website && (
                       <div>
-                        <h3 className="font-semibold mb-2">Links</h3>
+                        <h3 className="mb-2 font-semibold">Links</h3>
                         <div className="space-y-2">
                           <a
+                            className="inline-flex items-center space-x-2 text-blue-600 text-sm hover:underline"
                             href={selectedApp.website}
-                            target="_blank"
                             rel="noopener noreferrer"
-                            className="inline-flex items-center space-x-2 text-blue-600 hover:underline text-sm"
+                            target="_blank"
                           >
                             <ExternalLink className="h-4 w-4" />
                             <span>Visit Website</span>
@@ -512,55 +509,55 @@ export function OAuthDeveloperPortal({
       {/* Developer Resources Section */}
       <div className="border-t bg-muted/30">
         <div className="container mx-auto px-6 py-12">
-          <div className="text-center mb-8">
-            <h2 className="text-2xl font-bold mb-2">Build Your Own Integration</h2>
+          <div className="mb-8 text-center">
+            <h2 className="mb-2 font-bold text-2xl">Build Your Own Integration</h2>
             <p className="text-muted-foreground">
               Create custom integrations with Faworra's OAuth 2.0 API
             </p>
           </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
             <Card className="text-center">
               <CardContent className="p-6">
-                <div className="mx-auto w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mb-4">
+                <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-blue-100">
                   <BookOpen className="h-6 w-6 text-blue-600" />
                 </div>
-                <h3 className="font-semibold mb-2">Documentation</h3>
-                <p className="text-sm text-muted-foreground mb-4">
+                <h3 className="mb-2 font-semibold">Documentation</h3>
+                <p className="mb-4 text-muted-foreground text-sm">
                   Complete API reference and integration guides
                 </p>
-                <Button variant="outline" size="sm">
-                  View Docs <ArrowRight className="h-4 w-4 ml-1" />
+                <Button size="sm" variant="outline">
+                  View Docs <ArrowRight className="ml-1 h-4 w-4" />
                 </Button>
               </CardContent>
             </Card>
 
             <Card className="text-center">
               <CardContent className="p-6">
-                <div className="mx-auto w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mb-4">
+                <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-green-100">
                   <Code2 className="h-6 w-6 text-green-600" />
                 </div>
-                <h3 className="font-semibold mb-2">Code Examples</h3>
-                <p className="text-sm text-muted-foreground mb-4">
+                <h3 className="mb-2 font-semibold">Code Examples</h3>
+                <p className="mb-4 text-muted-foreground text-sm">
                   Sample code in multiple programming languages
                 </p>
-                <Button variant="outline" size="sm">
-                  Browse Examples <ArrowRight className="h-4 w-4 ml-1" />
+                <Button size="sm" variant="outline">
+                  Browse Examples <ArrowRight className="ml-1 h-4 w-4" />
                 </Button>
               </CardContent>
             </Card>
 
             <Card className="text-center">
               <CardContent className="p-6">
-                <div className="mx-auto w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mb-4">
+                <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-purple-100">
                   <Settings className="h-6 w-6 text-purple-600" />
                 </div>
-                <h3 className="font-semibold mb-2">Developer Console</h3>
-                <p className="text-sm text-muted-foreground mb-4">
+                <h3 className="mb-2 font-semibold">Developer Console</h3>
+                <p className="mb-4 text-muted-foreground text-sm">
                   Manage your OAuth applications and API keys
                 </p>
-                <Button variant="outline" size="sm">
-                  Open Console <ArrowRight className="h-4 w-4 ml-1" />
+                <Button size="sm" variant="outline">
+                  Open Console <ArrowRight className="ml-1 h-4 w-4" />
                 </Button>
               </CardContent>
             </Card>

@@ -83,11 +83,11 @@ export function ChartArea({
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-lg font-semibold">{currentConfig.title}</h3>
-            <p className="text-sm text-muted-foreground">{currentConfig.description}</p>
+            <h3 className="font-semibold text-lg">{currentConfig.title}</h3>
+            <p className="text-muted-foreground text-sm">{currentConfig.description}</p>
           </div>
 
-          <Tabs value={activeChart} onValueChange={(v) => setActiveChart(v as any)}>
+          <Tabs onValueChange={(v) => setActiveChart(v as any)} value={activeChart}>
             <TabsList>
               <TabsTrigger value="revenue">Revenue</TabsTrigger>
               <TabsTrigger value="orders">Orders</TabsTrigger>
@@ -101,35 +101,35 @@ export function ChartArea({
           {currentConfig.data.length === 0 ? (
             <div className="flex h-full items-center justify-center">
               <div className="text-center">
-                <p className="text-sm text-muted-foreground">No data available</p>
-                <p className="text-xs text-muted-foreground mt-1">
+                <p className="text-muted-foreground text-sm">No data available</p>
+                <p className="mt-1 text-muted-foreground text-xs">
                   Data will appear once you start recording {activeChart}
                 </p>
               </div>
             </div>
           ) : (
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer height="100%" width="100%">
               {currentConfig.type === "area" ? (
                 <AreaChart data={currentConfig.data}>
                   <defs>
-                    <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
+                    <linearGradient id="colorValue" x1="0" x2="0" y1="0" y2="1">
                       <stop offset="5%" stopColor={currentConfig.color} stopOpacity={0.3} />
                       <stop offset="95%" stopColor={currentConfig.color} stopOpacity={0} />
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                  <XAxis dataKey="date" className="text-xs" tickLine={false} axisLine={false} />
-                  <YAxis className="text-xs" tickLine={false} axisLine={false} />
+                  <CartesianGrid stroke="hsl(var(--border))" strokeDasharray="3 3" />
+                  <XAxis axisLine={false} className="text-xs" dataKey="date" tickLine={false} />
+                  <YAxis axisLine={false} className="text-xs" tickLine={false} />
                   <Tooltip
                     content={({ active, payload }) => {
                       if (active && payload && payload.length) {
                         return (
                           <div className="rounded-lg border bg-background p-3 shadow-lg">
                             <div className="space-y-1">
-                              <p className="text-xs text-muted-foreground">
+                              <p className="text-muted-foreground text-xs">
                                 {payload[0].payload.date}
                               </p>
-                              <p className="text-sm font-semibold">
+                              <p className="font-semibold text-sm">
                                 {activeChart === "revenue"
                                   ? `₵${payload[0].value?.toLocaleString()}`
                                   : payload[0].value}
@@ -142,29 +142,29 @@ export function ChartArea({
                     }}
                   />
                   <Area
-                    type="monotone"
                     dataKey="value"
-                    stroke={currentConfig.color}
-                    fillOpacity={1}
                     fill="url(#colorValue)"
+                    fillOpacity={1}
+                    stroke={currentConfig.color}
                     strokeWidth={2}
+                    type="monotone"
                   />
                 </AreaChart>
               ) : (
                 <BarChart data={currentConfig.data}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                  <XAxis dataKey="date" className="text-xs" tickLine={false} axisLine={false} />
-                  <YAxis className="text-xs" tickLine={false} axisLine={false} />
+                  <CartesianGrid stroke="hsl(var(--border))" strokeDasharray="3 3" />
+                  <XAxis axisLine={false} className="text-xs" dataKey="date" tickLine={false} />
+                  <YAxis axisLine={false} className="text-xs" tickLine={false} />
                   <Tooltip
                     content={({ active, payload }) => {
                       if (active && payload && payload.length) {
                         return (
                           <div className="rounded-lg border bg-background p-3 shadow-lg">
                             <div className="space-y-1">
-                              <p className="text-xs text-muted-foreground">
+                              <p className="text-muted-foreground text-xs">
                                 {payload[0].payload.date}
                               </p>
-                              <p className="text-sm font-semibold">{payload[0].value} orders</p>
+                              <p className="font-semibold text-sm">{payload[0].value} orders</p>
                             </div>
                           </div>
                         );

@@ -2,19 +2,31 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatAmount } from "@/lib/format-currency";
 
-export function TransactionsTotalIncome({ amount, currency, subtitle, loading = false }: { amount: number; currency: string; subtitle?: string; loading?: boolean }) {
+export function TransactionsTotalIncome({
+  amount,
+  currency,
+  subtitle,
+  loading = false,
+}: {
+  amount: number;
+  currency: string;
+  subtitle?: string;
+  loading?: boolean;
+}) {
   return (
     <Card className="h-[200px]">
       <CardHeader className="pb-3">
         {loading ? (
-          <div className="h-8 w-32 bg-muted animate-pulse rounded" />
+          <div className="h-8 w-32 animate-pulse rounded bg-muted" />
         ) : (
-          <CardTitle className="font-medium text-2xl text-emerald-600">{formatAmount({ currency, amount })}</CardTitle>
+          <CardTitle className="font-medium text-2xl text-emerald-600">
+            {formatAmount({ currency, amount })}
+          </CardTitle>
         )}
       </CardHeader>
       <CardContent className="pb-[34px]">
         <div>Total Income</div>
-        <div className="text-sm text-muted-foreground">{subtitle || "Selected period"}</div>
+        <div className="text-muted-foreground text-sm">{subtitle || "Selected period"}</div>
       </CardContent>
     </Card>
   );

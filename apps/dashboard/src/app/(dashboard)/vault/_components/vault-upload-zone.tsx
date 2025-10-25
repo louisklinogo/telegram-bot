@@ -1,11 +1,11 @@
 "use client";
 
+import { createBrowserClient } from "@Faworra/supabase/client";
 import { type ReactNode, useEffect, useRef, useState } from "react";
 import { type FileRejection, useDropzone } from "react-dropzone";
-import { createBrowserClient } from "@Faworra/supabase/client";
-import { resumableUpload } from "@/lib/upload";
-import { trpc } from "@/lib/trpc/client";
 import { useToast } from "@/components/ui/use-toast";
+import { trpc } from "@/lib/trpc/client";
+import { resumableUpload } from "@/lib/upload";
 import { cn } from "@/lib/utils";
 
 type UploadResult = {
@@ -64,8 +64,8 @@ export function VaultUploadZone({ children, teamId }: Props) {
 
               setProgress(Math.round(totalProgress / files.length));
             },
-          }),
-        ),
+          })
+        )
       )) as UploadResult[];
 
       // Create document records in database
@@ -77,8 +77,8 @@ export function VaultUploadZone({ children, teamId }: Props) {
             mimeType: result.file.type,
             size: result.file.size,
             tags: [],
-          }),
-        ),
+          })
+        )
       );
 
       toast({
@@ -118,7 +118,7 @@ export function VaultUploadZone({ children, teamId }: Props) {
         });
       }
     },
-    maxSize: 5242880, // 5MB
+    maxSize: 5_242_880, // 5MB
     maxFiles: 25,
     accept: {
       "image/*": [".jpg", ".jpeg", ".png", ".webp", ".heic", ".heif", ".avif"],
@@ -144,18 +144,18 @@ export function VaultUploadZone({ children, teamId }: Props) {
   return (
     <div className="relative h-full" {...getRootProps({ onClick: (evt) => evt.stopPropagation() })}>
       {/* Drag overlay */}
-      <div className="absolute top-0 right-0 left-0 z-50 w-full pointer-events-none h-[calc(100vh-150px)]">
+      <div className="pointer-events-none absolute top-0 right-0 left-0 z-50 h-[calc(100vh-150px)] w-full">
         <div
           className={cn(
-            "bg-background/95 backdrop-blur-sm h-full w-full flex items-center justify-center text-center border-2 border-dashed border-primary/50 rounded-lg transition-all",
-            isDragActive ? "visible opacity-100" : "invisible opacity-0",
+            "flex h-full w-full items-center justify-center rounded-lg border-2 border-primary/50 border-dashed bg-background/95 text-center backdrop-blur-sm transition-all",
+            isDragActive ? "visible opacity-100" : "invisible opacity-0"
           )}
         >
           <input {...getInputProps()} id="upload-files" />
 
           <div className="flex flex-col items-center justify-center gap-2">
-            <p className="text-sm font-medium">Drop your documents and files here</p>
-            <span className="text-xs text-muted-foreground">
+            <p className="font-medium text-sm">Drop your documents and files here</p>
+            <span className="text-muted-foreground text-xs">
               Maximum of 25 files at a time • Max file size 5MB
             </span>
           </div>
@@ -164,16 +164,16 @@ export function VaultUploadZone({ children, teamId }: Props) {
 
       {/* Upload progress */}
       {isUploading && (
-        <div className="absolute top-4 right-4 z-50 bg-background border rounded-lg p-4 shadow-lg min-w-[200px]">
+        <div className="absolute top-4 right-4 z-50 min-w-[200px] rounded-lg border bg-background p-4 shadow-lg">
           <div className="space-y-2">
-            <p className="text-sm font-medium">Uploading...</p>
-            <div className="w-full bg-secondary rounded-full h-2">
+            <p className="font-medium text-sm">Uploading...</p>
+            <div className="h-2 w-full rounded-full bg-secondary">
               <div
-                className="bg-primary h-2 rounded-full transition-all"
+                className="h-2 rounded-full bg-primary transition-all"
                 style={{ width: `${progress}%` }}
               />
             </div>
-            <p className="text-xs text-muted-foreground">{progress}%</p>
+            <p className="text-muted-foreground text-xs">{progress}%</p>
           </div>
         </div>
       )}

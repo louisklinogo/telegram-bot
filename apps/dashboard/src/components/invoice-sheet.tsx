@@ -1,7 +1,7 @@
 "use client";
 
-import { useInvoiceParams } from "@/hooks/use-invoice-params";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { useInvoiceParams } from "@/hooks/use-invoice-params";
 import { InvoiceForm } from "./invoice-form";
 
 export function InvoiceSheet() {
@@ -10,13 +10,13 @@ export function InvoiceSheet() {
   const title = type === "create" ? "Create Invoice" : "Edit Invoice";
 
   return (
-    <Sheet open={isOpen} onOpenChange={(open) => !open && close()}>
-      <SheetContent className="overflow-y-auto sm:max-w-[800px] bg-background">
-        <SheetHeader className="border-b pb-4 mb-2">
+    <Sheet onOpenChange={(open) => !open && close()} open={isOpen}>
+      <SheetContent className="overflow-y-auto bg-background sm:max-w-[800px]">
+        <SheetHeader className="mb-2 border-b pb-4">
           <SheetTitle className="text-2xl">{title}</SheetTitle>
         </SheetHeader>
 
-        <InvoiceForm invoiceId={invoiceId} orderId={orderId || undefined} onSuccess={close} />
+        <InvoiceForm invoiceId={invoiceId} onSuccess={close} orderId={orderId || undefined} />
       </SheetContent>
     </Sheet>
   );

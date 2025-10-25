@@ -1,4 +1,4 @@
-import { eq, and, isNull, or, ilike, desc, sql } from "drizzle-orm";
+import { and, desc, eq, ilike, isNull, or, sql } from "drizzle-orm";
 import type { DbClient } from "../client";
 import { clients } from "../schema";
 
@@ -12,7 +12,7 @@ export async function getClients(
     search?: string;
     limit?: number;
     cursor?: string;
-  },
+  }
 ) {
   const { teamId, search, limit = 50, cursor } = params;
 
@@ -30,8 +30,8 @@ export async function getClients(
         ilike(clients.name, `%${search}%`),
         ilike(clients.email, `%${search}%`),
         ilike(clients.phone, `%${search}%`),
-        ilike(clients.whatsapp, `%${search}%`),
-      )!,
+        ilike(clients.whatsapp, `%${search}%`)
+      )!
     );
   }
 
@@ -73,7 +73,7 @@ export async function updateClient(
   db: DbClient,
   id: string,
   teamId: string,
-  data: Partial<typeof clients.$inferInsert>,
+  data: Partial<typeof clients.$inferInsert>
 ) {
   const result = await db
     .update(clients)

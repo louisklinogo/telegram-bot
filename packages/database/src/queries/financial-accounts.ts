@@ -19,11 +19,7 @@ export async function getFinancialAccounts(db: DbClient, params: { teamId: strin
     .orderBy(financialAccounts.name);
 }
 
-export async function getFinancialAccountById(
-  db: DbClient,
-  teamId: string,
-  accountId: string,
-) {
+export async function getFinancialAccountById(db: DbClient, teamId: string, accountId: string) {
   const result = await db
     .select({
       id: financialAccounts.id,
@@ -53,7 +49,7 @@ export async function createFinancialAccount(
     provider?: string;
     externalId?: string;
     openingBalance?: string;
-  },
+  }
 ) {
   const [result] = await db
     .insert(financialAccounts)
@@ -88,7 +84,7 @@ export async function updateFinancialAccount(
     name?: string;
     status?: string;
     openingBalance?: string | null;
-  },
+  }
 ) {
   const [result] = await db
     .update(financialAccounts)

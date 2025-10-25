@@ -17,7 +17,7 @@ type NextResponseLike = {
 
 export async function updateSession<T extends NextResponseLike>(
   request: NextRequestLike,
-  response: T,
+  response: T
 ): Promise<T> {
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -36,7 +36,7 @@ export async function updateSession<T extends NextResponseLike>(
           response.cookies.set({ name, value: "", ...options });
         },
       },
-    },
+    }
   );
 
   // CRITICAL: Must call getUser() to trigger session refresh and cookie updates

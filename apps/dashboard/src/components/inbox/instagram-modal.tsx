@@ -17,7 +17,7 @@ export function InstagramModal({ isOpen, onClose }: InstagramModalProps) {
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog onOpenChange={onClose} open={isOpen}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Connect Instagram</DialogTitle>
@@ -28,22 +28,22 @@ export function InstagramModal({ isOpen, onClose }: InstagramModalProps) {
               <InstagramLogo />
             </div>
             <div className="text-center">
-              <h3 className="text-lg font-medium">Connect Instagram</h3>
-              <p className="text-sm text-muted-foreground mt-1">
+              <h3 className="font-medium text-lg">Connect Instagram</h3>
+              <p className="mt-1 text-muted-foreground text-sm">
                 Link your Instagram Business account to receive direct messages
               </p>
             </div>
           </div>
 
-          <div className="flex flex-col gap-4 w-full border-t-[1px] pt-8">
-            <Button onClick={handleConnect} className="w-full" variant="default">
+          <div className="flex w-full flex-col gap-4 border-t-[1px] pt-8">
+            <Button className="w-full" onClick={handleConnect} variant="default">
               <ExternalLink className="mr-2 h-4 w-4" />
               Connect with Instagram
             </Button>
           </div>
 
-          <div className="text-xs text-muted-foreground text-center max-w-sm">
-            <ol className="list-decimal list-inside space-y-1 mt-1">
+          <div className="max-w-sm text-center text-muted-foreground text-xs">
+            <ol className="mt-1 list-inside list-decimal space-y-1">
               <li>You'll be redirected to Facebook for authorization</li>
               <li>Select your Instagram Business account</li>
               <li>Grant permissions to receive direct messages</li>

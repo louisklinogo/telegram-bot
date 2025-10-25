@@ -1,6 +1,7 @@
 "use client";
 
 import { Keyboard } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -9,7 +10,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
 
 export function KeyboardShortcutsHelp() {
   const shortcuts = [
@@ -50,38 +50,34 @@ export function KeyboardShortcutsHelp() {
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button variant="ghost" size="icon">
+        <Button size="icon" variant="ghost">
           <Keyboard className="h-4 w-4" />
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle>Keyboard Shortcuts</DialogTitle>
-          <DialogDescription>
-            Use these shortcuts to navigate faster
-          </DialogDescription>
+          <DialogDescription>Use these shortcuts to navigate faster</DialogDescription>
         </DialogHeader>
-        <div className="space-y-6 mt-4">
+        <div className="mt-4 space-y-6">
           {shortcuts.map((section) => (
             <div key={section.category}>
-              <h3 className="text-sm font-semibold mb-3">{section.category}</h3>
+              <h3 className="mb-3 font-semibold text-sm">{section.category}</h3>
               <div className="space-y-2">
                 {section.items.map((item, index) => (
                   <div
+                    className="flex items-center justify-between rounded-md px-3 py-2 hover:bg-muted/50"
                     key={index}
-                    className="flex items-center justify-between py-2 px-3 rounded-md hover:bg-muted/50"
                   >
-                    <span className="text-sm text-muted-foreground">
-                      {item.description}
-                    </span>
+                    <span className="text-muted-foreground text-sm">{item.description}</span>
                     <div className="flex items-center gap-1">
                       {item.keys.map((key, keyIndex) => (
-                        <span key={keyIndex} className="flex items-center gap-1">
-                          <kbd className="px-2 py-1 text-xs font-semibold bg-muted border border-border rounded">
+                        <span className="flex items-center gap-1" key={keyIndex}>
+                          <kbd className="rounded border border-border bg-muted px-2 py-1 font-semibold text-xs">
                             {key}
                           </kbd>
                           {keyIndex < item.keys.length - 1 && (
-                            <span className="text-xs text-muted-foreground">+</span>
+                            <span className="text-muted-foreground text-xs">+</span>
                           )}
                         </span>
                       ))}

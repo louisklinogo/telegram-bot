@@ -1,20 +1,9 @@
 "use client";
 
-import { MoreVertical, Download, Trash2, Eye, Copy, Check } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Checkbox } from "@/components/ui/checkbox";
-import { trpc } from "@/lib/trpc/client";
-import { useToast } from "@/components/ui/use-toast";
 import { createBrowserClient } from "@Faworra/supabase/client";
+import { Check, Copy, Download, Eye, MoreVertical, Trash2 } from "lucide-react";
 import { useState } from "react";
+import { FilePreviewIcon } from "@/components/file-preview-icon";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,10 +14,21 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { TagEditor } from "./tag-editor";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useToast } from "@/components/ui/use-toast";
+import { trpc } from "@/lib/trpc/client";
 import { cn } from "@/lib/utils";
 import { useVaultStore } from "@/stores/vault-store";
-import { FilePreviewIcon } from "@/components/file-preview-icon";
+import { TagEditor } from "./tag-editor";
 
 type VaultCardProps = {
   document: any;
@@ -124,15 +124,15 @@ export function VaultCard({ document }: VaultCardProps) {
     <>
       <div
         className={cn(
-          "h-72 border relative flex text-muted-foreground p-4 flex-col gap-3 hover:bg-accent dark:hover:bg-secondary transition-colors duration-200 group cursor-pointer",
-          isSelected && "ring-2 ring-primary",
+          "group relative flex h-72 cursor-pointer flex-col gap-3 border p-4 text-muted-foreground transition-colors duration-200 hover:bg-accent dark:hover:bg-secondary",
+          isSelected && "ring-2 ring-primary"
         )}
       >
         {/* Checkbox for selection - top right, always visible when selected or on hover */}
         <div
           className={cn(
-            "absolute top-2 left-2 transition-opacity duration-200 z-10",
-            isSelected ? "opacity-100" : "opacity-0 group-hover:opacity-100",
+            "absolute top-2 left-2 z-10 transition-opacity duration-200",
+            isSelected ? "opacity-100" : "opacity-0 group-hover:opacity-100"
           )}
         >
           <Checkbox
@@ -142,61 +142,61 @@ export function VaultCard({ document }: VaultCardProps) {
           />
         </div>
 
-        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+        <div className="absolute top-2 right-2 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
           <DropdownMenu>
             <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+              <Button className="h-8 w-8 p-0" size="sm" variant="ghost">
                 <MoreVertical className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem onClick={handleDownload}>
-                <Eye className="h-4 w-4 mr-2" />
+                <Eye className="mr-2 h-4 w-4" />
                 Preview
               </DropdownMenuItem>
               <DropdownMenuItem onClick={handleDownload}>
-                <Download className="h-4 w-4 mr-2" />
+                <Download className="mr-2 h-4 w-4" />
                 Download
               </DropdownMenuItem>
               <DropdownMenuItem onClick={handleShare}>
                 {isCopied ? (
                   <>
-                    <Check className="h-4 w-4 mr-2" />
+                    <Check className="mr-2 h-4 w-4" />
                     Copied!
                   </>
                 ) : (
                   <>
-                    <Copy className="h-4 w-4 mr-2" />
+                    <Copy className="mr-2 h-4 w-4" />
                     Copy Link
                   </>
                 )}
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={handleDelete} className="text-destructive">
-                <Trash2 className="h-4 w-4 mr-2" />
+              <DropdownMenuItem className="text-destructive" onClick={handleDelete}>
+                <Trash2 className="mr-2 h-4 w-4" />
                 Delete
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
 
-        <button type="button" className="w-[60px] h-[84px] flex items-center justify-center">
+        <button className="flex h-[84px] w-[60px] items-center justify-center" type="button">
           {isLoading ? (
-            <Skeleton className="w-[60px] h-[84px]" />
+            <Skeleton className="h-[84px] w-[60px]" />
           ) : (
-            <FilePreviewIcon mimeType={document.mimeType} className="w-8 h-8" />
+            <FilePreviewIcon className="h-8 w-8" mimeType={document.mimeType} />
           )}
         </button>
 
         <div className="flex flex-col text-left">
-          <h2 className="text-sm text-primary line-clamp-1 mb-2 mt-3">
-            {isLoading ? <Skeleton className="w-[80%] h-4" /> : document.name}
+          <h2 className="mt-3 mb-2 line-clamp-1 text-primary text-sm">
+            {isLoading ? <Skeleton className="h-4 w-[80%]" /> : document.name}
           </h2>
 
           {isLoading ? (
-            <Skeleton className="w-[50%] h-4" />
+            <Skeleton className="h-4 w-[50%]" />
           ) : (
-            <p className="text-xs text-muted-foreground line-clamp-3">
+            <p className="line-clamp-3 text-muted-foreground text-xs">
               {document.metadata?.description || "No description"}
             </p>
           )}
@@ -207,7 +207,7 @@ export function VaultCard({ document }: VaultCardProps) {
         </div>
       </div>
 
-      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+      <AlertDialog onOpenChange={setShowDeleteDialog} open={showDeleteDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Delete document?</AlertDialogTitle>
@@ -219,8 +219,8 @@ export function VaultCard({ document }: VaultCardProps) {
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
-              onClick={confirmDelete}
               className="bg-destructive text-destructive-foreground"
+              onClick={confirmDelete}
             >
               Delete
             </AlertDialogAction>

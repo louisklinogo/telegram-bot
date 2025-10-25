@@ -9,7 +9,5 @@
     "types": []
   },
   "include": ["src/**/*"],
-  "exclude": [
-    "src/rest/routers/oauth.ts"
-  ]
+  "exclude": ["src/rest/routers/oauth.ts"]
 }

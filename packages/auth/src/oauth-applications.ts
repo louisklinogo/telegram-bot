@@ -1,5 +1,5 @@
-import crypto from "crypto";
 import bcrypt from "bcryptjs";
+import crypto from "crypto";
 
 /**
  * OAuth Application Management Service
@@ -26,7 +26,7 @@ export interface OAuthApplication {
   createdBy: string;
   isPublic: boolean;
   active: boolean;
-  status: 'draft' | 'pending' | 'approved' | 'rejected';
+  status: "draft" | "pending" | "approved" | "rejected";
   createdAt: Date;
   updatedAt: Date;
 }
@@ -69,7 +69,7 @@ export class OAuthApplicationService {
    */
   private generateClientId(): string {
     const randomBytes = crypto.randomBytes(24); // 24 bytes = 32 base64url chars
-    return `faw_client_${randomBytes.toString('base64url')}`;
+    return `faw_client_${randomBytes.toString("base64url")}`;
   }
 
   /**
@@ -78,7 +78,7 @@ export class OAuthApplicationService {
    */
   private generateClientSecret(): string {
     const randomBytes = crypto.randomBytes(48); // 48 bytes = 64 base64url chars
-    return `faw_secret_${randomBytes.toString('base64url')}`;
+    return `faw_secret_${randomBytes.toString("base64url")}`;
   }
 
   /**
@@ -87,16 +87,16 @@ export class OAuthApplicationService {
   private generateSlug(name: string, existingSlugs: string[] = []): string {
     let baseSlug = name
       .toLowerCase()
-      .replace(/[^a-z0-9\s-]/g, '') // Remove special chars except spaces and hyphens
-      .replace(/\s+/g, '-') // Replace spaces with hyphens
-      .replace(/-+/g, '-') // Replace multiple hyphens with single
-      .replace(/^-|-$/g, ''); // Remove leading/trailing hyphens
-    
+      .replace(/[^a-z0-9\s-]/g, "") // Remove special chars except spaces and hyphens
+      .replace(/\s+/g, "-") // Replace spaces with hyphens
+      .replace(/-+/g, "-") // Replace multiple hyphens with single
+      .replace(/^-|-$/g, ""); // Remove leading/trailing hyphens
+
     // Handle empty slug
     if (!baseSlug) {
-      baseSlug = 'app';
+      baseSlug = "app";
     }
-    
+
     // Ensure uniqueness
     let slug = baseSlug;
     let counter = 1;
@@ -104,7 +104,7 @@ export class OAuthApplicationService {
       slug = `${baseSlug}-${counter}`;
       counter++;
     }
-    
+
     return slug;
   }
 
@@ -145,13 +145,13 @@ export class OAuthApplicationService {
 
     // Validate inputs
     if (!name || name.trim().length === 0) {
-      throw new Error('Application name is required');
+      throw new Error("Application name is required");
     }
     if (!redirectUris || redirectUris.length === 0) {
-      throw new Error('At least one redirect URI is required');
+      throw new Error("At least one redirect URI is required");
     }
     if (screenshots.length > 4) {
-      throw new Error('Maximum 4 screenshots allowed');
+      throw new Error("Maximum 4 screenshots allowed");
     }
 
     // Validate redirect URIs
@@ -167,7 +167,7 @@ export class OAuthApplicationService {
     const clientId = this.generateClientId();
     const clientSecret = this.generateClientSecret();
     const clientSecretHash = await bcrypt.hash(clientSecret, 12);
-    
+
     // TODO: Get existing slugs from database to ensure uniqueness
     const existingSlugs: string[] = []; // This should be fetched from DB
     const slug = this.generateSlug(name, existingSlugs);
@@ -194,7 +194,7 @@ export class OAuthApplicationService {
       createdBy,
       isPublic,
       active: true,
-      status: 'draft',
+      status: "draft",
       createdAt: now,
       updatedAt: now,
     };
@@ -232,9 +232,12 @@ export class OAuthApplicationService {
   /**
    * Regenerate client secret for an existing application
    */
-  async regenerateClientSecret(applicationId: string, userId: string): Promise<{ clientSecret: string }> {
+  async regenerateClientSecret(
+    applicationId: string,
+    userId: string
+  ): Promise<{ clientSecret: string }> {
     // TODO: Verify user has permission to regenerate secret
-    
+
     const newClientSecret = this.generateClientSecret();
     const clientSecretHash = await bcrypt.hash(newClientSecret, 12);
 
@@ -256,7 +259,7 @@ export class OAuthApplicationService {
    * Following Midday's validation logic
    */
   async validateClientCredentials(
-    clientId: string, 
+    clientId: string,
     clientSecret?: string
   ): Promise<OAuthApplication | null> {
     // TODO: Get application from database
@@ -277,14 +280,14 @@ export class OAuthApplicationService {
     // For public clients, no secret validation required
     if (application.isPublic) {
       if (clientSecret) {
-        throw new Error('Public clients must not send client_secret');
+        throw new Error("Public clients must not send client_secret");
       }
       return application;
     }
 
     // For confidential clients, validate secret
     if (!clientSecret) {
-      throw new Error('Client secret required for confidential clients');
+      throw new Error("Client secret required for confidential clients");
     }
 
     const isValidSecret = await bcrypt.compare(clientSecret, application.clientSecretHash);
@@ -319,7 +322,7 @@ export class OAuthApplicationService {
     } = params;
 
     // Generate secure authorization code
-    const code = crypto.randomBytes(32).toString('base64url');
+    const code = crypto.randomBytes(32).toString("base64url");
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
     const authCode: OAuthAuthorizationCode = {
@@ -356,7 +359,7 @@ export class OAuthApplicationService {
     codeVerifier?: string;
   }): Promise<{
     accessToken: string;
-    tokenType: 'Bearer';
+    tokenType: "Bearer";
     expiresIn: number;
     refreshToken?: string;
     scopes: string[];
@@ -375,41 +378,38 @@ export class OAuthApplicationService {
     const authCode: any = null; // Placeholder
 
     if (!authCode) {
-      throw new Error('Invalid authorization code');
+      throw new Error("Invalid authorization code");
     }
 
     if (new Date() > new Date(authCode.expiresAt)) {
-      throw new Error('Authorization code expired');
+      throw new Error("Authorization code expired");
     }
 
     if (authCode.redirectUri !== redirectUri) {
-      throw new Error('redirect_uri does not match');
+      throw new Error("redirect_uri does not match");
     }
 
     // Validate PKCE if required
     if (authCode.codeChallenge) {
       if (!codeVerifier) {
-        throw new Error('code_verifier required for PKCE');
+        throw new Error("code_verifier required for PKCE");
       }
-      
+
       let challenge: string;
-      if (authCode.codeChallengeMethod === 'S256') {
-        challenge = crypto
-          .createHash('sha256')
-          .update(codeVerifier)
-          .digest('base64url');
+      if (authCode.codeChallengeMethod === "S256") {
+        challenge = crypto.createHash("sha256").update(codeVerifier).digest("base64url");
       } else {
         challenge = codeVerifier;
       }
 
       if (challenge !== authCode.codeChallenge) {
-        throw new Error('Invalid code_verifier');
+        throw new Error("Invalid code_verifier");
       }
     }
 
     // Generate access token
-    const accessToken = `faw_access_token_${crypto.randomBytes(32).toString('base64url')}`;
-    const refreshToken = `faw_refresh_${crypto.randomBytes(32).toString('base64url')}`;
+    const accessToken = `faw_access_token_${crypto.randomBytes(32).toString("base64url")}`;
+    const refreshToken = `faw_refresh_${crypto.randomBytes(32).toString("base64url")}`;
     const expiresIn = 3600; // 1 hour
     const expiresAt = new Date(Date.now() + expiresIn * 1000);
     const refreshTokenExpiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 days
@@ -419,7 +419,7 @@ export class OAuthApplicationService {
 
     return {
       accessToken,
-      tokenType: 'Bearer',
+      tokenType: "Bearer",
       expiresIn,
       refreshToken,
       scopes: authCode.scopes,
@@ -431,7 +431,7 @@ export class OAuthApplicationService {
    * Used by middleware to authenticate API requests
    */
   async validateAccessToken(token: string): Promise<OAuthAccessToken | null> {
-    if (!token.startsWith('faw_access_token_')) {
+    if (!token.startsWith("faw_access_token_")) {
       return null;
     }
 
@@ -462,10 +462,7 @@ export class OAuthApplicationService {
   /**
    * Revoke access token or refresh token
    */
-  async revokeToken(params: {
-    token: string;
-    applicationId: string;
-  }): Promise<void> {
+  async revokeToken(params: { token: string; applicationId: string }): Promise<void> {
     const { token, applicationId } = params;
 
     // TODO: Update token in database

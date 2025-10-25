@@ -15,7 +15,7 @@ export function ConnectWhatsApp() {
       const res = await fetch(`${base}/providers/whatsapp/baileys/session/start`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ externalId: `primary`, displayName: "WhatsApp" }),
+        body: JSON.stringify({ externalId: "primary", displayName: "WhatsApp" }),
       });
       if (!res.ok) throw new Error("Failed");
       setIsModalOpen(true);
@@ -29,11 +29,11 @@ export function ConnectWhatsApp() {
   return (
     <>
       <Button
-        variant="outline"
-        size="sm"
         className="w-full transform transition-all duration-200 hover:scale-[1.02] hover:shadow-md"
-        onClick={startInstall}
         disabled={installing}
+        onClick={startInstall}
+        size="sm"
+        variant="outline"
       >
         {installing ? "Installing..." : "Install"}
       </Button>

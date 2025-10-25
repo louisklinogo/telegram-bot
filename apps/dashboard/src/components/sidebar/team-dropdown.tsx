@@ -39,14 +39,14 @@ export function TeamDropdown({ isExpanded = false, teams = [], currentTeamId }: 
   const initials = (currentTeam?.name || "TM").slice(0, 2).toUpperCase();
 
   return (
-    <div className="absolute left-[19px] bottom-4 flex items-center gap-3">
+    <div className="absolute bottom-4 left-[19px] flex items-center gap-3">
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Avatar className="w-[32px] h-[32px] rounded-none border cursor-pointer">
+          <Avatar className="h-[32px] w-[32px] cursor-pointer rounded-none border">
             <AvatarFallback className="rounded-none text-xs">{initials}</AvatarFallback>
           </Avatar>
         </DropdownMenuTrigger>
-        <DropdownMenuContent side="right" align="start">
+        <DropdownMenuContent align="start" side="right">
           {teamsList.map((t) => (
             <DropdownMenuItem key={t.id} onClick={() => setTeam(t.id)}>
               {t.name || t.id}
@@ -55,7 +55,7 @@ export function TeamDropdown({ isExpanded = false, teams = [], currentTeamId }: 
         </DropdownMenuContent>
       </DropdownMenu>
       {isExpanded && currentTeam?.name && (
-        <span className="text-sm text-primary truncate max-w-[140px]">{currentTeam.name}</span>
+        <span className="max-w-[140px] truncate text-primary text-sm">{currentTeam.name}</span>
       )}
     </div>
   );

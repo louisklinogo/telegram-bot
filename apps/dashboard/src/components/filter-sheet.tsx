@@ -1,9 +1,9 @@
 "use client";
 
+import { Label } from "@Faworra/ui/label";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@Faworra/ui/label";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from "@/components/ui/sheet";
 import {
   Select,
   SelectContent,
@@ -11,7 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useState } from "react";
+import { Sheet, SheetContent, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 
 type FilterSheetProps = {
   open: boolean;
@@ -43,7 +43,7 @@ export function FilterSheet({ open, onOpenChange, onApplyFilters }: FilterSheetP
   };
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
+    <Sheet onOpenChange={onOpenChange} open={open}>
       <SheetContent>
         <SheetHeader>
           <SheetTitle>Filter Clients</SheetTitle>
@@ -53,8 +53,8 @@ export function FilterSheet({ open, onOpenChange, onApplyFilters }: FilterSheetP
           <div className="space-y-2">
             <Label>Referral Source</Label>
             <Select
-              value={filters.referralSource}
               onValueChange={(value) => setFilters({ ...filters, referralSource: value })}
+              value={filters.referralSource}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select source..." />
@@ -71,8 +71,8 @@ export function FilterSheet({ open, onOpenChange, onApplyFilters }: FilterSheetP
           <div className="space-y-2">
             <Label>Has Orders</Label>
             <Select
-              value={filters.hasOrders?.toString()}
               onValueChange={(value) => setFilters({ ...filters, hasOrders: value === "true" })}
+              value={filters.hasOrders?.toString()}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Any" />
@@ -88,31 +88,31 @@ export function FilterSheet({ open, onOpenChange, onApplyFilters }: FilterSheetP
             <Label>Revenue Range (GHS)</Label>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label className="text-xs text-muted-foreground">Min</Label>
+                <Label className="text-muted-foreground text-xs">Min</Label>
                 <Input
-                  type="number"
-                  placeholder="0"
-                  value={filters.minRevenue || ""}
                   onChange={(e) =>
                     setFilters({
                       ...filters,
                       minRevenue: Number(e.target.value) || undefined,
                     })
                   }
+                  placeholder="0"
+                  type="number"
+                  value={filters.minRevenue || ""}
                 />
               </div>
               <div className="space-y-2">
-                <Label className="text-xs text-muted-foreground">Max</Label>
+                <Label className="text-muted-foreground text-xs">Max</Label>
                 <Input
-                  type="number"
-                  placeholder="10000"
-                  value={filters.maxRevenue || ""}
                   onChange={(e) =>
                     setFilters({
                       ...filters,
                       maxRevenue: Number(e.target.value) || undefined,
                     })
                   }
+                  placeholder="10000"
+                  type="number"
+                  value={filters.maxRevenue || ""}
                 />
               </div>
             </div>
@@ -120,7 +120,7 @@ export function FilterSheet({ open, onOpenChange, onApplyFilters }: FilterSheetP
         </div>
 
         <SheetFooter className="flex justify-end gap-4">
-          <Button variant="outline" onClick={handleClear}>
+          <Button onClick={handleClear} variant="outline">
             Clear All
           </Button>
           <Button onClick={handleApply}>Apply Filters</Button>

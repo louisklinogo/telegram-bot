@@ -1,10 +1,10 @@
 export type {
+  CompositeTypes,
   Database,
+  Enums,
   Json,
   Tables,
   TablesInsert,
   TablesUpdate,
-  Enums,
-  CompositeTypes,
 } from "./database.generated";
 export { Constants } from "./database.generated";

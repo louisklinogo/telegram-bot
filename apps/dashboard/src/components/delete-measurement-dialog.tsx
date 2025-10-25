@@ -34,7 +34,7 @@ export function DeleteMeasurementDialog({
   };
 
   return (
-    <AlertDialog open={open} onOpenChange={onOpenChange}>
+    <AlertDialog onOpenChange={onOpenChange} open={open}>
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>Are you sure?</AlertDialogTitle>
@@ -58,9 +58,9 @@ export function DeleteMeasurementDialog({
         <AlertDialogFooter>
           <AlertDialogCancel disabled={deleteMutation.isPending}>Cancel</AlertDialogCancel>
           <AlertDialogAction
-            onClick={handleDelete}
-            disabled={deleteMutation.isPending}
             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            disabled={deleteMutation.isPending}
+            onClick={handleDelete}
           >
             {deleteMutation.isPending ? "Deleting..." : "Delete Measurement"}
           </AlertDialogAction>

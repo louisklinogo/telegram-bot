@@ -1,10 +1,10 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { Upload, Download } from "lucide-react";
-import { useRef } from "react";
+import { Download, Upload } from "lucide-react";
 import Papa from "papaparse";
+import { useRef } from "react";
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 
 type CSVUploadProps = {
   onUpload: (data: any[]) => void;
@@ -80,24 +80,24 @@ export function CSVUpload({ onUpload }: CSVUploadProps) {
   return (
     <div className="flex items-center gap-2">
       <input
+        accept=".csv"
+        className="hidden"
+        onChange={handleFileSelect}
         ref={fileInputRef}
         type="file"
-        accept=".csv"
-        onChange={handleFileSelect}
-        className="hidden"
       />
 
       <Button
-        variant="outline"
-        size="sm"
         className="gap-2"
         onClick={() => fileInputRef.current?.click()}
+        size="sm"
+        variant="outline"
       >
         <Upload className="h-4 w-4" />
         Import CSV
       </Button>
 
-      <Button variant="outline" size="sm" className="gap-2" onClick={downloadTemplate}>
+      <Button className="gap-2" onClick={downloadTemplate} size="sm" variant="outline">
         <Download className="h-4 w-4" />
         Template
       </Button>

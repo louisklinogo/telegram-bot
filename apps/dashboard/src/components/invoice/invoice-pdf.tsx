@@ -1,4 +1,4 @@
-import { Document, Page, Text, View, StyleSheet, Image, Font } from "@react-pdf/renderer";
+import { Document, Font, Image, Page, StyleSheet, Text, View } from "@react-pdf/renderer";
 
 // Register fonts (optional - for better typography)
 Font.register({
@@ -210,7 +210,7 @@ export function InvoicePDF({ invoice, items, from, to }: InvoicePDFProps) {
       <Page size="A4" style={styles.page}>
         {/* Header */}
         <View style={styles.header}>
-          <View>{invoice.logoUrl && <Image style={styles.logo} src={invoice.logoUrl} />}</View>
+          <View>{invoice.logoUrl && <Image src={invoice.logoUrl} style={styles.logo} />}</View>
           <View style={styles.invoiceInfo}>
             <Text style={styles.title}>INVOICE</Text>
             <Text style={styles.invoiceNumber}>{invoice.invoiceNumber}</Text>

@@ -1,8 +1,8 @@
 "use client";
 
-import { trpc } from "@/lib/trpc/client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useSuspenseQuery } from "@tanstack/react-query";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { trpc } from "@/lib/trpc/client";
 
 export function PendingOrdersCount() {
   const [data] = trpc.analytics.pendingOrdersCount.useSuspenseQuery();
@@ -16,7 +16,7 @@ export function PendingOrdersCount() {
       <CardContent className="pb-[34px]">
         <div className="flex flex-col gap-2">
           <div>Pending Orders</div>
-          <div className="text-sm text-muted-foreground">In progress</div>
+          <div className="text-muted-foreground text-sm">In progress</div>
         </div>
       </CardContent>
     </Card>

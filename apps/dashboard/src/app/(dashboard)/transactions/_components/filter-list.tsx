@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import { Badge } from '@/components/ui/badge';
-import { Icons } from '@/components/ui/icons';
-import { cn } from '@/lib/utils';
-import type { FilterState } from './types';
+import { Badge } from "@/components/ui/badge";
+import { Icons } from "@/components/ui/icons";
+import { cn } from "@/lib/utils";
+import type { FilterState } from "./types";
 
 type Props = {
   filters: FilterState;
@@ -21,10 +21,10 @@ interface FilterBadgeProps {
 
 function FilterBadge({ label, onRemove, icon: Icon }: FilterBadgeProps) {
   return (
-    <Badge 
-      variant="secondary" 
-      className="flex items-center gap-1 text-xs cursor-pointer hover:bg-secondary/80"
+    <Badge
+      className="flex cursor-pointer items-center gap-1 text-xs hover:bg-secondary/80"
       onClick={onRemove}
+      variant="secondary"
     >
       {Icon && <Icon className="h-3 w-3" />}
       <span>{label}</span>
@@ -33,25 +33,32 @@ function FilterBadge({ label, onRemove, icon: Icon }: FilterBadgeProps) {
   );
 }
 
-export function FilterList({ filters, onRemoveFilter, onClearAll, loading = false, currency = "GHS" }: Props) {
+export function FilterList({
+  filters,
+  onRemoveFilter,
+  onClearAll,
+  loading = false,
+  currency = "GHS",
+}: Props) {
   const filterBadges: React.ReactNode[] = [];
 
   // Date range
   if (filters.startDate || filters.endDate) {
-    const label = filters.startDate && filters.endDate 
-      ? `${formatDate(filters.startDate)} - ${formatDate(filters.endDate)}`
-      : filters.startDate 
-        ? `From ${formatDate(filters.startDate)}`
-        : `Until ${formatDate(filters.endDate!)}`;
-    
+    const label =
+      filters.startDate && filters.endDate
+        ? `${formatDate(filters.startDate)} - ${formatDate(filters.endDate)}`
+        : filters.startDate
+          ? `From ${formatDate(filters.startDate)}`
+          : `Until ${formatDate(filters.endDate!)}`;
+
     filterBadges.push(
       <FilterBadge
+        icon={Icons.CalendarMonth}
         key="date-range"
         label={label}
-        icon={Icons.CalendarMonth}
         onRemove={() => {
-          onRemoveFilter('startDate');
-          onRemoveFilter('endDate');
+          onRemoveFilter("startDate");
+          onRemoveFilter("endDate");
         }}
       />
     );
@@ -59,20 +66,21 @@ export function FilterList({ filters, onRemoveFilter, onClearAll, loading = fals
 
   // Amount range
   if (filters.amountMin !== undefined || filters.amountMax !== undefined) {
-    const label = filters.amountMin !== undefined && filters.amountMax !== undefined
-      ? `${currency} ${filters.amountMin} - ${currency} ${filters.amountMax}`
-      : filters.amountMin !== undefined
-        ? `From ${currency} ${filters.amountMin}`
-        : `Up to ${currency} ${filters.amountMax}`;
-    
+    const label =
+      filters.amountMin !== undefined && filters.amountMax !== undefined
+        ? `${currency} ${filters.amountMin} - ${currency} ${filters.amountMax}`
+        : filters.amountMin !== undefined
+          ? `From ${currency} ${filters.amountMin}`
+          : `Up to ${currency} ${filters.amountMax}`;
+
     filterBadges.push(
       <FilterBadge
+        icon={Icons.Currency}
         key="amount-range"
         label={label}
-        icon={Icons.Currency}
         onRemove={() => {
-          onRemoveFilter('amountMin');
-          onRemoveFilter('amountMax');
+          onRemoveFilter("amountMin");
+          onRemoveFilter("amountMax");
         }}
       />
     );
@@ -81,12 +89,12 @@ export function FilterList({ filters, onRemoveFilter, onClearAll, loading = fals
   // Statuses
   if (filters.statuses?.length) {
     filterBadges.push(
-      ...filters.statuses.map(status => (
+      ...filters.statuses.map((status) => (
         <FilterBadge
+          icon={Icons.Status}
           key={`status-${status}`}
           label={status.charAt(0).toUpperCase() + status.slice(1)}
-          icon={Icons.Status}
-          onRemove={() => onRemoveFilter('statuses', status)}
+          onRemove={() => onRemoveFilter("statuses", status)}
         />
       ))
     );
@@ -96,10 +104,10 @@ export function FilterList({ filters, onRemoveFilter, onClearAll, loading = fals
   if (filters.hasAttachments !== undefined) {
     filterBadges.push(
       <FilterBadge
-        key="attachments"
-        label={filters.hasAttachments ? 'Has attachments' : 'No attachments'}
         icon={Icons.Attachments}
-        onRemove={() => onRemoveFilter('hasAttachments')}
+        key="attachments"
+        label={filters.hasAttachments ? "Has attachments" : "No attachments"}
+        onRemove={() => onRemoveFilter("hasAttachments")}
       />
     );
   }
@@ -107,12 +115,12 @@ export function FilterList({ filters, onRemoveFilter, onClearAll, loading = fals
   // Categories
   if (filters.categories?.length) {
     filterBadges.push(
-      ...filters.categories.map(category => (
+      ...filters.categories.map((category) => (
         <FilterBadge
+          icon={Icons.Category}
           key={`category-${category}`}
           label={category}
-          icon={Icons.Category}
-          onRemove={() => onRemoveFilter('categories', category)}
+          onRemove={() => onRemoveFilter("categories", category)}
         />
       ))
     );
@@ -121,12 +129,12 @@ export function FilterList({ filters, onRemoveFilter, onClearAll, loading = fals
   // Tags
   if (filters.tags?.length) {
     filterBadges.push(
-      ...filters.tags.map(tag => (
+      ...filters.tags.map((tag) => (
         <FilterBadge
+          icon={Icons.Status}
           key={`tag-${tag}`}
           label={tag}
-          icon={Icons.Status}
-          onRemove={() => onRemoveFilter('tags', tag)}
+          onRemove={() => onRemoveFilter("tags", tag)}
         />
       ))
     );
@@ -135,12 +143,12 @@ export function FilterList({ filters, onRemoveFilter, onClearAll, loading = fals
   // Accounts
   if (filters.accounts?.length) {
     filterBadges.push(
-      ...filters.accounts.map(account => (
+      ...filters.accounts.map((account) => (
         <FilterBadge
+          icon={Icons.Accounts}
           key={`account-${account}`}
           label={account}
-          icon={Icons.Accounts}
-          onRemove={() => onRemoveFilter('accounts', account)}
+          onRemove={() => onRemoveFilter("accounts", account)}
         />
       ))
     );
@@ -149,12 +157,12 @@ export function FilterList({ filters, onRemoveFilter, onClearAll, loading = fals
   // Assignees
   if (filters.assignees?.length) {
     filterBadges.push(
-      ...filters.assignees.map(assignee => (
+      ...filters.assignees.map((assignee) => (
         <FilterBadge
+          icon={Icons.AccountCircle}
           key={`assignee-${assignee}`}
           label={assignee}
-          icon={Icons.AccountCircle}
-          onRemove={() => onRemoveFilter('assignees', assignee)}
+          onRemove={() => onRemoveFilter("assignees", assignee)}
         />
       ))
     );
@@ -164,10 +172,10 @@ export function FilterList({ filters, onRemoveFilter, onClearAll, loading = fals
   if (filters.isRecurring !== undefined) {
     filterBadges.push(
       <FilterBadge
-        key="recurring"
-        label={filters.isRecurring ? 'Recurring' : 'Not recurring'}
         icon={Icons.Repeat}
-        onRemove={() => onRemoveFilter('isRecurring')}
+        key="recurring"
+        label={filters.isRecurring ? "Recurring" : "Not recurring"}
+        onRemove={() => onRemoveFilter("isRecurring")}
       />
     );
   }
@@ -181,14 +189,14 @@ export function FilterList({ filters, onRemoveFilter, onClearAll, loading = fals
       {loading && (
         <div className="flex items-center gap-2">
           <Icons.Refresh className="h-3 w-3 animate-spin" />
-          <span className="text-xs text-muted-foreground">Updating filters...</span>
+          <span className="text-muted-foreground text-xs">Updating filters...</span>
         </div>
       )}
       {filterBadges}
       {filterBadges.length > 1 && (
         <button
+          className="text-muted-foreground text-xs transition-colors hover:text-foreground"
           onClick={onClearAll}
-          className="text-xs text-muted-foreground hover:text-foreground transition-colors"
         >
           Clear all
         </button>
@@ -200,10 +208,10 @@ export function FilterList({ filters, onRemoveFilter, onClearAll, loading = fals
 function formatDate(dateStr: string): string {
   try {
     const date = new Date(dateStr);
-    return date.toLocaleDateString('en-US', { 
-      month: 'short', 
-      day: 'numeric',
-      year: date.getFullYear() !== new Date().getFullYear() ? 'numeric' : undefined
+    return date.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: date.getFullYear() !== new Date().getFullYear() ? "numeric" : undefined,
     });
   } catch {
     return dateStr;

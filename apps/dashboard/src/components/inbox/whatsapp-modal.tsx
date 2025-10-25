@@ -63,60 +63,77 @@ export function WhatsAppModal({ isOpen, onClose }: WhatsAppModalProps) {
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-3xl p-0">
-        <DialogHeader className="sticky top-0 z-10 bg-background px-5 pt-5 pb-4 border-b">
+    <Dialog onOpenChange={onClose} open={isOpen}>
+      <DialogContent className="p-0 sm:max-w-3xl">
+        <DialogHeader className="sticky top-0 z-10 border-b bg-background px-5 pt-5 pb-4">
           <div className="flex items-start justify-between">
             <div>
-              <DialogTitle className="text-lg md:text-xl leading-none">Connect WhatsApp</DialogTitle>
-              <p className="text-xs text-muted-foreground mt-1">Scan the QR with your phone to pair WhatsApp.</p>
+              <DialogTitle className="text-lg leading-none md:text-xl">
+                Connect WhatsApp
+              </DialogTitle>
+              <p className="mt-1 text-muted-foreground text-xs">
+                Scan the QR with your phone to pair WhatsApp.
+              </p>
             </div>
           </div>
         </DialogHeader>
 
         <div className="p-6">
-          <div className="grid grid-cols-1 md:grid-cols-[360px,1fr] gap-8">
+          <div className="grid grid-cols-1 gap-8 md:grid-cols-[360px,1fr]">
             {/* Left: QR panel */}
             <div>
-              <div className="relative border rounded-lg p-4 flex items-center justify-center">
-                <div className="w-[360px] h-[360px] border border-border rounded-md flex items-center justify-center bg-background">
+              <div className="relative flex items-center justify-center rounded-lg border p-4">
+                <div className="flex h-[360px] w-[360px] items-center justify-center rounded-md border border-border bg-background">
                   {loading && !qrCodeUrl ? (
                     <div className="flex items-center justify-center">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-foreground" />
+                      <div className="h-8 w-8 animate-spin rounded-full border-foreground border-b-2" />
                     </div>
                   ) : qrCodeUrl ? (
-                    <img src={qrCodeUrl} alt="WhatsApp QR Code" className="w-[348px] h-[348px] object-contain" />
+                    <img
+                      alt="WhatsApp QR Code"
+                      className="h-[348px] w-[348px] object-contain"
+                      src={qrCodeUrl}
+                    />
                   ) : (
-                    <span className="text-sm text-muted-foreground" aria-live="polite">Waiting for QR…</span>
+                    <span aria-live="polite" className="text-muted-foreground text-sm">
+                      Waiting for QR…
+                    </span>
                   )}
                 </div>
 
                 {loading && qrCodeUrl && (
-                  <div className="absolute inset-0 bg-background/50 backdrop-blur-[1px] rounded-lg flex items-center justify-center">
-                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-foreground" />
+                  <div className="absolute inset-0 flex items-center justify-center rounded-lg bg-background/50 backdrop-blur-[1px]">
+                    <div className="h-6 w-6 animate-spin rounded-full border-foreground border-b-2" />
                   </div>
                 )}
               </div>
 
-              <div className="mt-4 flex flex-col sm:flex-row gap-3 w-full">
-                <Button onClick={fetchQr} className="flex-1 gap-2" variant="default" disabled={loading}>
+              <div className="mt-4 flex w-full flex-col gap-3 sm:flex-row">
+                <Button
+                  className="flex-1 gap-2"
+                  disabled={loading}
+                  onClick={fetchQr}
+                  variant="default"
+                >
                   <WhatsappLogo size={16} weight="duotone" />
                   {loading ? "Refreshing…" : "Refresh QR"}
                 </Button>
-                <Button onClick={copyToClipboard} variant="outline" className="flex-1">
+                <Button className="flex-1" onClick={copyToClipboard} variant="outline">
                   <Copy className="mr-2 h-4 w-4" />
                   Copy Link
                 </Button>
               </div>
 
-              <p className="mt-2 text-[11px] text-muted-foreground whitespace-nowrap">WhatsApp → Linked devices → Link a device</p>
+              <p className="mt-2 whitespace-nowrap text-[11px] text-muted-foreground">
+                WhatsApp → Linked devices → Link a device
+              </p>
             </div>
 
             {/* Right: Steps & tips */}
             <div className="space-y-6">
               <div>
-                <h4 className="text-sm font-medium mb-2">Steps</h4>
-                <ol className="list-decimal list-inside text-xs text-muted-foreground space-y-1">
+                <h4 className="mb-2 font-medium text-sm">Steps</h4>
+                <ol className="list-inside list-decimal space-y-1 text-muted-foreground text-xs">
                   <li>Open WhatsApp on your phone</li>
                   <li>Go to Linked devices → Link a device</li>
                   <li>Point your camera at the QR</li>
@@ -124,8 +141,8 @@ export function WhatsAppModal({ isOpen, onClose }: WhatsAppModalProps) {
                 </ol>
               </div>
               <div>
-                <h4 className="text-sm font-medium mb-2">Things to know</h4>
-                <ul className="list-disc list-inside text-xs text-muted-foreground space-y-1">
+                <h4 className="mb-2 font-medium text-sm">Things to know</h4>
+                <ul className="list-inside list-disc space-y-1 text-muted-foreground text-xs">
                   <li>Keep your phone powered and online for a steady connection.</li>
                   <li>If the session pauses, re‑scan — it takes under a minute.</li>
                 </ul>

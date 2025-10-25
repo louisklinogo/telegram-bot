@@ -1,5 +1,6 @@
 "use client";
 
+import type { RouterOutputs } from "@Faworra/api/trpc/routers/_app";
 import type { ColumnDef } from "@tanstack/react-table";
 import { MoreHorizontal } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -14,7 +15,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { formatAmount } from "@/lib/format-currency";
-import type { RouterOutputs } from "@Faworra/api/trpc/routers/_app";
 import { TagsCell } from "./tags-cell";
 
 export type TransactionRow = {
@@ -54,7 +54,10 @@ type ColumnContext = {
   onToggleSelection: (id: string) => void;
   onViewDetails: (row: TransactionRow) => void;
   onCopyUrl: (id: string) => void;
-  onToggleStatus: (id: string, status: NonNullable<TransactionRow["transaction"]["status"]>) => void;
+  onToggleStatus: (
+    id: string,
+    status: NonNullable<TransactionRow["transaction"]["status"]>
+  ) => void;
   onToggleExclude: (id: string, exclude: boolean) => void;
   onVoid: (id: string) => void;
   onUnvoid: (id: string) => void;
@@ -68,21 +71,21 @@ export function createTransactionColumns(context: ColumnContext): ColumnDef<Tran
       id: "select",
       header: ({ table }) => (
         <Checkbox
+          aria-label="Select all"
           checked={
             table.getIsAllPageRowsSelected() ||
             (table.getIsSomePageRowsSelected() && "indeterminate")
           }
           onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-          aria-label="Select all"
         />
       ),
       cell: ({ row }) => (
         <Checkbox
+          aria-label="Select row"
           checked={row.getIsSelected()}
           onCheckedChange={(value) => {
             row.toggleSelected(!!value);
           }}
-          aria-label="Select row"
         />
       ),
       enableSorting: false,
@@ -112,9 +115,9 @@ export function createTransactionColumns(context: ColumnContext): ColumnDef<Tran
       header: "Description",
       cell: ({ row }) => (
         <div className="space-y-1">
-          <p className="text-sm font-medium">{row.original.transaction.description}</p>
+          <p className="font-medium text-sm">{row.original.transaction.description}</p>
           {row.original.transaction.paymentReference && (
-            <p className="text-xs text-muted-foreground">
+            <p className="text-muted-foreground text-xs">
               Ref: {row.original.transaction.paymentReference}
             </p>
           )}
@@ -145,8 +148,8 @@ export function createTransactionColumns(context: ColumnContext): ColumnDef<Tran
                 : "bg-sky-100 text-sky-700 border-sky-200"; // adjustment
         return (
           <Badge
+            className={"rounded-full px-2.5 py-0.5 font-medium text-xs" + cls}
             variant="outline"
-            className={"rounded-full px-2.5 py-0.5 text-xs font-medium " + cls}
           >
             {label}
           </Badge>
@@ -159,7 +162,7 @@ export function createTransactionColumns(context: ColumnContext): ColumnDef<Tran
       id: "category",
       header: "Category",
       cell: ({ row }) => (
-        <span className="text-sm text-muted-foreground">
+        <span className="text-muted-foreground text-sm">
           {row.original.category?.name || row.original.transaction.categorySlug || "-"}
         </span>
       ),
@@ -177,7 +180,7 @@ export function createTransactionColumns(context: ColumnContext): ColumnDef<Tran
               .map((p) => (p ? p[0].toUpperCase() + p.slice(1).toLowerCase() : p))
               .join(" ")
           : "-";
-        return <span className="text-sm text-muted-foreground">{label}</span>;
+        return <span className="text-muted-foreground text-sm">{label}</span>;
       },
     },
     {
@@ -198,11 +201,11 @@ export function createTransactionColumns(context: ColumnContext): ColumnDef<Tran
                 : "bg-slate-100 text-slate-700 border-slate-200"; // cancelled
         return (
           <Badge
-            variant="outline"
             className={
-              "rounded-full px-2.5 py-0.5 text-xs font-medium inline-flex items-center gap-1.5 " +
+              "inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 font-medium text-xs" +
               cls
             }
+            variant="outline"
           >
             {s === "completed" && (
               <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-green-500" />
@@ -210,7 +213,9 @@ export function createTransactionColumns(context: ColumnContext): ColumnDef<Tran
             {s === "pending" && (
               <span
                 aria-hidden
-                className={"h-1.5 w-1.5 rounded-full bg-amber-500 " + (enriching ? "animate-pulse" : "")}
+                className={
+                  "h-1.5 w-1.5 rounded-full bg-amber-500" + (enriching ? "animate-pulse" : "")
+                }
               />
             )}
             {label}
@@ -226,7 +231,11 @@ export function createTransactionColumns(context: ColumnContext): ColumnDef<Tran
         const isManual = !!row.original.transaction.manual;
         const textCls = isManual ? "text-slate-700" : "text-[#878787]";
         return (
-          <span className={"border border-border rounded-full py-1 px-2 text-[10px] font-mono " + textCls}>
+          <span
+            className={
+              "rounded-full border border-border px-2 py-1 font-mono text-[10px]" + textCls
+            }
+          >
             {isManual ? "Manual" : "System"}
           </span>
         );
@@ -253,7 +262,7 @@ export function createTransactionColumns(context: ColumnContext): ColumnDef<Tran
             <span className="text-sm">{label}</span>
           </div>
         ) : (
-          <span className="text-sm text-muted-foreground">-</span>
+          <span className="text-muted-foreground text-sm">-</span>
         );
       },
     },
@@ -262,9 +271,9 @@ export function createTransactionColumns(context: ColumnContext): ColumnDef<Tran
       id: "tags",
       header: "Tags",
       cell: ({ row }) => (
-        <TagsCell 
-          transactionId={row.original.transaction.id} 
-          initialTags={row.original.tags ?? []} 
+        <TagsCell
+          initialTags={row.original.tags ?? []}
+          transactionId={row.original.transaction.id}
         />
       ),
     },
@@ -297,47 +306,67 @@ export function createTransactionColumns(context: ColumnContext): ColumnDef<Tran
         const isCompleted = transaction.status === "completed";
 
         return (
-          <DropdownMenu onOpenChange={context.onMenuOpenChange}
-          >
+          <DropdownMenu onOpenChange={context.onMenuOpenChange}>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm" data-row-click-exempt>
+              <Button data-row-click-exempt size="sm" variant="ghost">
                 <MoreHorizontal className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent forceMount align="end" className="w-[180px]" onCloseAutoFocus={(e) => e.preventDefault()}>
-              <DropdownMenuItem onSelect={() => setTimeout(() => context.onViewDetails(row.original), 0)}>
+            <DropdownMenuContent
+              align="end"
+              className="w-[180px]"
+              forceMount
+              onCloseAutoFocus={(e) => e.preventDefault()}
+            >
+              <DropdownMenuItem
+                onSelect={() => setTimeout(() => context.onViewDetails(row.original), 0)}
+              >
                 View details
               </DropdownMenuItem>
-              <DropdownMenuItem onSelect={() => setTimeout(() => context.onViewDetails(row.original), 0)}>
+              <DropdownMenuItem
+                onSelect={() => setTimeout(() => context.onViewDetails(row.original), 0)}
+              >
                 Edit tags…
               </DropdownMenuItem>
-              <DropdownMenuItem onSelect={() => setTimeout(() => context.onCopyUrl(transaction.id), 0)}>
+              <DropdownMenuItem
+                onSelect={() => setTimeout(() => context.onCopyUrl(transaction.id), 0)}
+              >
                 Copy share URL
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 onSelect={() =>
-                  setTimeout(() => context.onToggleStatus(transaction.id, isCompleted ? "pending" : "completed"), 0)
+                  setTimeout(
+                    () =>
+                      context.onToggleStatus(transaction.id, isCompleted ? "pending" : "completed"),
+                    0
+                  )
                 }
               >
                 Mark as {isCompleted ? "uncompleted" : "completed"}
               </DropdownMenuItem>
-              <DropdownMenuItem onSelect={() => setTimeout(() => context.onVoid(transaction.id), 0)}>
+              <DropdownMenuItem
+                onSelect={() => setTimeout(() => context.onVoid(transaction.id), 0)}
+              >
                 Void
               </DropdownMenuItem>
-              <DropdownMenuItem onSelect={() => setTimeout(() => context.onUnvoid(transaction.id), 0)}>
+              <DropdownMenuItem
+                onSelect={() => setTimeout(() => context.onUnvoid(transaction.id), 0)}
+              >
                 Unvoid
               </DropdownMenuItem>
               <DropdownMenuItem
-                onSelect={() => setTimeout(() => context.onToggleExclude(transaction.id, !isExcluded), 0)}
+                onSelect={() =>
+                  setTimeout(() => context.onToggleExclude(transaction.id, !isExcluded), 0)
+                }
               >
                 {isExcluded ? "Include" : "Exclude"} from analytics
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem
-                onSelect={() => setTimeout(() => context.onDelete(transaction.id), 0)}
                 className="text-destructive"
                 disabled={!transaction.manual}
+                onSelect={() => setTimeout(() => context.onDelete(transaction.id), 0)}
               >
                 Delete
               </DropdownMenuItem>
@@ -349,4 +378,3 @@ export function createTransactionColumns(context: ColumnContext): ColumnDef<Tran
     },
   ];
 }
-

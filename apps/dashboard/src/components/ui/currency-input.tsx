@@ -9,10 +9,10 @@ export function CurrencyInput({
 }: NumericFormatProps) {
   return (
     <NumericFormat
-      thousandSeparator={thousandSeparator}
+      customInput={Input}
       decimalScale={decimalScale}
       fixedDecimalScale={fixedDecimalScale}
-      customInput={Input}
+      thousandSeparator={thousandSeparator}
       {...props}
     />
   );

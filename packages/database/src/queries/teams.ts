@@ -1,6 +1,6 @@
 import { eq } from "drizzle-orm";
 import type { DbClient } from "../client";
-import { teams, usersOnTeam, users } from "../schema";
+import { teams, users, usersOnTeam } from "../schema";
 
 export async function getUserTeams(db: DbClient, userId: string) {
   return await db

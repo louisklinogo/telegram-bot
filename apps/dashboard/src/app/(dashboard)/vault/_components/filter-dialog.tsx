@@ -1,6 +1,9 @@
 "use client";
 
+import { Label } from "@Faworra/ui/label";
+import { Filter, X } from "lucide-react";
 import { useState, useTransition } from "react";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -11,9 +14,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Label } from "@Faworra/ui/label";
-import { Badge } from "@/components/ui/badge";
-import { X, Filter } from "lucide-react";
 import { useVaultParams } from "@/hooks/use-vault-params";
 import { trpc } from "@/lib/trpc/client";
 
@@ -34,7 +34,7 @@ export function FilterDialog({ trigger }: FilterDialogProps) {
 
   const toggleTag = (tag: string) => {
     setSelectedTags((prev) =>
-      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag],
+      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
     );
   };
 
@@ -61,13 +61,13 @@ export function FilterDialog({ trigger }: FilterDialogProps) {
   const hasActiveFilters = params.q || (params.tags && params.tags.length > 0);
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+    <Dialog onOpenChange={setIsOpen} open={isOpen}>
       <DialogTrigger asChild>
         {trigger || (
-          <Button variant="ghost" size="sm" className="h-9 gap-2">
+          <Button className="h-9 gap-2" size="sm" variant="ghost">
             <Filter className="h-4 w-4" />
             {hasActiveFilters && (
-              <Badge variant="secondary" className="h-5 px-1 text-xs">
+              <Badge className="h-5 px-1 text-xs" variant="secondary">
                 {(params.tags?.length || 0) + (params.q ? 1 : 0)}
               </Badge>
             )}
@@ -91,18 +91,18 @@ export function FilterDialog({ trigger }: FilterDialogProps) {
                   const isSelected = selectedTags.includes(tag);
                   return (
                     <Badge
+                      className="cursor-pointer transition-colors hover:bg-accent"
                       key={tag}
-                      variant={isSelected ? "default" : "outline"}
-                      className="cursor-pointer hover:bg-accent transition-colors"
                       onClick={() => toggleTag(tag)}
+                      variant={isSelected ? "default" : "outline"}
                     >
-                      {tag} ({tagData.count}){isSelected && <X className="h-3 w-3 ml-1" />}
+                      {tag} ({tagData.count}){isSelected && <X className="ml-1 h-3 w-3" />}
                     </Badge>
                   );
                 })}
               </div>
             ) : (
-              <p className="text-sm text-muted-foreground">
+              <p className="text-muted-foreground text-sm">
                 No tags available yet. Add tags to your documents to filter by them.
               </p>
             )}
@@ -126,11 +126,11 @@ export function FilterDialog({ trigger }: FilterDialogProps) {
 
         <DialogFooter className="gap-2 sm:gap-0">
           {hasActiveFilters && (
-            <Button variant="ghost" onClick={handleClearFilters} disabled={isPending}>
+            <Button disabled={isPending} onClick={handleClearFilters} variant="ghost">
               Clear All
             </Button>
           )}
-          <Button onClick={handleApplyFilters} disabled={isPending}>
+          <Button disabled={isPending} onClick={handleApplyFilters}>
             {isPending ? "Applying..." : "Apply Filters"}
           </Button>
         </DialogFooter>

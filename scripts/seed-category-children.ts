@@ -1,11 +1,14 @@
 import "dotenv/config";
 import { db } from "@Faworra/database/client";
-import { teams, users } from "@Faworra/database/schema";
 import { seedCategoryHierarchy } from "@Faworra/database/queries/transaction-categories";
+import { teams, users } from "@Faworra/database/schema";
 
 async function main() {
   // Prefer current user's team if available; fallback to first team
-  const [user] = await db.select({ id: users.id, currentTeamId: users.currentTeamId }).from(users).limit(1);
+  const [user] = await db
+    .select({ id: users.id, currentTeamId: users.currentTeamId })
+    .from(users)
+    .limit(1);
   let teamId = user?.currentTeamId as string | null | undefined;
   if (!teamId) {
     const [team] = await db.select({ id: teams.id }).from(teams).limit(1);

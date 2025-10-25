@@ -1,13 +1,13 @@
+import { createServerClient } from "@Faworra/supabase";
 import makeWASocket, {
   DisconnectReason,
+  downloadContentFromMessage,
   fetchLatestBaileysVersion,
   useMultiFileAuthState,
-  type WASocket,
   type WAMessage,
-  downloadContentFromMessage,
+  type WASocket,
 } from "@whiskeysockets/baileys";
 import path from "path";
-import { createServerClient } from "@Faworra/supabase";
 import { Registry } from "./registry";
 
 type AccountRow = { id: string; team_id: string; external_id: string; status: string };
@@ -62,7 +62,7 @@ export async function startBaileysForAccount(acc: AccountRow) {
       if (m.type !== "notify") return;
       for (const msg of m.messages) {
         await handleMessage(acc, msg).catch((e) =>
-          console.error("baileys handle message error", e),
+          console.error("baileys handle message error", e)
         );
       }
     });
@@ -107,7 +107,7 @@ async function handleMessage(acc: { id: string; team_id: string }, msg: WAMessag
   const mediaDesc = extractMediaDescriptor(msg);
 
   // Drop pure status/protocol messages: no text and no media
-  if (!content && !mediaDesc) {
+  if (!(content || mediaDesc)) {
     return;
   }
 
@@ -189,7 +189,9 @@ async function handleMessage(acc: { id: string; team_id: string }, msg: WAMessag
     const { error: upErr } = await supabase.storage
       .from("vault")
       .upload(storagePath, buffer, { contentType: mime, upsert: true });
-    if (!upErr) {
+    if (upErr) {
+      console.error("media upload error", upErr.message);
+    } else {
       await supabase.from("message_attachments").insert({
         message_id: messageId,
         storage_path: storagePath,
@@ -206,8 +208,6 @@ async function handleMessage(acc: { id: string; team_id: string }, msg: WAMessag
         linked_type: "message",
         linked_id: messageId,
       });
-    } else {
-      console.error("media upload error", upErr.message);
     }
   }
 
@@ -220,11 +220,11 @@ async function handleMessage(acc: { id: string; team_id: string }, msg: WAMessag
 
 function extractText(msg: WAMessage): string | undefined {
   const m = msg.message as any;
-  if (!m) return undefined;
+  if (!m) return;
   if (m.conversation) return m.conversation as string;
   if (m.extendedTextMessage?.text) return m.extendedTextMessage.text as string;
   if (m.imageMessage?.caption) return m.imageMessage.caption as string;
-  return undefined;
+  return;
 }
 
 function detectType(msg: WAMessage): string {
@@ -239,7 +239,7 @@ function detectType(msg: WAMessage): string {
 }
 
 function extractMediaDescriptor(
-  msg: WAMessage,
+  msg: WAMessage
 ): { stream: AsyncGenerator<Buffer>; mime: string; filename?: string } | null {
   const m = msg.message as any;
   if (!m) return null;
@@ -261,7 +261,7 @@ function extractMediaDescriptor(
           : m.stickerMessage
             ? m.stickerMessage
             : null;
-  if (!node || !mime) return null;
+  if (!(node && mime)) return null;
   const stream = downloadContentFromMessage(
     node,
     m.imageMessage
@@ -272,7 +272,7 @@ function extractMediaDescriptor(
           ? "document"
           : m.audioMessage
             ? "audio"
-            : "sticker",
+            : "sticker"
   );
   return { stream, mime, filename: fileName };
 }

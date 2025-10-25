@@ -1,7 +1,17 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Icons } from "@/components/ui/icons";
+import { Input } from "@/components/ui/input";
 import {
   Table,
   TableBody,
@@ -10,20 +20,10 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Icons } from "@/components/ui/icons";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { trpc } from "@/lib/trpc/client";
-import { CategoryEditSheet } from "./category-edit-sheet";
 import { CategoryCreateSheet } from "./category-create-sheet";
+import { CategoryEditSheet } from "./category-edit-sheet";
 
 type CategoryNode = {
   id: string;
@@ -87,16 +87,21 @@ export function CategoriesTable({ initialCategories, defaultTaxType = "" }: Prop
         <div className="flex items-center justify-between gap-3">
           <div className="sr-only">Categories</div>
           <div className="ml-auto flex items-center gap-2">
-            <div className="hidden md:flex items-center gap-2 rounded-none border px-3 py-2 text-sm">
+            <div className="hidden items-center gap-2 rounded-none border px-3 py-2 text-sm md:flex">
               <Icons.Search className="h-4 w-4 text-muted-foreground" />
               <Input
+                className="h-6 w-[260px] border-none bg-transparent p-0 text-sm focus-visible:ring-0"
+                onChange={(e) => setQuery(e.target.value)}
                 placeholder="Search categories…"
                 value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                className="h-6 w-[260px] border-none bg-transparent p-0 text-sm focus-visible:ring-0"
               />
             </div>
-            <Button size="icon" onClick={() => setCreateOpen(true)} aria-label="Add category" title="Add category">
+            <Button
+              aria-label="Add category"
+              onClick={() => setCreateOpen(true)}
+              size="icon"
+              title="Add category"
+            >
               <Icons.Add className="h-5 w-5" />
             </Button>
           </div>
@@ -105,7 +110,7 @@ export function CategoriesTable({ initialCategories, defaultTaxType = "" }: Prop
       <CardContent>
         {flat.length === 0 ? (
           <div className="py-16 text-center">
-            <div className="text-sm text-muted-foreground mb-4">No categories yet</div>
+            <div className="mb-4 text-muted-foreground text-sm">No categories yet</div>
             <Button onClick={() => setCreateOpen(true)}>Create</Button>
           </div>
         ) : (
@@ -115,32 +120,36 @@ export function CategoriesTable({ initialCategories, defaultTaxType = "" }: Prop
                 <TableHeader className="sticky top-0 z-10 bg-background">
                   <TableRow>
                     <TableHead className="sticky top-0 bg-background">Name</TableHead>
-                    <TableHead className="w-[120px] sticky top-0 bg-background">Tax Type</TableHead>
-                    <TableHead className="w-[100px] sticky top-0 bg-background">Tax Rate</TableHead>
-                    <TableHead className="w-[160px] sticky top-0 bg-background">
+                    <TableHead className="sticky top-0 w-[120px] bg-background">Tax Type</TableHead>
+                    <TableHead className="sticky top-0 w-[100px] bg-background">Tax Rate</TableHead>
+                    <TableHead className="sticky top-0 w-[160px] bg-background">
                       Report Code
                     </TableHead>
-                    <TableHead className="w-[120px] text-right sticky top-0 bg-background">
+                    <TableHead className="sticky top-0 w-[120px] bg-background text-right">
                       Actions
                     </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {visible.map((r) => (
-                    <TableRow key={r.id} onClick={() => setEditId(r.id)} className="cursor-pointer hover:bg-muted/50">
+                    <TableRow
+                      className="cursor-pointer hover:bg-muted/50"
+                      key={r.id}
+                      onClick={() => setEditId(r.id)}
+                    >
                       <TableCell>
                         <div
+                          className="flex items-center gap-2 font-medium text-sm"
                           style={{ paddingLeft: `${r.depth * 16}px` }}
-                          className="flex items-center gap-2 text-sm font-medium"
                         >
                           {r.hasChildren ? (
                             <button
-                              className="p-1 -ml-1"
+                              aria-label={expanded.has(r.id) ? "Collapse" : "Expand"}
+                              className="-ml-1 p-1"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 toggle(r.id);
                               }}
-                              aria-label={expanded.has(r.id) ? "Collapse" : "Expand"}
                             >
                               {expanded.has(r.id) ? (
                                 <Icons.ChevronDown size={18} />
@@ -161,49 +170,51 @@ export function CategoriesTable({ initialCategories, defaultTaxType = "" }: Prop
                               <TooltipTrigger asChild>
                                 <span>{r.name}</span>
                               </TooltipTrigger>
-                              <TooltipContent side="right" className="px-3 py-1.5 text-xs">
+                              <TooltipContent className="px-3 py-1.5 text-xs" side="right">
                                 <span>{(r as any).description || "No description"}</span>
                               </TooltipContent>
                             </Tooltip>
                           </TooltipProvider>
                           {r.system ? (
-                            <span className="border border-border rounded-full py-1 px-2 text-[10px] text-[#878787] font-mono">
+                            <span className="rounded-full border border-border px-2 py-1 font-mono text-[#878787] text-[10px]">
                               System
                             </span>
                           ) : null}
                         </div>
                       </TableCell>
-                      <TableCell className="text-sm text-muted-foreground">
+                      <TableCell className="text-muted-foreground text-sm">
                         {formatTaxType(r.taxType)}
                       </TableCell>
-                      <TableCell className="text-sm text-muted-foreground">
+                      <TableCell className="text-muted-foreground text-sm">
                         {formatTaxRate(r.taxRate)}
                       </TableCell>
-                      <TableCell className="text-sm text-muted-foreground">
+                      <TableCell className="text-muted-foreground text-sm">
                         {r.taxReportingCode || "-"}
                       </TableCell>
                       <TableCell className="text-right">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button
+                              aria-label="Actions"
+                              onClick={(e) => e.stopPropagation()}
                               size="icon"
                               variant="ghost"
-                              onClick={(e) => e.stopPropagation()}
-                              aria-label="Actions"
                             >
                               <Icons.MoreHoriz className="size-5" />
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
-                            <DropdownMenuItem onClick={() => setEditId(r.id)}>Edit</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => setEditId(r.id)}>
+                              Edit
+                            </DropdownMenuItem>
                             {!r.system && (
                               <DropdownMenuItem
+                                disabled={del.isPending}
                                 onClick={async () => {
                                   if (window.confirm("Delete this category?")) {
                                     await del.mutateAsync({ id: r.id });
                                   }
                                 }}
-                                disabled={del.isPending}
                               >
                                 Remove
                               </DropdownMenuItem>
@@ -220,16 +231,16 @@ export function CategoriesTable({ initialCategories, defaultTaxType = "" }: Prop
         )}
       </CardContent>
       <CategoryEditSheet
-        open={!!editId}
-        onOpenChange={(o) => !o && setEditId(null)}
-        id={editId}
         categories={initialCategories}
+        id={editId}
+        onOpenChange={(o) => !o && setEditId(null)}
+        open={!!editId}
       />
       <CategoryCreateSheet
-        open={createOpen}
-        onOpenChange={setCreateOpen}
         categories={initialCategories}
         defaultTaxType={defaultTaxType}
+        onOpenChange={setCreateOpen}
+        open={createOpen}
       />
     </Card>
   );
@@ -238,7 +249,7 @@ export function CategoriesTable({ initialCategories, defaultTaxType = "" }: Prop
 function flatten(
   nodes: CategoryNode[],
   depth = 0,
-  ancestors: string[] = [],
+  ancestors: string[] = []
 ): Array<
   CategoryNode & {
     depth: number;
@@ -266,7 +277,7 @@ function formatTaxType(t: string | null | undefined) {
 
 function formatTaxRate(r: string | number | null | undefined) {
   if (r === null || r === undefined || r === "") return "-";
-  const n = typeof r === "number" ? r : parseFloat(r);
+  const n = typeof r === "number" ? r : Number.parseFloat(r);
   if (!isFinite(n)) return "-";
   return `${n}%`;
 }

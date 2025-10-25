@@ -1,11 +1,11 @@
 import { and, desc, eq, isNull, lt, or, sql } from "drizzle-orm";
 import type { DbClient } from "../client";
 import {
-  invoices,
-  invoiceItems,
-  orders,
   clients,
+  invoiceItems,
+  invoices,
   orderItems,
+  orders,
   transactionAllocations,
 } from "../schema";
 
@@ -15,7 +15,7 @@ export async function getInvoicesWithOrder(
     teamId: string;
     limit?: number;
     cursor?: { createdAt: Date | null; id: string } | null;
-  },
+  }
 ) {
   const { teamId, limit = 50, cursor } = params;
 
@@ -32,10 +32,10 @@ export async function getInvoicesWithOrder(
             baseWhere,
             or(
               lt(invoices.createdAt, cursor.createdAt),
-              and(eq(invoices.createdAt, cursor.createdAt), lt(invoices.id, cursor.id)),
-            ),
+              and(eq(invoices.createdAt, cursor.createdAt), lt(invoices.id, cursor.id))
+            )
           )
-        : baseWhere,
+        : baseWhere
     )
     .orderBy(desc(invoices.createdAt), desc(invoices.id))
     .limit(limit);
@@ -132,7 +132,7 @@ export async function createInvoiceWithItems(
     unitPrice: string | number;
     total: string | number;
     orderItemId?: string;
-  }>,
+  }>
 ) {
   // Create invoice
   const [newInvoice] = await db.insert(invoices).values(invoice).returning();
@@ -165,7 +165,7 @@ export async function updateInvoiceWithItems(
     quantity: number;
     unitPrice: string | number;
     total: string | number;
-  }>,
+  }>
 ) {
   // Check if invoice is still editable (draft)
   const existing = await getInvoiceById(db, id, teamId);
@@ -204,7 +204,7 @@ export async function updateInvoice(
   db: DbClient,
   id: string,
   teamId: string,
-  data: Partial<typeof invoices.$inferInsert>,
+  data: Partial<typeof invoices.$inferInsert>
 ) {
   const res = await db
     .update(invoices)
@@ -219,7 +219,7 @@ export async function updateInvoiceStatus(
   id: string,
   teamId: string,
   status: string,
-  paidAt?: Date | null,
+  paidAt?: Date | null
 ) {
   const patch: Partial<typeof invoices.$inferInsert> = { status } as any;
   if (status === "paid" && paidAt) (patch as any).paidAt = paidAt;

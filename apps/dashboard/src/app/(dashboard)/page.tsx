@@ -1,8 +1,10 @@
+import {
+  getInvoicesWithOrder,
+  getMeasurementsWithClient,
+  getOrdersWithClients,
+} from "@Faworra/database/queries";
 import { redirect } from "next/navigation";
-import { getCurrentTeamId, db } from "@/lib/trpc/server";
-import { getOrdersWithClients } from "@Faworra/database/queries";
-import { getInvoicesWithOrder } from "@Faworra/database/queries";
-import { getMeasurementsWithClient } from "@Faworra/database/queries";
+import { db, getCurrentTeamId } from "@/lib/trpc/server";
 import { DashboardView } from "./_components/dashboard-view";
 
 // PPR disabled for now - requires Next.js canary
@@ -22,9 +24,9 @@ export default async function DashboardPage() {
 
   return (
     <DashboardView
-      initialOrders={ordersData}
       initialInvoices={invoicesData}
       initialMeasurements={measurementsData}
+      initialOrders={ordersData}
     />
   );
 }

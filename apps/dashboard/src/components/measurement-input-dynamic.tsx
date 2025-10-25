@@ -2,10 +2,10 @@
 
 import { Plus, X } from "lucide-react";
 import { useState } from "react";
+import { MeasurementSelector } from "@/components/measurement-selector";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
-import { MeasurementSelector } from "@/components/measurement-selector";
 
 type MeasurementEntry = {
   key: string;
@@ -34,7 +34,7 @@ export function DynamicMeasurementInput({
   const usedMeasurements = Object.keys(measurements);
 
   const handleAddMeasurement = () => {
-    if (!selectedMeasurementKey || !newValue.trim()) return;
+    if (!(selectedMeasurementKey && newValue.trim())) return;
 
     onChange({
       ...measurements,
@@ -70,26 +70,26 @@ export function DynamicMeasurementInput({
       {entries.length > 0 && (
         <div className="space-y-2">
           {entries.map(({ key, value }) => (
-            <div key={key} className="flex items-center gap-2">
-              <div className="flex-1 grid grid-cols-2 gap-2">
+            <div className="flex items-center gap-2" key={key}>
+              <div className="grid flex-1 grid-cols-2 gap-2">
                 <Input
-                  value={key.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())}
+                  className="h-9 cursor-not-allowed bg-muted/50"
                   disabled
-                  className="h-9 bg-muted/50 cursor-not-allowed"
+                  value={key.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())}
                 />
                 <Input
-                  value={value}
+                  className="h-9"
                   onChange={(e) => handleUpdateMeasurement(key, e.target.value)}
                   placeholder="e.g., 42 or 42/44"
-                  className="h-9"
+                  value={value}
                 />
               </div>
               <Button
-                type="button"
-                variant="ghost"
-                size="icon"
                 className="h-9 w-9 text-muted-foreground hover:text-destructive"
                 onClick={() => handleRemoveMeasurement(key)}
+                size="icon"
+                type="button"
+                variant="ghost"
               >
                 <X className="h-4 w-4" />
               </Button>
@@ -101,8 +101,8 @@ export function DynamicMeasurementInput({
       {/* Empty State */}
       {entries.length === 0 && (
         <div className="border p-8 text-center">
-          <p className="text-sm text-muted-foreground mb-2">No measurements added yet</p>
-          <p className="text-xs text-muted-foreground">
+          <p className="mb-2 text-muted-foreground text-sm">No measurements added yet</p>
+          <p className="text-muted-foreground text-xs">
             Add measurements below or use quick add suggestions
           </p>
         </div>
@@ -110,40 +110,40 @@ export function DynamicMeasurementInput({
 
       {/* Add New Measurement */}
       <div className="space-y-2">
-        <p className="text-sm font-medium">Add Measurement</p>
+        <p className="font-medium text-sm">Add Measurement</p>
         <div className="flex items-end gap-2">
-          <div className="flex-1 grid grid-cols-2 gap-2">
+          <div className="grid flex-1 grid-cols-2 gap-2">
             <MeasurementSelector
-              value={selectedMeasurementKey}
               onSelect={handleMeasurementSelect}
-              usedMeasurements={usedMeasurements}
               placeholder="Select measurement"
+              usedMeasurements={usedMeasurements}
+              value={selectedMeasurementKey}
             />
             <Input
-              value={newValue}
-              onChange={(e) => setNewValue(e.target.value)}
-              placeholder="Value (e.g., 42)"
               className="h-10"
+              onChange={(e) => setNewValue(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
                   e.preventDefault();
                   handleAddMeasurement();
                 }
               }}
+              placeholder="Value (e.g., 42)"
+              value={newValue}
             />
           </div>
           <Button
-            type="button"
-            size="sm"
-            onClick={handleAddMeasurement}
-            disabled={!selectedMeasurementKey || !newValue.trim()}
             className="h-10"
+            disabled={!(selectedMeasurementKey && newValue.trim())}
+            onClick={handleAddMeasurement}
+            size="sm"
+            type="button"
           >
-            <Plus className="h-4 w-4 mr-1" />
+            <Plus className="mr-1 h-4 w-4" />
             Add
           </Button>
         </div>
-        <p className="text-xs text-muted-foreground">
+        <p className="text-muted-foreground text-xs">
           Select a measurement from the dropdown and enter the value. Supports dual values (e.g.,
           "42/44")
         </p>

@@ -54,7 +54,7 @@ export async function uploadToCloudinary(
     public_id?: string;
     resource_type?: "image" | "video" | "raw" | "auto";
     transformation?: any;
-  } = {},
+  } = {}
 ) {
   const cloudinaryInstance = getCloudinaryInstance();
 
@@ -70,7 +70,7 @@ export async function uploadToCloudinary(
   };
 
   try {
-    console.log(`☁️ Uploading to Cloudinary with options:`, uploadOptions);
+    console.log("☁️ Uploading to Cloudinary with options:", uploadOptions);
     const result = await cloudinaryInstance.uploader.upload(filePath, uploadOptions);
     console.log(`✅ File uploaded to Cloudinary: ${result.public_id}`);
     return result;
@@ -87,7 +87,7 @@ export async function uploadToCloudinary(
  */
 export async function deleteFromCloudinary(
   publicId: string,
-  resourceType: "image" | "video" | "raw" = "raw",
+  resourceType: "image" | "video" | "raw" = "raw"
 ) {
   const cloudinaryInstance = getCloudinaryInstance();
 
@@ -114,7 +114,7 @@ export function generateCloudinaryUrl(
     resource_type?: "image" | "video" | "raw";
     secure?: boolean;
     transformation?: any;
-  } = {},
+  } = {}
 ) {
   const cloudinaryInstance = getCloudinaryInstance();
 

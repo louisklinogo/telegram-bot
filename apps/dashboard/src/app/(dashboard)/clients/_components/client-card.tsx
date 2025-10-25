@@ -24,12 +24,12 @@ export function ClientCard({ client }: ClientCardProps) {
         <div className="space-y-1">
           <h3 className="font-semibold text-lg">{client.name}</h3>
           {client.referralSource && (
-            <p className="text-xs text-muted-foreground">via {client.referralSource}</p>
+            <p className="text-muted-foreground text-xs">via {client.referralSource}</p>
           )}
         </div>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="h-8 w-8">
+            <Button className="h-8 w-8" size="icon" variant="ghost">
               <MoreVertical className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
@@ -58,7 +58,7 @@ export function ClientCard({ client }: ClientCardProps) {
           </div>
         )}
         {client.notes && (
-          <p className="mt-2 text-xs text-muted-foreground line-clamp-2">{client.notes}</p>
+          <p className="mt-2 line-clamp-2 text-muted-foreground text-xs">{client.notes}</p>
         )}
       </CardContent>
     </Card>

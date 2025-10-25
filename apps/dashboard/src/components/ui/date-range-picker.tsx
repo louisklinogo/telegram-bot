@@ -21,19 +21,19 @@ export function DateRangePicker({ className, range, disabled, onSelect, placehol
     <div className={cn("grid gap-2", className)}>
       <Popover>
         <PopoverTrigger asChild disabled={disabled}>
-          <Button variant="outline" className={cn("justify-start text-left font-medium space-x-2")}>
+          <Button className={cn("justify-start space-x-2 text-left font-medium")} variant="outline">
             <span>{placeholder}</span>
             <Icons.ChevronDown />
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-auto p-0 mt-2" align="end">
+        <PopoverContent align="end" className="mt-2 w-auto p-0">
           <Calendar
+            defaultMonth={range?.from}
             initialFocus
             mode="range"
-            defaultMonth={range?.from}
-            selected={range}
-            onSelect={onSelect}
             numberOfMonths={2}
+            onSelect={onSelect}
+            selected={range}
           />
         </PopoverContent>
       </Popover>

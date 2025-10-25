@@ -1,8 +1,8 @@
 "use client";
 
-import { trpc } from "@/lib/trpc/client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useSuspenseQuery } from "@tanstack/react-query";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { trpc } from "@/lib/trpc/client";
 
 export function InactiveClients() {
   const [data] = trpc.analytics.inactiveClientsCount.useSuspenseQuery();
@@ -16,7 +16,7 @@ export function InactiveClients() {
       <CardContent className="pb-[34px]">
         <div className="flex flex-col gap-2">
           <div>Inactive Clients</div>
-          <div className="text-sm text-muted-foreground">No orders past 30 days</div>
+          <div className="text-muted-foreground text-sm">No orders past 30 days</div>
         </div>
       </CardContent>
     </Card>

@@ -10,10 +10,10 @@ export function ConnectInstagram() {
   return (
     <>
       <Button
-        variant="outline"
-        size="sm"
         className="w-full transform transition-all duration-200 hover:scale-[1.02] hover:shadow-md"
         onClick={() => setIsModalOpen(true)}
+        size="sm"
+        variant="outline"
       >
         Install
       </Button>

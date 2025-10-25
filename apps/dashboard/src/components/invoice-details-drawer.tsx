@@ -1,7 +1,10 @@
 "use client";
 
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { Download, Plus } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { GeneratePDFButton } from "@/components/invoice/generate-pdf-button";
 import { Button } from "@/components/ui/button";
 import {
   Drawer,
@@ -10,11 +13,8 @@ import {
   DrawerHeader,
   DrawerTitle,
 } from "@/components/ui/drawer";
-import { useQuery, useMutation } from "@tanstack/react-query";
-import { trpc } from "@/lib/trpc/client";
 import { useTransactionParams } from "@/hooks/use-transaction-params";
-import { Plus, Download } from "lucide-react";
-import { GeneratePDFButton } from "@/components/invoice/generate-pdf-button";
+import { trpc } from "@/lib/trpc/client";
 
 export function InvoiceDetailsDrawer({
   open,
@@ -27,7 +27,7 @@ export function InvoiceDetailsDrawer({
 }) {
   const { data: allocations = [], isLoading } = trpc.transactions.allocationsByInvoice.useQuery(
     { invoiceId: invoice?.id || "" },
-    { enabled: !!invoice?.id && open },
+    { enabled: !!invoice?.id && open }
   );
 
   const deleteM = trpc.transactions.deleteAllocation.useMutation({
@@ -50,39 +50,39 @@ export function InvoiceDetailsDrawer({
   const outstanding = Math.max(0, invoice?.amount - paid);
 
   return (
-    <Drawer open={open} onOpenChange={onOpenChange}>
+    <Drawer onOpenChange={onOpenChange} open={open}>
       <DrawerContent>
         <DrawerHeader>
           <DrawerTitle>Invoice {invoice?.invoice_number}</DrawerTitle>
-          <div className="text-sm text-muted-foreground">
+          <div className="text-muted-foreground text-sm">
             Client: {invoice?.order?.client?.name || "-"}
           </div>
         </DrawerHeader>
-        <div className="p-4 space-y-3">
+        <div className="space-y-3 p-4">
           <div className="flex items-center gap-6 text-sm">
             <div>Total: ₵{invoice?.amount?.toLocaleString()}</div>
             <div>Paid: ₵{paid.toLocaleString()}</div>
             <div>Outstanding: ₵{outstanding.toLocaleString()}</div>
           </div>
-          <div className="border rounded p-3">
-            <div className="font-medium mb-2">Allocations</div>
+          <div className="rounded border p-3">
+            <div className="mb-2 font-medium">Allocations</div>
             {isLoading ? (
-              <div className="text-xs text-muted-foreground">Loading…</div>
+              <div className="text-muted-foreground text-xs">Loading…</div>
             ) : allocations.length === 0 ? (
-              <div className="text-xs text-muted-foreground">No allocations yet</div>
+              <div className="text-muted-foreground text-xs">No allocations yet</div>
             ) : (
               <div className="space-y-2">
                 {allocations.map((a) => (
-                  <div key={a.id} className="flex items-center justify-between text-sm">
+                  <div className="flex items-center justify-between text-sm" key={a.id}>
                     <div>
                       <div>
                         TX {a.transaction?.transaction_number} — ₵{a.amount?.toLocaleString()}
                       </div>
-                      <div className="text-xs text-muted-foreground">
+                      <div className="text-muted-foreground text-xs">
                         {new Date(a.created_at).toLocaleString()}
                       </div>
                     </div>
-                    <Button size="sm" variant="outline" onClick={() => removeAlloc(a.id)}>
+                    <Button onClick={() => removeAlloc(a.id)} size="sm" variant="outline">
                       Remove
                     </Button>
                   </div>
@@ -91,10 +91,11 @@ export function InvoiceDetailsDrawer({
             )}
           </div>
         </div>
-        <DrawerFooter className="flex-row gap-2 justify-between">
+        <DrawerFooter className="flex-row justify-between gap-2">
           <div className="flex gap-2">
             {outstanding > 0 && (
               <Button
+                className="gap-2"
                 onClick={() => {
                   openTransactionSheet({
                     invoiceId: invoice?.id,
@@ -102,7 +103,6 @@ export function InvoiceDetailsDrawer({
                   });
                   onOpenChange(false);
                 }}
-                className="gap-2"
               >
                 <Plus className="h-4 w-4" />
                 Record Payment
@@ -110,16 +110,16 @@ export function InvoiceDetailsDrawer({
             )}
           </div>
 
-          <div className="flex gap-2 ml-auto">
+          <div className="ml-auto flex gap-2">
             {invoice && (
               <GeneratePDFButton
                 invoice={invoice}
                 items={[]} // TODO: Add items from invoice
-                variant="outline"
                 size="default"
+                variant="outline"
               />
             )}
-            <Button variant="outline" onClick={() => onOpenChange(false)}>
+            <Button onClick={() => onOpenChange(false)} variant="outline">
               Close
             </Button>
           </div>

@@ -219,7 +219,7 @@ app.openapi(webhookRoute, async (c: Context) => {
             message,
             value.metadata.phone_number_id,
             supabase,
-            analytics,
+            analytics
           );
         }
       }
@@ -240,7 +240,7 @@ async function processWhatsAppMessage(
   message: WhatsappMessage,
   phoneNumberId: string,
   supabase: any,
-  analytics: any,
+  analytics: any
 ) {
   // Extract inboxId from message text (user should send a message with inboxId)
   let inboxId: string | null = null;
@@ -358,7 +358,7 @@ async function processWhatsAppMessage(
         teamId: teamId,
         referenceId: item.reference_id,
       } satisfies ProcessAttachmentPayload,
-    })),
+    }))
   );
 
   // Send notification for WhatsApp attachments

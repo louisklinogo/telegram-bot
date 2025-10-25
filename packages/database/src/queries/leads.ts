@@ -1,13 +1,13 @@
 import { and, desc, eq, gte, lt, or, sql } from "drizzle-orm";
 import type { DbClient } from "../client";
 import {
+  clients,
+  communicationAccounts,
   communicationMessages,
   communicationThreads,
-  communicationAccounts,
-  leads,
-  clients,
-  whatsappContacts,
   instagramContacts,
+  leads,
+  whatsappContacts,
 } from "../schema";
 
 type Platform = "whatsapp" | "instagram" | "email" | "telegram";
@@ -35,7 +35,12 @@ function platformWeight(p: Platform): number {
   }
 }
 
-function calculateScore(messageCount: number, platform: Platform, lastDate: Date | null, manual = 0) {
+function calculateScore(
+  messageCount: number,
+  platform: Platform,
+  lastDate: Date | null,
+  manual = 0
+) {
   const engagement = Math.min(messageCount * 10, 100);
   const pScore = platformWeight(platform);
   let recency = 0;
@@ -50,7 +55,13 @@ function calculateScore(messageCount: number, platform: Platform, lastDate: Date
 
 export async function createLeadFromThread(
   db: DbClient,
-  params: { teamId: string; threadId: string; ownerUserId?: string | null; manualScore?: number; notes?: string }
+  params: {
+    teamId: string;
+    threadId: string;
+    ownerUserId?: string | null;
+    manualScore?: number;
+    notes?: string;
+  }
 ) {
   const { teamId, threadId, ownerUserId, manualScore = 0, notes } = params;
 
@@ -83,7 +94,8 @@ export async function createLeadFromThread(
   const i = row[0]?.igc as any;
   if (!t) throw new Error("Thread not found or not in team");
 
-  const platform: Platform = (t.channel as Platform) || (acc?.provider?.startsWith("whatsapp") ? "whatsapp" : "instagram");
+  const platform: Platform =
+    (t.channel as Platform) || (acc?.provider?.startsWith("whatsapp") ? "whatsapp" : "instagram");
 
   // Count last-7d messages for engagement
   const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
@@ -94,8 +106,8 @@ export async function createLeadFromThread(
       and(
         eq(communicationMessages.teamId, teamId),
         eq(communicationMessages.threadId, threadId),
-        gte(communicationMessages.createdAt, sevenDaysAgo),
-      ),
+        gte(communicationMessages.createdAt, sevenDaysAgo)
+      )
     );
   const messageCount = countRows[0]?.c ?? 0;
 
@@ -109,8 +121,13 @@ export async function createLeadFromThread(
       teamId,
       threadId,
       customerId: t.customerId ?? null,
-      prospectName: (c?.name as string) ?? (w?.displayName as string) ?? (i?.displayName as string) ?? (t.externalContactId as string),
-      prospectPhone: (c?.whatsapp as string) ?? (c?.phone as string) ?? (w?.phone as string) ?? null,
+      prospectName:
+        (c?.name as string) ??
+        (w?.displayName as string) ??
+        (i?.displayName as string) ??
+        (t.externalContactId as string),
+      prospectPhone:
+        (c?.whatsapp as string) ?? (c?.phone as string) ?? (w?.phone as string) ?? null,
       prospectHandle: (i?.username as string) ?? null,
       whatsappContactId: (w?.id as string) ?? null,
       instagramContactId: (i?.id as string) ?? null,
@@ -128,10 +145,7 @@ export async function createLeadFromThread(
   return inserted;
 }
 
-export async function getLeadByThread(
-  db: DbClient,
-  params: { teamId: string; threadId: string },
-) {
+export async function getLeadByThread(db: DbClient, params: { teamId: string; threadId: string }) {
   const { teamId, threadId } = params;
   const row = await db.query.leads.findFirst({
     where: (t, { and, eq }) => and(eq(t.teamId, teamId), eq(t.threadId, threadId)),
@@ -139,10 +153,7 @@ export async function getLeadByThread(
   return row ?? null;
 }
 
-export async function getLead(
-  db: DbClient,
-  params: { teamId: string; leadId: string },
-) {
+export async function getLead(db: DbClient, params: { teamId: string; leadId: string }) {
   const { teamId, leadId } = params;
   const row = await db.query.leads.findFirst({
     where: (t, { and, eq }) => and(eq(t.teamId, teamId), eq(t.id, leadId)),
@@ -150,10 +161,7 @@ export async function getLead(
   return row ?? null;
 }
 
-export async function recomputeLeadScore(
-  db: DbClient,
-  params: { teamId: string; leadId: string },
-) {
+export async function recomputeLeadScore(db: DbClient, params: { teamId: string; leadId: string }) {
   const { teamId, leadId } = params;
   // Join to read thread
   const joinRow = await db
@@ -166,8 +174,8 @@ export async function recomputeLeadScore(
   if (!lr) return null;
 
   const threadId = lr.lead.threadId;
-  let lastInteractionAt = lr.thread?.lastMessageAt ?? lr.lead.lastInteractionAt ?? null;
-  let platform: Platform = (lr.thread?.channel as Platform) || ("whatsapp");
+  const lastInteractionAt = lr.thread?.lastMessageAt ?? lr.lead.lastInteractionAt ?? null;
+  const platform: Platform = (lr.thread?.channel as Platform) || "whatsapp";
 
   // Re-count last-7d messages
   const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
@@ -178,8 +186,8 @@ export async function recomputeLeadScore(
       and(
         eq(communicationMessages.teamId, teamId),
         eq(communicationMessages.threadId, threadId!),
-        gte(communicationMessages.createdAt, sevenDaysAgo),
-      ),
+        gte(communicationMessages.createdAt, sevenDaysAgo)
+      )
     );
   const messageCount = countRows[0]?.c ?? lr.lead.messageCount;
 
@@ -202,7 +210,7 @@ export async function listLeads(
     minScore?: number;
     limit?: number;
     cursor?: { updatedAt: Date | null; id: string } | null;
-  },
+  }
 ) {
   const { teamId, status = "all", minScore, limit = 50, cursor } = params;
   const conditions: any[] = [eq(leads.teamId, teamId)];
@@ -211,7 +219,7 @@ export async function listLeads(
   if (cursor && cursor.updatedAt) {
     const updatedAt = cursor.updatedAt as Date;
     conditions.push(
-      sql`${leads.updatedAt} < ${updatedAt} OR (${leads.updatedAt} = ${updatedAt} AND ${leads.id} < ${cursor.id})`,
+      sql`${leads.updatedAt} < ${updatedAt} OR (${leads.updatedAt} = ${updatedAt} AND ${leads.id} < ${cursor.id})`
     );
   }
 
@@ -232,7 +240,11 @@ export async function listLeads(
 
 export async function updateLeadStatus(
   db: DbClient,
-  params: { teamId: string; leadId: string; status: "new" | "interested" | "qualified" | "converted" | "lost" },
+  params: {
+    teamId: string;
+    leadId: string;
+    status: "new" | "interested" | "qualified" | "converted" | "lost";
+  }
 ) {
   const { teamId, leadId, status } = params;
   const [row] = await db
@@ -245,7 +257,7 @@ export async function updateLeadStatus(
 
 export async function setLeadClient(
   db: DbClient,
-  params: { teamId: string; leadId: string; clientId: string },
+  params: { teamId: string; leadId: string; clientId: string }
 ) {
   const { teamId, leadId, clientId } = params;
   const [row] = await db
@@ -259,7 +271,9 @@ export async function setLeadClient(
     await db
       .update(communicationThreads)
       .set({ customerId: clientId, updatedAt: sql`now()` })
-      .where(and(eq(communicationThreads.id, row.threadId), eq(communicationThreads.teamId, teamId)));
+      .where(
+        and(eq(communicationThreads.id, row.threadId), eq(communicationThreads.teamId, teamId))
+      );
   }
   return row;
 }

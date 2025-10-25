@@ -1,6 +1,6 @@
+import { getProductsEnriched } from "@Faworra/database/queries";
 import { redirect } from "next/navigation";
 import { db, getCurrentTeamId } from "@/lib/trpc/server";
-import { getProductsEnriched } from "@Faworra/database/queries";
 import { ProductsView } from "./_components/products-view";
 
 export const metadata = {

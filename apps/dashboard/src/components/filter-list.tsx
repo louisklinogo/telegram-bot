@@ -1,9 +1,9 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { X } from "lucide-react";
 import { format } from "date-fns";
 import { motion } from "framer-motion";
+import { X } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const listVariant = {
@@ -48,7 +48,7 @@ export function FilterList({ filters, loading, onRemove }: Props) {
       }
 
       case "tags": {
-        if (!value || !Array.isArray(value)) return null;
+        if (!(value && Array.isArray(value))) return null;
         return value.join(", ");
       }
 
@@ -67,7 +67,7 @@ export function FilterList({ filters, loading, onRemove }: Props) {
   };
 
   return (
-    <motion.ul variants={listVariant} initial="hidden" animate="show" className="flex space-x-2">
+    <motion.ul animate="show" className="flex space-x-2" initial="hidden" variants={listVariant}>
       {loading && (
         <div className="flex space-x-2">
           <motion.li key="1" variants={itemVariant}>
@@ -91,10 +91,10 @@ export function FilterList({ filters, loading, onRemove }: Props) {
             return (
               <motion.li key={key} variants={itemVariant}>
                 <Button
-                  className="h-9 px-2 bg-secondary hover:bg-secondary font-normal text-muted-foreground flex space-x-1 items-center group rounded-none"
+                  className="group flex h-9 items-center space-x-1 rounded-none bg-secondary px-2 font-normal text-muted-foreground hover:bg-secondary"
                   onClick={() => handleOnRemove(filterKey)}
                 >
-                  <X className="scale-0 group-hover:scale-100 transition-all w-0 group-hover:w-4 h-4" />
+                  <X className="h-4 w-0 scale-0 transition-all group-hover:w-4 group-hover:scale-100" />
                   <span>{renderedValue}</span>
                 </Button>
               </motion.li>

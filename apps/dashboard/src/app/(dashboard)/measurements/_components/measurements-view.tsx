@@ -2,11 +2,11 @@
 
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { Download, Filter, MoreVertical, Plus, Ruler, Search, X } from "lucide-react";
-import { useMemo, useState } from "react";
 import { useQueryState } from "nuqs";
+import { useMemo, useState } from "react";
 import { DeleteMeasurementDialog } from "@/components/delete-measurement-dialog";
-import { MeasurementSheet } from "@/components/measurement-sheet";
 import { EmptyState } from "@/components/empty-state";
+import { MeasurementSheet } from "@/components/measurement-sheet";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -57,7 +57,7 @@ export function MeasurementsView({ initialMeasurements = [] }: MeasurementsViewP
     {},
     {
       initialData: initialMeasurements,
-    },
+    }
   );
 
   const rows = useMemo<MeasurementRow[]>(
@@ -74,7 +74,7 @@ export function MeasurementsView({ initialMeasurements = [] }: MeasurementsViewP
         created_at: (measurement as any).createdAt ?? null,
         client: client ? { name: client.name } : null,
       })),
-    [data],
+    [data]
   );
 
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -131,31 +131,31 @@ export function MeasurementsView({ initialMeasurements = [] }: MeasurementsViewP
   return (
     <div className="flex flex-col gap-6 px-6">
       <div className="flex flex-col gap-4 py-6">
-          <div className="flex justify-between">
+        <div className="flex justify-between">
           <div className="relative hidden md:block">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Search className="-translate-y-1/2 absolute top-1/2 left-3 h-4 w-4 text-muted-foreground" />
             <Input
+              className="w-[350px] pl-9"
+              onChange={(e) => setSearch(e.target.value)}
               placeholder="Search by client or record name..."
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-9 w-[350px]"
             />
           </div>
           <div className="ml-auto flex items-center gap-2">
             <Button
-              variant={showActiveOnly ? "default" : "outline"}
-              size="sm"
               onClick={() => setShowActiveOnly(!showActiveOnly)}
+              size="sm"
+              variant={showActiveOnly ? "default" : "outline"}
             >
               {showActiveOnly ? "Active Only" : "All Versions"}
             </Button>
-            <Button variant="outline" size="sm" className="gap-2">
+            <Button className="gap-2" size="sm" variant="outline">
               <Filter className="h-4 w-4" /> Filters
             </Button>
-            <Button variant="outline" size="sm" className="gap-2">
+            <Button className="gap-2" size="sm" variant="outline">
               <Download className="h-4 w-4" /> Export
             </Button>
-            <Button size="sm" className="gap-2" onClick={handleNew}>
+            <Button className="gap-2" onClick={handleNew} size="sm">
               <Plus className="h-4 w-4" /> New Measurement
             </Button>
           </div>
@@ -164,13 +164,13 @@ export function MeasurementsView({ initialMeasurements = [] }: MeasurementsViewP
         {/* Active tag filter */}
         {tagFilter && (
           <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground">Filtered by tag:</span>
-            <Badge variant="secondary" className="gap-1 pr-1">
+            <span className="text-muted-foreground text-sm">Filtered by tag:</span>
+            <Badge className="gap-1 pr-1" variant="secondary">
               <span>{tagFilter}</span>
               <button
-                type="button"
+                className="rounded-full p-0.5 hover:bg-muted"
                 onClick={() => setTagFilter("")}
-                className="hover:bg-muted rounded-full p-0.5"
+                type="button"
               >
                 <X className="h-3 w-3" />
               </button>
@@ -182,21 +182,21 @@ export function MeasurementsView({ initialMeasurements = [] }: MeasurementsViewP
       <div className="grid gap-4 md:grid-cols-4">
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
+            <CardTitle className="font-medium text-muted-foreground text-sm">
               Total Measurements
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{rows.length}</div>
-            <p className="mt-1 text-xs text-muted-foreground">All time records</p>
+            <div className="font-bold text-2xl">{rows.length}</div>
+            <p className="mt-1 text-muted-foreground text-xs">All time records</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">This Month</CardTitle>
+            <CardTitle className="font-medium text-muted-foreground text-sm">This Month</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className="font-bold text-2xl">
               {
                 rows.filter((m) => {
                   const date = new Date((m.created_at as any) || Date.now());
@@ -207,33 +207,33 @@ export function MeasurementsView({ initialMeasurements = [] }: MeasurementsViewP
                 }).length
               }
             </div>
-            <p className="mt-1 text-xs text-muted-foreground">Recent measurements</p>
+            <p className="mt-1 text-muted-foreground text-xs">Recent measurements</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
+            <CardTitle className="font-medium text-muted-foreground text-sm">
               Unique Clients
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className="font-bold text-2xl">
               {new Set(rows.map((m) => (m as any).client_id).filter(Boolean)).size}
             </div>
-            <p className="mt-1 text-xs text-muted-foreground">With measurements</p>
+            <p className="mt-1 text-muted-foreground text-xs">With measurements</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
+            <CardTitle className="font-medium text-muted-foreground text-sm">
               Active Versions
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className="font-bold text-2xl">
               {rows.filter((m) => m.is_active === true).length}
             </div>
-            <p className="mt-1 text-xs text-muted-foreground">Current active measurements</p>
+            <p className="mt-1 text-muted-foreground text-xs">Current active measurements</p>
           </CardContent>
         </Card>
       </div>
@@ -242,7 +242,7 @@ export function MeasurementsView({ initialMeasurements = [] }: MeasurementsViewP
         <CardHeader>
           <div>
             <CardTitle>All Measurements</CardTitle>
-            <p className="mt-1 text-sm text-muted-foreground">
+            <p className="mt-1 text-muted-foreground text-sm">
               {showActiveOnly
                 ? "Showing only active measurement versions"
                 : "Complete measurement records for all clients"}
@@ -253,8 +253,6 @@ export function MeasurementsView({ initialMeasurements = [] }: MeasurementsViewP
           {/* Empty States - Exact Midday Design */}
           {filtered.length === 0 && (search || tagFilter || showActiveOnly) && (
             <EmptyState
-              title="No results"
-              description="Try another search, or adjusting the filters"
               action={{
                 label: "Clear filters",
                 onClick: () => {
@@ -263,22 +261,24 @@ export function MeasurementsView({ initialMeasurements = [] }: MeasurementsViewP
                   setShowActiveOnly(false);
                 },
               }}
+              description="Try another search, or adjusting the filters"
+              title="No results"
             />
           )}
 
           {filtered.length === 0 && !search && !tagFilter && !showActiveOnly && (
             <EmptyState
-              title="No measurements"
+              action={{
+                label: "Create measurement",
+                onClick: handleNew,
+              }}
               description={
                 <>
                   You haven't created any measurements yet. <br />
                   Go ahead and create your first one.
                 </>
               }
-              action={{
-                label: "Create measurement",
-                onClick: handleNew,
-              }}
+              title="No measurements"
             />
           )}
 
@@ -292,21 +292,21 @@ export function MeasurementsView({ initialMeasurements = [] }: MeasurementsViewP
                   <TableHead>Tags</TableHead>
                   <TableHead>Measurements</TableHead>
                   <TableHead>Date Taken</TableHead>
-                  <TableHead className="w-[50px]"></TableHead>
+                  <TableHead className="w-[50px]" />
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filtered.map((m) => (
                   <TableRow
-                    key={m.id}
                     className="cursor-pointer hover:bg-muted/50"
+                    key={m.id}
                     onClick={() => handleEdit(m)}
                   >
                     <TableCell>
                       <div className="space-y-1">
                         <p className="font-medium">{m.client?.name || "Unknown"}</p>
                         {m.notes && (
-                          <p className="line-clamp-1 text-xs text-muted-foreground">{m.notes}</p>
+                          <p className="line-clamp-1 text-muted-foreground text-xs">{m.notes}</p>
                         )}
                       </div>
                     </TableCell>
@@ -315,11 +315,11 @@ export function MeasurementsView({ initialMeasurements = [] }: MeasurementsViewP
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-1">
-                        <Badge variant="outline" className="text-xs">
+                        <Badge className="text-xs" variant="outline">
                           v{m.version || 1}
                         </Badge>
                         {m.is_active && (
-                          <Badge variant="default" className="text-xs">
+                          <Badge className="text-xs" variant="default">
                             Active
                           </Badge>
                         )}
@@ -327,22 +327,22 @@ export function MeasurementsView({ initialMeasurements = [] }: MeasurementsViewP
                     </TableCell>
                     <TableCell>
                       {m.tags && m.tags.length > 0 ? (
-                        <div className="flex gap-1 flex-wrap">
+                        <div className="flex flex-wrap gap-1">
                           {m.tags.slice(0, 2).map((tag: string, idx: number) => (
                             <Badge
+                              className="cursor-pointer text-xs hover:opacity-80"
                               key={idx}
-                              variant={tagFilter === tag ? "default" : "secondary"}
-                              className="text-xs cursor-pointer hover:opacity-80"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 handleTagClick(tag);
                               }}
+                              variant={tagFilter === tag ? "default" : "secondary"}
                             >
                               {tag}
                             </Badge>
                           ))}
                           {m.tags.length > 2 && (
-                            <Badge variant="outline" className="text-xs">
+                            <Badge className="text-xs" variant="outline">
                               +{m.tags.length - 2}
                             </Badge>
                           )}
@@ -352,12 +352,12 @@ export function MeasurementsView({ initialMeasurements = [] }: MeasurementsViewP
                       )}
                     </TableCell>
                     <TableCell>
-                      <p className="max-w-xs line-clamp-1 text-sm text-muted-foreground">
+                      <p className="line-clamp-1 max-w-xs text-muted-foreground text-sm">
                         {getMeasurementSummary(m.measurements || {})}
                       </p>
                     </TableCell>
                     <TableCell>
-                      <span className="text-sm text-muted-foreground">
+                      <span className="text-muted-foreground text-sm">
                         {m.taken_at
                           ? new Date(m.taken_at as any).toLocaleDateString("en-US", {
                               month: "short",
@@ -366,14 +366,14 @@ export function MeasurementsView({ initialMeasurements = [] }: MeasurementsViewP
                             })
                           : new Date((m.created_at as any) || Date.now()).toLocaleDateString(
                               "en-US",
-                              { month: "short", day: "numeric", year: "numeric" },
+                              { month: "short", day: "numeric", year: "numeric" }
                             )}
                       </span>
                     </TableCell>
                     <TableCell>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                          <Button className="h-8 w-8 p-0" size="sm" variant="ghost">
                             <MoreVertical className="h-4 w-4" />
                           </Button>
                         </DropdownMenuTrigger>
@@ -390,11 +390,11 @@ export function MeasurementsView({ initialMeasurements = [] }: MeasurementsViewP
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem
+                            className="text-destructive"
                             onClick={(e) => {
                               e.stopPropagation();
                               handleDelete(m);
                             }}
-                            className="text-destructive"
                           >
                             Delete
                           </DropdownMenuItem>
@@ -410,14 +410,14 @@ export function MeasurementsView({ initialMeasurements = [] }: MeasurementsViewP
       </Card>
 
       <MeasurementSheet
-        open={sheetOpen}
-        onOpenChange={setSheetOpen}
         measurement={selectedMeasurement as any}
+        onOpenChange={setSheetOpen}
+        open={sheetOpen}
       />
       <DeleteMeasurementDialog
-        open={deleteDialogOpen}
-        onOpenChange={setDeleteDialogOpen}
         measurement={selectedMeasurement as any}
+        onOpenChange={setDeleteDialogOpen}
+        open={deleteDialogOpen}
       />
     </div>
   );

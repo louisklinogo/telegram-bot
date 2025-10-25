@@ -1,4 +1,4 @@
-import type { Context, Next, MiddlewareHandler } from "hono";
+import type { Context, MiddlewareHandler, Next } from "hono";
 import { HTTPException } from "hono/http-exception";
 
 export interface RateLimitOptions {
@@ -19,14 +19,17 @@ interface RateLimitEntry {
 
 const rateLimitStore = new Map<string, RateLimitEntry>();
 
-setInterval(() => {
-  const now = Date.now();
-  for (const [key, entry] of rateLimitStore.entries()) {
-    if (entry.resetTime < now) {
-      rateLimitStore.delete(key);
+setInterval(
+  () => {
+    const now = Date.now();
+    for (const [key, entry] of rateLimitStore.entries()) {
+      if (entry.resetTime < now) {
+        rateLimitStore.delete(key);
+      }
     }
-  }
-}, 5 * 60 * 1000);
+  },
+  5 * 60 * 1000
+);
 
 export interface RateLimitResult {
   exceeded: boolean;
@@ -53,8 +56,9 @@ async function checkRateLimit(key: string, options: RateLimitOptions): Promise<R
   return { exceeded, remaining, resetTime: entry.resetTime, current: entry.count };
 }
 
-export const rateLimiter = (options: RateLimitOptions): MiddlewareHandler => {
-  return async (c: Context, next: Next) => {
+export const rateLimiter =
+  (options: RateLimitOptions): MiddlewareHandler =>
+  async (c: Context, next: Next) => {
     const key = options.keyGenerator(c);
     const limit = await checkRateLimit(key, options);
 
@@ -102,7 +106,6 @@ export const rateLimiter = (options: RateLimitOptions): MiddlewareHandler => {
       }
     }
   };
-};
 
 export const RateLimiters = {
   public: rateLimiter({
@@ -172,4 +175,3 @@ export async function getRateLimitStatus(key: string): Promise<RateLimitEntry | 
   if (!entry || entry.resetTime < Date.now()) return null;
   return entry;
 }
-

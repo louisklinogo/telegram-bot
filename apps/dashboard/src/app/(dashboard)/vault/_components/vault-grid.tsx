@@ -1,7 +1,7 @@
 "use client";
 
-import { VaultCard } from "./vault-card";
 import { FolderCard } from "./folder-card";
+import { VaultCard } from "./vault-card";
 
 type VaultGridProps = {
   documents: any[];
@@ -11,20 +11,20 @@ type VaultGridProps = {
 
 export function VaultGrid({ documents, folders = [], onOpenFolder }: VaultGridProps) {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
       {/* Folders first */}
       {folders.map((folder) => (
         <FolderCard
+          count={folder.count}
           key={folder.name}
           name={folder.name}
-          count={folder.count}
           onClick={() => onOpenFolder?.(folder.name)}
         />
       ))}
 
       {/* Then files */}
       {documents.map((document) => (
-        <VaultCard key={document.id} document={document} />
+        <VaultCard document={document} key={document.id} />
       ))}
     </div>
   );

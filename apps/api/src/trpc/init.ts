@@ -1,10 +1,10 @@
+import { db } from "@Faworra/database/client";
+import { getRequestContext, runWithRequestContext } from "@Faworra/database/request-context";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { initTRPC, TRPCError } from "@trpc/server";
 import type { FetchCreateContextFnOptions } from "@trpc/server/adapters/fetch";
 import superjson from "superjson";
-import { db } from "@Faworra/database/client";
 import { createClient } from "../services/supabase";
-import type { SupabaseClient } from "@supabase/supabase-js";
-import { runWithRequestContext, getRequestContext } from "@Faworra/database/request-context";
 
 export type Session = {
   userId: string;
@@ -66,31 +66,34 @@ const t = initTRPC.context<TRPCContext>().create({
 
 // Timing middleware (production safe, env-gated)
 const timing = t.middleware(async ({ path, type, next }) => {
-  const enable = process.env.TRPC_TIMING === '1';
+  const enable = process.env.TRPC_TIMING === "1";
   if (!enable) return next();
 
   const reqId = Math.random().toString(36).slice(2);
   const start = Date.now();
-  return await runWithRequestContext({ reqId, procedure: `${type}:${path}`, startAt: start }, async () => {
-    const result = await next();
-    const ms = Date.now() - start;
-    const ctx = getRequestContext();
-    const q = ctx?.queryCount ?? 0;
-    const threshold = Number(process.env.SLOW_PROCEDURE_MS ?? 200);
-    if (ms >= threshold) {
-      console.warn(`[trpc][slow] ${ms}ms ${type}:${path} queries=${q}`);
-    } else if (process.env.TRPC_LOG_ALL === '1') {
-      console.log(`[trpc] ${ms}ms ${type}:${path} queries=${q}`);
+  return await runWithRequestContext(
+    { reqId, procedure: `${type}:${path}`, startAt: start },
+    async () => {
+      const result = await next();
+      const ms = Date.now() - start;
+      const ctx = getRequestContext();
+      const q = ctx?.queryCount ?? 0;
+      const threshold = Number(process.env.SLOW_PROCEDURE_MS ?? 200);
+      if (ms >= threshold) {
+        console.warn(`[trpc][slow] ${ms}ms ${type}:${path} queries=${q}`);
+      } else if (process.env.TRPC_LOG_ALL === "1") {
+        console.log(`[trpc] ${ms}ms ${type}:${path} queries=${q}`);
+      }
+      return result;
     }
-    return result;
-  });
+  );
 });
 
 export const createTRPCRouter = t.router;
 export const publicProcedure = t.procedure;
 
 export const protectedProcedure = t.procedure.use(timing).use(async ({ ctx, next }) => {
-  if (!ctx.session || !ctx.userId) {
+  if (!(ctx.session && ctx.userId)) {
     throw new TRPCError({
       code: "UNAUTHORIZED",
       message: "Not authenticated",

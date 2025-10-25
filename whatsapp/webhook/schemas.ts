@@ -59,7 +59,7 @@ export const whatsappEntrySchema = z.object({
     z.object({
       value: whatsappValueSchema,
       field: z.literal("messages"),
-    }),
+    })
   ),
 });
 

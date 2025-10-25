@@ -23,7 +23,7 @@ const generateSequentialNumber = async (): Promise<string> => {
   if (typeof lastNumber === "string") {
     const match = lastNumber.match(/(\d+)$/);
     if (match) {
-      const next = (parseInt(match[1], 10) || 0) + 1;
+      const next = (Number.parseInt(match[1], 10) || 0) + 1;
       return `${INVOICE_PREFIX}${next.toString().padStart(4, "0")}`;
     }
   }
@@ -71,7 +71,7 @@ export const createInvoiceRecord = async (input: CreateInvoiceInput): Promise<In
 export const updateInvoiceStatus = async (
   invoiceId: string,
   status: string,
-  paidAt?: string | null,
+  paidAt?: string | null
 ): Promise<InvoiceRecord> => {
   const supabase = getSupabaseServiceClient();
 

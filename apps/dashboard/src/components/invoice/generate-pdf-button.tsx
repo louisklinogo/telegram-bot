@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { pdf } from "@react-pdf/renderer";
 import { Download, Loader2 } from "lucide-react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
-import { pdf } from "@react-pdf/renderer";
 import { InvoicePDF } from "./invoice-pdf";
 
 interface GeneratePDFButtonProps {
@@ -89,11 +89,11 @@ export function GeneratePDFButton({
 
   return (
     <Button
-      variant={variant}
-      size={size}
-      onClick={handleGeneratePDF}
-      disabled={generating}
       className="gap-2"
+      disabled={generating}
+      onClick={handleGeneratePDF}
+      size={size}
+      variant={variant}
     >
       {generating ? (
         <>

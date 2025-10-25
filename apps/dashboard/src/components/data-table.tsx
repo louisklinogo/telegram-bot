@@ -56,7 +56,7 @@ export function DataTable<TData, TValue>({
     onColumnFiltersChange: setColumnFilters,
     getFilteredRowModel: getFilteredRowModel(),
     onRowSelectionChange: setRowSelection,
-    enableRowSelection: enableRowSelection,
+    enableRowSelection,
     initialState: {
       pagination: {
         pageSize: 50,
@@ -119,30 +119,30 @@ export function DataTable<TData, TValue>({
       <div className="space-y-4">
         {searchKey && (
           <div className="flex items-center">
-            <Input placeholder={searchPlaceholder} className="max-w-sm" disabled />
+            <Input className="max-w-sm" disabled placeholder={searchPlaceholder} />
           </div>
         )}
         <div className="flex min-h-[400px] flex-col items-center justify-center rounded-lg border border-dashed p-12 text-center">
           <div className="mx-auto flex max-w-[420px] flex-col items-center justify-center text-center">
             <div className="flex h-20 w-20 items-center justify-center rounded-full bg-muted">
               <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth={1.5}
-                stroke="currentColor"
                 className="h-10 w-10 text-muted-foreground"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={1.5}
+                viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg"
               >
                 <path
+                  d="M3.75 9.776c.112-.017.227-.026.344-.026h15.812c.117 0 .232.009.344.026m-16.5 0a2.25 2.25 0 00-1.883 2.542l.857 6a2.25 2.25 0 002.227 1.932H19.05a2.25 2.25 0 002.227-1.932l.857-6a2.25 2.25 0 00-1.883-2.542m-16.5 0V6A2.25 2.25 0 016 3.75h3a3.75 3.75 0 017.5 0h3A2.25 2.25 0 0121.75 6v3.776"
                   strokeLinecap="round"
                   strokeLinejoin="round"
-                  d="M3.75 9.776c.112-.017.227-.026.344-.026h15.812c.117 0 .232.009.344.026m-16.5 0a2.25 2.25 0 00-1.883 2.542l.857 6a2.25 2.25 0 002.227 1.932H19.05a2.25 2.25 0 002.227-1.932l.857-6a2.25 2.25 0 00-1.883-2.542m-16.5 0V6A2.25 2.25 0 016 3.75h3a3.75 3.75 0 017.5 0h3A2.25 2.25 0 0121.75 6v3.776"
                 />
               </svg>
             </div>
 
-            <h3 className="mt-6 text-lg font-semibold">No data found</h3>
-            <p className="mt-2 text-sm text-muted-foreground">
+            <h3 className="mt-6 font-semibold text-lg">No data found</h3>
+            <p className="mt-2 text-muted-foreground text-sm">
               Get started by creating your first entry
             </p>
           </div>
@@ -156,28 +156,26 @@ export function DataTable<TData, TValue>({
       {searchKey && (
         <div className="flex items-center">
           <Input
+            className="max-w-sm"
+            onChange={(event) => table.getColumn(searchKey)?.setFilterValue(event.target.value)}
             placeholder={searchPlaceholder}
             value={(table.getColumn(searchKey)?.getFilterValue() as string) ?? ""}
-            onChange={(event) => table.getColumn(searchKey)?.setFilterValue(event.target.value)}
-            className="max-w-sm"
           />
         </div>
       )}
 
-      <div className="rounded-lg border overflow-hidden">
+      <div className="overflow-hidden rounded-lg border">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id} className="hover:bg-transparent">
-                {headerGroup.headers.map((header) => {
-                  return (
-                    <TableHead key={header.id} className="font-semibold">
-                      {header.isPlaceholder
-                        ? null
-                        : flexRender(header.column.columnDef.header, header.getContext())}
-                    </TableHead>
-                  );
-                })}
+              <TableRow className="hover:bg-transparent" key={headerGroup.id}>
+                {headerGroup.headers.map((header) => (
+                  <TableHead className="font-semibold" key={header.id}>
+                    {header.isPlaceholder
+                      ? null
+                      : flexRender(header.column.columnDef.header, header.getContext())}
+                  </TableHead>
+                ))}
               </TableRow>
             ))}
           </TableHeader>
@@ -185,9 +183,9 @@ export function DataTable<TData, TValue>({
             {table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
                 <TableRow
-                  key={row.id}
-                  data-state={row.getIsSelected() && "selected"}
                   className="cursor-pointer transition-colors hover:bg-muted/50"
+                  data-state={row.getIsSelected() && "selected"}
+                  key={row.id}
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>
@@ -198,10 +196,10 @@ export function DataTable<TData, TValue>({
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={columns.length} className="h-32 text-center">
+                <TableCell className="h-32 text-center" colSpan={columns.length}>
                   <div className="text-muted-foreground">
-                    <p className="text-sm font-medium">No results found</p>
-                    <p className="text-xs mt-1">Try adjusting your search</p>
+                    <p className="font-medium text-sm">No results found</p>
+                    <p className="mt-1 text-xs">Try adjusting your search</p>
                   </div>
                 </TableCell>
               </TableRow>
@@ -212,7 +210,7 @@ export function DataTable<TData, TValue>({
 
       {/* Pagination */}
       <div className="flex items-center justify-end space-x-2">
-        <div className="flex-1 text-sm text-muted-foreground">
+        <div className="flex-1 text-muted-foreground text-sm">
           {enableRowSelection && table.getFilteredSelectedRowModel().rows.length > 0 ? (
             <span>
               {table.getFilteredSelectedRowModel().rows.length} of{" "}
@@ -223,18 +221,18 @@ export function DataTable<TData, TValue>({
           )}
         </div>
         <Button
-          variant="outline"
-          size="sm"
-          onClick={() => table.previousPage()}
           disabled={!table.getCanPreviousPage()}
+          onClick={() => table.previousPage()}
+          size="sm"
+          variant="outline"
         >
           Previous
         </Button>
         <Button
-          variant="outline"
-          size="sm"
-          onClick={() => table.nextPage()}
           disabled={!table.getCanNextPage()}
+          onClick={() => table.nextPage()}
+          size="sm"
+          variant="outline"
         >
           Next
         </Button>

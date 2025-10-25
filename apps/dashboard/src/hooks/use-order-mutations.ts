@@ -37,13 +37,13 @@ export function useCreateOrder() {
   });
 
   function normalizeCreateInput(
-    payload: CreateOrderInput | Record<string, unknown>,
+    payload: CreateOrderInput | Record<string, unknown>
   ): CreateOrderInput {
     const p = payload as any;
     const clientId = ("clientId" in p ? p.clientId : p.client_id) ?? null;
     const orderNumber = ("orderNumber" in p ? p.orderNumber : p.order_number) as string;
     const status = String(
-      "status" in p ? p.status : "generated",
+      "status" in p ? p.status : "generated"
     ).toLowerCase() as CreateOrderInput["status"];
     const items = (p.items ?? []) as OrderItemInput[];
     const totalPrice = Number(("totalPrice" in p ? p.totalPrice : p.total_price) ?? 0);
@@ -51,7 +51,13 @@ export function useCreateOrder() {
     const balanceAmount = Number(("balanceAmount" in p ? p.balanceAmount : p.balance_amount) ?? 0);
     const notes = ("notes" in p ? p.notes : null) as string | null;
     const due = ("dueDate" in p ? p.dueDate : p.due_date) as string | null | undefined;
-    const dueDate = due ? (typeof due === "string" ? (due.includes("T") ? due : `${due}T00:00:00Z`) : new Date(due).toISOString()) : null;
+    const dueDate = due
+      ? typeof due === "string"
+        ? due.includes("T")
+          ? due
+          : `${due}T00:00:00Z`
+        : new Date(due).toISOString()
+      : null;
     return {
       clientId,
       orderNumber,
@@ -78,10 +84,7 @@ export function useUpdateOrder() {
   const utils = trpc.useUtils();
   const m = trpc.orders.update.useMutation({
     onSuccess: async () => {
-      await Promise.all([
-        utils.orders.list.invalidate(),
-        utils.invalidate(),
-      ]);
+      await Promise.all([utils.orders.list.invalidate(), utils.invalidate()]);
       toast.success("Order updated successfully");
     },
     onError: (error: any) => toast.error(`Failed to update order: ${error?.message}`),
@@ -116,7 +119,13 @@ export function useUpdateOrder() {
     if (d.notes !== undefined) out.notes = d.notes;
     if (d.dueDate !== undefined || d.due_date !== undefined) {
       const due = d.dueDate ?? d.due_date;
-      out.dueDate = due ? (typeof due === "string" ? (due.includes("T") ? due : `${due}T00:00:00Z`) : new Date(due).toISOString()) : null;
+      out.dueDate = due
+        ? typeof due === "string"
+          ? due.includes("T")
+            ? due
+            : `${due}T00:00:00Z`
+          : new Date(due).toISOString()
+        : null;
     }
     return out as { id: string } & Partial<CreateOrderInput>;
   }
@@ -125,7 +134,7 @@ export function useUpdateOrder() {
     (m as any).mutate(normalizeUpdateInput(payload), opts);
   const mutateAsync = (
     payload: UpdateOrderClientPayload,
-    opts?: Parameters<typeof m.mutateAsync>[1],
+    opts?: Parameters<typeof m.mutateAsync>[1]
   ) => (m as any).mutateAsync(normalizeUpdateInput(payload), opts);
 
   return {
@@ -133,8 +142,14 @@ export function useUpdateOrder() {
     mutate,
     mutateAsync,
   } as Omit<typeof m, "mutate" | "mutateAsync"> & {
-    mutate: (payload: UpdateOrderClientPayload, opts?: Parameters<typeof m.mutate>[1]) => ReturnType<typeof m.mutate>;
-    mutateAsync: (payload: UpdateOrderClientPayload, opts?: Parameters<typeof m.mutateAsync>[1]) => ReturnType<typeof m.mutateAsync>;
+    mutate: (
+      payload: UpdateOrderClientPayload,
+      opts?: Parameters<typeof m.mutate>[1]
+    ) => ReturnType<typeof m.mutate>;
+    mutateAsync: (
+      payload: UpdateOrderClientPayload,
+      opts?: Parameters<typeof m.mutateAsync>[1]
+    ) => ReturnType<typeof m.mutateAsync>;
   };
 }
 

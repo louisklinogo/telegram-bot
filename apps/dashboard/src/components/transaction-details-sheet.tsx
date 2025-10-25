@@ -1,25 +1,43 @@
 "use client";
 
-import { Sheet, SheetContent } from "@/components/ui/sheet";
+import { createBrowserClient } from "@Faworra/supabase/client";
+import { Check, X } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useDropzone } from "react-dropzone";
+import { SelectCategory } from "@/components/select-category";
+import { SelectUser } from "@/components/select-user";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import { ComboboxMulti } from "@/components/ui/combobox-multi";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+} from "@/components/ui/command";
+import { Icons } from "@/components/ui/icons";
+import { Input } from "@/components/ui/input";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { useTransactionParams } from "@/hooks/use-transaction-params";
 import { trpc } from "@/lib/trpc/client";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Check, X } from "lucide-react";
-import { SelectCategory } from "@/components/select-category";
-import { SelectUser } from "@/components/select-user";
-import { ComboboxMulti } from "@/components/ui/combobox-multi";
-import { Input } from "@/components/ui/input";
-import { Icons } from "@/components/ui/icons";
-import { createBrowserClient } from "@Faworra/supabase/client";
-import { useDropzone } from "react-dropzone";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
 
 export function TransactionDetailsSheet() {
@@ -28,7 +46,7 @@ export function TransactionDetailsSheet() {
   const enabled = Boolean(transactionId);
   const { data, isLoading } = trpc.transactions.byId.useQuery(
     { id: transactionId as string },
-    { enabled },
+    { enabled }
   );
   const utils = trpc.useUtils();
 
@@ -52,8 +70,8 @@ export function TransactionDetailsSheet() {
   if (!transactionId) return null;
 
   return (
-    <Sheet open={isOpen} onOpenChange={(open) => !open && close()}>
-      <SheetContent className="sm:max-w-[660px] bg-background p-0">
+    <Sheet onOpenChange={(open) => !open && close()} open={isOpen}>
+      <SheetContent className="bg-background p-0 sm:max-w-[660px]">
         <ScrollArea className="h-full p-6">
           {isLoading || !data ? (
             <div className="space-y-3">
@@ -66,17 +84,17 @@ export function TransactionDetailsSheet() {
             <div className="space-y-6">
               {/* Header - Midday style: date, description, amount stacked */}
               <div>
-                <div className="text-xs text-muted-foreground">
+                <div className="text-muted-foreground text-xs">
                   {new Date((data as any).transaction.date as any).toLocaleDateString(undefined, {
                     month: "short",
                     day: "numeric",
                     year: "numeric",
                   })}
                 </div>
-                <h2 className="mt-2 text-base font-medium text-foreground select-text">
+                <h2 className="mt-2 select-text font-medium text-base text-foreground">
                   {(data as any).transaction.name || (data as any).transaction.description || "-"}
                 </h2>
-                <div className="mt-2 text-4xl font-mono">
+                <div className="mt-2 font-mono text-4xl">
                   {(() => {
                     const cur = (data as any).transaction.currency as string;
                     const amt = Number((data as any).transaction.amount || 0);
@@ -93,7 +111,7 @@ export function TransactionDetailsSheet() {
               {/* Status + Meta */}
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
-                  <div className="text-xs text-muted-foreground">Type</div>
+                  <div className="text-muted-foreground text-xs">Type</div>
                   <div>
                     {(() => {
                       const t = String((data as any).transaction.type || "");
@@ -102,35 +120,55 @@ export function TransactionDetailsSheet() {
                   </div>
                 </div>
                 <div>
-                  <div className="text-xs text-muted-foreground">Status</div>
-                  <div className="mt-1 flex flex-wrap items-center gap-2" role="radiogroup" aria-label="Status">
+                  <div className="text-muted-foreground text-xs">Status</div>
+                  <div
+                    aria-label="Status"
+                    className="mt-1 flex flex-wrap items-center gap-2"
+                    role="radiogroup"
+                  >
                     {(
                       [
-                        { id: "completed", label: "Completed", cls: "bg-green-100 text-green-700 border-green-200" },
-                        { id: "pending", label: "Pending", cls: "bg-amber-100 text-amber-700 border-amber-200" },
-                        { id: "cancelled", label: "Cancelled", cls: "bg-slate-100 text-slate-700 border-slate-200" },
-                        { id: "failed", label: "Failed", cls: "bg-red-100 text-red-700 border-red-200" },
+                        {
+                          id: "completed",
+                          label: "Completed",
+                          cls: "bg-green-100 text-green-700 border-green-200",
+                        },
+                        {
+                          id: "pending",
+                          label: "Pending",
+                          cls: "bg-amber-100 text-amber-700 border-amber-200",
+                        },
+                        {
+                          id: "cancelled",
+                          label: "Cancelled",
+                          cls: "bg-slate-100 text-slate-700 border-slate-200",
+                        },
+                        {
+                          id: "failed",
+                          label: "Failed",
+                          cls: "bg-red-100 text-red-700 border-red-200",
+                        },
                       ] as const
                     ).map((s) => {
                       const cur = String((data as any).transaction.status || "");
                       const selected = cur === s.id;
                       return (
                         <button
-                          key={s.id}
-                          type="button"
-                          role="radio"
                           aria-checked={selected}
+                          className={
+                            "rounded-full border px-2.5 py-0.5 font-medium text-xs transition-colors" +
+                            s.cls +
+                            (selected ? "ring-2 ring-offset-0" : "opacity-90 hover:opacity-100")
+                          }
+                          key={s.id}
                           onClick={() =>
                             bulkUpdate.mutate({
                               transactionIds: [(data as any).transaction.id],
                               updates: { status: s.id as any },
                             })
                           }
-                          className={
-                            "rounded-full px-2.5 py-0.5 text-xs font-medium border transition-colors " +
-                            s.cls +
-                            (selected ? " ring-2 ring-offset-0" : " opacity-90 hover:opacity-100")
-                          }
+                          role="radio"
+                          type="button"
                         >
                           {s.label}
                         </button>
@@ -139,12 +177,12 @@ export function TransactionDetailsSheet() {
                   </div>
                 </div>
                 <div>
-                  <div className="text-xs text-muted-foreground">Transaction #</div>
+                  <div className="text-muted-foreground text-xs">Transaction #</div>
                   <div>{(data as any).transaction.transactionNumber || "-"}</div>
                 </div>
                 <div>
-                  <div className="text-xs text-muted-foreground">Origin</div>
-                  <div className="text-sm text-muted-foreground">
+                  <div className="text-muted-foreground text-xs">Origin</div>
+                  <div className="text-muted-foreground text-sm">
                     {(data as any).transaction.manual ? "Manual" : "System"}
                   </div>
                 </div>
@@ -153,17 +191,8 @@ export function TransactionDetailsSheet() {
               {/* Editors */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <div className="mb-2 text-sm font-medium">Category</div>
+                  <div className="mb-2 font-medium text-sm">Category</div>
                   <SelectCategory
-                    selected={
-                      (data as any).category
-                        ? {
-                            id: (data as any).category.id,
-                            name: (data as any).category.name,
-                            color: (data as any).category.color,
-                          }
-                        : undefined
-                    }
                     onChange={(cat) => {
                       // find slug from categoriesTree
                       const findSlug = (nodes: any[], id: string): string | undefined => {
@@ -182,10 +211,19 @@ export function TransactionDetailsSheet() {
                         updates: { categorySlug: slug },
                       });
                     }}
+                    selected={
+                      (data as any).category
+                        ? {
+                            id: (data as any).category.id,
+                            name: (data as any).category.name,
+                            color: (data as any).category.color,
+                          }
+                        : undefined
+                    }
                   />
                 </div>
                 <div>
-                  <div className="mb-2 text-sm font-medium">Assign</div>
+                  <div className="mb-2 font-medium text-sm">Assign</div>
                   <SelectUser
                     onSelect={(user) =>
                       bulkUpdate.mutate({
@@ -198,11 +236,14 @@ export function TransactionDetailsSheet() {
               </div>
 
               <div>
-                  <div className="mb-2 text-sm font-medium">Tags</div>
-                <TagsEditor transactionId={(data as any).transaction.id} existing={((data as any).tags ?? []) as any[]} />
+                <div className="mb-2 font-medium text-sm">Tags</div>
+                <TagsEditor
+                  existing={((data as any).tags ?? []) as any[]}
+                  transactionId={(data as any).transaction.id}
+                />
               </div>
 
-              <Accordion type="multiple" defaultValue={["general", "attachments", "note"]}>
+              <Accordion defaultValue={["general", "attachments", "note"]} type="multiple">
                 <AccordionItem value="general">
                   <AccordionTrigger>General</AccordionTrigger>
                   <AccordionContent>
@@ -210,7 +251,9 @@ export function TransactionDetailsSheet() {
                       <div className="flex items-center justify-between">
                         <div className="space-y-0.5 pr-4">
                           <div className="font-medium">Exclude from analytics</div>
-                          <p className="text-xs text-muted-foreground">Exclude this transaction from KPIs and summaries.</p>
+                          <p className="text-muted-foreground text-xs">
+                            Exclude this transaction from KPIs and summaries.
+                          </p>
                         </div>
                         <Switch
                           checked={(data as any).transaction.excludeFromAnalytics ?? false}
@@ -226,7 +269,9 @@ export function TransactionDetailsSheet() {
                       <div className="flex items-center justify-between">
                         <div className="space-y-0.5 pr-4">
                           <div className="font-medium">Mark as recurring</div>
-                          <p className="text-xs text-muted-foreground">Future similar transactions will be auto-categorized.</p>
+                          <p className="text-muted-foreground text-xs">
+                            Future similar transactions will be auto-categorized.
+                          </p>
                         </div>
                         <Switch
                           checked={(data as any).transaction.recurring ?? false}
@@ -241,15 +286,15 @@ export function TransactionDetailsSheet() {
 
                       {((data as any).transaction.recurring ?? false) && (
                         <div>
-                          <div className="mb-2 text-sm font-medium">Frequency</div>
+                          <div className="mb-2 font-medium text-sm">Frequency</div>
                           <Select
-                            value={((data as any).transaction.frequency as string) ?? undefined}
                             onValueChange={(value) =>
                               bulkUpdate.mutate({
                                 transactionIds: [(data as any).transaction.id],
                                 updates: { frequency: value as any, recurring: true },
                               })
                             }
+                            value={((data as any).transaction.frequency as string) ?? undefined}
                           >
                             <SelectTrigger className="w-full">
                               <SelectValue placeholder="Select frequency" />
@@ -280,7 +325,10 @@ export function TransactionDetailsSheet() {
                 <AccordionItem value="attachments">
                   <AccordionTrigger>Attachments</AccordionTrigger>
                   <AccordionContent>
-                    <AttachmentsEditor data={data as any} transactionId={(data as any).transaction.id} />
+                    <AttachmentsEditor
+                      data={data as any}
+                      transactionId={(data as any).transaction.id}
+                    />
                   </AccordionContent>
                 </AccordionItem>
 
@@ -354,13 +402,17 @@ function TagsEditor({ transactionId, existing }: { transactionId: string; existi
 
   return (
     <div>
-      <div className="flex flex-wrap items-center gap-1.5 mb-2">
+      <div className="mb-2 flex flex-wrap items-center gap-1.5">
         {selectedTags.length ? (
           (expanded ? selectedTags : selectedTags.slice(0, 3)).map((t: any) => (
             <span
+              className="group inline-flex items-center gap-1 rounded-full border bg-muted/60 px-2 py-0.5 text-[11px]"
               key={t.id}
-              className="group inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] bg-muted/60"
-              style={t.color ? { borderColor: `${t.color}55`, backgroundColor: `${t.color}15` } : undefined}
+              style={
+                t.color
+                  ? { borderColor: `${t.color}55`, backgroundColor: `${t.color}15` }
+                  : undefined
+              }
             >
               {renderDot(t.color)}
               <span className="truncate">{t.name}</span>
@@ -374,44 +426,48 @@ function TagsEditor({ transactionId, existing }: { transactionId: string; existi
             </span>
           ))
         ) : (
-          <span className="text-sm text-muted-foreground">No tags</span>
+          <span className="text-muted-foreground text-sm">No tags</span>
         )}
         {!expanded && selectedTags.length > 3 && (
           <button
-            type="button"
-            className="text-xs text-muted-foreground hover:underline"
+            className="text-muted-foreground text-xs hover:underline"
             onClick={() => setExpanded(true)}
+            type="button"
           >
             +{selectedTags.length - 3} more
           </button>
         )}
         {expanded && selectedTags.length > 3 && (
           <button
-            type="button"
-            className="text-xs text-muted-foreground hover:underline"
+            className="text-muted-foreground text-xs hover:underline"
             onClick={() => setExpanded(false)}
+            type="button"
           >
             Show less
           </button>
         )}
       </div>
-      <Popover open={manageOpen} onOpenChange={setManageOpen}>
+      <Popover onOpenChange={setManageOpen} open={manageOpen}>
         <PopoverTrigger asChild>
-          <button type="button" className="text-xs text-muted-foreground hover:underline" data-row-click-exempt>
+          <button
+            className="text-muted-foreground text-xs hover:underline"
+            data-row-click-exempt
+            type="button"
+          >
             {selected.length ? "Manage" : "Add tags"}
           </button>
         </PopoverTrigger>
-        <PopoverContent className="p-0 w-[260px]" align="start">
+        <PopoverContent align="start" className="w-[260px] p-0">
           <Command loop shouldFilter={false}>
-            <CommandInput placeholder="Search tags…" className="px-3" />
+            <CommandInput className="px-3" placeholder="Search tags…" />
             <CommandGroup>
               <div className="max-h-[225px] overflow-auto">
                 {(allTags as any[]).map((t: any) => {
                   const isChecked = selectedSet.has(String(t.id));
                   return (
                     <CommandItem
+                      className="cursor-pointer"
                       key={t.id}
-                      value={String(t.id)}
                       onSelect={(id) => {
                         const already = selectedSet.has(id);
                         if (already) removeTag.mutate({ transactionId, tagId: id });
@@ -423,9 +479,11 @@ function TagsEditor({ transactionId, existing }: { transactionId: string; existi
                           return Array.from(next);
                         });
                       }}
-                      className="cursor-pointer"
+                      value={String(t.id)}
                     >
-                      <Check className={cn("mr-2 h-4 w-4", isChecked ? "opacity-100" : "opacity-0")} />
+                      <Check
+                        className={cn("mr-2 h-4 w-4", isChecked ? "opacity-100" : "opacity-0")}
+                      />
                       {t.name}
                     </CommandItem>
                   );
@@ -440,7 +498,13 @@ function TagsEditor({ transactionId, existing }: { transactionId: string; existi
   );
 }
 
-function NoteEditor({ initialValue, onSave }: { initialValue: string; onSave: (value: string) => void }) {
+function NoteEditor({
+  initialValue,
+  onSave,
+}: {
+  initialValue: string;
+  onSave: (value: string) => void;
+}) {
   const [value, setValue] = useState(initialValue);
   useEffect(() => {
     setValue(initialValue);
@@ -457,12 +521,12 @@ function NoteEditor({ initialValue, onSave }: { initialValue: string; onSave: (v
   return (
     <div className="space-y-2">
       <Textarea
-        value={value}
+        className="min-h-[160px] resize-y"
+        onBlur={() => onSave(value)}
         onChange={(e) => setValue(e.target.value)}
         placeholder="Add internal notes"
-        onBlur={() => onSave(value)}
         rows={6}
-        className="resize-y min-h-[160px]"
+        value={value}
       />
     </div>
   );
@@ -490,7 +554,7 @@ function AttachmentsEditor({ data, transactionId }: { data: any; transactionId: 
   });
   const { data: docsSearch } = trpc.documents.list.useQuery(
     { q: attachmentQuery, limit: 10 },
-    { enabled: attachmentQuery.length > 1 },
+    { enabled: attachmentQuery.length > 1 }
   );
 
   const onDrop = async (files: File[]) => {
@@ -548,21 +612,20 @@ function AttachmentsEditor({ data, transactionId }: { data: any; transactionId: 
   return (
     <div className="space-y-3">
       <div className="relative">
-        <Icons.Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Icons.Search className="-translate-y-1/2 absolute top-1/2 left-3 h-4 w-4 text-muted-foreground" />
         <Input
           className="pl-9"
+          onChange={(e) => setAttachmentQuery(e.target.value)}
           placeholder="Search attachment"
           value={attachmentQuery}
-          onChange={(e) => setAttachmentQuery(e.target.value)}
         />
       </div>
       {attachmentQuery.length > 1 && (docsSearch as any)?.items?.length > 0 && (
-        <div className="border rounded-md divide-y max-h-48 overflow-auto text-sm">
+        <div className="max-h-48 divide-y overflow-auto rounded-md border text-sm">
           {(docsSearch as any).items.map((doc: any) => (
             <button
-              type="button"
+              className="w-full px-3 py-2 text-left hover:bg-secondary"
               key={doc.id}
-              className="w-full text-left px-3 py-2 hover:bg-secondary"
               onClick={async () => {
                 const path = (doc.pathTokens || []).join("/");
                 await attachmentsAdd.mutateAsync({
@@ -578,10 +641,11 @@ function AttachmentsEditor({ data, transactionId }: { data: any; transactionId: 
                 });
                 setAttachmentQuery("");
               }}
+              type="button"
             >
               <div className="flex items-center justify-between gap-2">
                 <span className="truncate">{doc.name}</span>
-                <span className="text-xs text-muted-foreground">
+                <span className="text-muted-foreground text-xs">
                   {(doc.mimeType || "").split("/")[1] || "file"}
                 </span>
               </div>
@@ -592,27 +656,28 @@ function AttachmentsEditor({ data, transactionId }: { data: any; transactionId: 
 
       <div
         {...getRootProps()}
-        className={`border border-dashed rounded-md px-4 text-sm min-h-[120px] flex items-center justify-center text-center ${isDragActive ? "bg-secondary" : "bg-background"}`}
+        className={`flex min-h-[120px] items-center justify-center rounded-md border border-dashed px-4 text-center text-sm ${isDragActive ? "bg-secondary" : "bg-background"}`}
       >
         <input {...getInputProps()} />
         <p className="text-muted-foreground">
-          Drop your files here, or {" "}
-          <button type="button" onClick={open} className="underline">
+          Drop your files here, or{" "}
+          <button className="underline" onClick={open} type="button">
             click to browse
           </button>
-          .<br />3MB file limit.
+          .<br />
+          3MB file limit.
         </p>
       </div>
 
       {existing.length > 0 && (
-        <div className="mt-2 space-y-1 text-xs text-muted-foreground">
+        <div className="mt-2 space-y-1 text-muted-foreground text-xs">
           {existing.map((a: any) => (
-            <div key={a.id} className="flex items-center justify-between gap-2">
+            <div className="flex items-center justify-between gap-2" key={a.id}>
               <span className="truncate">{a.name || (a.path || []).join("/")}</span>
               <button
-                type="button"
                 className="text-red-600"
                 onClick={() => attachmentsRemove.mutate({ attachmentId: a.id })}
+                type="button"
               >
                 Remove
               </button>

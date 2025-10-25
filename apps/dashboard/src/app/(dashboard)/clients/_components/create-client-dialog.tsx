@@ -10,7 +10,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@Faworra/ui/dialog";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@Faworra/ui/input";
 import { Textarea } from "@Faworra/ui/textarea";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -19,6 +18,14 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { trpc } from "@/lib/trpc/client";
 
 const clientSchema = z.object({
@@ -78,7 +85,7 @@ export function CreateClientDialog({ children }: CreateClientDialogProps) {
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog onOpenChange={setOpen} open={open}>
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
@@ -88,7 +95,7 @@ export function CreateClientDialog({ children }: CreateClientDialogProps) {
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <form className="space-y-4" onSubmit={form.handleSubmit(onSubmit)}>
             <FormField
               control={form.control}
               name="name"
@@ -174,10 +181,10 @@ export function CreateClientDialog({ children }: CreateClientDialogProps) {
             />
 
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+              <Button onClick={() => setOpen(false)} type="button" variant="outline">
                 Cancel
               </Button>
-              <Button type="submit" disabled={isPending}>
+              <Button disabled={isPending} type="submit">
                 {isPending ? "Creating..." : "Create Client"}
               </Button>
             </DialogFooter>

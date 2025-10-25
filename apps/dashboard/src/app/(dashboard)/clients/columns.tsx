@@ -7,7 +7,7 @@ export type ClientColumn = ClientRecord;
 
 export const createColumns = (
   _onEdit?: (client: ClientRecord) => void,
-  _onDelete?: (client: ClientRecord) => void,
+  _onDelete?: (client: ClientRecord) => void
 ): ColumnDef<ClientRecord>[] => [
   {
     accessorKey: "name",

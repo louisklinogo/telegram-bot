@@ -5,12 +5,12 @@ import { Ban, ChevronDown, CircleDot, EyeOff, RotateCcw, Tag, User } from "lucid
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
-  DropdownMenuItem,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuGroup,
-  DropdownMenuSeparator,
+  DropdownMenuItem,
   DropdownMenuPortal,
+  DropdownMenuSeparator,
   DropdownMenuSub,
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
@@ -55,7 +55,7 @@ export function BulkActions({ ids, onComplete }: Props) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" className="space-x-2">
+        <Button className="space-x-2" variant="outline">
           <span>Actions</span>
           <ChevronDown className="h-4 w-4" />
         </Button>
@@ -95,15 +95,15 @@ export function BulkActions({ ids, onComplete }: Props) {
               <span>Categories</span>
             </DropdownMenuSubTrigger>
             <DropdownMenuPortal>
-              <DropdownMenuSubContent sideOffset={14} className="p-0 w-[250px] h-[270px]">
+              <DropdownMenuSubContent className="h-[270px] w-[250px] p-0" sideOffset={14}>
                 <SelectCategory
+                  headless
                   onChange={(selected) => {
                     updateMutation.mutate({
                       transactionIds: ids,
                       updates: { categorySlug: selected.id },
                     });
                   }}
-                  headless
                 />
               </DropdownMenuSubContent>
             </DropdownMenuPortal>
@@ -150,7 +150,7 @@ export function BulkActions({ ids, onComplete }: Props) {
               <span>Assign</span>
             </DropdownMenuSubTrigger>
             <DropdownMenuPortal>
-              <DropdownMenuSubContent sideOffset={14} className="w-[230px] h-[170px] p-4 space-y-4">
+              <DropdownMenuSubContent className="h-[170px] w-[230px] space-y-4 p-4" sideOffset={14}>
                 <SelectUser
                   onSelect={(selected) => {
                     updateMutation.mutate({

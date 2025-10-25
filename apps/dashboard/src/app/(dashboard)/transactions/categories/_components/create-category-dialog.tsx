@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -8,7 +9,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { trpc } from "@/lib/trpc/client";
 
@@ -39,39 +39,39 @@ export function CreateCategoryDialog({ open, onOpenChange, onCreated, parentId =
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog onOpenChange={onOpenChange} open={open}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Create category</DialogTitle>
         </DialogHeader>
         <div className="space-y-3 py-2">
           <div className="space-y-1">
-            <label className="text-xs text-muted-foreground">Name</label>
+            <label className="text-muted-foreground text-xs">Name</label>
             <Input
-              value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="e.g. Utilities, Sales"
+              value={name}
             />
           </div>
           <div className="space-y-1">
-            <label className="text-xs text-muted-foreground">Color</label>
+            <label className="text-muted-foreground text-xs">Color</label>
             <div className="flex items-center gap-2">
               <input
+                aria-label="Pick color"
+                className="h-9 w-9 rounded border p-0"
+                onChange={(e) => setColor(e.target.value)}
                 type="color"
                 value={color}
-                onChange={(e) => setColor(e.target.value)}
-                className="h-9 w-9 rounded border p-0"
-                aria-label="Pick color"
               />
-              <Input value={color} onChange={(e) => setColor(e.target.value)} className="w-28" />
+              <Input className="w-28" onChange={(e) => setColor(e.target.value)} value={color} />
             </div>
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isPending}>
+          <Button disabled={isPending} onClick={() => onOpenChange(false)} variant="outline">
             Cancel
           </Button>
-          <Button onClick={submit} disabled={!name.trim() || isPending}>
+          <Button disabled={!name.trim() || isPending} onClick={submit}>
             {isPending ? "Creating…" : "Create"}
           </Button>
         </DialogFooter>

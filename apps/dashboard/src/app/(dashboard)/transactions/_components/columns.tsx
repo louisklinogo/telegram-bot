@@ -1,7 +1,10 @@
 "use client";
 
-import { type ColumnDef } from "@tanstack/react-table";
+import type { ColumnDef } from "@tanstack/react-table";
+import { format } from "date-fns";
+import { MoreHorizontal } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   DropdownMenu,
@@ -10,9 +13,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Button } from "@/components/ui/button";
-import { MoreHorizontal } from "lucide-react";
-import { format } from "date-fns";
 
 export type TransactionRow = {
   transaction: {
@@ -45,18 +45,18 @@ export const columns: ColumnDef<TransactionRow>[] = [
     id: "select",
     header: ({ table }) => (
       <Checkbox
+        aria-label="Select all"
         checked={
           table.getIsAllPageRowsSelected() || (table.getIsSomePageRowsSelected() && "indeterminate")
         }
         onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-        aria-label="Select all"
       />
     ),
     cell: ({ row }) => (
       <Checkbox
+        aria-label="Select row"
         checked={row.getIsSelected()}
         onCheckedChange={(value) => row.toggleSelected(!!value)}
-        aria-label="Select row"
       />
     ),
     enableSorting: false,
@@ -81,7 +81,7 @@ export const columns: ColumnDef<TransactionRow>[] = [
         <div className="flex flex-col">
           <span className="font-medium">{description}</span>
           {paymentReference && (
-            <span className="text-xs text-muted-foreground">{paymentReference}</span>
+            <span className="text-muted-foreground text-xs">{paymentReference}</span>
           )}
         </div>
       );
@@ -185,7 +185,7 @@ export const columns: ColumnDef<TransactionRow>[] = [
       return (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
+            <Button className="h-8 w-8 p-0" variant="ghost">
               <span className="sr-only">Open menu</span>
               <MoreHorizontal className="h-4 w-4" />
             </Button>
@@ -198,7 +198,7 @@ export const columns: ColumnDef<TransactionRow>[] = [
               onClick={() =>
                 meta?.onToggleStatus?.(
                   transaction.id,
-                  transaction.status === "completed" ? "pending" : "completed",
+                  transaction.status === "completed" ? "pending" : "completed"
                 )
               }
             >
@@ -213,8 +213,8 @@ export const columns: ColumnDef<TransactionRow>[] = [
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem
-              onClick={() => meta?.onDelete?.(transaction.id)}
               className="text-destructive focus:text-destructive"
+              onClick={() => meta?.onDelete?.(transaction.id)}
             >
               Delete
             </DropdownMenuItem>

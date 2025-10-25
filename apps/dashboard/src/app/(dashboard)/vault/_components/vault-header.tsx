@@ -1,16 +1,16 @@
 "use client";
 
-import { Search, Upload, Grid3x3, List } from "lucide-react";
+import { Grid3x3, List, Search, Upload } from "lucide-react";
+import { useTransition } from "react";
+import { FilterList } from "@/components/filter-list";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useVaultParams } from "@/hooks/use-vault-params";
 import { useVaultStore } from "@/stores/vault-store";
-import { useTransition } from "react";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { VaultSearchFilter } from "./vault-search-filter";
-import { FilterList } from "@/components/filter-list";
 import { UploadDocumentDialog } from "./upload-document-dialog";
+import { VaultSearchFilter } from "./vault-search-filter";
 
 type VaultHeaderProps = {
   documents?: any[];
@@ -53,39 +53,39 @@ export function VaultHeader({ documents = [], teamId }: VaultHeaderProps) {
   };
 
   const validFilters = Object.fromEntries(
-    Object.entries(params).filter(([key]) => key !== "q" && key !== "view"),
+    Object.entries(params).filter(([key]) => key !== "q" && key !== "view")
   );
 
   return (
     <div className="flex justify-between py-6">
-      <div className="flex space-x-4 items-center">
+      <div className="flex items-center space-x-4">
         {/* Select All Checkbox */}
         {documents.length > 0 && (
           <Checkbox
-            checked={allSelected}
-            onCheckedChange={handleSelectAll}
-            className="data-[state=indeterminate]:bg-primary"
             aria-label="Select all documents"
+            checked={allSelected}
+            className="data-[state=indeterminate]:bg-primary"
+            onCheckedChange={handleSelectAll}
             // Show indeterminate state when some are selected
             {...(someSelected && { "data-state": "indeterminate" })}
           />
         )}
 
         <form className="relative" onSubmit={handleSearch}>
-          <Search className="absolute pointer-events-none left-3 top-[11px] h-4 w-4" />
+          <Search className="pointer-events-none absolute top-[11px] left-3 h-4 w-4" />
           <Input
+            autoCapitalize="none"
+            autoComplete="off"
+            autoCorrect="off"
+            className="w-full pr-8 pl-9 md:w-[350px]"
+            defaultValue={params.q || ""}
             name="q"
             placeholder="Search or type filter"
-            className="pl-9 w-full md:w-[350px] pr-8"
-            autoComplete="off"
-            autoCapitalize="none"
-            autoCorrect="off"
             spellCheck="false"
-            defaultValue={params.q || ""}
           />
 
           {/* Filter Icon inside search */}
-          <div className="absolute right-3 top-[11px]">
+          <div className="absolute top-[11px] right-3">
             <VaultSearchFilter />
           </div>
         </form>
@@ -94,11 +94,10 @@ export function VaultHeader({ documents = [], teamId }: VaultHeaderProps) {
         <FilterList filters={validFilters} loading={isPending} onRemove={setParams} />
       </div>
 
-      <div className="space-x-2 flex items-center">
+      <div className="flex items-center space-x-2">
         {/* View Toggle */}
         <ToggleGroup
-          type="single"
-          value={params.view || "grid"}
+          className="hidden md:flex"
           onValueChange={(value) => {
             if (value) {
               startTransition(() => {
@@ -106,12 +105,13 @@ export function VaultHeader({ documents = [], teamId }: VaultHeaderProps) {
               });
             }
           }}
-          className="hidden md:flex"
+          type="single"
+          value={params.view || "grid"}
         >
-          <ToggleGroupItem value="grid" aria-label="Grid view" size="sm">
+          <ToggleGroupItem aria-label="Grid view" size="sm" value="grid">
             <Grid3x3 className="h-4 w-4" />
           </ToggleGroupItem>
-          <ToggleGroupItem value="list" aria-label="List view" size="sm">
+          <ToggleGroupItem aria-label="List view" size="sm" value="list">
             <List className="h-4 w-4" />
           </ToggleGroupItem>
         </ToggleGroup>

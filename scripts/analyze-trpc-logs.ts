@@ -38,12 +38,16 @@ function main() {
   }));
   rows.sort((a, b) => b.avg - a.avg);
   if (!rows.length) {
-    console.log("No [trpc] timing lines found. Ensure TRPC_TIMING is enabled and reproduce the flow.");
+    console.log(
+      "No [trpc] timing lines found. Ensure TRPC_TIMING is enabled and reproduce the flow."
+    );
     return;
   }
   console.log("TRPC Timing Summary (avg ms, count, min..max):\n");
   for (const r of rows.slice(0, 20)) {
-    console.log(`${r.key.padEnd(40)} avg=${r.avg.toFixed(1)}ms  n=${r.count}  [${r.min}..${r.max}]`);
+    console.log(
+      `${r.key.padEnd(40)} avg=${r.avg.toFixed(1)}ms  n=${r.count}  [${r.min}..${r.max}]`
+    );
   }
 }
 

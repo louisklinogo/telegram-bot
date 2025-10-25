@@ -5,7 +5,7 @@ type TeamInsert = Database["public"]["Tables"]["teams"]["Insert"];
 type AccountInsert = Database["public"]["Tables"]["communication_accounts"]["Insert"];
 
 export async function ensureAnyTeam(
-  supabase: SupabaseClient<Database>,
+  supabase: SupabaseClient<Database>
 ): Promise<{ id: string } | null> {
   const { data: teamRow, error: teamErr } = await supabase
     .from("teams")
@@ -25,7 +25,7 @@ export async function ensureAnyTeam(
 
 export async function upsertCommunicationAccount(
   supabase: SupabaseClient<Database>,
-  row: AccountInsert,
+  row: AccountInsert
 ) {
   return supabase
     .from("communication_accounts")

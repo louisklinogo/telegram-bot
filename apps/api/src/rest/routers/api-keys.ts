@@ -1,9 +1,9 @@
+import { ApiKeyScopes, apiKeyService } from "@Faworra/auth/api-keys";
+import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import { z } from "zod";
-import { zValidator } from "@hono/zod-validator";
-import { apiKeyService, ApiKeyScopes } from "@Faworra/auth/api-keys";
-import { requireAuthTeam, requireScopes } from "../middleware/auth";
 import type { ApiEnv } from "../../types/hono-env";
+import { requireAuthTeam, requireScopes } from "../middleware/auth";
 
 const app = new Hono<ApiEnv>();
 
@@ -21,8 +21,8 @@ const updateApiKeySchema = z.object({
 });
 
 // List all available scopes
-app.get("/scopes", requireAuthTeam, async (c) => {
-  return c.json({
+app.get("/scopes", requireAuthTeam, async (c) =>
+  c.json({
     scopes: ApiKeyScopes,
     categories: {
       read: Object.entries(ApiKeyScopes)
@@ -38,8 +38,8 @@ app.get("/scopes", requireAuthTeam, async (c) => {
         .filter(([key]) => !key.match(/^(read|write|admin):/))
         .reduce((acc, [key, value]) => ({ ...acc, [key]: value }), {}),
     },
-  });
-});
+  })
+);
 
 // Create a new API key
 app.post(
@@ -55,18 +55,24 @@ app.post(
       // Validate scopes
       const scopeValidation = apiKeyService.validateScopes(scopes);
       if (!scopeValidation.valid) {
-        return c.json({
-          error: "Invalid scopes",
-          invalid: scopeValidation.invalid,
-        }, 400);
+        return c.json(
+          {
+            error: "Invalid scopes",
+            invalid: scopeValidation.invalid,
+          },
+          400
+        );
       }
 
       // Check for duplicate name within team
       const existingKeys = await apiKeyService.listApiKeys(session.teamId);
-      if (existingKeys.some(key => key.name === name)) {
-        return c.json({
-          error: "API key with this name already exists",
-        }, 400);
+      if (existingKeys.some((key) => key.name === name)) {
+        return c.json(
+          {
+            error: "API key with this name already exists",
+          },
+          400
+        );
       }
 
       // Generate API key
@@ -79,21 +85,26 @@ app.post(
       });
 
       // Return API key (token is only shown once)
-      return c.json({
-        id: apiKey.id,
-        name: apiKey.name,
-        token: apiKey.token, // Only returned during creation
-        scopes: apiKey.scopes,
-        expiresAt: apiKey.expiresAt,
-        createdAt: apiKey.createdAt,
-        warning: "This token will only be shown once. Please save it securely.",
-      }, 201);
-
+      return c.json(
+        {
+          id: apiKey.id,
+          name: apiKey.name,
+          token: apiKey.token, // Only returned during creation
+          scopes: apiKey.scopes,
+          expiresAt: apiKey.expiresAt,
+          createdAt: apiKey.createdAt,
+          warning: "This token will only be shown once. Please save it securely.",
+        },
+        201
+      );
     } catch (error) {
       console.error("API key creation error:", error);
-      return c.json({
-        error: "Failed to create API key",
-      }, 500);
+      return c.json(
+        {
+          error: "Failed to create API key",
+        },
+        500
+      );
     }
   }
 );
@@ -105,7 +116,7 @@ app.get("/", requireAuthTeam, async (c) => {
     const apiKeys = await apiKeyService.listApiKeys(session.teamId);
 
     return c.json({
-      apiKeys: apiKeys.map(key => ({
+      apiKeys: apiKeys.map((key) => ({
         id: key.id,
         name: key.name,
         scopes: key.scopes,
@@ -117,12 +128,14 @@ app.get("/", requireAuthTeam, async (c) => {
         // Never return hashedToken or token
       })),
     });
-
   } catch (error) {
     console.error("API key listing error:", error);
-    return c.json({
-      error: "Failed to list API keys",
-    }, 500);
+    return c.json(
+      {
+        error: "Failed to list API keys",
+      },
+      500
+    );
   }
 });
 
@@ -133,12 +146,15 @@ app.get("/:id", requireAuthTeam, async (c) => {
     const session = c.get("session");
 
     const apiKeys = await apiKeyService.listApiKeys(session.teamId);
-    const apiKey = apiKeys.find(key => key.id === apiKeyId);
+    const apiKey = apiKeys.find((key) => key.id === apiKeyId);
 
     if (!apiKey) {
-      return c.json({
-        error: "API key not found",
-      }, 404);
+      return c.json(
+        {
+          error: "API key not found",
+        },
+        404
+      );
     }
 
     return c.json({
@@ -152,12 +168,14 @@ app.get("/:id", requireAuthTeam, async (c) => {
       updatedAt: apiKey.updatedAt,
       user: apiKey.user,
     });
-
   } catch (error) {
     console.error("API key fetch error:", error);
-    return c.json({
-      error: "Failed to fetch API key",
-    }, 500);
+    return c.json(
+      {
+        error: "Failed to fetch API key",
+      },
+      500
+    );
   }
 });
 
@@ -175,38 +193,52 @@ app.put(
 
       // Check if API key exists and belongs to team
       const apiKeys = await apiKeyService.listApiKeys(session.teamId);
-      const existingKey = apiKeys.find(key => key.id === apiKeyId);
+      const existingKey = apiKeys.find((key) => key.id === apiKeyId);
 
       if (!existingKey) {
-        return c.json({
-          error: "API key not found",
-        }, 404);
+        return c.json(
+          {
+            error: "API key not found",
+          },
+          404
+        );
       }
 
       if (existingKey.revoked) {
-        return c.json({
-          error: "Cannot update revoked API key",
-        }, 400);
+        return c.json(
+          {
+            error: "Cannot update revoked API key",
+          },
+          400
+        );
       }
 
       // Validate scopes if provided
       if (updates.scopes) {
         const scopeValidation = apiKeyService.validateScopes(updates.scopes);
         if (!scopeValidation.valid) {
-          return c.json({
-            error: "Invalid scopes",
-            invalid: scopeValidation.invalid,
-          }, 400);
+          return c.json(
+            {
+              error: "Invalid scopes",
+              invalid: scopeValidation.invalid,
+            },
+            400
+          );
         }
       }
 
       // Check for name conflicts if name is being updated
-      if (updates.name && updates.name !== existingKey.name) {
-        if (apiKeys.some(key => key.name === updates.name && key.id !== apiKeyId)) {
-          return c.json({
+      if (
+        updates.name &&
+        updates.name !== existingKey.name &&
+        apiKeys.some((key) => key.name === updates.name && key.id !== apiKeyId)
+      ) {
+        return c.json(
+          {
             error: "API key with this name already exists",
-          }, 400);
-        }
+          },
+          400
+        );
       }
 
       // Update API key
@@ -216,12 +248,14 @@ app.put(
         message: "API key updated successfully",
         updated: updates,
       });
-
     } catch (error) {
       console.error("API key update error:", error);
-      return c.json({
-        error: "Failed to update API key",
-      }, 500);
+      return c.json(
+        {
+          error: "Failed to update API key",
+        },
+        500
+      );
     }
   }
 );
@@ -234,18 +268,24 @@ app.delete("/:id", requireAuthTeam, requireScopes(["admin:system"]), async (c) =
 
     // Check if API key exists and belongs to team
     const apiKeys = await apiKeyService.listApiKeys(session.teamId);
-    const existingKey = apiKeys.find(key => key.id === apiKeyId);
+    const existingKey = apiKeys.find((key) => key.id === apiKeyId);
 
     if (!existingKey) {
-      return c.json({
-        error: "API key not found",
-      }, 404);
+      return c.json(
+        {
+          error: "API key not found",
+        },
+        404
+      );
     }
 
     if (existingKey.revoked) {
-      return c.json({
-        error: "API key is already revoked",
-      }, 400);
+      return c.json(
+        {
+          error: "API key is already revoked",
+        },
+        400
+      );
     }
 
     // Revoke API key
@@ -255,19 +295,21 @@ app.delete("/:id", requireAuthTeam, requireScopes(["admin:system"]), async (c) =
       message: "API key revoked successfully",
       revokedAt: new Date().toISOString(),
     });
-
   } catch (error) {
     console.error("API key revocation error:", error);
-    return c.json({
-      error: "Failed to revoke API key",
-    }, 500);
+    return c.json(
+      {
+        error: "Failed to revoke API key",
+      },
+      500
+    );
   }
 });
 
 // Test API key endpoint - useful for debugging
 app.get("/test/validate", requireAuthTeam, async (c) => {
   const session = c.get("session");
-  
+
   return c.json({
     message: "API key is valid",
     session: {

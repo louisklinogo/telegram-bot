@@ -1,10 +1,10 @@
-import { createServerClient } from "@Faworra/supabase/server";
+import { AuthEvents, trackAuthEvent } from "@Faworra/analytics/auth-events";
 import { upsertUserBasic } from "@Faworra/supabase/mutations";
+import { createServerClient } from "@Faworra/supabase/server";
+import { cookies } from "next/headers";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import { CookiePreferredSignInProvider } from "@/lib/cookies";
-import { trackAuthEvent, AuthEvents } from "@Faworra/analytics/auth-events";
 
 export async function GET(request: NextRequest) {
   const requestUrl = new URL(request.url);
@@ -20,12 +20,14 @@ export async function GET(request: NextRequest) {
 
       if (error) {
         // Enhanced error tracking
-        await trackAuthEvent(AuthEvents.signInFailed(
-          error.message,
-          provider || undefined,
-          (error as any)?.status,
-          "auth_exchange_failed"
-        ));
+        await trackAuthEvent(
+          AuthEvents.signInFailed(
+            error.message,
+            provider || undefined,
+            (error as any)?.status,
+            "auth_exchange_failed"
+          )
+        );
 
         const status = (error as any)?.status || "unknown";
         const reason = encodeURIComponent((error as any)?.message || "unknown_error");
@@ -35,9 +37,9 @@ export async function GET(request: NextRequest) {
           provider,
           code: code ? "[PRESENT]" : "[MISSING]",
         });
-        
+
         return NextResponse.redirect(
-          new URL(`/login?error=auth_failed&status=${status}&reason=${reason}`, requestUrl.origin),
+          new URL(`/login?error=auth_failed&status=${status}&reason=${reason}`, requestUrl.origin)
         );
       }
 
@@ -47,16 +49,14 @@ export async function GET(request: NextRequest) {
       } = await supabase.auth.getUser();
 
       if (user) {
-      // Track successful sign-in
-      await trackAuthEvent(AuthEvents.signInSuccess(
-        user.id,
-        provider || undefined,
-        {
-          email: user.email,
-          emailConfirmed: user.email_confirmed_at !== null,
-          createdAt: user.created_at,
-        }
-      ));
+        // Track successful sign-in
+        await trackAuthEvent(
+          AuthEvents.signInSuccess(user.id, provider || undefined, {
+            email: user.email,
+            emailConfirmed: user.email_confirmed_at !== null,
+            createdAt: user.created_at,
+          })
+        );
 
         // Ensure user row exists (bootstrap)
         try {
@@ -110,11 +110,10 @@ export async function GET(request: NextRequest) {
 
     // Redirect to dashboard after successful auth
     return NextResponse.redirect(new URL("/", requestUrl.origin));
-    
   } catch (error) {
     // Comprehensive error handling for unexpected errors
     console.error("🔐 Unexpected auth callback error:", error);
-    
+
     await trackAuthEvent({
       event: "SignIn.Failed",
       provider: provider || undefined,
@@ -122,8 +121,6 @@ export async function GET(request: NextRequest) {
       errorType: "unexpected_error",
     });
 
-    return NextResponse.redirect(
-      new URL("/login?error=unexpected_error", requestUrl.origin)
-    );
+    return NextResponse.redirect(new URL("/login?error=unexpected_error", requestUrl.origin));
   }
 }

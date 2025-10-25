@@ -1,8 +1,8 @@
 "use client";
 
-import { trpc } from "@/lib/trpc/client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Spinner } from "@/components/ui/spinner";
+import { trpc } from "@/lib/trpc/client";
 
 type User = {
   id: string;
@@ -35,7 +35,7 @@ function AssignedUser({
   return (
     <div className="flex items-center space-x-2">
       <Avatar className="h-6 w-6">
-        <AvatarImage src={avatarUrl ?? undefined} alt={fullName ?? email ?? ""} />
+        <AvatarImage alt={fullName ?? email ?? ""} src={avatarUrl ?? undefined} />
         <AvatarFallback className="text-xs">{initials}</AvatarFallback>
       </Avatar>
       <span className="text-sm">{fullName ?? email ?? "Unknown"}</span>
@@ -48,7 +48,7 @@ export function SelectUser({ onSelect }: Props) {
 
   if (isLoading) {
     return (
-      <div className="w-full h-full flex items-center justify-center">
+      <div className="flex h-full w-full items-center justify-center">
         <Spinner />
       </div>
     );
@@ -58,9 +58,8 @@ export function SelectUser({ onSelect }: Props) {
     <div className="space-y-2">
       {members?.map((member: any) => (
         <button
-          type="button"
+          className="flex w-full cursor-pointer items-center rounded-sm p-2 text-sm hover:bg-accent"
           key={member.id}
-          className="flex items-center text-sm cursor-pointer hover:bg-accent w-full p-2 rounded-sm"
           onClick={() => {
             onSelect({
               id: member.id,
@@ -69,16 +68,17 @@ export function SelectUser({ onSelect }: Props) {
               email: member.email,
             });
           }}
+          type="button"
         >
           <AssignedUser
             avatarUrl={member.avatarUrl}
-            fullName={member.fullName}
             email={member.email}
+            fullName={member.fullName}
           />
         </button>
       ))}
       {(!members || members.length === 0) && (
-        <p className="text-sm text-muted-foreground px-2">No members found</p>
+        <p className="px-2 text-muted-foreground text-sm">No members found</p>
       )}
     </div>
   );

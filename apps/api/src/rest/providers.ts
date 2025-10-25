@@ -1,9 +1,9 @@
-import type { Hono } from "hono";
-import type { ApiEnv } from "../types/hono-env";
 import { StartBaileysSessionSchema } from "@Faworra/schemas";
 import { upsertCommunicationAccount } from "@Faworra/supabase/mutations";
-import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@Faworra/supabase/types";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Hono } from "hono";
+import type { ApiEnv } from "../types/hono-env";
 
 // Simple in-memory rate limiter (per-process). For production behind a single instance.
 const rlStore = new Map<string, { count: number; ts: number }>();

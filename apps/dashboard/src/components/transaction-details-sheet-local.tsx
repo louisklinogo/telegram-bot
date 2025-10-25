@@ -1,9 +1,9 @@
 "use client";
 
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { trpc } from "@/lib/trpc/client";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
+import { trpc } from "@/lib/trpc/client";
 
 type Props = {
   open: boolean;
@@ -15,15 +15,15 @@ export function TransactionDetailsSheetLocal({ open, transactionId, onOpenChange
   const enabled = open && !!transactionId;
   const { data, isLoading } = trpc.transactions.byId.useQuery(
     { id: transactionId as string },
-    { enabled },
+    { enabled }
   );
 
   if (!open) return null;
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="sm:max-w-[620px] bg-background p-0">
-        <div className="p-6 pb-0 border-b">
+    <Sheet onOpenChange={onOpenChange} open={open}>
+      <SheetContent className="bg-background p-0 sm:max-w-[620px]">
+        <div className="border-b p-6 pb-0">
           <SheetHeader>
             <SheetTitle className="text-2xl">Transaction Details</SheetTitle>
           </SheetHeader>
@@ -40,36 +40,36 @@ export function TransactionDetailsSheetLocal({ open, transactionId, onOpenChange
             <div className="space-y-4 text-sm">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <div className="text-xs text-muted-foreground">Date</div>
+                  <div className="text-muted-foreground text-xs">Date</div>
                   <div>{new Date((data as any).transaction.date as any).toLocaleDateString()}</div>
                 </div>
                 <div>
-                  <div className="text-xs text-muted-foreground">Amount</div>
+                  <div className="text-muted-foreground text-xs">Amount</div>
                   <div>
                     {(data as any).transaction.currency}{" "}
                     {Number((data as any).transaction.amount).toLocaleString()}
                   </div>
                 </div>
                 <div>
-                  <div className="text-xs text-muted-foreground">Type</div>
+                  <div className="text-muted-foreground text-xs">Type</div>
                   <div>{(data as any).transaction.type}</div>
                 </div>
                 <div>
-                  <div className="text-xs text-muted-foreground">Status</div>
+                  <div className="text-muted-foreground text-xs">Status</div>
                   <div>{(data as any).transaction.status}</div>
                 </div>
               </div>
               <div>
-                <div className="text-xs text-muted-foreground">Description</div>
+                <div className="text-muted-foreground text-xs">Description</div>
                 <div>{(data as any).transaction.description || "-"}</div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <div className="text-xs text-muted-foreground">Client</div>
+                  <div className="text-muted-foreground text-xs">Client</div>
                   <div>{(data as any).client?.name || "-"}</div>
                 </div>
                 <div>
-                  <div className="text-xs text-muted-foreground">Category</div>
+                  <div className="text-muted-foreground text-xs">Category</div>
                   <div>
                     {(data as any).category?.name || (data as any).transaction.categorySlug || "-"}
                   </div>
@@ -77,16 +77,16 @@ export function TransactionDetailsSheetLocal({ open, transactionId, onOpenChange
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <div className="text-xs text-muted-foreground">Method</div>
+                  <div className="text-muted-foreground text-xs">Method</div>
                   <div>{(data as any).transaction.paymentMethod || "-"}</div>
                 </div>
                 <div>
-                  <div className="text-xs text-muted-foreground">Reference</div>
+                  <div className="text-muted-foreground text-xs">Reference</div>
                   <div>{(data as any).transaction.paymentReference || "-"}</div>
                 </div>
               </div>
               <div>
-                <div className="text-xs text-muted-foreground">Notes</div>
+                <div className="text-muted-foreground text-xs">Notes</div>
                 <div>{(data as any).transaction.notes || "-"}</div>
               </div>
             </div>

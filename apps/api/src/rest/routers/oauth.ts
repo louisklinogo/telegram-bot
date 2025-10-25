@@ -1,26 +1,23 @@
-import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
-import type { ApiEnv } from "../../types/hono-env";
-import { HTTPException } from "hono/http-exception";
-import { z } from "zod";
-
+// Import schemas
+import {
+  oauthApplicationInfoSchema,
+  oauthAuthorizationDecisionSchema,
+  oauthAuthorizationRequestSchema,
+  oauthErrorResponseSchema,
+  oauthRefreshTokenRequestSchema,
+  oauthRevokeTokenRequestSchema,
+  oauthTokenRequestSchema,
+  oauthTokenResponseSchema,
+} from "@faworra/api/schemas/oauth-flow";
+// Import OAuth service
+import { oauthApplicationService } from "@faworra/auth/oauth-applications";
 // Import middleware
 import { globalErrorHandler } from "@faworra/middleware/error-handling";
 import { rateLimitingMiddleware } from "@faworra/middleware/rate-limiting-simple";
-
-// Import schemas
-import {
-  oauthAuthorizationRequestSchema,
-  oauthAuthorizationDecisionSchema,
-  oauthApplicationInfoSchema,
-  oauthTokenRequestSchema,
-  oauthRefreshTokenRequestSchema,
-  oauthRevokeTokenRequestSchema,
-  oauthTokenResponseSchema,
-  oauthErrorResponseSchema,
-} from "@faworra/api/schemas/oauth-flow";
-
-// Import OAuth service
-import { oauthApplicationService } from "@faworra/auth/oauth-applications";
+import { createRoute, OpenAPIHono } from "@hono/zod-openapi";
+import { HTTPException } from "hono/http-exception";
+import { z } from "zod";
+import type { ApiEnv } from "../../types/hono-env";
 
 /**
  * OAuth 2.0 Server Implementation
@@ -42,8 +39,7 @@ app.openapi(
     path: "/authorize",
     summary: "OAuth Authorization Endpoint",
     operationId: "getOAuthAuthorization",
-    description:
-      "Initiate OAuth authorization flow and get consent screen information",
+    description: "Initiate OAuth authorization flow and get consent screen information",
     tags: ["OAuth"],
     request: {
       query: oauthAuthorizationRequestSchema,
@@ -77,7 +73,7 @@ app.openapi(
       // const application = await getOAuthApplicationByClientId(client_id);
       const application: any = null; // Placeholder
 
-      if (!application || !application.active) {
+      if (!(application && application.active)) {
         throw new HTTPException(400, {
           message: "Invalid client_id",
         });
@@ -99,9 +95,7 @@ app.openapi(
 
       // Validate scopes
       const requestedScopes = scope.split(" ").filter(Boolean);
-      const invalidScopes = requestedScopes.filter(
-        (s) => !application.scopes.includes(s),
-      );
+      const invalidScopes = requestedScopes.filter((s) => !application.scopes.includes(s));
 
       if (invalidScopes.length > 0) {
         throw new HTTPException(400, {
@@ -123,7 +117,6 @@ app.openapi(
       };
 
       return c.json(applicationInfo);
-
     } catch (error) {
       if (error instanceof HTTPException) {
         throw error;
@@ -132,7 +125,7 @@ app.openapi(
         message: "Invalid authorization request",
       });
     }
-  },
+  }
 );
 
 // OAuth Authorization Decision Endpoint - POST (user consent)
@@ -190,15 +183,7 @@ app.openapi(
     const authHeader = c.req.header("Authorization");
     const body = c.req.valid("json");
 
-    const {
-      client_id,
-      decision,
-      scopes,
-      redirect_uri,
-      state,
-      code_challenge,
-      team_id,
-    } = body;
+    const { client_id, decision, scopes, redirect_uri, state, code_challenge, team_id } = body;
 
     try {
       // Verify user authentication (get from JWT token)
@@ -223,7 +208,7 @@ app.openapi(
       // TODO: Replace with actual database call
       const application: any = null; // Placeholder
 
-      if (!application || !application.active) {
+      if (!(application && application.active)) {
         throw new HTTPException(400, {
           message: "Invalid client_id",
         });
@@ -280,7 +265,6 @@ app.openapi(
       }
 
       return c.json({ redirect_url: redirectUrl.toString() });
-
     } catch (error) {
       if (error instanceof HTTPException) {
         throw error;
@@ -289,7 +273,7 @@ app.openapi(
         message: "Failed to process authorization decision",
       });
     }
-  },
+  }
 );
 
 // OAuth Token Exchange Endpoint
@@ -299,23 +283,16 @@ app.openapi(
     path: "/token",
     summary: "OAuth Token Exchange",
     operationId: "postOAuthToken",
-    description:
-      "Exchange authorization code for access token or refresh an access token",
+    description: "Exchange authorization code for access token or refresh an access token",
     tags: ["OAuth"],
     request: {
       body: {
         content: {
           "application/json": {
-            schema: z.union([
-              oauthTokenRequestSchema,
-              oauthRefreshTokenRequestSchema,
-            ]),
+            schema: z.union([oauthTokenRequestSchema, oauthRefreshTokenRequestSchema]),
           },
           "application/x-www-form-urlencoded": {
-            schema: z.union([
-              oauthTokenRequestSchema,
-              oauthRefreshTokenRequestSchema,
-            ]),
+            schema: z.union([oauthTokenRequestSchema, oauthRefreshTokenRequestSchema]),
           },
         },
       },
@@ -374,10 +351,9 @@ app.openapi(
       }
 
       if (grant_type === "authorization_code") {
-        if (!code || !redirect_uri) {
+        if (!(code && redirect_uri)) {
           throw new HTTPException(400, {
-            message:
-              "Missing required parameters: code and redirect_uri are required",
+            message: "Missing required parameters: code and redirect_uri are required",
           });
         }
 
@@ -399,16 +375,13 @@ app.openapi(
           };
 
           return c.json(response);
-
         } catch (error) {
-          const errorMessage =
-            error instanceof Error ? error.message : "Unknown error";
+          const errorMessage = error instanceof Error ? error.message : "Unknown error";
 
           // Handle specific OAuth errors with proper error codes (following Midday)
           if (errorMessage.includes("Authorization code expired")) {
             throw new HTTPException(400, {
-              message:
-                "The authorization code has expired. Please restart the OAuth flow.",
+              message: "The authorization code has expired. Please restart the OAuth flow.",
             });
           }
 
@@ -427,8 +400,7 @@ app.openapi(
 
           if (errorMessage.includes("redirect_uri")) {
             throw new HTTPException(400, {
-              message:
-                "The redirect_uri does not match the one used in the authorization request.",
+              message: "The redirect_uri does not match the one used in the authorization request.",
             });
           }
 
@@ -448,9 +420,7 @@ app.openapi(
 
         try {
           // Parse requested scopes
-          const requestedScopes = scope
-            ? scope.split(" ").filter(Boolean)
-            : undefined;
+          const requestedScopes = scope ? scope.split(" ").filter(Boolean) : undefined;
 
           // TODO: Implement refresh token functionality
           // const tokenResponse = await refreshAccessToken({
@@ -462,10 +432,8 @@ app.openapi(
           throw new HTTPException(501, {
             message: "Refresh token flow not yet implemented",
           });
-
         } catch (error) {
-          const errorMessage =
-            error instanceof Error ? error.message : "Unknown error";
+          const errorMessage = error instanceof Error ? error.message : "Unknown error";
 
           if (errorMessage.includes("Invalid refresh token")) {
             throw new HTTPException(400, {
@@ -494,7 +462,6 @@ app.openapi(
       throw new HTTPException(400, {
         message: "Grant type not supported",
       });
-
     } catch (error) {
       if (error instanceof HTTPException) {
         throw error;
@@ -503,7 +470,7 @@ app.openapi(
         message: "Token exchange failed",
       });
     }
-  },
+  }
 );
 
 // OAuth Token Revocation Endpoint
@@ -572,7 +539,6 @@ app.openapi(
       });
 
       return c.json({ success: true });
-
     } catch (error) {
       if (error instanceof HTTPException) {
         throw error;
@@ -581,7 +547,7 @@ app.openapi(
         message: "Token revocation failed",
       });
     }
-  },
+  }
 );
 
 export default app;

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -8,10 +9,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { trpc } from "@/lib/trpc/client";
 import { useTeamCurrency } from "@/hooks/use-team-currency";
+import { trpc } from "@/lib/trpc/client";
 
 type Props = {
   open: boolean;
@@ -43,27 +43,27 @@ export function CreateAccountDialog({ open, onOpenChange, onCreated }: Props) {
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog onOpenChange={onOpenChange} open={open}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Create account</DialogTitle>
         </DialogHeader>
         <div className="space-y-3 py-2">
           <div className="space-y-1">
-            <label className="text-xs text-muted-foreground">Name</label>
+            <label className="text-muted-foreground text-xs">Name</label>
             <Input
-              value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="e.g. Cash till, Bank - GTBank"
+              value={name}
             />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
-              <label className="text-xs text-muted-foreground">Type</label>
+              <label className="text-muted-foreground text-xs">Type</label>
               <select
-                value={type}
-                onChange={(e) => setType(e.target.value as any)}
                 className="w-full rounded border px-3 py-2 text-sm"
+                onChange={(e) => setType(e.target.value as any)}
+                value={type}
               >
                 <option value="cash">cash</option>
                 <option value="bank">bank</option>
@@ -73,20 +73,20 @@ export function CreateAccountDialog({ open, onOpenChange, onCreated }: Props) {
               </select>
             </div>
             <div className="space-y-1">
-              <label className="text-xs text-muted-foreground">Currency</label>
+              <label className="text-muted-foreground text-xs">Currency</label>
               <Input
-                value={currency}
                 onChange={(e) => setCurrency(e.target.value.toUpperCase())}
                 placeholder="GHS"
+                value={currency}
               />
             </div>
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isPending}>
+          <Button disabled={isPending} onClick={() => onOpenChange(false)} variant="outline">
             Cancel
           </Button>
-          <Button onClick={submit} disabled={!name.trim() || isPending}>
+          <Button disabled={!name.trim() || isPending} onClick={submit}>
             {isPending ? "Creating…" : "Create"}
           </Button>
         </DialogFooter>

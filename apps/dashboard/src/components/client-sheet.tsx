@@ -1,26 +1,34 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { SubmitButton } from "@/components/ui/submit-button";
-import { Input } from "@/components/ui/input";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { CountrySelector } from "@/components/country-selector";
+import { PhoneCountrySelector } from "@/components/phone-country-selector";
+import { TagInput } from "@/components/tag-input";
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { Button } from "@/components/ui/button";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { SubmitButton } from "@/components/ui/submit-button";
 import { Textarea } from "@/components/ui/textarea";
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useCreateClient, useUpdateClient } from "@/hooks/use-client-mutations";
-import { CountrySelector } from "@/components/country-selector";
-import { PhoneCountrySelector } from "@/components/phone-country-selector";
-import { TagInput } from "@/components/tag-input";
 import { formatPhoneNumber, getPhonePlaceholder } from "@/lib/phone-formatter";
-import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
 
 const clientFormSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -122,16 +130,20 @@ export function ClientSheet({ open, onOpenChange, client }: ClientSheetProps) {
   };
 
   return (
-    <Sheet open={open} onOpenChange={handleOpenChange}>
+    <Sheet onOpenChange={handleOpenChange} open={open}>
       <SheetContent className="flex flex-col overflow-hidden">
         <SheetHeader className="flex-shrink-0">
           <SheetTitle className="text-xl">{isEdit ? "Edit Client" : "Create Client"}</SheetTitle>
         </SheetHeader>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col flex-1 min-h-0">
-            <div className="flex-1 overflow-y-auto scrollbar-hide px-1 -mx-1">
-              <Accordion type="multiple" defaultValue={["general", "details"]} className="space-y-6">
+          <form className="flex min-h-0 flex-1 flex-col" onSubmit={form.handleSubmit(onSubmit)}>
+            <div className="scrollbar-hide -mx-1 flex-1 overflow-y-auto px-1">
+              <Accordion
+                className="space-y-6"
+                defaultValue={["general", "details"]}
+                type="multiple"
+              >
                 <AccordionItem value="general">
                   <AccordionTrigger>General</AccordionTrigger>
                   <AccordionContent>
@@ -141,15 +153,15 @@ export function ClientSheet({ open, onOpenChange, client }: ClientSheetProps) {
                         name="name"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="text-xs text-muted-foreground font-normal">
+                            <FormLabel className="font-normal text-muted-foreground text-xs">
                               Name
                             </FormLabel>
                             <FormControl>
                               <Input
                                 {...field}
-                                placeholder="Kwame Mensah"
                                 autoComplete="off"
                                 autoFocus
+                                placeholder="Kwame Mensah"
                               />
                             </FormControl>
                             <FormMessage />
@@ -162,16 +174,16 @@ export function ClientSheet({ open, onOpenChange, client }: ClientSheetProps) {
                         name="email"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="text-xs text-muted-foreground font-normal">
+                            <FormLabel className="font-normal text-muted-foreground text-xs">
                               Email
                             </FormLabel>
                             <FormControl>
                               <Input
                                 {...field}
-                                value={field.value ?? ""}
-                                type="email"
-                                placeholder="kwame@example.com"
                                 autoComplete="off"
+                                placeholder="kwame@example.com"
+                                type="email"
+                                value={field.value ?? ""}
                               />
                             </FormControl>
                             <FormMessage />
@@ -184,7 +196,7 @@ export function ClientSheet({ open, onOpenChange, client }: ClientSheetProps) {
                         name="phone"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="text-xs text-muted-foreground font-normal">
+                            <FormLabel className="font-normal text-muted-foreground text-xs">
                               Phone
                             </FormLabel>
                             <FormControl>
@@ -195,15 +207,18 @@ export function ClientSheet({ open, onOpenChange, client }: ClientSheetProps) {
                                 />
                                 <Input
                                   {...field}
-                                  value={field.value ?? ""}
-                                  type="tel"
-                                  placeholder={getPhonePlaceholder(phoneCountryCode)}
                                   autoComplete="off"
                                   className="flex-1"
                                   onChange={(e) => {
-                                    const formatted = formatPhoneNumber(phoneCountryCode, e.target.value);
+                                    const formatted = formatPhoneNumber(
+                                      phoneCountryCode,
+                                      e.target.value
+                                    );
                                     field.onChange(formatted);
                                   }}
+                                  placeholder={getPhonePlaceholder(phoneCountryCode)}
+                                  type="tel"
+                                  value={field.value ?? ""}
                                 />
                               </div>
                             </FormControl>
@@ -217,7 +232,7 @@ export function ClientSheet({ open, onOpenChange, client }: ClientSheetProps) {
                         name="whatsapp"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="text-xs text-muted-foreground font-normal">
+                            <FormLabel className="font-normal text-muted-foreground text-xs">
                               WhatsApp
                             </FormLabel>
                             <FormControl>
@@ -228,14 +243,17 @@ export function ClientSheet({ open, onOpenChange, client }: ClientSheetProps) {
                                 />
                                 <Input
                                   {...field}
-                                  type="tel"
-                                  placeholder={getPhonePlaceholder(whatsappCountryCode)}
                                   autoComplete="off"
                                   className="flex-1"
                                   onChange={(e) => {
-                                    const formatted = formatPhoneNumber(whatsappCountryCode, e.target.value);
+                                    const formatted = formatPhoneNumber(
+                                      whatsappCountryCode,
+                                      e.target.value
+                                    );
                                     field.onChange(formatted);
                                   }}
+                                  placeholder={getPhonePlaceholder(whatsappCountryCode)}
+                                  type="tel"
                                 />
                               </div>
                             </FormControl>
@@ -249,15 +267,15 @@ export function ClientSheet({ open, onOpenChange, client }: ClientSheetProps) {
                         name="company"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="text-xs text-muted-foreground font-normal">
+                            <FormLabel className="font-normal text-muted-foreground text-xs">
                               Company
                             </FormLabel>
                             <FormControl>
                               <Input
                                 {...field}
-                                value={field.value ?? ""}
-                                placeholder="Acme Inc"
                                 autoComplete="off"
+                                placeholder="Acme Inc"
+                                value={field.value ?? ""}
                               />
                             </FormControl>
                             <FormMessage />
@@ -270,15 +288,15 @@ export function ClientSheet({ open, onOpenChange, client }: ClientSheetProps) {
                         name="occupation"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="text-xs text-muted-foreground font-normal">
+                            <FormLabel className="font-normal text-muted-foreground text-xs">
                               Occupation
                             </FormLabel>
                             <FormControl>
                               <Input
                                 {...field}
-                                value={field.value ?? ""}
-                                placeholder="Business Owner"
                                 autoComplete="off"
+                                placeholder="Business Owner"
+                                value={field.value ?? ""}
                               />
                             </FormControl>
                             <FormMessage />
@@ -298,16 +316,16 @@ export function ClientSheet({ open, onOpenChange, client }: ClientSheetProps) {
                         name="address"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="text-xs text-muted-foreground font-normal">
+                            <FormLabel className="font-normal text-muted-foreground text-xs">
                               Address
                             </FormLabel>
                             <FormControl>
                               <Textarea
                                 {...field}
-                                value={field.value ?? ""}
-                                placeholder="123 Main St, Accra"
                                 autoComplete="off"
+                                placeholder="123 Main St, Accra"
                                 rows={3}
+                                value={field.value ?? ""}
                               />
                             </FormControl>
                             <FormMessage />
@@ -320,7 +338,7 @@ export function ClientSheet({ open, onOpenChange, client }: ClientSheetProps) {
                         name="countryCode"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="text-xs text-muted-foreground font-normal">
+                            <FormLabel className="font-normal text-muted-foreground text-xs">
                               Country
                             </FormLabel>
                             <FormControl>
@@ -342,15 +360,15 @@ export function ClientSheet({ open, onOpenChange, client }: ClientSheetProps) {
                         name="referral_source"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="text-xs text-muted-foreground font-normal">
+                            <FormLabel className="font-normal text-muted-foreground text-xs">
                               Referral Source
                             </FormLabel>
                             <FormControl>
                               <Input
                                 {...field}
-                                value={field.value ?? ""}
-                                placeholder="Instagram, Word of mouth, Facebook"
                                 autoComplete="off"
+                                placeholder="Instagram, Word of mouth, Facebook"
+                                value={field.value ?? ""}
                               />
                             </FormControl>
                             <FormMessage />
@@ -363,15 +381,22 @@ export function ClientSheet({ open, onOpenChange, client }: ClientSheetProps) {
                         name="tags"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="text-xs text-muted-foreground font-normal">
+                            <FormLabel className="font-normal text-muted-foreground text-xs">
                               Tags
                             </FormLabel>
                             <FormControl>
                               <TagInput
-                                value={field.value ?? []}
                                 onChange={field.onChange}
                                 placeholder="Add tags (VIP, Regular, New...)"
-                                suggestions={["VIP", "Regular", "New", "Wholesale", "Retail", "Premium"]}
+                                suggestions={[
+                                  "VIP",
+                                  "Regular",
+                                  "New",
+                                  "Wholesale",
+                                  "Retail",
+                                  "Premium",
+                                ]}
+                                value={field.value ?? []}
                               />
                             </FormControl>
                             <FormMessage />
@@ -384,17 +409,17 @@ export function ClientSheet({ open, onOpenChange, client }: ClientSheetProps) {
                         name="notes"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="text-xs text-muted-foreground font-normal">
+                            <FormLabel className="font-normal text-muted-foreground text-xs">
                               Note
                             </FormLabel>
                             <FormControl>
                               <Textarea
                                 {...field}
-                                value={field.value ?? ""}
-                                placeholder="Additional information..."
                                 autoComplete="off"
-                                rows={4}
                                 className="resize-none"
+                                placeholder="Additional information..."
+                                rows={4}
+                                value={field.value ?? ""}
                               />
                             </FormControl>
                             <FormMessage />
@@ -407,16 +432,16 @@ export function ClientSheet({ open, onOpenChange, client }: ClientSheetProps) {
               </Accordion>
             </div>
 
-            <div className="flex-shrink-0 flex justify-end gap-4 pt-4 border-t mt-4">
+            <div className="mt-4 flex flex-shrink-0 justify-end gap-4 border-t pt-4">
               <Button
+                disabled={isLoading}
+                onClick={() => handleOpenChange(false)}
                 type="button"
                 variant="outline"
-                onClick={() => handleOpenChange(false)}
-                disabled={isLoading}
               >
                 Cancel
               </Button>
-              <SubmitButton type="submit" isSubmitting={isLoading}>
+              <SubmitButton isSubmitting={isLoading} type="submit">
                 {isEdit ? "Update" : "Create"}
               </SubmitButton>
             </div>

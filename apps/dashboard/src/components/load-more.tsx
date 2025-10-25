@@ -15,8 +15,8 @@ export const LoadMore = React.forwardRef<HTMLDivElement, LoadMoreProps>(
 
     return (
       <div
+        className="flex h-16 items-center justify-center text-muted-foreground text-sm"
         ref={ref}
-        className="flex justify-center items-center h-16 text-sm text-muted-foreground"
       >
         {isFetchingNextPage ? (
           <div className="flex items-center gap-2">
@@ -28,7 +28,7 @@ export const LoadMore = React.forwardRef<HTMLDivElement, LoadMoreProps>(
         )}
       </div>
     );
-  },
+  }
 );
 
 LoadMore.displayName = "LoadMore";

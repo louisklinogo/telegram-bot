@@ -35,7 +35,7 @@ export async function createTag(
     teamId: string;
     name: string;
     color?: string;
-  },
+  }
 ) {
   const [result] = await db
     .insert(tags)
@@ -60,7 +60,7 @@ export async function updateTag(
     id: string;
     name?: string;
     color?: string | null;
-  },
+  }
 ) {
   const [result] = await db
     .update(tags)

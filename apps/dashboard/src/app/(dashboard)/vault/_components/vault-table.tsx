@@ -1,7 +1,19 @@
 "use client";
 
+import { createBrowserClient } from "@Faworra/supabase/client";
 import { formatDistanceToNow } from "date-fns";
-import { MoreVertical, Download, Trash2, Eye, FileText, Copy, Check } from "lucide-react";
+import { Check, Copy, Download, Eye, FileText, MoreVertical, Trash2 } from "lucide-react";
+import { useState } from "react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -18,20 +30,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { trpc } from "@/lib/trpc/client";
 import { useToast } from "@/components/ui/use-toast";
-import { createBrowserClient } from "@Faworra/supabase/client";
-import { useState } from "react";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import { trpc } from "@/lib/trpc/client";
 import { formatFileSize } from "@/lib/upload";
 import { TagEditor } from "./tag-editor";
 
@@ -124,27 +124,27 @@ export function VaultTable({ documents }: VaultTableProps) {
 
   return (
     <>
-      <div className="border rounded-lg">
+      <div className="rounded-lg border">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-[50px]"></TableHead>
+              <TableHead className="w-[50px]" />
               <TableHead>Name</TableHead>
               <TableHead>Size</TableHead>
               <TableHead>Tags</TableHead>
               <TableHead>Uploaded</TableHead>
-              <TableHead className="w-[50px]"></TableHead>
+              <TableHead className="w-[50px]" />
             </TableRow>
           </TableHeader>
           <TableBody>
             {documents.map((document) => (
-              <TableRow key={document.id} className="group">
+              <TableRow className="group" key={document.id}>
                 <TableCell>
                   <FileText className="h-4 w-4 text-muted-foreground" />
                 </TableCell>
                 <TableCell className="font-medium">
                   <div className="flex items-center gap-2">
-                    <span className="truncate max-w-[300px]">{document.name}</span>
+                    <span className="max-w-[300px] truncate">{document.name}</span>
                   </div>
                 </TableCell>
                 <TableCell className="text-muted-foreground">
@@ -162,41 +162,41 @@ export function VaultTable({ documents }: VaultTableProps) {
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button
-                        variant="ghost"
+                        className="h-8 w-8 p-0 opacity-0 transition-opacity group-hover:opacity-100"
                         size="sm"
-                        className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                        variant="ghost"
                       >
                         <MoreVertical className="h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       <DropdownMenuItem onClick={() => handleDownload(document)}>
-                        <Eye className="h-4 w-4 mr-2" />
+                        <Eye className="mr-2 h-4 w-4" />
                         Preview
                       </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => handleDownload(document)}>
-                        <Download className="h-4 w-4 mr-2" />
+                        <Download className="mr-2 h-4 w-4" />
                         Download
                       </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => handleShare(document)}>
                         {copiedId === document.id ? (
                           <>
-                            <Check className="h-4 w-4 mr-2" />
+                            <Check className="mr-2 h-4 w-4" />
                             Copied!
                           </>
                         ) : (
                           <>
-                            <Copy className="h-4 w-4 mr-2" />
+                            <Copy className="mr-2 h-4 w-4" />
                             Copy Link
                           </>
                         )}
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem
-                        onClick={() => handleDelete(document)}
                         className="text-destructive"
+                        onClick={() => handleDelete(document)}
                       >
-                        <Trash2 className="h-4 w-4 mr-2" />
+                        <Trash2 className="mr-2 h-4 w-4" />
                         Delete
                       </DropdownMenuItem>
                     </DropdownMenuContent>
@@ -208,7 +208,7 @@ export function VaultTable({ documents }: VaultTableProps) {
         </Table>
       </div>
 
-      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+      <AlertDialog onOpenChange={setDeleteDialogOpen} open={deleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Delete document?</AlertDialogTitle>
@@ -220,8 +220,8 @@ export function VaultTable({ documents }: VaultTableProps) {
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
-              onClick={confirmDelete}
               className="bg-destructive text-destructive-foreground"
+              onClick={confirmDelete}
             >
               Delete
             </AlertDialogAction>

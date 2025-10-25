@@ -4,12 +4,12 @@ import {
   Inbox,
   LayoutDashboard,
   NotebookPen,
+  Package,
   ReceiptText,
   Ruler,
   Settings,
   Users,
   Vault,
-  Package,
 } from "lucide-react";
 
 export type NavItem = {
@@ -52,9 +52,7 @@ export const NAV_SECTIONS: NavSection[] = [
         href: "/transactions",
         icon: CreditCard,
         description: "Payments & expenses",
-        children: [
-          { title: "Categories", href: "/transactions/categories" },
-        ],
+        children: [{ title: "Categories", href: "/transactions/categories" }],
       },
       {
         title: "Orders",

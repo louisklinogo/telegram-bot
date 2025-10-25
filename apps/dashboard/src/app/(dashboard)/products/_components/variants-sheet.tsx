@@ -1,15 +1,21 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { Label } from "@Faworra/ui/label";
 import { useRouter, useSearchParams } from "next/navigation";
-import { trpc } from "@/lib/trpc/client";
-import { Sheet, SheetContent, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@Faworra/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useTeamCurrency } from "@/hooks/use-team-currency";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Sheet, SheetContent, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useToast } from "@/components/ui/use-toast";
+import { useTeamCurrency } from "@/hooks/use-team-currency";
+import { trpc } from "@/lib/trpc/client";
 
 export function VariantsSheet() {
   const router = useRouter();
@@ -20,7 +26,10 @@ export function VariantsSheet() {
   const { toast } = useToast();
   const utils = trpc.useUtils();
 
-  const detailsQuery = trpc.products.details.useQuery({ id: productId as any }, { enabled: open, staleTime: 30_000 });
+  const detailsQuery = trpc.products.details.useQuery(
+    { id: productId as any },
+    { enabled: open, staleTime: 30_000 }
+  );
   const product = detailsQuery.data?.product as any;
   const variants = (detailsQuery.data?.variants as any[]) || [];
 
@@ -31,15 +40,23 @@ export function VariantsSheet() {
   };
 
   const variantCreate = trpc.products.variantCreate.useMutation({
-    onSuccess: async () => { toast({ description: "Variant added" }); await detailsQuery.refetch(); },
+    onSuccess: async () => {
+      toast({ description: "Variant added" });
+      await detailsQuery.refetch();
+    },
     onError: (e) => toast({ description: e.message, variant: "destructive" }),
   });
   const variantUpdate = trpc.products.variantUpdate.useMutation({
-    onSuccess: async () => { toast({ description: "Variant updated" }); },
+    onSuccess: async () => {
+      toast({ description: "Variant updated" });
+    },
     onError: (e) => toast({ description: e.message, variant: "destructive" }),
   });
   const variantDelete = trpc.products.variantDelete.useMutation({
-    onSuccess: async () => { toast({ description: "Variant deleted" }); await detailsQuery.refetch(); },
+    onSuccess: async () => {
+      toast({ description: "Variant deleted" });
+      await detailsQuery.refetch();
+    },
     onError: (e) => toast({ description: e.message, variant: "destructive" }),
   });
 
@@ -48,7 +65,12 @@ export function VariantsSheet() {
   const [newPrice, setNewPrice] = useState<string>("");
   const [newStatus, setNewStatus] = useState<"active" | "draft" | "archived">("active");
 
-  type Edit = { name?: string | null; sku?: string | null; price?: number | null; status?: "active" | "draft" | "archived" };
+  type Edit = {
+    name?: string | null;
+    sku?: string | null;
+    price?: number | null;
+    status?: "active" | "draft" | "archived";
+  };
   const [edits, setEdits] = useState<Record<string, Edit>>({});
 
   const addVariant = async () => {
@@ -62,36 +84,46 @@ export function VariantsSheet() {
       fulfillmentType: "stocked",
       status: newStatus,
     } as any);
-    setNewName(""); setNewSku(""); setNewPrice(""); setNewStatus("active");
+    setNewName("");
+    setNewSku("");
+    setNewPrice("");
+    setNewStatus("active");
     await detailsQuery.refetch();
   };
 
   return (
-    <Sheet open={open} onOpenChange={(v) => !v && close()}>
-      <SheetContent className="sm:max-w-[780px] p-0 flex flex-col overflow-hidden">
+    <Sheet onOpenChange={(v) => !v && close()} open={open}>
+      <SheetContent className="flex flex-col overflow-hidden p-0 sm:max-w-[780px]">
         <SheetHeader className="px-6 pt-6 pb-0">
           <SheetTitle>Manage variants{product?.name ? ` · ${product.name}` : ""}</SheetTitle>
         </SheetHeader>
-        <div className="flex-1 min-h-0 overflow-auto px-6 py-4">
+        <div className="min-h-0 flex-1 overflow-auto px-6 py-4">
           <div className="space-y-3">
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label>New variant name</Label>
-                <Input value={newName} onChange={(e) => setNewName(e.target.value)} />
+                <Input onChange={(e) => setNewName(e.target.value)} value={newName} />
               </div>
               <div>
                 <Label>SKU</Label>
-                <Input value={newSku} onChange={(e) => setNewSku(e.target.value)} />
+                <Input onChange={(e) => setNewSku(e.target.value)} value={newSku} />
               </div>
               <div>
                 <Label>Price ({currency})</Label>
-                <Input type="number" step="0.01" value={newPrice} onChange={(e) => setNewPrice(e.target.value)} />
+                <Input
+                  onChange={(e) => setNewPrice(e.target.value)}
+                  step="0.01"
+                  type="number"
+                  value={newPrice}
+                />
               </div>
               <div className="flex items-end gap-2">
                 <div className="flex-1">
                   <Label>Status</Label>
-                  <Select value={newStatus} onValueChange={(v) => setNewStatus(v as any)}>
-                    <SelectTrigger><SelectValue placeholder="Status" /></SelectTrigger>
+                  <Select onValueChange={(v) => setNewStatus(v as any)} value={newStatus}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Status" />
+                    </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="active">Active</SelectItem>
                       <SelectItem value="draft">Draft</SelectItem>
@@ -99,35 +131,53 @@ export function VariantsSheet() {
                     </SelectContent>
                   </Select>
                 </div>
-                <Button onClick={addVariant} disabled={variantCreate.isPending}>Add</Button>
+                <Button disabled={variantCreate.isPending} onClick={addVariant}>
+                  Add
+                </Button>
               </div>
             </div>
 
             <VariantsList
-              variants={variants}
               currency={currency}
               edits={edits}
               onChangeEdits={setEdits}
+              onDelete={async (id) => {
+                await variantDelete.mutateAsync({ id });
+              }}
               onSave={async (id, patch) => {
                 await variantUpdate.mutateAsync({ id, ...patch } as any);
                 setEdits((p) => ({ ...p, [id]: {} }));
                 await detailsQuery.refetch();
               }}
-              onDelete={async (id) => { await variantDelete.mutateAsync({ id }); }}
+              variants={variants}
             />
           </div>
         </div>
-        <SheetFooter className="px-6 py-4 border-t">
-          <Button type="button" variant="outline" onClick={close}>Close</Button>
+        <SheetFooter className="border-t px-6 py-4">
+          <Button onClick={close} type="button" variant="outline">
+            Close
+          </Button>
         </SheetFooter>
       </SheetContent>
     </Sheet>
   );
 }
 
-type VariantEdit = { name?: string | null; sku?: string | null; price?: number | null; status?: "active" | "draft" | "archived" };
+type VariantEdit = {
+  name?: string | null;
+  sku?: string | null;
+  price?: number | null;
+  status?: "active" | "draft" | "archived";
+};
 
-function VariantsList({ variants, currency, edits, onChangeEdits, onSave, onDelete }: {
+function VariantsList({
+  variants,
+  currency,
+  edits,
+  onChangeEdits,
+  onSave,
+  onDelete,
+}: {
   variants: any[];
   currency: string;
   edits: Record<string, VariantEdit>;
@@ -153,34 +203,62 @@ function VariantsList({ variants, currency, edits, onChangeEdits, onSave, onDele
         const sku = effectiveSku(v) || "";
         const dup = sku && (skuCounts.get(sku) || 0) > 1;
         return (
-          <div key={v.id} className="grid grid-cols-12 gap-2 items-center py-2">
+          <div className="grid grid-cols-12 items-center gap-2 py-2" key={v.id}>
             <div className="col-span-3">
               <Input
-                value={e.name ?? (v.name || "")}
-                onChange={(ev) => onChangeEdits((prev) => ({ ...prev, [v.id]: { ...prev[v.id], name: ev.target.value || null } }))}
+                onChange={(ev) =>
+                  onChangeEdits((prev) => ({
+                    ...prev,
+                    [v.id]: { ...prev[v.id], name: ev.target.value || null },
+                  }))
+                }
                 placeholder="Name"
+                value={e.name ?? (v.name || "")}
               />
             </div>
             <div className="col-span-3">
               <Input
-                value={e.sku ?? (v.sku || "")}
-                onChange={(ev) => onChangeEdits((prev) => ({ ...prev, [v.id]: { ...prev[v.id], sku: ev.target.value || null } }))}
+                onChange={(ev) =>
+                  onChangeEdits((prev) => ({
+                    ...prev,
+                    [v.id]: { ...prev[v.id], sku: ev.target.value || null },
+                  }))
+                }
                 placeholder="SKU"
+                value={e.sku ?? (v.sku || "")}
               />
-              {dup ? <div className="text-[10px] text-destructive mt-1">Duplicate SKU</div> : null}
+              {dup ? <div className="mt-1 text-[10px] text-destructive">Duplicate SKU</div> : null}
             </div>
             <div className="col-span-2">
               <Input
-                type="number"
-                step="0.01"
-                value={(e.price ?? (v.price as any as number) ?? "") as any}
-                onChange={(ev) => onChangeEdits((prev) => ({ ...prev, [v.id]: { ...prev[v.id], price: ev.target.value ? Number(ev.target.value) : null } }))}
+                onChange={(ev) =>
+                  onChangeEdits((prev) => ({
+                    ...prev,
+                    [v.id]: {
+                      ...prev[v.id],
+                      price: ev.target.value ? Number(ev.target.value) : null,
+                    },
+                  }))
+                }
                 placeholder={`Price (${currency})`}
+                step="0.01"
+                type="number"
+                value={(e.price ?? (v.price as any as number) ?? "") as any}
               />
             </div>
             <div className="col-span-2">
-              <Select value={(e.status ?? v.status) as any} onValueChange={(val) => onChangeEdits((prev) => ({ ...prev, [v.id]: { ...prev[v.id], status: val as any } }))}>
-                <SelectTrigger><SelectValue placeholder="Status" /></SelectTrigger>
+              <Select
+                onValueChange={(val) =>
+                  onChangeEdits((prev) => ({
+                    ...prev,
+                    [v.id]: { ...prev[v.id], status: val as any },
+                  }))
+                }
+                value={(e.status ?? v.status) as any}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="active">Active</SelectItem>
                   <SelectItem value="draft">Draft</SelectItem>
@@ -189,8 +267,17 @@ function VariantsList({ variants, currency, edits, onChangeEdits, onSave, onDele
               </Select>
             </div>
             <div className="col-span-2 flex justify-end gap-2">
-              <Button size="sm" variant="secondary" onClick={() => onSave(v.id, e)} disabled={!Object.keys(e).length}>Save</Button>
-              <Button size="sm" variant="destructive" onClick={() => onDelete(v.id)}>Delete</Button>
+              <Button
+                disabled={!Object.keys(e).length}
+                onClick={() => onSave(v.id, e)}
+                size="sm"
+                variant="secondary"
+              >
+                Save
+              </Button>
+              <Button onClick={() => onDelete(v.id)} size="sm" variant="destructive">
+                Delete
+              </Button>
             </div>
           </div>
         );

@@ -1,18 +1,18 @@
 "use client";
 
-import { trpc } from "@/lib/trpc/client";
+import { createBrowserClient } from "@Faworra/supabase/client";
 import { useSuspenseInfiniteQuery } from "@tanstack/react-query";
-import { useVaultParams } from "@/hooks/use-vault-params";
 import { useEffect, useMemo } from "react";
 import { useInView } from "react-intersection-observer";
-import { createBrowserClient } from "@Faworra/supabase/client";
-import { VaultGrid } from "./vault-grid";
-import { VaultTable } from "./vault-table";
-import { VaultEmptyState } from "./vault-empty-state";
+import { useVaultParams } from "@/hooks/use-vault-params";
+import { trpc } from "@/lib/trpc/client";
 import { BulkActionsBar } from "./bulk-actions-bar";
-import { VaultHeader } from "./vault-header";
-import { VaultBreadcrumb } from "./vault-breadcrumb";
 import { FolderCard } from "./folder-card";
+import { VaultBreadcrumb } from "./vault-breadcrumb";
+import { VaultEmptyState } from "./vault-empty-state";
+import { VaultGrid } from "./vault-grid";
+import { VaultHeader } from "./vault-header";
+import { VaultTable } from "./vault-table";
 
 type VaultViewProps = {
   initialData: any[];
@@ -42,7 +42,7 @@ export function VaultView({ initialData = [], teamId }: VaultViewProps) {
       },
       {
         getNextPageParam: (lastPage) => lastPage.meta?.cursor,
-      },
+      }
     ),
     initialData:
       initialData.length > 0
@@ -53,9 +53,7 @@ export function VaultView({ initialData = [], teamId }: VaultViewProps) {
         : undefined,
   });
 
-  const documents = useMemo(() => {
-    return pages?.pages.flatMap((page) => page.items) ?? [];
-  }, [pages]);
+  const documents = useMemo(() => pages?.pages.flatMap((page) => page.items) ?? [], [pages]);
 
   // Get current folder path
   const currentPath = params.folder || [];
@@ -113,7 +111,7 @@ export function VaultView({ initialData = [], teamId }: VaultViewProps) {
           // Refetch documents on any change
           refetch();
           t.documents.list.invalidate();
-        },
+        }
       )
       .subscribe();
 
@@ -123,7 +121,7 @@ export function VaultView({ initialData = [], teamId }: VaultViewProps) {
   }, [teamId, supabase, refetch, t]);
 
   // Empty state
-  if (!documents.length && !isFetching) {
+  if (!(documents.length || isFetching)) {
     return <VaultEmptyState teamId={teamId} />;
   }
 
@@ -142,7 +140,7 @@ export function VaultView({ initialData = [], teamId }: VaultViewProps) {
       {/* Breadcrumb */}
       {currentPath.length > 0 && (
         <div className="mb-4">
-          <VaultBreadcrumb path={currentPath} onNavigate={handleNavigateFolder} />
+          <VaultBreadcrumb onNavigate={handleNavigateFolder} path={currentPath} />
         </div>
       )}
 
@@ -155,8 +153,8 @@ export function VaultView({ initialData = [], teamId }: VaultViewProps) {
 
         {/* Load more trigger */}
         {hasNextPage && (
-          <div ref={ref} className="flex justify-center py-8">
-            <div className="text-sm text-muted-foreground">
+          <div className="flex justify-center py-8" ref={ref}>
+            <div className="text-muted-foreground text-sm">
               {isFetching ? "Loading more..." : "Load more"}
             </div>
           </div>

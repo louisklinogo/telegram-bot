@@ -24,7 +24,7 @@ export function TRPCProvider({ children }: { children: React.ReactNode }) {
             deserializeData: superjson.deserialize,
           },
         },
-      }),
+      })
   );
 
   const [trpcClient] = useState(() =>
@@ -55,7 +55,7 @@ export function TRPCProvider({ children }: { children: React.ReactNode }) {
           },
         }),
       ],
-    }),
+    })
   );
 
   return (

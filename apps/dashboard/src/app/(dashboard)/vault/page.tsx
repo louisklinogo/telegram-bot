@@ -1,8 +1,8 @@
+import { getDocuments } from "@Faworra/database/queries";
 import { redirect } from "next/navigation";
 import { db, getCurrentTeamId } from "@/lib/trpc/server";
-import { getDocuments } from "@Faworra/database/queries";
-import { VaultView } from "./_components/vault-view";
 import { VaultUploadZone } from "./_components/vault-upload-zone";
+import { VaultView } from "./_components/vault-view";
 
 export const metadata = {
   title: "Vault | Cimantikós",

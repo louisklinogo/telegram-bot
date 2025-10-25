@@ -31,7 +31,7 @@ function oklchToHslTriplet(oklchCss: string): string | null {
     return null;
   }
   // Clamp and round
-  const H = Math.round(((hsl.h ?? 0) % 360 + 360) % 360);
+  const H = Math.round((((hsl.h ?? 0) % 360) + 360) % 360);
   const S = Math.round(Math.max(0, Math.min(1, hsl.s)) * 100);
   const L = Math.round(Math.max(0, Math.min(1, hsl.l)) * 100);
   return `${H} ${S}% ${L}%`;
@@ -52,7 +52,7 @@ function printCssBlock(selector: string, tokens: TokenMap) {
   for (const k of keys) {
     console.log(`  --${k}: ${tokens[k]};`);
   }
-  console.log(`}`);
+  console.log("}");
 }
 
 const root = process.cwd();

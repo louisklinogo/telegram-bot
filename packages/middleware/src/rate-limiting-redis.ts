@@ -1,6 +1,6 @@
-import type { MiddlewareHandler } from "hono";
 import type { ApiEnv } from "@faworra/api/types/hono-env";
-import { createClient, RedisClientType } from "redis";
+import type { MiddlewareHandler } from "hono";
+import { createClient, type RedisClientType } from "redis";
 
 // Rate limiting strategy types
 export type RateLimitStrategy = "fixed-window" | "sliding-window" | "token-bucket" | "leaky-bucket";
@@ -42,12 +42,12 @@ export interface SlidingWindowConfig {
 // Redis-based rate limiter class
 export class RedisRateLimiter {
   private redis: RedisClientType | null = null;
-  private connected: boolean = false;
+  private connected = false;
   private connectionPromise: Promise<void> | null = null;
 
   constructor(
     private redisUrl: string = process.env.REDIS_URL || "redis://localhost:6379",
-    private prefix: string = "rl:"
+    private prefix = "rl:"
   ) {}
 
   private async connect(): Promise<RedisClientType> {
@@ -70,7 +70,7 @@ export class RedisRateLimiter {
       this.redis = createClient({
         url: this.redisUrl,
         socket: {
-          connectTimeout: 15000,
+          connectTimeout: 15_000,
           // IPv6 for production environments
           family: process.env.NODE_ENV === "production" ? 6 : 4,
           reconnectStrategy: (retries) => {
@@ -100,7 +100,6 @@ export class RedisRateLimiter {
 
       await this.redis.connect();
       this.connected = true;
-
     } catch (error) {
       console.error("Failed to connect to Redis for rate limiting:", error);
       this.connected = false;
@@ -112,11 +111,7 @@ export class RedisRateLimiter {
    * Fixed Window Rate Limiting
    * Simple and memory efficient, but allows bursts at window boundaries
    */
-  async fixedWindow(
-    key: string,
-    limit: number,
-    windowMs: number
-  ): Promise<RateLimitInfo> {
+  async fixedWindow(key: string, limit: number, windowMs: number): Promise<RateLimitInfo> {
     try {
       const redis = await this.connect();
       const window = Math.floor(Date.now() / windowMs);
@@ -132,7 +127,7 @@ export class RedisRateLimiter {
       const current = results![0] as number;
       const ttl = results![2] as number;
 
-      const resetTime = new Date(Date.now() + (ttl * 1000));
+      const resetTime = new Date(Date.now() + ttl * 1000);
 
       return {
         limit,
@@ -142,7 +137,6 @@ export class RedisRateLimiter {
         totalHits: current,
         strategy: "fixed-window",
       };
-
     } catch (error) {
       console.error("Fixed window rate limiting error:", error);
       // Fallback: allow request if Redis is down
@@ -151,14 +145,14 @@ export class RedisRateLimiter {
   }
 
   /**
-   * Sliding Window Rate Limiting  
+   * Sliding Window Rate Limiting
    * More accurate than fixed window, prevents burst at boundaries
    */
   async slidingWindow(
     key: string,
     limit: number,
     windowMs: number,
-    precision: number = 10
+    precision = 10
   ): Promise<RateLimitInfo> {
     try {
       const redis = await this.connect();
@@ -188,7 +182,6 @@ export class RedisRateLimiter {
         totalHits: current,
         strategy: "sliding-window",
       };
-
     } catch (error) {
       console.error("Sliding window rate limiting error:", error);
       return this.createFallbackInfo(limit, "sliding-window");
@@ -241,7 +234,7 @@ export class RedisRateLimiter {
         return {allowed, tokens, capacity}
       `;
 
-      const result = await redis.eval(luaScript, {
+      const result = (await redis.eval(luaScript, {
         keys: [redisKey],
         arguments: [
           config.capacity.toString(),
@@ -249,7 +242,7 @@ export class RedisRateLimiter {
           (config.refillPeriod || 1000).toString(),
           now.toString(),
         ],
-      }) as [number, number, number];
+      })) as [number, number, number];
 
       const [allowed, tokens, capacity] = result;
       const current = capacity - tokens;
@@ -262,7 +255,6 @@ export class RedisRateLimiter {
         totalHits: current,
         strategy: "token-bucket",
       };
-
     } catch (error) {
       console.error("Token bucket rate limiting error:", error);
       return this.createFallbackInfo(config.capacity, "token-bucket");
@@ -277,7 +269,7 @@ export class RedisRateLimiter {
     key: string,
     limit: number,
     windowMs: number,
-    leakRate: number = 1
+    leakRate = 1
   ): Promise<RateLimitInfo> {
     try {
       const redis = await this.connect();
@@ -315,10 +307,10 @@ export class RedisRateLimiter {
         return {allowed, volume, limit}
       `;
 
-      const result = await redis.eval(luaScript, {
+      const result = (await redis.eval(luaScript, {
         keys: [redisKey],
         arguments: [limit.toString(), leakRate.toString(), windowMs.toString(), now.toString()],
-      }) as [number, number, number];
+      })) as [number, number, number];
 
       const [allowed, volume] = result;
 
@@ -330,7 +322,6 @@ export class RedisRateLimiter {
         totalHits: Math.ceil(volume),
         strategy: "leaky-bucket",
       };
-
     } catch (error) {
       console.error("Leaky bucket rate limiting error:", error);
       return this.createFallbackInfo(limit, "leaky-bucket");
@@ -342,7 +333,7 @@ export class RedisRateLimiter {
       limit,
       current: 1,
       remaining: limit - 1,
-      resetTime: new Date(Date.now() + 60000), // 1 minute fallback
+      resetTime: new Date(Date.now() + 60_000), // 1 minute fallback
       totalHits: 1,
       strategy,
     };
@@ -365,10 +356,11 @@ export const KeyGenerators = {
    * Generate key based on IP address
    */
   ip: (c: any): string => {
-    const ip = c.req.header("x-forwarded-for") || 
-             c.req.header("x-real-ip") || 
-             c.req.header("remote-addr") || 
-             "unknown";
+    const ip =
+      c.req.header("x-forwarded-for") ||
+      c.req.header("x-real-ip") ||
+      c.req.header("remote-addr") ||
+      "unknown";
     return `ip:${ip}`;
   },
 
@@ -420,9 +412,7 @@ export const KeyGenerators = {
 };
 
 // Rate limiting middleware factory
-export function createRateLimitMiddleware(
-  config: RateLimitConfig
-): MiddlewareHandler<ApiEnv> {
+export function createRateLimitMiddleware(config: RateLimitConfig): MiddlewareHandler<ApiEnv> {
   const keyGenerator = config.keyGenerator || KeyGenerators.ip;
   const headers = config.headers !== false;
   const standardHeaders = config.standardHeaders !== false;
@@ -439,12 +429,18 @@ export function createRateLimitMiddleware(
           rateLimitInfo = await rateLimiter.fixedWindow(key, config.limit, config.windowMs);
           break;
 
-        case "sliding-window":
+        case "sliding-window": {
           const precision = (config as any).precision || 10;
-          rateLimitInfo = await rateLimiter.slidingWindow(key, config.limit, config.windowMs, precision);
+          rateLimitInfo = await rateLimiter.slidingWindow(
+            key,
+            config.limit,
+            config.windowMs,
+            precision
+          );
           break;
+        }
 
-        case "token-bucket":
+        case "token-bucket": {
           const bucketConfig = config as RateLimitConfig & TokenBucketConfig;
           rateLimitInfo = await rateLimiter.tokenBucket(key, {
             capacity: bucketConfig.capacity || config.limit,
@@ -453,11 +449,18 @@ export function createRateLimitMiddleware(
             windowMs: config.windowMs,
           });
           break;
+        }
 
-        case "leaky-bucket":
+        case "leaky-bucket": {
           const leakRate = (config as any).leakRate || 1;
-          rateLimitInfo = await rateLimiter.leakyBucket(key, config.limit, config.windowMs, leakRate);
+          rateLimitInfo = await rateLimiter.leakyBucket(
+            key,
+            config.limit,
+            config.windowMs,
+            leakRate
+          );
           break;
+        }
 
         default:
           rateLimitInfo = await rateLimiter.fixedWindow(key, config.limit, config.windowMs);
@@ -468,14 +471,23 @@ export function createRateLimitMiddleware(
         if (standardHeaders) {
           c.header("RateLimit-Limit", config.limit.toString());
           c.header("RateLimit-Remaining", rateLimitInfo.remaining.toString());
-          c.header("RateLimit-Reset", Math.ceil(rateLimitInfo.resetTime.getTime() / 1000).toString());
-          c.header("RateLimit-Policy", `${config.limit};w=${config.windowMs / 1000};strategy=${config.strategy}`);
+          c.header(
+            "RateLimit-Reset",
+            Math.ceil(rateLimitInfo.resetTime.getTime() / 1000).toString()
+          );
+          c.header(
+            "RateLimit-Policy",
+            `${config.limit};w=${config.windowMs / 1000};strategy=${config.strategy}`
+          );
         }
 
         if (legacyHeaders) {
           c.header("X-RateLimit-Limit", config.limit.toString());
           c.header("X-RateLimit-Remaining", rateLimitInfo.remaining.toString());
-          c.header("X-RateLimit-Reset", Math.ceil(rateLimitInfo.resetTime.getTime() / 1000).toString());
+          c.header(
+            "X-RateLimit-Reset",
+            Math.ceil(rateLimitInfo.resetTime.getTime() / 1000).toString()
+          );
         }
       }
 
@@ -491,19 +503,23 @@ export function createRateLimitMiddleware(
         }
 
         // Generate error message
-        const message = typeof config.message === "function"
-          ? config.message(rateLimitInfo)
-          : config.message || `Rate limit exceeded. Try again in ${retryAfter} seconds.`;
+        const message =
+          typeof config.message === "function"
+            ? config.message(rateLimitInfo)
+            : config.message || `Rate limit exceeded. Try again in ${retryAfter} seconds.`;
 
-        return c.json({
-          error: "Rate limit exceeded",
-          message,
-          retryAfter,
-          limit: config.limit,
-          remaining: rateLimitInfo.remaining,
-          resetTime: rateLimitInfo.resetTime.toISOString(),
-          strategy: config.strategy,
-        }, config.statusCode || 429);
+        return c.json(
+          {
+            error: "Rate limit exceeded",
+            message,
+            retryAfter,
+            limit: config.limit,
+            remaining: rateLimitInfo.remaining,
+            resetTime: rateLimitInfo.resetTime.toISOString(),
+            strategy: config.strategy,
+          },
+          config.statusCode || 429
+        );
       }
 
       // Store rate limit info for other middleware
@@ -522,7 +538,6 @@ export function createRateLimitMiddleware(
         // Would need to implement request rollback here
         console.log("Skipping successful request count (not implemented)");
       }
-
     } catch (error) {
       console.error("Rate limiting middleware error:", error);
       // Continue without rate limiting if there's an error
@@ -612,7 +627,10 @@ export const RateLimiters = {
     windowMs: 60 * 60 * 1000, // 1 hour
     limit: 3, // 3 password reset attempts per hour
     keyGenerator: (c: any) => {
-      const email = c.req.json().then((body: any) => body.email).catch(() => "unknown");
+      const email = c.req
+        .json()
+        .then((body: any) => body.email)
+        .catch(() => "unknown");
       return `pwd_reset:${email}`;
     },
     message: "Too many password reset attempts. Please wait an hour before trying again.",

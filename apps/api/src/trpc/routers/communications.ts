@@ -1,11 +1,11 @@
-import { createTRPCRouter, teamProcedure } from "../init";
-import { z } from "zod";
 import {
-  getTeamAccounts,
-  getThreadsByStatus,
-  getThreadMessages,
   createMessage,
+  getTeamAccounts,
+  getThreadMessages,
+  getThreadsByStatus,
 } from "@Faworra/database/queries";
+import { z } from "zod";
+import { createTRPCRouter, teamProcedure } from "../init";
 
 export const communicationsRouter = createTRPCRouter({
   accounts: teamProcedure.query(async ({ ctx }) => {
@@ -41,7 +41,7 @@ export const communicationsRouter = createTRPCRouter({
           .object({ lastMessageAt: z.string().nullable(), id: z.string() })
           .nullable()
           .optional(),
-      }),
+      })
     )
     .query(async ({ input, ctx }) => {
       const rows = await getThreadsByStatus(ctx.db, {
@@ -93,7 +93,7 @@ export const communicationsRouter = createTRPCRouter({
         z.object({
           threadId: z.string().uuid(),
           limit: z.number().int().min(1).max(100).optional().default(50),
-        }),
+        })
       )
       .query(async ({ input, ctx }) => {
         const messages = await getThreadMessages(ctx.db, input.threadId, ctx.teamId, input.limit);
@@ -115,7 +115,7 @@ export const communicationsRouter = createTRPCRouter({
           threadId: z.string().uuid(),
           text: z.string().min(1).max(4096),
           clientMessageId: z.string().optional(),
-        }),
+        })
       )
       .mutation(async ({ input, ctx }) => {
         const message = await createMessage(ctx.db, {

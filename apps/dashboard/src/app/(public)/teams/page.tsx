@@ -1,11 +1,9 @@
-import { redirect } from "next/navigation";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { getServerSession } from "@/lib/trpc/server";
-import { db } from "@/lib/trpc/server";
-import { usersOnTeam, teams } from "@Faworra/database/schema";
-import { eq } from "@Faworra/database/schema";
+import { eq, teams, usersOnTeam } from "@Faworra/database/schema";
 import Link from "next/link";
+import { redirect } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { db, getServerSession } from "@/lib/trpc/server";
 
 async function getUserTeams(userId: string) {
   const rows = await db
@@ -32,16 +30,16 @@ export default async function TeamsPage() {
         <CardContent>
           <div className="space-y-2">
             {myTeams.map((t) => (
-              <form action={`/api/teams/launch?teamId=${t.id}`} method="post" key={t.id}>
-                <div className="flex items-center justify-between border rounded p-2">
+              <form action={`/api/teams/launch?teamId=${t.id}`} key={t.id} method="post">
+                <div className="flex items-center justify-between rounded border p-2">
                   <span>{t.name || t.id}</span>
-                  <Button type="submit" variant="outline" size="sm">
+                  <Button size="sm" type="submit" variant="outline">
                     Launch
                   </Button>
                 </div>
               </form>
             ))}
-            <div className="text-center pt-4 border-t mt-4">
+            <div className="mt-4 border-t pt-4 text-center">
               <Link href="/teams/create">
                 <Button variant="ghost">Create team</Button>
               </Link>

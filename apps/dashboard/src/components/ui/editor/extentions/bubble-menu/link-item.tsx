@@ -36,10 +36,10 @@ export function LinkItem({ editor, open, setOpen }: LinkItemProps) {
   };
 
   return (
-    <Popover modal={false} open={open} onOpenChange={setOpen}>
+    <Popover modal={false} onOpenChange={setOpen} open={open}>
       <PopoverTrigger asChild>
         <div>
-          <BubbleMenuButton isActive={isActive} action={() => setOpen(true)}>
+          <BubbleMenuButton action={() => setOpen(true)} isActive={isActive}>
             {linkValue ? (
               <MdOutlineLinkOff className="size-4" />
             ) : (
@@ -51,10 +51,7 @@ export function LinkItem({ editor, open, setOpen }: LinkItemProps) {
       <PopoverContent align="end" className="w-60 p-0" sideOffset={10}>
         <div className="flex p-1">
           <input
-            ref={inputRef}
-            type="text"
-            placeholder="Paste a link"
-            className="flex-1 bg-background p-0.5 h-7 text-xs outline-none placeholder:text-muted-foreground"
+            className="h-7 flex-1 bg-background p-0.5 text-xs outline-none placeholder:text-muted-foreground"
             defaultValue={linkValue || ""}
             onChange={(e) => setValue(e.target.value)}
             onKeyDown={(e) => {
@@ -62,14 +59,14 @@ export function LinkItem({ editor, open, setOpen }: LinkItemProps) {
                 handleSubmit();
               }
             }}
+            placeholder="Paste a link"
+            ref={inputRef}
+            type="text"
           />
 
           {linkValue ? (
             <Button
-              size="icon"
-              variant="outline"
-              type="button"
-              className="flex size-7 items-center p-1 text-red-600 transition-all hover:bg-red-100 dark:hover:bg-red-800 hover:border-none"
+              className="flex size-7 items-center p-1 text-red-600 transition-all hover:border-none hover:bg-red-100 dark:hover:bg-red-800"
               onClick={() => {
                 editor.chain().focus().unsetLink().run();
                 if (inputRef.current) {
@@ -77,11 +74,14 @@ export function LinkItem({ editor, open, setOpen }: LinkItemProps) {
                 }
                 setOpen(false);
               }}
+              size="icon"
+              type="button"
+              variant="outline"
             >
               <MdOutlineDelete className="size-4" />
             </Button>
           ) : (
-            <Button size="icon" className="size-7" type="button" onClick={handleSubmit}>
+            <Button className="size-7" onClick={handleSubmit} size="icon" type="button">
               <MdOutlineCheck className="size-4" />
             </Button>
           )}

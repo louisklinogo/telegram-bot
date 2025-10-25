@@ -17,9 +17,9 @@ export async function trackAuthEvent(event: AuthEvent) {
       ...event,
       timestamp: event.timestamp || new Date().toISOString(),
     };
-    
+
     console.log("🔐 Auth Event:", JSON.stringify(eventData, null, 2));
-    
+
     // TODO: Integrate with OpenPanel like Midday
     // Example OpenPanel integration:
     // const client = new OpenPanel({
@@ -27,10 +27,9 @@ export async function trackAuthEvent(event: AuthEvent) {
     //   clientSecret: process.env.OPENPANEL_SECRET_KEY!,
     // });
     // await client.track(event.event, eventData);
-    
+
     // TODO: Store in database for audit logging
     // await storeAuditLog(eventData);
-    
   } catch (error) {
     console.error("Failed to track auth event:", error);
     // Don't throw - analytics failures shouldn't break auth flow
@@ -45,15 +44,20 @@ export const AuthEvents = {
     provider,
     metadata,
   }),
-  
-  signInFailed: (error: string, provider?: string, errorCode?: string | number, errorType?: string): AuthEvent => ({
+
+  signInFailed: (
+    error: string,
+    provider?: string,
+    errorCode?: string | number,
+    errorType?: string
+  ): AuthEvent => ({
     event: "SignIn.Failed",
     error,
     provider,
     errorCode,
     errorType,
   }),
-  
+
   apiKeyUsed: (userId: string, teamId: string, scopes: string[]): AuthEvent => ({
     event: "ApiKeyUsed",
     userId,

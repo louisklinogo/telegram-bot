@@ -1,4 +1,4 @@
-import { eq, and, isNull, desc, sql } from "drizzle-orm";
+import { and, desc, eq, isNull, sql } from "drizzle-orm";
 import type { DbClient } from "../client";
 import { clients, orders } from "../schema";
 
@@ -12,7 +12,7 @@ export async function getEnrichedClients(
     search?: string;
     limit?: number;
     cursor?: string;
-  },
+  }
 ) {
   const { teamId, search, limit = 50, cursor } = params;
 
@@ -31,7 +31,7 @@ export async function getEnrichedClients(
         ${clients.email} ILIKE ${"%" + search + "%"} OR 
         ${clients.phone} ILIKE ${"%" + search + "%"} OR 
         ${clients.whatsapp} ILIKE ${"%" + search + "%"}
-      )`,
+      )`
     );
   }
 

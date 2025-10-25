@@ -1,6 +1,6 @@
-import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Database } from "@Faworra/supabase/types";
 import type { ApiKey } from "@Faworra/auth/api-keys";
+import type { Database } from "@Faworra/supabase/types";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 export type AuthSession = {
   userId: string;

@@ -25,20 +25,20 @@
     --input: 224 0% 90%;
     --ring: 224 0% 63%;
     --radius: 0.625rem;
-    
+
     /* Border radius variants - for flexible component sizing */
     --radius-sm: calc(var(--radius) - 4px);
     --radius-md: calc(var(--radius) - 2px);
     --radius-lg: var(--radius);
     --radius-xl: calc(var(--radius) + 4px);
-    
+
     /* Chart colors */
     --chart-1: 24 100% 40%;
     --chart-2: 176 100% 21%;
     --chart-3: 196 72% 23%;
     --chart-4: 47 100% 39%;
     --chart-5: 41 100% 39%;
-    
+
     /* Sidebar colors */
     --sidebar: 224 0% 98%;
     --sidebar-foreground: 224 0% 4%;
@@ -70,14 +70,14 @@
     --border: 224 0% 15%;
     --input: 224 0% 15%;
     --ring: 224 0% 32%;
-    
+
     /* Chart colors (dark) */
     --chart-1: 225 84% 49%;
     --chart-2: 164 100% 26%;
     --chart-3: 41 100% 39%;
     --chart-4: 272 100% 65%;
     --chart-5: 345 100% 56%;
-    
+
     /* Sidebar dark mode */
     --sidebar: 224 0% 9%;
     --sidebar-foreground: 224 0% 98%;
@@ -102,7 +102,9 @@
 
 /* Font utility classes from v0 */
 .font-inter {
-  font-family: var(--font-inter), ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family:
+    var(--font-inter), ui-sans-serif, system-ui, -apple-system,
+    BlinkMacSystemFont, sans-serif;
 }
 
 .font-instrument-serif {
@@ -116,7 +118,7 @@
     font-family: "Inter";
     font-display: swap;
   }
-  
+
   @font-face {
     font-family: "Instrument Serif";
     font-display: swap;

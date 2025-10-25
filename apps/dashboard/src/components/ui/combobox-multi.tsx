@@ -1,8 +1,8 @@
 "use client";
 
-import * as React from "react";
 import { CommandList } from "cmdk";
 import { Check, ChevronsUpDown } from "lucide-react";
+import * as React from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "./button";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "./command";
@@ -19,7 +19,14 @@ type Props = {
   onCreate?: (name: string) => void;
 };
 
-export function ComboboxMulti({ items, values, onChange, placeholder, searchPlaceholder, onCreate }: Props) {
+export function ComboboxMulti({
+  items,
+  values,
+  onChange,
+  placeholder,
+  searchPlaceholder,
+  onCreate,
+}: Props) {
   const [open, setOpen] = React.useState(false);
   const [inputValue, setInputValue] = React.useState("");
 
@@ -32,9 +39,9 @@ export function ComboboxMulti({ items, values, onChange, placeholder, searchPlac
   };
 
   return (
-    <Popover open={open} onOpenChange={setOpen} modal>
+    <Popover modal onOpenChange={setOpen} open={open}>
       <PopoverTrigger asChild className="w-full">
-        <Button variant="outline" className="w-full justify-between font-normal">
+        <Button className="w-full justify-between font-normal" variant="outline">
           <span className="truncate pr-3">
             {values.length
               ? `${values.length} tag${values.length > 1 ? "s" : ""} selected`
@@ -46,21 +53,26 @@ export function ComboboxMulti({ items, values, onChange, placeholder, searchPlac
       <PopoverContent className="p-0" style={{ width: "var(--radix-popover-trigger-width)" }}>
         <Command loop shouldFilter={false}>
           <CommandInput
-            value={inputValue}
+            className="px-3"
             onValueChange={setInputValue}
             placeholder={searchPlaceholder ?? "Search..."}
-            className="px-3"
+            value={inputValue}
           />
           <CommandGroup>
             <CommandList className="max-h-[225px] overflow-auto">
               {filtered.map((item) => (
                 <CommandItem
-                  key={item.id}
-                  value={item.id}
-                  onSelect={(id) => toggle(id)}
                   className="cursor-pointer"
+                  key={item.id}
+                  onSelect={(id) => toggle(id)}
+                  value={item.id}
                 >
-                  <Check className={cn("mr-2 h-4 w-4", values.includes(item.id) ? "opacity-100" : "opacity-0")} />
+                  <Check
+                    className={cn(
+                      "mr-2 h-4 w-4",
+                      values.includes(item.id) ? "opacity-100" : "opacity-0"
+                    )}
+                  />
                   {item.label}
                 </CommandItem>
               ))}
@@ -68,16 +80,16 @@ export function ComboboxMulti({ items, values, onChange, placeholder, searchPlac
               {showCreate && (
                 <CommandItem
                   key={inputValue}
-                  value={inputValue}
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                  }}
                   onSelect={() => {
                     onCreate?.(inputValue);
                     setOpen(false);
                     setInputValue("");
                   }}
-                  onMouseDown={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                  }}
+                  value={inputValue}
                 >
                   Create "{inputValue}"
                 </CommandItem>

@@ -42,21 +42,17 @@ interface CreateColumnsOptions {
 export const createColumns = (options?: CreateColumnsOptions): ColumnDef<OrderColumn>[] => [
   {
     accessorKey: "order_number",
-    header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          className="-ml-4 h-8"
-        >
-          Order #
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      );
-    },
-    cell: ({ row }) => {
-      return <span className="font-mono text-sm">{row.original.order_number}</span>;
-    },
+    header: ({ column }) => (
+      <Button
+        className="-ml-4 h-8"
+        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        variant="ghost"
+      >
+        Order #
+        <ArrowUpDown className="ml-2 h-4 w-4" />
+      </Button>
+    ),
+    cell: ({ row }) => <span className="font-mono text-sm">{row.original.order_number}</span>,
   },
   {
     accessorKey: "client",
@@ -67,7 +63,7 @@ export const createColumns = (options?: CreateColumnsOptions): ColumnDef<OrderCo
         <div>
           <p className="font-medium">{order.client?.name || "Unknown"}</p>
           {order.client?.phone && (
-            <p className="text-xs text-muted-foreground">{order.client.phone}</p>
+            <p className="text-muted-foreground text-xs">{order.client.phone}</p>
           )}
         </div>
       );
@@ -85,47 +81,39 @@ export const createColumns = (options?: CreateColumnsOptions): ColumnDef<OrderCo
   },
   {
     accessorKey: "total_price",
-    header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          className="-ml-4 h-8"
-        >
-          Total
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      );
-    },
-    cell: ({ row }) => {
-      return (
-        <div className="text-right font-medium">{formatCurrency(row.original.total_price)}</div>
-      );
-    },
+    header: ({ column }) => (
+      <Button
+        className="-ml-4 h-8"
+        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        variant="ghost"
+      >
+        Total
+        <ArrowUpDown className="ml-2 h-4 w-4" />
+      </Button>
+    ),
+    cell: ({ row }) => (
+      <div className="text-right font-medium">{formatCurrency(row.original.total_price)}</div>
+    ),
   },
   {
     accessorKey: "created_at",
-    header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          className="-ml-4 h-8"
-        >
-          Created
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      );
-    },
-    cell: ({ row }) => {
-      return (
-        <span className="text-sm text-muted-foreground">
-          {formatDistanceToNow(new Date(row.original.created_at), {
-            addSuffix: true,
-          })}
-        </span>
-      );
-    },
+    header: ({ column }) => (
+      <Button
+        className="-ml-4 h-8"
+        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        variant="ghost"
+      >
+        Created
+        <ArrowUpDown className="ml-2 h-4 w-4" />
+      </Button>
+    ),
+    cell: ({ row }) => (
+      <span className="text-muted-foreground text-sm">
+        {formatDistanceToNow(new Date(row.original.created_at), {
+          addSuffix: true,
+        })}
+      </span>
+    ),
   },
   {
     id: "actions",
@@ -135,7 +123,7 @@ export const createColumns = (options?: CreateColumnsOptions): ColumnDef<OrderCo
       return (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+            <Button className="h-8 w-8 p-0" size="sm" variant="ghost">
               <MoreVertical className="h-4 w-4" />
               <span className="sr-only">Open menu</span>
             </Button>

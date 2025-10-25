@@ -110,74 +110,72 @@ export const Combobox = ({
         inputRef?.current?.blur();
       }, 0);
     },
-    [onSelect],
+    [onSelect]
   );
 
   return (
     <CommandPrimitive className="w-full">
-      <div className="flex items-center w-full relative">
+      <div className="relative flex w-full items-center">
         {showIcon && (
-          <Icons.Search className="w-[18px] h-[18px] absolute left-4 pointer-events-none" />
+          <Icons.Search className="pointer-events-none absolute left-4 h-[18px] w-[18px]" />
         )}
 
         <CommandInput
-          ref={inputRef}
-          value={inputValue}
-          onValueChange={handleOnValueChange}
+          autoFocus={autoFocus}
+          className={className}
+          disabled={disabled}
           onBlur={handleBlur}
           onFocus={handleOnFocus}
+          onValueChange={handleOnValueChange}
           placeholder={placeholder}
-          disabled={disabled}
-          className={className}
-          autoFocus={autoFocus}
+          ref={inputRef}
+          value={inputValue}
         />
 
-        {isLoading && <Spinner className="w-[16px] h-[16px] absolute right-2 text-dark-gray" />}
+        {isLoading && <Spinner className="absolute right-2 h-[16px] w-[16px] text-dark-gray" />}
 
         {!isLoading && selected && onRemove && (
-          <Icons.Close className="w-[18px] h-[18px] absolute right-2" onClick={handleOnRemove} />
+          <Icons.Close className="absolute right-2 h-[18px] w-[18px]" onClick={handleOnRemove} />
         )}
       </div>
 
       <div className="relative w-full">
         <CommandList
-          className="w-full outline-none animate-in fade-in-0 zoom-in-95"
+          className="fade-in-0 zoom-in-95 w-full animate-in outline-none"
           hidden={!isOpen}
         >
           {isOpen && (
             <CommandGroup
               className={cn(
-                "bg-background absolute z-10 w-full max-h-[250px] overflow-auto py-2 border px-2",
-                classNameList,
+                "absolute z-10 max-h-[250px] w-full overflow-auto border bg-background px-2 py-2",
+                classNameList
               )}
             >
-              {options?.map(({ component: Component, ...option }) => {
-                return (
-                  <CommandItem
-                    key={option.id}
-                    value={`${option.name}_${option.id}`}
-                    onMouseDown={(event) => {
-                      event.preventDefault();
-                      event.stopPropagation();
-                    }}
-                    onSelect={() => handleSelectOption(option)}
-                    className="flex items-center gap-2 w-full px-2"
-                  >
-                    {Component ? <Component /> : option.name}
-                  </CommandItem>
-                );
-              })}
+              {options?.map(({ component: Component, ...option }) => (
+                <CommandItem
+                  className="flex w-full items-center gap-2 px-2"
+                  key={option.id}
+                  onMouseDown={(event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                  }}
+                  onSelect={() => handleSelectOption(option)}
+                  value={`${option.name}_${option.id}`}
+                >
+                  {Component ? <Component /> : option.name}
+                </CommandItem>
+              ))}
 
               {onCreate &&
                 !options?.find((o) => o.name.toLowerCase() === inputValue.toLowerCase()) && (
                   <CommandItem
                     key={inputValue}
-                    value={inputValue}
-                    onSelect={() => onCreate(inputValue)}
                     onMouseDown={(event) => {
                       event.preventDefault();
                       event.stopPropagation();
                     }}
+                    onSelect={() => onCreate(inputValue)}
+                    value={inputValue}
                   >
                     {CreateComponent ? (
                       <CreateComponent value={inputValue} />

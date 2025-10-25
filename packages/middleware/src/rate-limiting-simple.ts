@@ -1,5 +1,5 @@
-import type { MiddlewareHandler } from "hono";
 import type { ApiEnv } from "@faworra/api/types/hono-env";
+import type { MiddlewareHandler } from "hono";
 import { rateLimiter } from "hono-rate-limiter";
 
 /**
@@ -11,9 +11,7 @@ import { rateLimiter } from "hono-rate-limiter";
 export const protectedRateLimiter = rateLimiter({
   windowMs: 10 * 60 * 1000, // 10 minutes (Midday's exact setting)
   limit: 100, // 100 requests per window (Midday's exact limit)
-  keyGenerator: (c) => {
-    return c.get("session")?.user?.id ?? "unknown";
-  },
+  keyGenerator: (c) => c.get("session")?.user?.id ?? "unknown",
   statusCode: 429,
   message: "Rate limit exceeded",
 });
@@ -22,10 +20,7 @@ export const protectedRateLimiter = rateLimiter({
 export const oauthRateLimiter = rateLimiter({
   windowMs: 15 * 60 * 1000, // 15 minutes (Midday's OAuth setting)
   limit: 20, // 20 requests per IP (Midday's exact limit)
-  keyGenerator: (c) => 
-    c.req.header("x-forwarded-for") || 
-    c.req.header("x-real-ip") || 
-    "unknown",
+  keyGenerator: (c) => c.req.header("x-forwarded-for") || c.req.header("x-real-ip") || "unknown",
   statusCode: 429,
   message: "Rate limit exceeded",
 });

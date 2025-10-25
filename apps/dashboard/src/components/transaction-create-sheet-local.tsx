@@ -1,8 +1,8 @@
 "use client";
 
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { TransactionForm } from "@/components/transaction-form";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 
 type Props = {
   open: boolean;
@@ -12,9 +12,9 @@ type Props = {
 export function TransactionCreateSheetLocal({ open, onOpenChange }: Props) {
   if (!open) return null;
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="sm:max-w-[600px] bg-background p-0">
-        <div className="p-6 pb-0 border-b">
+    <Sheet onOpenChange={onOpenChange} open={open}>
+      <SheetContent className="bg-background p-0 sm:max-w-[600px]">
+        <div className="border-b p-6 pb-0">
           <SheetHeader>
             <SheetTitle className="text-2xl">Record Transaction</SheetTitle>
           </SheetHeader>

@@ -9,7 +9,7 @@ type UploadOptions = {
 
 export async function resumableUpload(
   supabase: unknown,
-  { bucket, path, file, onProgress }: UploadOptions,
+  { bucket, path, file, onProgress }: UploadOptions
 ) {
   const filename = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, "_")}`;
   const filePath = [...path, filename].join("/");
@@ -41,5 +41,5 @@ export function formatFileSize(bytes?: number | null): string {
   const sizes = ["Bytes", "KB", "MB", "GB"];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
 
-  return `${Math.round((bytes / Math.pow(k, i)) * 100) / 100} ${sizes[i]}`;
+  return `${Math.round((bytes / k ** i) * 100) / 100} ${sizes[i]}`;
 }

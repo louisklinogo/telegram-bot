@@ -1,9 +1,9 @@
 "use client";
 
-import { trpc } from "@/lib/trpc/client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useSuspenseQuery } from "@tanstack/react-query";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatAmount } from "@/lib/format-currency";
+import { trpc } from "@/lib/trpc/client";
 
 export function HighestValueOrder() {
   const [data] = trpc.analytics.highestValueOrder.useSuspenseQuery();
@@ -19,7 +19,7 @@ export function HighestValueOrder() {
         <CardContent className="pb-[34px]">
           <div className="flex flex-col gap-2">
             <div>Highest Order</div>
-            <div className="text-sm text-muted-foreground">No orders found</div>
+            <div className="text-muted-foreground text-sm">No orders found</div>
           </div>
         </CardContent>
       </Card>
@@ -37,7 +37,7 @@ export function HighestValueOrder() {
       <CardContent className="pb-[34px]">
         <div className="flex flex-col gap-2">
           <div>Highest Order</div>
-          <div className="text-sm text-muted-foreground">
+          <div className="text-muted-foreground text-sm">
             {data.orderNumber} from {data.clientName || "Unknown"}
           </div>
         </div>

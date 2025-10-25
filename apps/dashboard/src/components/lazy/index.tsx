@@ -14,7 +14,7 @@ export const LazyEditor = dynamic(
   {
     loading: () => <Skeleton className="h-[200px] w-full" />,
     ssr: false, // Editor needs browser APIs
-  },
+  }
 );
 
 // Chart components (Recharts is heavy - ~50kb)
@@ -23,7 +23,7 @@ export const LazyAreaChart = dynamic(
   {
     loading: () => <Skeleton className="h-[300px] w-full" />,
     ssr: false,
-  },
+  }
 );
 
 export const LazyLineChart = dynamic(
@@ -31,7 +31,7 @@ export const LazyLineChart = dynamic(
   {
     loading: () => <Skeleton className="h-[300px] w-full" />,
     ssr: false,
-  },
+  }
 );
 
 export const LazyBarChart = dynamic(
@@ -39,7 +39,7 @@ export const LazyBarChart = dynamic(
   {
     loading: () => <Skeleton className="h-[300px] w-full" />,
     ssr: false,
-  },
+  }
 );
 
 // Sheet/Dialog components (only load when opened)
@@ -47,21 +47,21 @@ export const LazyClientSheet = dynamic(
   () => import("@/components/client-sheet").then((mod) => ({ default: mod.ClientSheet })),
   {
     loading: () => <Skeleton className="h-[600px] w-full" />,
-  },
+  }
 );
 
 export const LazyOrderSheet = dynamic(
   () => import("@/components/order-sheet").then((mod) => ({ default: mod.OrderSheet })),
   {
     loading: () => <Skeleton className="h-[600px] w-full" />,
-  },
+  }
 );
 
 export const LazyMeasurementSheet = dynamic(
   () => import("@/components/measurement-sheet").then((mod) => ({ default: mod.MeasurementSheet })),
   {
     loading: () => <Skeleton className="h-[600px] w-full" />,
-  },
+  }
 );
 
 export const LazyInvoiceDrawer = dynamic(
@@ -71,5 +71,5 @@ export const LazyInvoiceDrawer = dynamic(
     })),
   {
     loading: () => <Skeleton className="h-[600px] w-full" />,
-  },
+  }
 );

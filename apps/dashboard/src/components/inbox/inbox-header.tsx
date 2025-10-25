@@ -1,7 +1,6 @@
 import { Search, Settings } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { KeyboardShortcutsHelp } from "./keyboard-shortcuts-help";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -10,6 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { KeyboardShortcutsHelp } from "./keyboard-shortcuts-help";
 
 interface InboxHeaderProps {
   searchQuery: string;
@@ -30,22 +30,22 @@ export function InboxHeader({
 }: InboxHeaderProps) {
   return (
     <div className="flex items-center justify-between gap-4 border-b p-4">
-      <div className="flex items-center gap-2 flex-1">
-        <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+      <div className="flex flex-1 items-center gap-2">
+        <div className="relative max-w-md flex-1">
+          <Search className="-translate-y-1/2 absolute top-1/2 left-3 h-4 w-4 text-muted-foreground" />
           <Input
+            className="pl-9"
+            onChange={(e) => onSearchChange(e.target.value)}
             placeholder="Search messages..."
             value={searchQuery}
-            onChange={(e) => onSearchChange(e.target.value)}
-            className="pl-9"
           />
         </div>
 
         <Select
-          value={statusFilter}
           onValueChange={(value) =>
             onStatusFilterChange(value as "open" | "pending" | "resolved" | "snoozed")
           }
+          value={statusFilter}
         >
           <SelectTrigger className="w-[140px]">
             <SelectValue />
@@ -59,10 +59,10 @@ export function InboxHeader({
         </Select>
 
         <Select
-          value={platformFilter}
           onValueChange={(value) =>
             onPlatformFilterChange(value as "all" | "whatsapp" | "instagram")
           }
+          value={platformFilter}
         >
           <SelectTrigger className="w-[160px]">
             <SelectValue />
@@ -78,7 +78,7 @@ export function InboxHeader({
       <div className="flex items-center gap-2">
         <KeyboardShortcutsHelp />
         <Link href="/inbox/settings">
-          <Button variant="outline" size="icon">
+          <Button size="icon" variant="outline">
             <Settings className="h-4 w-4" />
           </Button>
         </Link>

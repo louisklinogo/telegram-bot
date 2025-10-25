@@ -1,4 +1,4 @@
-import { and, desc, eq, ilike, isNull, or, sql, gte, lte } from "drizzle-orm";
+import { and, desc, eq, gte, ilike, isNull, lte, or, sql } from "drizzle-orm";
 import type { PostgresJsDatabase } from "drizzle-orm/postgres-js";
 import { documents } from "../schema";
 
@@ -21,7 +21,7 @@ export type GetDocumentsParams = {
 
 export async function getDocuments(
   db: PostgresJsDatabase<Record<string, unknown>>,
-  params: GetDocumentsParams,
+  params: GetDocumentsParams
 ) {
   const { teamId, q, tags, orderId, invoiceId, clientId, start, end, limit = 20, cursor } = params;
 
@@ -62,7 +62,7 @@ export async function getDocuments(
   // Cursor-based pagination
   if (cursor) {
     conditions.push(
-      sql`${documents.createdAt} < (SELECT created_at FROM ${documents} WHERE id = ${cursor})`,
+      sql`${documents.createdAt} < (SELECT created_at FROM ${documents} WHERE id = ${cursor})`
     );
   }
 
@@ -91,7 +91,7 @@ export type GetDocumentByIdParams = {
 
 export async function getDocumentById(
   db: PostgresJsDatabase<Record<string, unknown>>,
-  params: GetDocumentByIdParams,
+  params: GetDocumentByIdParams
 ) {
   const { id, teamId } = params;
 
@@ -120,7 +120,7 @@ export type CreateDocumentParams = {
 
 export async function createDocument(
   db: PostgresJsDatabase<Record<string, unknown>>,
-  params: CreateDocumentParams,
+  params: CreateDocumentParams
 ) {
   const [document] = await db
     .insert(documents)
@@ -154,7 +154,7 @@ export type UpdateDocumentParams = {
 
 export async function updateDocument(
   db: PostgresJsDatabase<Record<string, unknown>>,
-  params: UpdateDocumentParams,
+  params: UpdateDocumentParams
 ) {
   const { id, teamId, ...updates } = params;
 
@@ -177,7 +177,7 @@ export type DeleteDocumentParams = {
 
 export async function deleteDocument(
   db: PostgresJsDatabase<Record<string, unknown>>,
-  params: DeleteDocumentParams,
+  params: DeleteDocumentParams
 ) {
   const { id, teamId } = params;
 
@@ -197,7 +197,7 @@ export type GetDocumentStatsParams = {
 
 export async function getDocumentStats(
   db: PostgresJsDatabase<Record<string, unknown>>,
-  params: GetDocumentStatsParams,
+  params: GetDocumentStatsParams
 ) {
   const { teamId } = params;
 
@@ -219,7 +219,7 @@ export type GetDocumentsByTagsParams = {
 
 export async function getAllDocumentTags(
   db: PostgresJsDatabase<Record<string, unknown>>,
-  params: GetDocumentsByTagsParams,
+  params: GetDocumentsByTagsParams
 ) {
   const { teamId } = params;
 

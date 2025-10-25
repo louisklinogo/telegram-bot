@@ -8,25 +8,25 @@ export default function SettingsPage() {
   const supabaseUrlId = useId();
   const supabaseAnonId = useId();
   return (
-    <div className="px-6 py-6 grid gap-6 lg:grid-cols-2">
+    <div className="grid gap-6 px-6 py-6 lg:grid-cols-2">
       <Card className="border-muted">
         <CardHeader>
-          <CardTitle className="text-base font-semibold">Supabase project</CardTitle>
+          <CardTitle className="font-semibold text-base">Supabase project</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3 text-sm">
           <div className="flex flex-col gap-1">
-            <label htmlFor={supabaseUrlId} className="text-muted-foreground">
+            <label className="text-muted-foreground" htmlFor={supabaseUrlId}>
               Project URL
             </label>
-            <Input id={supabaseUrlId} placeholder="https://your-project.supabase.co" disabled />
+            <Input disabled id={supabaseUrlId} placeholder="https://your-project.supabase.co" />
           </div>
           <div className="flex flex-col gap-1">
-            <label htmlFor={supabaseAnonId} className="text-muted-foreground">
+            <label className="text-muted-foreground" htmlFor={supabaseAnonId}>
               Anon key
             </label>
-            <Input id={supabaseAnonId} placeholder="••••••••••" disabled />
+            <Input disabled id={supabaseAnonId} placeholder="••••••••••" />
           </div>
-          <Button size="sm" className="gap-2">
+          <Button className="gap-2" size="sm">
             Rotate keys
           </Button>
         </CardContent>
@@ -34,10 +34,10 @@ export default function SettingsPage() {
 
       <Card className="border-dashed">
         <CardHeader>
-          <CardTitle className="text-base font-semibold">Role management</CardTitle>
+          <CardTitle className="font-semibold text-base">Role management</CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-sm text-muted-foreground mb-3">
+          <p className="mb-3 text-muted-foreground text-sm">
             Invite teammates by email to your current team.
           </p>
           <TeamInvites />

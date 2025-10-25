@@ -1,54 +1,58 @@
-import { z } from "zod";
-import { TRPCError } from "@trpc/server";
-import { createTRPCRouter, teamProcedure } from "../init";
 import {
-  getTransactionsWithClient,
+  getRecentTransactionsLite,
+  getSpendingByCategory,
+  getTransactionById,
   getTransactionStats,
   getTransactionsEnriched,
+  getTransactionsWithClient,
   searchTransactions,
-  getTransactionById,
-  updateTransactionsBulk,
   softDeleteTransactionsBulk,
-  getSpendingByCategory,
-  getRecentTransactionsLite,
+  updateTransactionsBulk,
 } from "@Faworra/database/queries";
-import {
-  invoices,
-  transactions,
-  transactionAllocations,
-  transactionTags,
-  financialAccounts,
-  transactionCategories,
-  transactionAttachments,
-  usersOnTeam,
-  users,
-  teams,
-} from "@Faworra/database/schema";
 // Import from database schema barrel to avoid duplicate drizzle-orm type instances
-import { and, eq } from "@Faworra/database/schema";
+import {
+  and,
+  eq,
+  financialAccounts,
+  invoices,
+  teams,
+  transactionAllocations,
+  transactionAttachments,
+  transactionCategories,
+  transactions,
+  transactionTags,
+  users,
+  usersOnTeam,
+} from "@Faworra/database/schema";
+import { TRPCError } from "@trpc/server";
+import { z } from "zod";
+import { createTRPCRouter, teamProcedure } from "../init";
 
 // Internal helpers to deduplicate transaction creation logic
-async function insertPaymentWithExtras(ctx: any, input: {
-  amount: number;
-  currency: string;
-  description?: string;
-  clientId?: string | null;
-  orderId?: string | null;
-  invoiceId?: string | null;
-  paymentMethod?: string | null;
-  paymentReference?: string | null;
-  transactionDate?: string | Date | null;
-  excludeFromAnalytics?: boolean;
-  tags?: string[];
-  attachments?: Array<{
-    path: string;
-    filename?: string;
-    contentType?: string | null;
-    size?: number | null;
-    type?: string | null;
-    checksum?: string | null;
-  }>;
-}) {
+async function insertPaymentWithExtras(
+  ctx: any,
+  input: {
+    amount: number;
+    currency: string;
+    description?: string;
+    clientId?: string | null;
+    orderId?: string | null;
+    invoiceId?: string | null;
+    paymentMethod?: string | null;
+    paymentReference?: string | null;
+    transactionDate?: string | Date | null;
+    excludeFromAnalytics?: boolean;
+    tags?: string[];
+    attachments?: Array<{
+      path: string;
+      filename?: string;
+      contentType?: string | null;
+      size?: number | null;
+      type?: string | null;
+      checksum?: string | null;
+    }>;
+  }
+) {
   const trxNumber = `TX-${Date.now()}`;
   const [created] = await ctx.db
     .insert(transactions)
@@ -99,7 +103,7 @@ async function insertPaymentWithExtras(ctx: any, input: {
           teamId: ctx.teamId,
           transactionId: created.id,
           tagId,
-        })),
+        }))
       )
       .onConflictDoNothing();
   }
@@ -123,31 +127,34 @@ async function insertPaymentWithExtras(ctx: any, input: {
   return created;
 }
 
-async function insertEntryWithExtras(ctx: any, input: {
-  type: "payment" | "expense" | "refund" | "adjustment";
-  amount: number;
-  currency: string;
-  description: string;
-  date?: string | null;
-  accountId?: string | null;
-  categorySlug?: string | null;
-  assignedId?: string | null;
-  clientId?: string | null;
-  orderId?: string | null;
-  paymentMethod?: string | null;
-  paymentReference?: string | null;
-  notes?: string | null;
-  excludeFromAnalytics?: boolean;
-  tags?: string[];
-  attachments?: Array<{
-    path: string;
-    filename?: string;
-    contentType?: string | null;
-    size?: number | null;
-    type?: string | null;
-    checksum?: string | null;
-  }>;
-}) {
+async function insertEntryWithExtras(
+  ctx: any,
+  input: {
+    type: "payment" | "expense" | "refund" | "adjustment";
+    amount: number;
+    currency: string;
+    description: string;
+    date?: string | null;
+    accountId?: string | null;
+    categorySlug?: string | null;
+    assignedId?: string | null;
+    clientId?: string | null;
+    orderId?: string | null;
+    paymentMethod?: string | null;
+    paymentReference?: string | null;
+    notes?: string | null;
+    excludeFromAnalytics?: boolean;
+    tags?: string[];
+    attachments?: Array<{
+      path: string;
+      filename?: string;
+      contentType?: string | null;
+      size?: number | null;
+      type?: string | null;
+      checksum?: string | null;
+    }>;
+  }
+) {
   const trxNumber = `TX-${Date.now()}`;
   const today = new Date();
   const dateOnly = input.date ?? today.toISOString().slice(0, 10);
@@ -188,7 +195,7 @@ async function insertEntryWithExtras(ctx: any, input: {
           teamId: ctx.teamId,
           transactionId: created.id,
           tagId,
-        })),
+        }))
       )
       .onConflictDoNothing();
   }
@@ -238,7 +245,7 @@ export const transactionsRouter = createTRPCRouter({
                 size: z.number().nullable().optional(),
                 type: z.string().optional(),
                 checksum: z.string().optional(),
-              }),
+              })
             )
             .optional(),
         }),
@@ -268,11 +275,11 @@ export const transactionsRouter = createTRPCRouter({
                 size: z.number().nullable().optional(),
                 type: z.string().optional(),
                 checksum: z.string().optional(),
-              }),
+              })
             )
             .optional(),
         }),
-      ]),
+      ])
     )
     .mutation(async ({ ctx, input }) => {
       const teamCurrency = async () => {
@@ -340,7 +347,7 @@ export const transactionsRouter = createTRPCRouter({
         name: z.string().min(1),
         type: z.enum(["cash", "bank", "mobile_money", "card", "other"]).default("cash"),
         currency: z.string().min(3).max(3).optional(),
-      }),
+      })
     )
     .mutation(async ({ ctx, input }) => {
       const [created] = await ctx.db
@@ -370,7 +377,7 @@ export const transactionsRouter = createTRPCRouter({
           .regex(/^#([0-9a-fA-F]{3}){1,2}$/)
           .optional(),
         parentId: z.string().uuid().optional(),
-      }),
+      })
     )
     .mutation(async ({ ctx, input }) => {
       const toSlug = (s: string) =>
@@ -393,7 +400,7 @@ export const transactionsRouter = createTRPCRouter({
           .select({ id: transactionCategories.id })
           .from(transactionCategories)
           .where(
-            and(eq(transactionCategories.teamId, ctx.teamId), eq(transactionCategories.slug, slug)),
+            and(eq(transactionCategories.teamId, ctx.teamId), eq(transactionCategories.slug, slug))
           )
           .limit(1);
         if (!existing[0]) break;
@@ -471,7 +478,7 @@ export const transactionsRouter = createTRPCRouter({
           limit: z.number().min(1).max(100).default(50),
           cursor: z.object({ date: z.string().nullable(), id: z.string() }).nullish(),
         })
-        .optional(),
+        .optional()
     )
     .query(async ({ ctx, input }) => {
       // DEBUG: log incoming start/end and cursor
@@ -577,19 +584,19 @@ export const transactionsRouter = createTRPCRouter({
         out.startDate = toISO(startOfDay(now));
         out.endDate = toISO(endOfDay(now));
       } else if (/yesterday/.test(q)) {
-        const y = new Date(now.getTime() - 86400000);
+        const y = new Date(now.getTime() - 86_400_000);
         out.startDate = toISO(startOfDay(y));
         out.endDate = toISO(endOfDay(y));
       } else if (/last\s+7\s+days/.test(q)) {
-        const s = new Date(now.getTime() - 86400000 * 6);
+        const s = new Date(now.getTime() - 86_400_000 * 6);
         out.startDate = toISO(startOfDay(s));
         out.endDate = toISO(endOfDay(now));
       } else if (/last\s+30\s+days/.test(q)) {
-        const s = new Date(now.getTime() - 86400000 * 29);
+        const s = new Date(now.getTime() - 86_400_000 * 29);
         out.startDate = toISO(startOfDay(s));
         out.endDate = toISO(endOfDay(now));
       } else if (/last\s+week/.test(q)) {
-        const s = new Date(now.getTime() - 86400000 * 7);
+        const s = new Date(now.getTime() - 86_400_000 * 7);
         out.startDate = toISO(startOfDay(s));
         out.endDate = toISO(endOfDay(now));
       } else if (/this\s+month/.test(q)) {
@@ -650,7 +657,7 @@ export const transactionsRouter = createTRPCRouter({
           excludeFromAnalytics: z.boolean().optional(),
           notes: z.string().nullable().optional(),
         }),
-      }),
+      })
     )
     .mutation(async ({ ctx, input }) => {
       const updated = await updateTransactionsBulk(ctx.db, {
@@ -694,10 +701,10 @@ export const transactionsRouter = createTRPCRouter({
               size: z.number().nullable().optional(),
               type: z.string().optional(),
               checksum: z.string().optional(),
-            }),
+            })
           )
           .optional(),
-      }),
+      })
     )
     .mutation(async ({ ctx, input }) => {
       const row = await ctx.db
@@ -748,10 +755,10 @@ export const transactionsRouter = createTRPCRouter({
               size: z.number().nullable().optional(),
               type: z.string().optional(),
               checksum: z.string().optional(),
-            }),
+            })
           )
           .optional(),
-      }),
+      })
     )
     .mutation(async ({ ctx, input }) => {
       const row = await ctx.db
@@ -787,7 +794,7 @@ export const transactionsRouter = createTRPCRouter({
           limit: z.number().min(1).max(100).default(50),
           cursor: z.object({ transactionDate: z.string().nullable(), id: z.string() }).nullish(),
         })
-        .optional(),
+        .optional()
     )
     .query(async ({ ctx, input }) => {
       const rows = await getTransactionsWithClient(ctx.db, {
@@ -817,36 +824,59 @@ export const transactionsRouter = createTRPCRouter({
     }),
 
   stats: teamProcedure
-    .input(z.object({ startDate: z.string().datetime().optional(), endDate: z.string().datetime().optional() }).optional())
-    .query(async ({ ctx, input }) => {
-      return getTransactionStats(ctx.db, {
+    .input(
+      z
+        .object({
+          startDate: z.string().datetime().optional(),
+          endDate: z.string().datetime().optional(),
+        })
+        .optional()
+    )
+    .query(async ({ ctx, input }) =>
+      getTransactionStats(ctx.db, {
         teamId: ctx.teamId,
         startDate: input?.startDate ? new Date(input.startDate) : undefined,
         endDate: input?.endDate ? new Date(input.endDate) : undefined,
-      });
-    }),
+      })
+    ),
 
   spending: teamProcedure
-    .input(z.object({ startDate: z.string().datetime().optional(), endDate: z.string().datetime().optional(), limit: z.number().min(1).max(50).default(12) }).optional())
-    .query(async ({ ctx, input }) => {
-      return getSpendingByCategory(ctx.db, {
+    .input(
+      z
+        .object({
+          startDate: z.string().datetime().optional(),
+          endDate: z.string().datetime().optional(),
+          limit: z.number().min(1).max(50).default(12),
+        })
+        .optional()
+    )
+    .query(async ({ ctx, input }) =>
+      getSpendingByCategory(ctx.db, {
         teamId: ctx.teamId,
         startDate: input?.startDate ? new Date(input.startDate) : undefined,
         endDate: input?.endDate ? new Date(input.endDate) : undefined,
         limit: input?.limit ?? 12,
-      });
-    }),
+      })
+    ),
 
   recentLite: teamProcedure
-    .input(z.object({ startDate: z.string().datetime().optional(), endDate: z.string().datetime().optional(), limit: z.number().min(1).max(50).default(8) }).optional())
-    .query(async ({ ctx, input }) => {
-      return getRecentTransactionsLite(ctx.db, {
+    .input(
+      z
+        .object({
+          startDate: z.string().datetime().optional(),
+          endDate: z.string().datetime().optional(),
+          limit: z.number().min(1).max(50).default(8),
+        })
+        .optional()
+    )
+    .query(async ({ ctx, input }) =>
+      getRecentTransactionsLite(ctx.db, {
         teamId: ctx.teamId,
         startDate: input?.startDate ? new Date(input.startDate) : undefined,
         endDate: input?.endDate ? new Date(input.endDate) : undefined,
         limit: input?.limit ?? 8,
-      });
-    }),
+      })
+    ),
 
   allocationsByInvoice: teamProcedure
     .input(z.object({ invoiceId: z.string().uuid() }))
@@ -865,8 +895,8 @@ export const transactionsRouter = createTRPCRouter({
         .where(
           and(
             eq(transactionAllocations.invoiceId, input.invoiceId),
-            eq(transactions.teamId, ctx.teamId),
-          ),
+            eq(transactions.teamId, ctx.teamId)
+          )
         );
 
       return rows.map((r) => ({
@@ -901,7 +931,7 @@ export const transactionsRouter = createTRPCRouter({
         transactionId: z.string().uuid(),
         invoiceId: z.string().uuid(),
         amount: z.number().positive(),
-      }),
+      })
     )
     .mutation(async ({ ctx, input }) => {
       // Verify transaction belongs to team
@@ -945,9 +975,9 @@ export const transactionsRouter = createTRPCRouter({
             size: z.number().nullable().optional(),
             type: z.string().optional(),
             checksum: z.string().optional(),
-          }),
+          })
         ),
-      }),
+      })
     )
     .mutation(async ({ ctx, input }) => {
       // Verify transaction belongs to team
@@ -970,7 +1000,10 @@ export const transactionsRouter = createTRPCRouter({
         checksum: a.checksum ?? null,
         uploadedBy: ctx.userId ?? null,
       }));
-      const inserted = await ctx.db.insert(transactionAttachments).values(rows).returning({ id: transactionAttachments.id });
+      const inserted = await ctx.db
+        .insert(transactionAttachments)
+        .values(rows)
+        .returning({ id: transactionAttachments.id });
       return { inserted: inserted.length };
     }),
 
@@ -983,10 +1016,17 @@ export const transactionsRouter = createTRPCRouter({
         .select({ id: transactionAttachments.id })
         .from(transactionAttachments)
         .leftJoin(transactions, eq(transactionAttachments.transactionId, transactions.id))
-        .where(and(eq(transactionAttachments.id, input.attachmentId), eq(transactions.teamId, ctx.teamId)))
+        .where(
+          and(
+            eq(transactionAttachments.id, input.attachmentId),
+            eq(transactions.teamId, ctx.teamId)
+          )
+        )
         .limit(1);
       if (!own[0]) throw new TRPCError({ code: "FORBIDDEN", message: "Invalid attachment" });
-      await ctx.db.delete(transactionAttachments).where(eq(transactionAttachments.id, input.attachmentId));
+      await ctx.db
+        .delete(transactionAttachments)
+        .where(eq(transactionAttachments.id, input.attachmentId));
       return { success: true };
     }),
 });

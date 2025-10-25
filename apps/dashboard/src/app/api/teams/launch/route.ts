@@ -1,9 +1,8 @@
-import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
+import { and, eq, users, usersOnTeam } from "@Faworra/database/schema";
 import { createServerClient } from "@Faworra/supabase/server";
+import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 import { db } from "@/lib/trpc/server";
-import { usersOnTeam, users } from "@Faworra/database/schema";
-import { and, eq } from "@Faworra/database/schema";
 
 export async function POST(req: NextRequest) {
   const url = new URL(req.url);

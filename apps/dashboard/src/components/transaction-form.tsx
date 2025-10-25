@@ -1,16 +1,27 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { trpc } from "@/lib/trpc/client";
-import { Button } from "@/components/ui/button";
-import { SubmitButton } from "@/components/ui/submit-button";
-import { Input } from "@/components/ui/input";
+import { currencies } from "@Faworra/schemas";
+import { createBrowserClient } from "@Faworra/supabase/client";
 import { Label } from "@Faworra/ui/label";
-import { Switch } from "@/components/ui/switch";
-import { Textarea } from "@/components/ui/textarea";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useEffect, useMemo, useState } from "react";
+import { useDropzone } from "react-dropzone";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import { ComboboxDropdown, type ComboboxItem } from "@/components/ui/combobox-dropdown";
+import { ComboboxMulti } from "@/components/ui/combobox-multi";
+import { CurrencyInput } from "@/components/ui/currency-input";
+import { Icons } from "@/components/ui/icons";
+import { Input } from "@/components/ui/input";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   Select,
   SelectContent,
@@ -18,24 +29,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { SubmitButton } from "@/components/ui/submit-button";
+import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
-import { createBrowserClient } from "@Faworra/supabase/client";
-import { CurrencyInput } from "@/components/ui/currency-input";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
-import { ComboboxDropdown, type ComboboxItem } from "@/components/ui/combobox-dropdown";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
-import { currencies } from "@Faworra/schemas";
-import { useDropzone } from "react-dropzone";
-import { Icons } from "@/components/ui/icons";
-import { ComboboxMulti } from "@/components/ui/combobox-multi";
-import { formatAmount } from "@/lib/format-currency";
 import { useTeamCurrency } from "@/hooks/use-team-currency";
+import { formatAmount } from "@/lib/format-currency";
+import { trpc } from "@/lib/trpc/client";
 
 const transactionFormSchema = z.object({
   type: z.enum(["payment", "expense", "refund", "adjustment"]),
@@ -61,7 +61,11 @@ interface TransactionFormProps {
   defaultClientId?: string;
 }
 
-export function TransactionForm({ onSuccess, defaultInvoiceId, defaultClientId }: TransactionFormProps) {
+export function TransactionForm({
+  onSuccess,
+  defaultInvoiceId,
+  defaultClientId,
+}: TransactionFormProps) {
   const { toast } = useToast();
   const utils = trpc.useUtils();
   const teamCurrency = useTeamCurrency();
@@ -121,7 +125,7 @@ export function TransactionForm({ onSuccess, defaultInvoiceId, defaultClientId }
   // Vault documents search for linking existing attachments
   const { data: docsSearch } = trpc.documents.list.useQuery(
     { q: attachmentQuery, limit: 10 },
-    { enabled: attachmentQuery.length > 1 },
+    { enabled: attachmentQuery.length > 1 }
   );
   // Get categories (hierarchical)
   const { data: categoriesTree = [] } = trpc.transactionCategories.list.useQuery();
@@ -138,7 +142,7 @@ export function TransactionForm({ onSuccess, defaultInvoiceId, defaultClientId }
   };
   const flattenCategories = (
     nodes: CategoryNode[],
-    depth = 0,
+    depth = 0
   ): Array<CategoryNode & { depth: number }> => {
     const out: Array<CategoryNode & { depth: number }> = [];
     for (const n of nodes) {
@@ -300,9 +304,9 @@ export function TransactionForm({ onSuccess, defaultInvoiceId, defaultClientId }
   });
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col flex-1 min-h-0">
-      <div className="flex-1 overflow-y-auto scrollbar-hide px-6 py-4">
-        <Accordion type="multiple" defaultValue={["general", "details"]} className="space-y-0">
+    <form className="flex min-h-0 flex-1 flex-col" onSubmit={handleSubmit(onSubmit)}>
+      <div className="scrollbar-hide flex-1 overflow-y-auto px-6 py-4">
+        <Accordion className="space-y-0" defaultValue={["general", "details"]} type="multiple">
           {/* General Section */}
           <AccordionItem value="general">
             <AccordionTrigger>General</AccordionTrigger>
@@ -310,7 +314,10 @@ export function TransactionForm({ onSuccess, defaultInvoiceId, defaultClientId }
               <div className="space-y-6">
                 <div>
                   <Label htmlFor="type">Transaction Type</Label>
-                  <Select value={watch("type")} onValueChange={(value) => setValue("type", value as any)}>
+                  <Select
+                    onValueChange={(value) => setValue("type", value as any)}
+                    value={watch("type")}
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="Select type" />
                     </SelectTrigger>
@@ -321,7 +328,9 @@ export function TransactionForm({ onSuccess, defaultInvoiceId, defaultClientId }
                       <SelectItem value="adjustment">Adjustment</SelectItem>
                     </SelectContent>
                   </Select>
-                  {errors.type && <p className="text-sm text-destructive mt-1">{errors.type.message}</p>}
+                  {errors.type && (
+                    <p className="mt-1 text-destructive text-sm">{errors.type.message}</p>
+                  )}
                 </div>
 
                 <div>
@@ -332,7 +341,7 @@ export function TransactionForm({ onSuccess, defaultInvoiceId, defaultClientId }
                     {...form.register("description")}
                   />
                   {errors.description && (
-                    <p className="text-sm text-destructive mt-1">{errors.description.message}</p>
+                    <p className="mt-1 text-destructive text-sm">{errors.description.message}</p>
                   )}
                 </div>
 
@@ -340,24 +349,27 @@ export function TransactionForm({ onSuccess, defaultInvoiceId, defaultClientId }
                   <div>
                     <Label htmlFor="amount">Amount</Label>
                     <CurrencyInput
-                      id="amount"
                       allowNegative={false}
+                      className="text-right font-mono"
                       decimalScale={2}
-                      value={watch("amount")}
+                      id="amount"
                       onValueChange={(values) =>
                         setValue("amount", Number(values.value || 0), { shouldValidate: true })
                       }
                       placeholder="0.00"
-                      className="text-right font-mono"
+                      value={watch("amount")}
                     />
                     {errors.amount && (
-                      <p className="text-sm text-destructive mt-1">{errors.amount.message}</p>
+                      <p className="mt-1 text-destructive text-sm">{errors.amount.message}</p>
                     )}
                   </div>
 
                   <div>
                     <Label htmlFor="currency">Currency</Label>
-                    <Select value={watch("currency")} onValueChange={(v) => setValue("currency", v)}>
+                    <Select
+                      onValueChange={(v) => setValue("currency", v)}
+                      value={watch("currency")}
+                    >
                       <SelectTrigger>
                         <SelectValue placeholder="Currency" />
                       </SelectTrigger>
@@ -390,6 +402,26 @@ export function TransactionForm({ onSuccess, defaultInvoiceId, defaultClientId }
                           label: `${a.name} (${a.currency})`,
                         })) as ComboboxItem[]
                       }
+                      onCreate={async (name) => {
+                        const currency = watch("currency") || teamCurrency;
+                        const res = await createAccount.mutateAsync({
+                          name,
+                          type: "cash",
+                          currency,
+                        });
+                        await utils.transactions.accounts.invalidate();
+                        setValue("accountId", res.id);
+                        if (res.currency) setValue("currency", res.currency);
+                      }}
+                      onSelect={(item) => {
+                        const id = item?.id || "";
+                        setValue("accountId", id);
+                        const acc = accountsById.get(id);
+                        if (acc?.currency) setValue("currency", acc.currency);
+                      }}
+                      placeholder="Select account"
+                      renderOnCreate={(value) => <span>Create "{value}"</span>}
+                      searchPlaceholder="Search accounts..."
                       selectedItem={
                         accountId
                           ? ({
@@ -398,22 +430,6 @@ export function TransactionForm({ onSuccess, defaultInvoiceId, defaultClientId }
                             } as ComboboxItem)
                           : undefined
                       }
-                      onSelect={(item) => {
-                        const id = item?.id || "";
-                        setValue("accountId", id);
-                        const acc = accountsById.get(id);
-                        if (acc?.currency) setValue("currency", acc.currency);
-                      }}
-                      onCreate={async (name) => {
-                        const currency = watch("currency") || teamCurrency;
-                        const res = await createAccount.mutateAsync({ name, type: "cash", currency });
-                        await utils.transactions.accounts.invalidate();
-                        setValue("accountId", res.id);
-                        if (res.currency) setValue("currency", res.currency);
-                      }}
-                      placeholder="Select account"
-                      searchPlaceholder="Search accounts..."
-                      renderOnCreate={(value) => <span>Create "{value}"</span>}
                     />
                   </div>
 
@@ -421,24 +437,27 @@ export function TransactionForm({ onSuccess, defaultInvoiceId, defaultClientId }
                     <Label htmlFor="transactionDate">Date</Label>
                     <Popover>
                       <PopoverTrigger asChild>
-                        <Button type="button" variant="outline" className="w-full justify-start">
+                        <Button className="w-full justify-start" type="button" variant="outline">
                           {((): string => {
                             const d = watch("transactionDate");
                             return d ? new Date(d as string).toLocaleDateString() : "Select date";
                           })()}
                         </Button>
                       </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
+                      <PopoverContent align="start" className="w-auto p-0">
                         <Calendar
+                          initialFocus
                           mode="single"
+                          onSelect={(value) => {
+                            setValue(
+                              "transactionDate",
+                              value ? value.toISOString().split("T")[0] : ""
+                            );
+                          }}
                           selected={((): Date | undefined => {
                             const d = watch("transactionDate");
                             return d ? new Date(d as string) : undefined;
                           })()}
-                          onSelect={(value) => {
-                            setValue("transactionDate", value ? value.toISOString().split("T")[0] : "");
-                          }}
-                          initialFocus
                         />
                       </PopoverContent>
                     </Popover>
@@ -449,24 +468,26 @@ export function TransactionForm({ onSuccess, defaultInvoiceId, defaultClientId }
                   <Label>Tags</Label>
                   <ComboboxMulti
                     items={(availableTags as any[]).map((t) => ({ id: t.id, label: t.name }))}
-                    values={selectedTags}
                     onChange={setSelectedTags}
-                    placeholder="Select tags"
-                    searchPlaceholder="Search or create tags..."
                     onCreate={async (name) => {
                       const created = await createTagMutation.mutateAsync({ name });
                       setSelectedTags((prev) => [...prev, created.id]);
                       await utils.tags.list.invalidate();
                     }}
+                    placeholder="Select tags"
+                    searchPlaceholder="Search or create tags..."
+                    values={selectedTags}
                   />
-                  <p className="text-xs text-muted-foreground mt-1">You can add tags to help filter transactions later.</p>
+                  <p className="mt-1 text-muted-foreground text-xs">
+                    You can add tags to help filter transactions later.
+                  </p>
                 </div>
 
                 <div>
                   <Label htmlFor="paymentMethod">Payment Method</Label>
                   <Select
-                    value={watch("paymentMethod")}
                     onValueChange={(value) => setValue("paymentMethod", value)}
+                    value={watch("paymentMethod")}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select method" />
@@ -485,30 +506,32 @@ export function TransactionForm({ onSuccess, defaultInvoiceId, defaultClientId }
                 {/* Relationships - Conditional */}
                 {(transactionType === "payment" || transactionType === "refund") && (
                   <>
-                    <div className="text-sm font-medium text-muted-foreground">Relationships</div>
+                    <div className="font-medium text-muted-foreground text-sm">Relationships</div>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <Label htmlFor="clientId">Customer</Label>
                         <ComboboxDropdown
                           items={clients.map((c: any) => ({ id: c.id, label: c.name }))}
+                          onSelect={(item) => setValue("clientId", item?.id || "")}
+                          placeholder="Select customer"
+                          searchPlaceholder="Search customers..."
                           selectedItem={
                             watch("clientId")
                               ? {
                                   id: watch("clientId")!,
-                                  label: clients.find((c: any) => c.id === watch("clientId"))?.name || "",
+                                  label:
+                                    clients.find((c: any) => c.id === watch("clientId"))?.name ||
+                                    "",
                                 }
                               : undefined
                           }
-                          onSelect={(item) => setValue("clientId", item?.id || "")}
-                          placeholder="Select customer"
-                          searchPlaceholder="Search customers..."
                         />
                       </div>
                       <div>
                         <Label htmlFor="invoiceId">Link to Invoice (Optional)</Label>
                         <Select
-                          value={watch("invoiceId")}
                           onValueChange={(value) => setValue("invoiceId", value)}
+                          value={watch("invoiceId")}
                         >
                           <SelectTrigger>
                             <SelectValue placeholder="Select invoice (optional)" />
@@ -516,12 +539,16 @@ export function TransactionForm({ onSuccess, defaultInvoiceId, defaultClientId }
                           <SelectContent>
                             {invoices.map((invoice: any) => (
                               <SelectItem key={invoice.id} value={invoice.id}>
-                                {invoice.invoiceNumber} - {formatAmount({ currency: invoice.currency || teamCurrency, amount: Number(invoice.amount || 0) })}
+                                {invoice.invoiceNumber} -{" "}
+                                {formatAmount({
+                                  currency: invoice.currency || teamCurrency,
+                                  amount: Number(invoice.amount || 0),
+                                })}
                               </SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
-                        <p className="text-xs text-muted-foreground mt-1">
+                        <p className="mt-1 text-muted-foreground text-xs">
                           Automatically allocates payment to selected invoice
                         </p>
                       </div>
@@ -530,37 +557,33 @@ export function TransactionForm({ onSuccess, defaultInvoiceId, defaultClientId }
                 )}
 
                 {/* Categorization */}
-                <div className="text-sm font-medium text-muted-foreground">Categorization</div>
+                <div className="font-medium text-muted-foreground text-sm">Categorization</div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="categorySlug">Category</Label>
                     <ComboboxDropdown
                       items={categoryItems}
-                      selectedItem={
-                        categorySlug
-                          ? (categoryItems.find((i) => i.id === categorySlug) as ComboboxItem | undefined)
-                          : undefined
-                      }
-                      onSelect={(item) => setValue("categorySlug", item?.id || "")}
-                      placeholder="Select category"
-                      searchPlaceholder="Search category"
                       onCreate={async (name) => {
                         const row = await createCategoryMutation.mutateAsync({ name });
                         await utils.transactionCategories.list.invalidate();
                         setValue("categorySlug", row.slug);
                       }}
-                      renderOnCreate={(value) => <span>Create "{value}"</span>}
+                      onSelect={(item) => setValue("categorySlug", item?.id || "")}
+                      placeholder="Select category"
                       renderListItem={({ isChecked, item }) => (
-                        <div className="flex items-center gap-2 w-full">
+                        <div className="flex w-full items-center gap-2">
                           <span style={{ paddingLeft: `${(item as any).depth * 12}px` }} />
                           <span
                             className="inline-block h-3 w-3 rounded-sm border"
-                            style={{ backgroundColor: ((item as any).color as string) || "#e5e7eb" }}
+                            style={{
+                              backgroundColor: ((item as any).color as string) || "#e5e7eb",
+                            }}
                           />
                           <span className="flex-1 truncate">{item.label}</span>
                           {isChecked ? <span className="text-xs">Selected</span> : null}
                         </div>
                       )}
+                      renderOnCreate={(value) => <span>Create "{value}"</span>}
                       renderSelectedItem={(sel) => (
                         <span className="flex items-center gap-2">
                           <span
@@ -570,12 +593,26 @@ export function TransactionForm({ onSuccess, defaultInvoiceId, defaultClientId }
                           <span className="truncate">{sel.label}</span>
                         </span>
                       )}
+                      searchPlaceholder="Search category"
+                      selectedItem={
+                        categorySlug
+                          ? (categoryItems.find((i) => i.id === categorySlug) as
+                              | ComboboxItem
+                              | undefined)
+                          : undefined
+                      }
                     />
                   </div>
                   <div>
                     <Label htmlFor="assignedId">Assign</Label>
                     <ComboboxDropdown
-                      items={members.map((m: any) => ({ id: m.id, label: m.name || m.email || m.id }))}
+                      items={members.map((m: any) => ({
+                        id: m.id,
+                        label: m.name || m.email || m.id,
+                      }))}
+                      onSelect={(item) => setValue("assignedId", item?.id || "")}
+                      placeholder="Select member"
+                      searchPlaceholder="Search member"
                       selectedItem={
                         watch("assignedId")
                           ? ({
@@ -587,9 +624,6 @@ export function TransactionForm({ onSuccess, defaultInvoiceId, defaultClientId }
                             } as ComboboxItem)
                           : undefined
                       }
-                      onSelect={(item) => setValue("assignedId", item?.id || "")}
-                      placeholder="Select member"
-                      searchPlaceholder="Search member"
                     />
                   </div>
                 </div>
@@ -602,115 +636,119 @@ export function TransactionForm({ onSuccess, defaultInvoiceId, defaultClientId }
             <AccordionTrigger>Attachments & Notes</AccordionTrigger>
             <AccordionContent>
               <div className="space-y-4">
-        <div className="text-sm font-medium text-muted-foreground">Attachment</div>
-        <div className="space-y-2">
-          <div className="relative">
-            <Icons.Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              className="pl-9"
-              placeholder="Search attachment"
-              value={attachmentQuery}
-              onChange={(e) => setAttachmentQuery(e.target.value)}
-            />
-          </div>
-          {attachmentQuery.length > 1 && (docsSearch as any)?.items?.length > 0 && (
-            <div className="border rounded-md divide-y max-h-48 overflow-auto text-sm">
-              {(docsSearch as any).items.map((doc: any) => (
-                <button
-                  type="button"
-                  key={doc.id}
-                  className="w-full text-left px-3 py-2 hover:bg-secondary"
-                  onClick={() => {
-                    const path = (doc.pathTokens || []).join("/");
-                    setAttachments((prev) => {
-                      if (prev.some((a) => a.path === path)) return prev; // dedupe
-                      return [
-                        ...prev,
-                        {
-                          path,
-                          filename: doc.name,
-                          contentType: doc.mimeType || null,
-                          size: doc.size || null,
-                        },
-                      ];
-                    });
-                    setAttachmentQuery("");
-                  }}
-                >
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="truncate">{doc.name}</span>
-                    <span className="text-xs text-muted-foreground">
-                      {(doc.mimeType || "").split("/")[1] || "file"}
-                    </span>
+                <div className="font-medium text-muted-foreground text-sm">Attachment</div>
+                <div className="space-y-2">
+                  <div className="relative">
+                    <Icons.Search className="-translate-y-1/2 absolute top-1/2 left-3 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      className="pl-9"
+                      onChange={(e) => setAttachmentQuery(e.target.value)}
+                      placeholder="Search attachment"
+                      value={attachmentQuery}
+                    />
                   </div>
-                </button>
-              ))}
-            </div>
-          )}
-          <div
-            {...getRootProps()}
-            className={`border border-dashed rounded-md px-4 text-sm min-h-[140px] flex items-center justify-center text-center ${isDragActive ? "bg-secondary" : "bg-background"}`}
-          >
-            <input {...getInputProps()} />
-            <p className="text-muted-foreground">
-              Drop your files here, or{" "}
-              <button type="button" onClick={open} className="underline">
-                click to browse
-              </button>
-              .
-              <br />
-              3MB file limit.
-            </p>
-          </div>
-          {attachments.length > 0 && (
-            <div className="mt-2 space-y-1 text-xs text-muted-foreground">
-              {attachments.map((a, idx) => (
-                <div key={idx} className="flex items-center justify-between gap-2">
-                  <span className="truncate">{a.filename || a.path}</span>
-                  <button
-                    type="button"
-                    className="text-red-600"
-                    onClick={() => setAttachments((prev) => prev.filter((_, i) => i !== idx))}
+                  {attachmentQuery.length > 1 && (docsSearch as any)?.items?.length > 0 && (
+                    <div className="max-h-48 divide-y overflow-auto rounded-md border text-sm">
+                      {(docsSearch as any).items.map((doc: any) => (
+                        <button
+                          className="w-full px-3 py-2 text-left hover:bg-secondary"
+                          key={doc.id}
+                          onClick={() => {
+                            const path = (doc.pathTokens || []).join("/");
+                            setAttachments((prev) => {
+                              if (prev.some((a) => a.path === path)) return prev; // dedupe
+                              return [
+                                ...prev,
+                                {
+                                  path,
+                                  filename: doc.name,
+                                  contentType: doc.mimeType || null,
+                                  size: doc.size || null,
+                                },
+                              ];
+                            });
+                            setAttachmentQuery("");
+                          }}
+                          type="button"
+                        >
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="truncate">{doc.name}</span>
+                            <span className="text-muted-foreground text-xs">
+                              {(doc.mimeType || "").split("/")[1] || "file"}
+                            </span>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  <div
+                    {...getRootProps()}
+                    className={`flex min-h-[140px] items-center justify-center rounded-md border border-dashed px-4 text-center text-sm ${isDragActive ? "bg-secondary" : "bg-background"}`}
                   >
-                    Remove
-                  </button>
+                    <input {...getInputProps()} />
+                    <p className="text-muted-foreground">
+                      Drop your files here, or{" "}
+                      <button className="underline" onClick={open} type="button">
+                        click to browse
+                      </button>
+                      .
+                      <br />
+                      3MB file limit.
+                    </p>
+                  </div>
+                  {attachments.length > 0 && (
+                    <div className="mt-2 space-y-1 text-muted-foreground text-xs">
+                      {attachments.map((a, idx) => (
+                        <div className="flex items-center justify-between gap-2" key={idx}>
+                          <span className="truncate">{a.filename || a.path}</span>
+                          <button
+                            className="text-red-600"
+                            onClick={() =>
+                              setAttachments((prev) => prev.filter((_, i) => i !== idx))
+                            }
+                            type="button"
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
-              ))}
-            </div>
-          )}
-        </div>
 
-        <div>
-          <Label htmlFor="paymentReference">Payment Reference (Optional)</Label>
-          <Input
-            id="paymentReference"
-            placeholder="e.g., Check #1234, Transaction ID"
-            {...form.register("paymentReference")}
-          />
-        </div>
+                <div>
+                  <Label htmlFor="paymentReference">Payment Reference (Optional)</Label>
+                  <Input
+                    id="paymentReference"
+                    placeholder="e.g., Check #1234, Transaction ID"
+                    {...form.register("paymentReference")}
+                  />
+                </div>
 
-        <div>
-          <Label htmlFor="notes">Note</Label>
-          <Textarea
-            id="notes"
-            rows={3}
-            placeholder="Additional details..."
-            {...form.register("notes")}
-            className="resize-none"
-          />
-        </div>
+                <div>
+                  <Label htmlFor="notes">Note</Label>
+                  <Textarea
+                    id="notes"
+                    placeholder="Additional details..."
+                    rows={3}
+                    {...form.register("notes")}
+                    className="resize-none"
+                  />
+                </div>
 
-        <div className="flex items-center justify-between">
-          <div className="pr-4">
-            <p className="text-xs text-muted-foreground">
-              Exclude this transaction from analytics like profit, expense and revenue.
-            </p>
-          </div>
-          <Switch
-            checked={!!watch("excludeFromAnalytics")}
-            onCheckedChange={(checked) => setValue("excludeFromAnalytics", Boolean(checked))}
-          />
-        </div>
+                <div className="flex items-center justify-between">
+                  <div className="pr-4">
+                    <p className="text-muted-foreground text-xs">
+                      Exclude this transaction from analytics like profit, expense and revenue.
+                    </p>
+                  </div>
+                  <Switch
+                    checked={!!watch("excludeFromAnalytics")}
+                    onCheckedChange={(checked) =>
+                      setValue("excludeFromAnalytics", Boolean(checked))
+                    }
+                  />
+                </div>
               </div>
             </AccordionContent>
           </AccordionItem>
@@ -718,11 +756,16 @@ export function TransactionForm({ onSuccess, defaultInvoiceId, defaultClientId }
       </div>
 
       {/* Footer actions aligned like Clients sheet */}
-      <div className="flex-shrink-0 flex justify-end gap-4 px-6 py-4 border-t">
-        <Button type="button" variant="outline" onClick={() => onSuccess?.()} disabled={isSaving || uploading}>
+      <div className="flex flex-shrink-0 justify-end gap-4 border-t px-6 py-4">
+        <Button
+          disabled={isSaving || uploading}
+          onClick={() => onSuccess?.()}
+          type="button"
+          variant="outline"
+        >
           Cancel
         </Button>
-        <SubmitButton type="submit" isSubmitting={isSaving} disabled={uploading}>
+        <SubmitButton disabled={uploading} isSubmitting={isSaving} type="submit">
           Record
         </SubmitButton>
       </div>

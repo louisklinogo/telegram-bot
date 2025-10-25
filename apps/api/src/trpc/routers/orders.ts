@@ -1,12 +1,12 @@
-import { z } from "zod";
-import { createTRPCRouter, teamProcedure } from "../init";
 import {
+  createOrderWithItems,
+  deleteOrder,
   getOrdersWithClients,
   getOrderWithItemsById,
-  createOrderWithItems,
   updateOrderWithItems,
-  deleteOrder,
 } from "@Faworra/database/queries";
+import { z } from "zod";
+import { createTRPCRouter, teamProcedure } from "../init";
 
 // Validation schemas
 const orderItemSchema = z.object({
@@ -48,7 +48,7 @@ export const ordersRouter = createTRPCRouter({
           limit: z.number().min(1).max(100).default(50),
           cursor: z.object({ createdAt: z.string().nullable(), id: z.string() }).nullish(),
         })
-        .optional(),
+        .optional()
     )
     .query(async ({ ctx, input }) => {
       const rows = await getOrdersWithClients(ctx.db, {
@@ -73,9 +73,9 @@ export const ordersRouter = createTRPCRouter({
     }),
 
   // Get a single order by ID
-  byId: teamProcedure.input(z.object({ id: z.string().uuid() })).query(async ({ ctx, input }) => {
-    return getOrderWithItemsById(ctx.db, input.id, ctx.teamId);
-  }),
+  byId: teamProcedure
+    .input(z.object({ id: z.string().uuid() }))
+    .query(async ({ ctx, input }) => getOrderWithItemsById(ctx.db, input.id, ctx.teamId)),
 
   // Create a new order
   create: teamProcedure.input(orderInsertSchema).mutation(async ({ ctx, input }) => {

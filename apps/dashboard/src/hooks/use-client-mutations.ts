@@ -1,8 +1,8 @@
 "use client";
 
+import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc/client";
-import { useQueryClient } from "@tanstack/react-query";
 
 export function useCreateClient() {
   const utils = trpc.useUtils();

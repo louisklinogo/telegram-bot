@@ -1,8 +1,8 @@
 "use client";
 
+import { Loader2 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react";
 
 export function ChannelConnectButton({ onClick }: { onClick: () => void }) {
   const [isLoading, setLoading] = useState(false);
@@ -14,8 +14,8 @@ export function ChannelConnectButton({ onClick }: { onClick: () => void }) {
   };
 
   return (
-    <Button variant="outline" disabled={isLoading} onClick={handleClick}>
-      {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Connect"}
+    <Button disabled={isLoading} onClick={handleClick} variant="outline">
+      {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Connect"}
     </Button>
   );
 }

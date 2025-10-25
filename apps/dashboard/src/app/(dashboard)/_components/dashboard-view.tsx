@@ -29,19 +29,19 @@ export function DashboardView({
     {},
     {
       initialData: { items: initialOrders, nextCursor: null },
-    },
+    }
   );
   const [invoicesResult] = trpc.invoices.list.useSuspenseQuery(
     { limit: 50 },
     {
       initialData: { items: initialInvoices, nextCursor: null },
-    },
+    }
   );
   const [measurementsResult] = trpc.measurements.list.useSuspenseQuery(
     { limit: 50 },
     {
       initialData: initialMeasurements,
-    },
+    }
   );
   const ordersData = (ordersResult as any)?.items ?? ordersResult ?? [];
   const invoicesData = (invoicesResult as any)?.items ?? invoicesResult ?? [];
@@ -97,35 +97,32 @@ export function DashboardView({
     <div className="flex flex-col gap-6 px-6">
       <div className="flex justify-between py-6">
         <div className="relative hidden md:block">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            placeholder="Search clients, orders, invoices..."
-            className="pl-9 w-[350px]"
-          />
+          <Search className="-translate-y-1/2 absolute top-1/2 left-3 h-4 w-4 text-muted-foreground" />
+          <Input className="w-[350px] pl-9" placeholder="Search clients, orders, invoices..." />
         </div>
 
         <div className="ml-auto flex items-center gap-2">
-          <Button variant="outline" size="sm" className="gap-2">
+          <Button className="gap-2" size="sm" variant="outline">
             <Filter className="h-4 w-4" /> Filters
           </Button>
-          <Button size="sm" className="gap-2">
+          <Button className="gap-2" size="sm">
             <Plus className="h-4 w-4" /> New Entry
           </Button>
         </div>
       </div>
 
       <ChartArea
-        revenueData={revenueData}
+        isLoading={false}
         ordersData={ordersChart}
         paymentsData={paymentsData}
-        isLoading={false}
+        revenueData={revenueData}
       />
 
       <Widgets
-        stats={stats}
-        recentOrders={orders as any}
-        recentMeasurements={measurements as any}
         isLoading={false}
+        recentMeasurements={measurements as any}
+        recentOrders={orders as any}
+        stats={stats}
       />
     </div>
   );

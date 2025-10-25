@@ -5,9 +5,9 @@ import {
   Sheet,
   SheetContent,
   SheetDescription,
+  SheetFooter,
   SheetHeader,
   SheetTitle,
-  SheetFooter,
 } from "@/components/ui/sheet";
 
 interface DisconnectChannelSheetProps {
@@ -26,7 +26,7 @@ export function DisconnectChannelSheet({
   isLoading,
 }: DisconnectChannelSheetProps) {
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
+    <Sheet onOpenChange={onOpenChange} open={open}>
       <SheetContent>
         <SheetHeader>
           <SheetTitle>Disconnect {provider}?</SheetTitle>
@@ -35,22 +35,17 @@ export function DisconnectChannelSheet({
           </SheetDescription>
         </SheetHeader>
 
-        <div className="py-6 space-y-2">
-          <p className="text-sm text-muted-foreground">
+        <div className="space-y-2 py-6">
+          <p className="text-muted-foreground text-sm">
             Existing conversations will remain in your inbox, but new messages won't be synced.
           </p>
         </div>
 
         <SheetFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isLoading}>
+          <Button disabled={isLoading} onClick={() => onOpenChange(false)} variant="outline">
             Cancel
           </Button>
-          <Button
-            variant="destructive"
-            onClick={onConfirm}
-            disabled={isLoading}
-            className="gap-2"
-          >
+          <Button className="gap-2" disabled={isLoading} onClick={onConfirm} variant="destructive">
             {isLoading ? "Disconnecting…" : "Disconnect"}
           </Button>
         </SheetFooter>

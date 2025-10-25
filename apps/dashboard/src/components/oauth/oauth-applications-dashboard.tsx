@@ -1,36 +1,58 @@
 "use client";
 
+import { Label } from "@Faworra/ui/label";
+import {
+  BarChart3,
+  Calendar,
+  Copy,
+  Edit,
+  ExternalLink,
+  Eye,
+  EyeOff,
+  Globe,
+  Key,
+  MoreHorizontal,
+  Plus,
+  Settings,
+  Shield,
+  Trash,
+  Users,
+} from "lucide-react";
 import React, { useState } from "react";
+import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
-import { Label } from "@Faworra/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { 
-  Plus, 
-  Settings, 
-  MoreHorizontal, 
-  Copy, 
-  Eye, 
-  EyeOff, 
-  Key, 
-  Trash, 
-  Edit, 
-  ExternalLink,
-  Shield,
-  Globe,
-  Users,
-  BarChart3,
-  Calendar
-} from "lucide-react";
-import { toast } from "sonner";
+import { Textarea } from "@/components/ui/textarea";
 
 /**
  * OAuth Applications Management Dashboard
@@ -53,7 +75,7 @@ interface OAuthApplication {
   scopes: string[];
   isPublic: boolean;
   active: boolean;
-  status: 'draft' | 'pending' | 'approved' | 'rejected';
+  status: "draft" | "pending" | "approved" | "rejected";
   createdAt: string;
   updatedAt: string;
   // Statistics
@@ -80,20 +102,20 @@ const STATUS_COLORS = {
 };
 
 const AVAILABLE_SCOPES = [
-  { id: 'profile.read', name: 'Profile (Read)', description: 'View basic profile information' },
-  { id: 'profile.write', name: 'Profile (Write)', description: 'Update profile information' },
-  { id: 'teams.read', name: 'Teams (Read)', description: 'View team information' },
-  { id: 'teams.write', name: 'Teams (Write)', description: 'Manage teams' },
-  { id: 'transactions.read', name: 'Transactions (Read)', description: 'View transactions' },
-  { id: 'transactions.write', name: 'Transactions (Write)', description: 'Manage transactions' },
-  { id: 'invoices.read', name: 'Invoices (Read)', description: 'View invoices' },
-  { id: 'invoices.write', name: 'Invoices (Write)', description: 'Manage invoices' },
-  { id: 'reports.read', name: 'Reports (Read)', description: 'Generate reports' },
-  { id: 'files.read', name: 'Files (Read)', description: 'View files' },
-  { id: 'files.write', name: 'Files (Write)', description: 'Manage files' },
-  { id: 'analytics.read', name: 'Analytics (Read)', description: 'View analytics data' },
-  { id: 'admin.read', name: 'Admin (Read)', description: 'Full read access' },
-  { id: 'admin.write', name: 'Admin (Write)', description: 'Full administrative access' },
+  { id: "profile.read", name: "Profile (Read)", description: "View basic profile information" },
+  { id: "profile.write", name: "Profile (Write)", description: "Update profile information" },
+  { id: "teams.read", name: "Teams (Read)", description: "View team information" },
+  { id: "teams.write", name: "Teams (Write)", description: "Manage teams" },
+  { id: "transactions.read", name: "Transactions (Read)", description: "View transactions" },
+  { id: "transactions.write", name: "Transactions (Write)", description: "Manage transactions" },
+  { id: "invoices.read", name: "Invoices (Read)", description: "View invoices" },
+  { id: "invoices.write", name: "Invoices (Write)", description: "Manage invoices" },
+  { id: "reports.read", name: "Reports (Read)", description: "Generate reports" },
+  { id: "files.read", name: "Files (Read)", description: "View files" },
+  { id: "files.write", name: "Files (Write)", description: "Manage files" },
+  { id: "analytics.read", name: "Analytics (Read)", description: "View analytics data" },
+  { id: "admin.read", name: "Admin (Read)", description: "Full read access" },
+  { id: "admin.write", name: "Admin (Write)", description: "Full administrative access" },
 ];
 
 export function OAuthApplicationsDashboard({
@@ -115,7 +137,7 @@ export function OAuthApplicationsDashboard({
   };
 
   const toggleSecretVisibility = (appId: string) => {
-    setRevealedSecrets(prev => {
+    setRevealedSecrets((prev) => {
       const newSet = new Set(prev);
       if (newSet.has(appId)) {
         newSet.delete(appId);
@@ -129,7 +151,7 @@ export function OAuthApplicationsDashboard({
   const handleRegenerateSecret = async (appId: string) => {
     try {
       const { clientSecret } = await onRegenerateSecret(appId);
-      setRevealedSecrets(prev => new Set(prev).add(appId));
+      setRevealedSecrets((prev) => new Set(prev).add(appId));
       toast.success("Client secret regenerated successfully");
     } catch (error) {
       toast.error("Failed to regenerate client secret");
@@ -137,23 +159,21 @@ export function OAuthApplicationsDashboard({
   };
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
+    <div className="container mx-auto space-y-6 p-6">
       {/* Header */}
-      <div className="flex justify-between items-center">
+      <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">OAuth Applications</h1>
-          <p className="text-muted-foreground">
-            Manage third-party integrations and API access
-          </p>
+          <h1 className="font-bold text-3xl">OAuth Applications</h1>
+          <p className="text-muted-foreground">Manage third-party integrations and API access</p>
         </div>
-        <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
+        <Dialog onOpenChange={setShowCreateDialog} open={showCreateDialog}>
           <DialogTrigger asChild>
             <Button>
-              <Plus className="h-4 w-4 mr-2" />
+              <Plus className="mr-2 h-4 w-4" />
               New Application
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Create OAuth Application</DialogTitle>
               <DialogDescription>
@@ -174,89 +194,88 @@ export function OAuthApplicationsDashboard({
       {applications.length === 0 ? (
         <Card className="p-12 text-center">
           <div className="space-y-4">
-            <div className="mx-auto w-16 h-16 bg-muted rounded-full flex items-center justify-center">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-muted">
               <Shield className="h-8 w-8 text-muted-foreground" />
             </div>
             <div>
-              <h3 className="text-lg font-semibold">No OAuth Applications</h3>
+              <h3 className="font-semibold text-lg">No OAuth Applications</h3>
               <p className="text-muted-foreground">
                 Create your first OAuth application to enable third-party integrations
               </p>
             </div>
             <Button onClick={() => setShowCreateDialog(true)}>
-              <Plus className="h-4 w-4 mr-2" />
+              <Plus className="mr-2 h-4 w-4" />
               Create Application
             </Button>
           </div>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
           {applications.map((app) => (
-            <Card key={app.id} className="relative">
+            <Card className="relative" key={app.id}>
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between">
                   <div className="flex items-center space-x-3">
                     <Avatar className="h-10 w-10">
-                      <AvatarImage src={app.logoUrl} alt={app.name} />
-                      <AvatarFallback>
-                        {app.name.charAt(0).toUpperCase()}
-                      </AvatarFallback>
+                      <AvatarImage alt={app.name} src={app.logoUrl} />
+                      <AvatarFallback>{app.name.charAt(0).toUpperCase()}</AvatarFallback>
                     </Avatar>
-                    <div className="flex-1 min-w-0">
-                      <CardTitle className="text-base truncate">{app.name}</CardTitle>
+                    <div className="min-w-0 flex-1">
+                      <CardTitle className="truncate text-base">{app.name}</CardTitle>
                       {app.website && (
                         <a
+                          className="inline-flex items-center text-muted-foreground text-xs hover:text-foreground"
                           href={app.website}
-                          target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-flex items-center text-xs text-muted-foreground hover:text-foreground"
+                          target="_blank"
                         >
-                          <ExternalLink className="h-3 w-3 mr-1" />
+                          <ExternalLink className="mr-1 h-3 w-3" />
                           Website
                         </a>
                       )}
                     </div>
                   </div>
-                  
+
                   <div className="flex items-center space-x-2">
-                    <Badge className={STATUS_COLORS[app.status]}>
-                      {app.status}
-                    </Badge>
+                    <Badge className={STATUS_COLORS[app.status]}>{app.status}</Badge>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                        <Button className="h-8 w-8 p-0" size="sm" variant="ghost">
                           <MoreHorizontal className="h-4 w-4" />
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem onClick={() => setEditingApp(app)}>
-                          <Edit className="h-4 w-4 mr-2" />
+                          <Edit className="mr-2 h-4 w-4" />
                           Edit
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => handleRegenerateSecret(app.id)}>
-                          <Key className="h-4 w-4 mr-2" />
+                          <Key className="mr-2 h-4 w-4" />
                           Regenerate Secret
                         </DropdownMenuItem>
                         <DropdownMenuItem
-                          onClick={() => onToggleStatus(app.id, !app.active)}
                           className={app.active ? "text-red-600" : "text-green-600"}
+                          onClick={() => onToggleStatus(app.id, !app.active)}
                         >
                           {app.active ? (
                             <>
-                              <EyeOff className="h-4 w-4 mr-2" />
+                              <EyeOff className="mr-2 h-4 w-4" />
                               Disable
                             </>
                           ) : (
                             <>
-                              <Eye className="h-4 w-4 mr-2" />
+                              <Eye className="mr-2 h-4 w-4" />
                               Enable
                             </>
                           )}
                         </DropdownMenuItem>
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
-                            <DropdownMenuItem className="text-red-600" onSelect={(e) => e.preventDefault()}>
-                              <Trash className="h-4 w-4 mr-2" />
+                            <DropdownMenuItem
+                              className="text-red-600"
+                              onSelect={(e) => e.preventDefault()}
+                            >
+                              <Trash className="mr-2 h-4 w-4" />
                               Delete
                             </DropdownMenuItem>
                           </AlertDialogTrigger>
@@ -264,8 +283,8 @@ export function OAuthApplicationsDashboard({
                             <AlertDialogHeader>
                               <AlertDialogTitle>Delete Application</AlertDialogTitle>
                               <AlertDialogDescription>
-                                This will permanently delete "{app.name}" and revoke all associated tokens.
-                                This action cannot be undone.
+                                This will permanently delete "{app.name}" and revoke all associated
+                                tokens. This action cannot be undone.
                               </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>
@@ -285,9 +304,7 @@ export function OAuthApplicationsDashboard({
                 </div>
 
                 {app.description && (
-                  <CardDescription className="text-sm">
-                    {app.description}
-                  </CardDescription>
+                  <CardDescription className="text-sm">{app.description}</CardDescription>
                 )}
               </CardHeader>
 
@@ -308,16 +325,16 @@ export function OAuthApplicationsDashboard({
 
                 {/* Client ID */}
                 <div className="space-y-2">
-                  <Label className="text-xs font-medium text-muted-foreground">Client ID</Label>
+                  <Label className="font-medium text-muted-foreground text-xs">Client ID</Label>
                   <div className="flex items-center space-x-2">
-                    <code className="flex-1 px-2 py-1 bg-muted rounded text-xs font-mono truncate">
+                    <code className="flex-1 truncate rounded bg-muted px-2 py-1 font-mono text-xs">
                       {app.clientId}
                     </code>
                     <Button
-                      variant="ghost"
-                      size="sm"
                       className="h-8 w-8 p-0"
                       onClick={() => copyToClipboard(app.clientId, "Client ID")}
+                      size="sm"
+                      variant="ghost"
                     >
                       <Copy className="h-3 w-3" />
                     </Button>
@@ -326,19 +343,18 @@ export function OAuthApplicationsDashboard({
 
                 {/* Client Secret */}
                 <div className="space-y-2">
-                  <Label className="text-xs font-medium text-muted-foreground">Client Secret</Label>
+                  <Label className="font-medium text-muted-foreground text-xs">Client Secret</Label>
                   <div className="flex items-center space-x-2">
-                    <code className="flex-1 px-2 py-1 bg-muted rounded text-xs font-mono">
-                      {revealedSecrets.has(app.id) 
-                        ? `faw_secret_${'•'.repeat(20)}` 
-                        : '•'.repeat(32)
-                      }
+                    <code className="flex-1 rounded bg-muted px-2 py-1 font-mono text-xs">
+                      {revealedSecrets.has(app.id)
+                        ? `faw_secret_${"•".repeat(20)}`
+                        : "•".repeat(32)}
                     </code>
                     <Button
-                      variant="ghost"
-                      size="sm"
                       className="h-8 w-8 p-0"
                       onClick={() => toggleSecretVisibility(app.id)}
+                      size="sm"
+                      variant="ghost"
                     >
                       {revealedSecrets.has(app.id) ? (
                         <EyeOff className="h-3 w-3" />
@@ -347,10 +363,10 @@ export function OAuthApplicationsDashboard({
                       )}
                     </Button>
                     <Button
-                      variant="ghost"
-                      size="sm"
                       className="h-8 w-8 p-0"
-                      onClick={() => copyToClipboard(`faw_secret_hidden`, "Client Secret")}
+                      onClick={() => copyToClipboard("faw_secret_hidden", "Client Secret")}
+                      size="sm"
+                      variant="ghost"
                     >
                       <Copy className="h-3 w-3" />
                     </Button>
@@ -359,15 +375,15 @@ export function OAuthApplicationsDashboard({
 
                 {/* Scopes */}
                 <div className="space-y-2">
-                  <Label className="text-xs font-medium text-muted-foreground">Scopes</Label>
+                  <Label className="font-medium text-muted-foreground text-xs">Scopes</Label>
                   <div className="flex flex-wrap gap-1">
                     {app.scopes.slice(0, 3).map((scope) => (
-                      <Badge key={scope} variant="secondary" className="text-xs">
+                      <Badge className="text-xs" key={scope} variant="secondary">
                         {scope}
                       </Badge>
                     ))}
                     {app.scopes.length > 3 && (
-                      <Badge variant="outline" className="text-xs">
+                      <Badge className="text-xs" variant="outline">
                         +{app.scopes.length - 3} more
                       </Badge>
                     )}
@@ -377,16 +393,16 @@ export function OAuthApplicationsDashboard({
                 {/* Status indicators */}
                 <div className="flex items-center justify-between text-xs">
                   <div className="flex items-center space-x-2">
-                    <div className={`w-2 h-2 rounded-full ${app.active ? 'bg-green-500' : 'bg-red-500'}`} />
+                    <div
+                      className={`h-2 w-2 rounded-full ${app.active ? "bg-green-500" : "bg-red-500"}`}
+                    />
                     <span className="text-muted-foreground">
-                      {app.active ? 'Active' : 'Disabled'}
+                      {app.active ? "Active" : "Disabled"}
                     </span>
                   </div>
                   <div className="flex items-center space-x-1 text-muted-foreground">
                     <Calendar className="h-3 w-3" />
-                    <span>
-                      {new Date(app.createdAt).toLocaleDateString()}
-                    </span>
+                    <span>{new Date(app.createdAt).toLocaleDateString()}</span>
                   </div>
                 </div>
               </CardContent>
@@ -397,21 +413,19 @@ export function OAuthApplicationsDashboard({
 
       {/* Edit Application Dialog */}
       {editingApp && (
-        <Dialog open={true} onOpenChange={() => setEditingApp(null)}>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <Dialog onOpenChange={() => setEditingApp(null)} open={true}>
+          <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Edit {editingApp.name}</DialogTitle>
-              <DialogDescription>
-                Update your OAuth application settings
-              </DialogDescription>
+              <DialogDescription>Update your OAuth application settings</DialogDescription>
             </DialogHeader>
             <EditApplicationForm
               application={editingApp}
+              onCancel={() => setEditingApp(null)}
               onSubmit={(data) => {
                 onUpdateApplication(editingApp.id, data);
                 setEditingApp(null);
               }}
-              onCancel={() => setEditingApp(null)}
             />
           </DialogContent>
         </Dialog>
@@ -421,7 +435,11 @@ export function OAuthApplicationsDashboard({
 }
 
 // Create Application Form Component
-function CreateApplicationForm({ onSubmit }: { onSubmit: (data: Partial<OAuthApplication>) => void }) {
+function CreateApplicationForm({
+  onSubmit,
+}: {
+  onSubmit: (data: Partial<OAuthApplication>) => void;
+}) {
   const [formData, setFormData] = useState({
     name: "",
     description: "",
@@ -432,51 +450,54 @@ function CreateApplicationForm({ onSubmit }: { onSubmit: (data: Partial<OAuthApp
   });
 
   const handleScopeToggle = (scopeId: string) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       scopes: prev.scopes.includes(scopeId)
-        ? prev.scopes.filter(s => s !== scopeId)
-        : [...prev.scopes, scopeId]
+        ? prev.scopes.filter((s) => s !== scopeId)
+        : [...prev.scopes, scopeId],
     }));
   };
 
   const addRedirectUri = () => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      redirectUris: [...prev.redirectUris, ""]
+      redirectUris: [...prev.redirectUris, ""],
     }));
   };
 
   const updateRedirectUri = (index: number, value: string) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      redirectUris: prev.redirectUris.map((uri, i) => i === index ? value : uri)
+      redirectUris: prev.redirectUris.map((uri, i) => (i === index ? value : uri)),
     }));
   };
 
   const removeRedirectUri = (index: number) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      redirectUris: prev.redirectUris.filter((_, i) => i !== index)
+      redirectUris: prev.redirectUris.filter((_, i) => i !== index),
     }));
   };
 
   return (
-    <form onSubmit={(e) => {
-      e.preventDefault();
-      onSubmit({
-        ...formData,
-        redirectUris: formData.redirectUris.filter(uri => uri.trim() !== "")
-      });
-    }} className="space-y-6">
+    <form
+      className="space-y-6"
+      onSubmit={(e) => {
+        e.preventDefault();
+        onSubmit({
+          ...formData,
+          redirectUris: formData.redirectUris.filter((uri) => uri.trim() !== ""),
+        });
+      }}
+    >
       <div className="space-y-2">
         <Label htmlFor="name">Application Name*</Label>
         <Input
           id="name"
-          value={formData.name}
-          onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+          onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
           placeholder="My Awesome App"
           required
+          value={formData.name}
         />
       </div>
 
@@ -484,10 +505,10 @@ function CreateApplicationForm({ onSubmit }: { onSubmit: (data: Partial<OAuthApp
         <Label htmlFor="description">Description</Label>
         <Textarea
           id="description"
-          value={formData.description}
-          onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+          onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
           placeholder="A brief description of your application"
           rows={3}
+          value={formData.description}
         />
       </div>
 
@@ -495,10 +516,10 @@ function CreateApplicationForm({ onSubmit }: { onSubmit: (data: Partial<OAuthApp
         <Label htmlFor="website">Website URL</Label>
         <Input
           id="website"
+          onChange={(e) => setFormData((prev) => ({ ...prev, website: e.target.value }))}
+          placeholder="https://myapp.com"
           type="url"
           value={formData.website}
-          onChange={(e) => setFormData(prev => ({ ...prev, website: e.target.value }))}
-          placeholder="https://myapp.com"
         />
       </div>
 
@@ -506,19 +527,19 @@ function CreateApplicationForm({ onSubmit }: { onSubmit: (data: Partial<OAuthApp
         <Label>Redirect URIs*</Label>
         <div className="space-y-2">
           {formData.redirectUris.map((uri, index) => (
-            <div key={index} className="flex space-x-2">
+            <div className="flex space-x-2" key={index}>
               <Input
-                value={uri}
                 onChange={(e) => updateRedirectUri(index, e.target.value)}
                 placeholder="https://myapp.com/callback"
                 required={index === 0}
+                value={uri}
               />
               {formData.redirectUris.length > 1 && (
                 <Button
+                  onClick={() => removeRedirectUri(index)}
+                  size="sm"
                   type="button"
                   variant="ghost"
-                  size="sm"
-                  onClick={() => removeRedirectUri(index)}
                 >
                   <Trash className="h-4 w-4" />
                 </Button>
@@ -526,26 +547,26 @@ function CreateApplicationForm({ onSubmit }: { onSubmit: (data: Partial<OAuthApp
             </div>
           ))}
         </div>
-        <Button type="button" variant="outline" size="sm" onClick={addRedirectUri}>
-          <Plus className="h-4 w-4 mr-2" />
+        <Button onClick={addRedirectUri} size="sm" type="button" variant="outline">
+          <Plus className="mr-2 h-4 w-4" />
           Add Redirect URI
         </Button>
       </div>
 
       <div className="space-y-4">
         <Label>Scopes*</Label>
-        <div className="grid grid-cols-1 gap-3 max-h-64 overflow-y-auto">
+        <div className="grid max-h-64 grid-cols-1 gap-3 overflow-y-auto">
           {AVAILABLE_SCOPES.map((scope) => (
-            <div key={scope.id} className="flex items-start space-x-3 p-3 border rounded-lg">
+            <div className="flex items-start space-x-3 rounded-lg border p-3" key={scope.id}>
               <input
-                type="checkbox"
                 checked={formData.scopes.includes(scope.id)}
-                onChange={() => handleScopeToggle(scope.id)}
                 className="mt-1"
+                onChange={() => handleScopeToggle(scope.id)}
+                type="checkbox"
               />
               <div className="flex-1">
                 <div className="font-medium text-sm">{scope.name}</div>
-                <div className="text-xs text-muted-foreground">{scope.description}</div>
+                <div className="text-muted-foreground text-xs">{scope.description}</div>
               </div>
             </div>
           ))}
@@ -554,17 +575,17 @@ function CreateApplicationForm({ onSubmit }: { onSubmit: (data: Partial<OAuthApp
 
       <div className="flex items-center space-x-2">
         <Switch
-          id="isPublic"
           checked={formData.isPublic}
-          onCheckedChange={(checked) => setFormData(prev => ({ ...prev, isPublic: checked }))}
+          id="isPublic"
+          onCheckedChange={(checked) => setFormData((prev) => ({ ...prev, isPublic: checked }))}
         />
-        <Label htmlFor="isPublic" className="text-sm">
+        <Label className="text-sm" htmlFor="isPublic">
           Public Application (PKCE required)
         </Label>
       </div>
 
       <div className="flex justify-end space-x-3">
-        <Button type="submit" disabled={!formData.name || formData.scopes.length === 0}>
+        <Button disabled={!formData.name || formData.scopes.length === 0} type="submit">
           Create Application
         </Button>
       </div>
@@ -573,11 +594,11 @@ function CreateApplicationForm({ onSubmit }: { onSubmit: (data: Partial<OAuthApp
 }
 
 // Edit Application Form Component
-function EditApplicationForm({ 
-  application, 
-  onSubmit, 
-  onCancel 
-}: { 
+function EditApplicationForm({
+  application,
+  onSubmit,
+  onCancel,
+}: {
   application: OAuthApplication;
   onSubmit: (data: Partial<OAuthApplication>) => void;
   onCancel: () => void;
@@ -594,16 +615,18 @@ function EditApplicationForm({
 
   // Similar form implementation as CreateApplicationForm but with edit-specific logic
   // Implementation details similar to create form...
-  
+
   return (
     <div className="space-y-6">
       {/* Form fields similar to create form */}
-      <div className="text-sm text-muted-foreground">
+      <div className="text-muted-foreground text-sm">
         Edit form implementation would go here with pre-populated values
       </div>
-      
+
       <div className="flex justify-end space-x-3">
-        <Button variant="outline" onClick={onCancel}>Cancel</Button>
+        <Button onClick={onCancel} variant="outline">
+          Cancel
+        </Button>
         <Button onClick={() => onSubmit(formData)}>Update Application</Button>
       </div>
     </div>

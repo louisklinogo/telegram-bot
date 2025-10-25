@@ -1,5 +1,5 @@
 import { useQueryStates } from "nuqs";
-import { parseAsString, parseAsArrayOf, parseAsStringLiteral } from "nuqs/server";
+import { parseAsArrayOf, parseAsString, parseAsStringLiteral } from "nuqs/server";
 
 export function useVaultParams() {
   const [params, setParams] = useQueryStates({

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Inter, Instrument_Serif } from "next/font/google";
-import { Providers } from "@/components/providers";
+import { Geist, Geist_Mono, Instrument_Serif, Inter } from "next/font/google";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
+import { Providers } from "@/components/providers";
 import "./globals.css";
 
 const geistSans = Geist({
