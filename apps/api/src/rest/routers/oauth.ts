@@ -18,6 +18,7 @@ import { createRoute, OpenAPIHono } from "@hono/zod-openapi";
 import { HTTPException } from "hono/http-exception";
 import { z } from "zod";
 import type { ApiEnv } from "../../types/hono-env";
+import baseLogger from "../../lib/logger";
 
 /**
  * OAuth 2.0 Server Implementation
@@ -25,6 +26,38 @@ import type { ApiEnv } from "../../types/hono-env";
  */
 
 const app = new OpenAPIHono<ApiEnv>();
+const HTTP = {
+  OK: 200,
+  BAD_REQUEST: 400,
+  UNAUTHORIZED: 401,
+  FORBIDDEN: 403,
+  INTERNAL_SERVER_ERROR: 500,
+  NOT_IMPLEMENTED: 501,
+} as const;
+
+const BEARER_PREFIX = "Bearer ";
+
+function ensure(condition: unknown, message: string, status = HTTP.BAD_REQUEST): asserts condition {
+  if (!condition) throw new HTTPException(status, { message });
+}
+
+function parseScopes(scope: string | undefined): string[] {
+  return scope ? scope.split(" ").filter(Boolean) : [];
+}
+
+// Helpers to keep handlers simple
+async function parseBody(c: OpenAPIHono<ApiEnv>["req"] | any): Promise<any> {
+  const contentType = c.header ? c.header("content-type") || "" : "";
+  if (contentType.includes("application/x-www-form-urlencoded")) {
+    return c.parseBody();
+  }
+  return c.valid ? c.valid("json") : {};
+}
+
+function getAccessTokenFromHeader(authHeader?: string | null): string | undefined {
+  if (!authHeader) return undefined;
+  return authHeader.startsWith(BEARER_PREFIX) ? authHeader.slice(BEARER_PREFIX.length) : undefined;
+}
 
 // Apply middleware
 app.use("*", globalErrorHandler);
@@ -63,7 +96,7 @@ app.openapi(
       },
     },
   }),
-  async (c) => {
+  (c) => {
     const query = c.req.valid("query");
     const { client_id, redirect_uri, scope, state, code_challenge } = query;
 
@@ -72,33 +105,26 @@ app.openapi(
       // TODO: Replace with actual database call
       // const application = await getOAuthApplicationByClientId(client_id);
       const application: any = null; // Placeholder
-
-      if (!(application && application.active)) {
-        throw new HTTPException(400, {
-          message: "Invalid client_id",
-        });
-      }
+      ensure(application?.active, "Invalid client_id");
 
       // Enforce PKCE for public clients (following Midday's security)
       if (application.isPublic && !code_challenge) {
-        throw new HTTPException(400, {
+        throw new HTTPException(HTTP.BAD_REQUEST, {
           message: "PKCE is required for public clients",
         });
       }
 
       // Validate redirect_uri
       if (!application.redirectUris.includes(redirect_uri)) {
-        throw new HTTPException(400, {
-          message: "Invalid redirect_uri",
-        });
+        throw new HTTPException(HTTP.BAD_REQUEST, { message: "Invalid redirect_uri" });
       }
 
       // Validate scopes
-      const requestedScopes = scope.split(" ").filter(Boolean);
+      const requestedScopes = parseScopes(scope);
       const invalidScopes = requestedScopes.filter((s) => !application.scopes.includes(s));
 
       if (invalidScopes.length > 0) {
-        throw new HTTPException(400, {
+        throw new HTTPException(HTTP.BAD_REQUEST, {
           message: `Invalid scopes: ${invalidScopes.join(", ")}`,
         });
       }
@@ -118,12 +144,8 @@ app.openapi(
 
       return c.json(applicationInfo);
     } catch (error) {
-      if (error instanceof HTTPException) {
-        throw error;
-      }
-      throw new HTTPException(400, {
-        message: "Invalid authorization request",
-      });
+      if (error instanceof HTTPException) throw error;
+      throw new HTTPException(HTTP.BAD_REQUEST, { message: "Invalid authorization request" });
     }
   }
 );
@@ -187,36 +209,23 @@ app.openapi(
 
     try {
       // Verify user authentication (get from JWT token)
-      const accessToken = authHeader?.split(" ")[1];
-      if (!accessToken) {
-        throw new HTTPException(401, {
-          message: "User must be authenticated",
-        });
-      }
+      const accessToken = getAccessTokenFromHeader(authHeader);
+      ensure(accessToken, "User must be authenticated", HTTP.UNAUTHORIZED);
 
       // TODO: Verify access token and get user session
       // const session = await verifyAccessToken(accessToken);
       const session: any = null; // Placeholder
 
-      if (!session) {
-        throw new HTTPException(401, {
-          message: "Invalid access token",
-        });
-      }
+      ensure(session, "Invalid access token", HTTP.UNAUTHORIZED);
 
       // Validate client_id
       // TODO: Replace with actual database call
       const application: any = null; // Placeholder
-
-      if (!(application && application.active)) {
-        throw new HTTPException(400, {
-          message: "Invalid client_id",
-        });
-      }
+      ensure(application?.active, "Invalid client_id");
 
       // Enforce PKCE for public clients
       if (application.isPublic && !code_challenge) {
-        throw new HTTPException(400, {
+        throw new HTTPException(HTTP.BAD_REQUEST, {
           message: "PKCE is required for public clients",
         });
       }
@@ -248,11 +257,7 @@ app.openapi(
         codeChallenge: code_challenge,
       });
 
-      if (!authCode) {
-        throw new HTTPException(500, {
-          message: "Failed to create authorization code",
-        });
-      }
+      ensure(authCode, "Failed to create authorization code", HTTP.INTERNAL_SERVER_ERROR);
 
       // TODO: Send app installation email (like Midday)
       // Check if user has ever authorized this application before
@@ -266,10 +271,8 @@ app.openapi(
 
       return c.json({ redirect_url: redirectUrl.toString() });
     } catch (error) {
-      if (error instanceof HTTPException) {
-        throw error;
-      }
-      throw new HTTPException(400, {
+      if (error instanceof HTTPException) throw error;
+      throw new HTTPException(HTTP.BAD_REQUEST, {
         message: "Failed to process authorization decision",
       });
     }
@@ -317,14 +320,12 @@ app.openapi(
     },
   }),
   async (c) => {
-    const contentType = c.req.header("content-type") || "";
-
-    let body: any;
-    if (contentType.includes("application/x-www-form-urlencoded")) {
-      body = await c.req.parseBody();
-    } else {
-      body = c.req.valid("json");
-    }
+    const logger = c.get("logger") || baseLogger;
+    const body: any = await (async () => {
+      const ct = c.req.header("content-type") || "";
+      if (ct.includes("application/x-www-form-urlencoded")) return c.req.parseBody();
+      return c.req.valid("json");
+    })();
 
     const {
       grant_type,
@@ -344,21 +345,11 @@ app.openapi(
         client_secret
       );
 
-      if (!application) {
-        throw new HTTPException(400, {
-          message: "Invalid client credentials",
-        });
-      }
+      ensure(application, "Invalid client credentials");
 
       if (grant_type === "authorization_code") {
-        if (!(code && redirect_uri)) {
-          throw new HTTPException(400, {
-            message: "Missing required parameters: code and redirect_uri are required",
-          });
-        }
-
+        ensure(code && redirect_uri, "Missing required parameters: code and redirect_uri are required");
         try {
-          // Exchange authorization code for access token
           const tokenResponse = await oauthApplicationService.exchangeAuthorizationCode({
             code,
             redirectUri: redirect_uri,
@@ -366,109 +357,70 @@ app.openapi(
             codeVerifier: code_verifier,
           });
 
-          const response = {
+          return c.json({
             access_token: tokenResponse.accessToken,
             token_type: tokenResponse.tokenType,
             expires_in: tokenResponse.expiresIn,
             refresh_token: tokenResponse.refreshToken || "",
             scope: tokenResponse.scopes.join(" "),
-          };
-
-          return c.json(response);
+          });
         } catch (error) {
-          const errorMessage = error instanceof Error ? error.message : "Unknown error";
-
-          // Handle specific OAuth errors with proper error codes (following Midday)
-          if (errorMessage.includes("Authorization code expired")) {
-            throw new HTTPException(400, {
+          const msg = error instanceof Error ? error.message : "Unknown error";
+          logger.warn({ msg }, "oauth code exchange error");
+          if (msg.includes("Authorization code expired")) {
+            throw new HTTPException(HTTP.BAD_REQUEST, {
               message: "The authorization code has expired. Please restart the OAuth flow.",
             });
           }
-
-          if (errorMessage.includes("Authorization code already used")) {
-            throw new HTTPException(400, {
+          if (msg.includes("Authorization code already used")) {
+            throw new HTTPException(HTTP.BAD_REQUEST, {
               message:
                 "The authorization code has already been used. All related tokens have been revoked for security.",
             });
           }
-
-          if (errorMessage.includes("Invalid authorization code")) {
-            throw new HTTPException(400, {
+          if (msg.includes("Invalid authorization code")) {
+            throw new HTTPException(HTTP.BAD_REQUEST, {
               message: "The authorization code is invalid or malformed.",
             });
           }
-
-          if (errorMessage.includes("redirect_uri")) {
-            throw new HTTPException(400, {
+          if (msg.includes("redirect_uri")) {
+            throw new HTTPException(HTTP.BAD_REQUEST, {
               message: "The redirect_uri does not match the one used in the authorization request.",
             });
           }
-
-          // Generic fallback for other errors
-          throw new HTTPException(400, {
+          throw new HTTPException(HTTP.BAD_REQUEST, {
             message: "Failed to exchange authorization code for access token.",
           });
         }
       }
 
       if (grant_type === "refresh_token") {
-        if (!refresh_token) {
-          throw new HTTPException(400, {
-            message: "Missing refresh_token",
-          });
-        }
-
+        ensure(refresh_token, "Missing refresh_token");
         try {
-          // Parse requested scopes
-          const requestedScopes = scope ? scope.split(" ").filter(Boolean) : undefined;
-
-          // TODO: Implement refresh token functionality
-          // const tokenResponse = await refreshAccessToken({
-          //   refreshToken: refresh_token,
-          //   applicationId: application.id,
-          //   scopes: requestedScopes,
-          // });
-
-          throw new HTTPException(501, {
+          const requestedScopes = scope ? parseScopes(scope) : undefined;
+          // TODO implement refresh token
+          throw new HTTPException(HTTP.NOT_IMPLEMENTED, {
             message: "Refresh token flow not yet implemented",
           });
         } catch (error) {
-          const errorMessage = error instanceof Error ? error.message : "Unknown error";
-
-          if (errorMessage.includes("Invalid refresh token")) {
-            throw new HTTPException(400, {
-              message: "Invalid refresh token",
-            });
+          const em = error instanceof Error ? error.message : "Unknown error";
+          if (em.includes("Invalid refresh token")) {
+            throw new HTTPException(HTTP.BAD_REQUEST, { message: "Invalid refresh token" });
           }
-
-          if (errorMessage.includes("expired")) {
-            throw new HTTPException(400, {
-              message: "Refresh token expired",
-            });
+          if (em.includes("expired")) {
+            throw new HTTPException(HTTP.BAD_REQUEST, { message: "Refresh token expired" });
           }
-
-          if (errorMessage.includes("revoked")) {
-            throw new HTTPException(400, {
-              message: "Refresh token revoked",
-            });
+          if (em.includes("revoked")) {
+            throw new HTTPException(HTTP.BAD_REQUEST, { message: "Refresh token revoked" });
           }
-
-          throw new HTTPException(400, {
-            message: "Failed to refresh access token",
-          });
+          throw new HTTPException(HTTP.BAD_REQUEST, { message: "Failed to refresh access token" });
         }
       }
 
-      throw new HTTPException(400, {
-        message: "Grant type not supported",
-      });
+      throw new HTTPException(HTTP.BAD_REQUEST, { message: "Grant type not supported" });
     } catch (error) {
-      if (error instanceof HTTPException) {
-        throw error;
-      }
-      throw new HTTPException(400, {
-        message: "Token exchange failed",
-      });
+      if (error instanceof HTTPException) throw error;
+      throw new HTTPException(HTTP.BAD_REQUEST, { message: "Token exchange failed" });
     }
   }
 );
@@ -508,14 +460,10 @@ app.openapi(
     },
   }),
   async (c) => {
-    const contentType = c.req.header("content-type") || "";
-
-    let body: any;
-    if (contentType.includes("application/x-www-form-urlencoded")) {
-      body = await c.req.parseBody();
-    } else {
-      body = c.req.valid("json");
-    }
+    const ct = c.req.header("content-type") || "";
+    const body: any = ct.includes("application/x-www-form-urlencoded")
+      ? await c.req.parseBody()
+      : c.req.valid("json");
 
     const { token, client_id, client_secret } = body;
 
@@ -526,11 +474,7 @@ app.openapi(
         client_secret
       );
 
-      if (!application) {
-        throw new HTTPException(400, {
-          message: "Invalid client credentials",
-        });
-      }
+      ensure(application, "Invalid client credentials");
 
       // Revoke token
       await oauthApplicationService.revokeToken({
@@ -540,12 +484,8 @@ app.openapi(
 
       return c.json({ success: true });
     } catch (error) {
-      if (error instanceof HTTPException) {
-        throw error;
-      }
-      throw new HTTPException(400, {
-        message: "Token revocation failed",
-      });
+      if (error instanceof HTTPException) throw error;
+      throw new HTTPException(HTTP.BAD_REQUEST, { message: "Token revocation failed" });
     }
   }
 );
