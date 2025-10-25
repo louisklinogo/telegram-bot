@@ -19,6 +19,14 @@ import { HTTPException } from "hono/http-exception";
 import { z } from "zod";
 import type { ApiEnv } from "../../types/hono-env";
 import baseLogger from "../../lib/logger";
+import {
+  BEARER_PREFIX,
+  DEFAULT_SLOW_MS,
+  HTTP,
+  ensure,
+  getAccessTokenFromHeader,
+  parseScopes,
+} from "../../lib/http";
 
 /**
  * OAuth 2.0 Server Implementation
@@ -26,25 +34,6 @@ import baseLogger from "../../lib/logger";
  */
 
 const app = new OpenAPIHono<ApiEnv>();
-const HTTP = {
-  OK: 200,
-  BAD_REQUEST: 400,
-  UNAUTHORIZED: 401,
-  FORBIDDEN: 403,
-  INTERNAL_SERVER_ERROR: 500,
-  NOT_IMPLEMENTED: 501,
-} as const;
-
-const BEARER_PREFIX = "Bearer ";
-
-function ensure(condition: unknown, message: string, status = HTTP.BAD_REQUEST): asserts condition {
-  if (!condition) throw new HTTPException(status, { message });
-}
-
-function parseScopes(scope: string | undefined): string[] {
-  return scope ? scope.split(" ").filter(Boolean) : [];
-}
-
 // Helpers to keep handlers simple
 async function parseBody(c: OpenAPIHono<ApiEnv>["req"] | any): Promise<any> {
   const contentType = c.header ? c.header("content-type") || "" : "";
@@ -52,11 +41,6 @@ async function parseBody(c: OpenAPIHono<ApiEnv>["req"] | any): Promise<any> {
     return c.parseBody();
   }
   return c.valid ? c.valid("json") : {};
-}
-
-function getAccessTokenFromHeader(authHeader?: string | null): string | undefined {
-  if (!authHeader) return undefined;
-  return authHeader.startsWith(BEARER_PREFIX) ? authHeader.slice(BEARER_PREFIX.length) : undefined;
 }
 
 // Apply middleware

@@ -5,6 +5,7 @@ import { RateLimiters } from "@Faworra/middleware/rate-limiter";
 import type { Context, MiddlewareHandler } from "hono";
 import { createAdminClient, createClient } from "../../services/supabase";
 import type { ApiEnv } from "../../types/hono-env";
+import { BEARER_PREFIX, HTTP } from "../../lib/http";
 export type AuthSession = {
   userId: string;
   teamId: string;
@@ -18,14 +19,7 @@ export type AuthSession = {
   apiKey?: ApiKey;
 };
 
-const HTTP = {
-  OK: 200,
-  UNAUTHORIZED: 401,
-  FORBIDDEN: 403,
-  INTERNAL_SERVER_ERROR: 500,
-} as const;
-
-const BEARER_PREFIX = "Bearer ";
+// HTTP constants and Bearer prefix centralized in lib/http
 
 type AuthResult = { session: AuthSession } | { error: Response };
 

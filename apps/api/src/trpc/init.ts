@@ -4,8 +4,9 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { initTRPC, TRPCError } from "@trpc/server";
 import type { FetchCreateContextFnOptions } from "@trpc/server/adapters/fetch";
 import superjson from "superjson";
-import { createClient } from "../services/supabase";
 import baseLogger from "../lib/logger";
+import { createClient } from "../services/supabase";
+import { BEARER_PREFIX, DEFAULT_SLOW_MS, REQ_ID_RADIX } from "../lib/http";
 
 export type Session = {
   userId: string;
@@ -23,7 +24,6 @@ export type TRPCContext = {
 
 export async function createTRPCContext(opts?: FetchCreateContextFnOptions): Promise<TRPCContext> {
   const authHeader = opts?.req?.headers.get("Authorization");
-  const BEARER_PREFIX = "Bearer ";
   const token = authHeader?.startsWith(BEARER_PREFIX)
     ? authHeader.substring(BEARER_PREFIX.length)
     : undefined;
@@ -74,7 +74,6 @@ const timing = t.middleware(async ({ path, type, next }) => {
   if (!enable) {
     return next();
   }
-  const REQ_ID_RADIX = 36;
   const reqId = Math.random().toString(REQ_ID_RADIX).slice(2);
   const start = Date.now();
   return await runWithRequestContext(
@@ -84,7 +83,6 @@ const timing = t.middleware(async ({ path, type, next }) => {
       const ms = Date.now() - start;
       const ctx = getRequestContext();
       const q = ctx?.queryCount ?? 0;
-      const DEFAULT_SLOW_MS = 200;
       const threshold = Number(process.env.SLOW_PROCEDURE_MS ?? DEFAULT_SLOW_MS);
       if (ms >= threshold) {
         baseLogger.warn({ ms, type, path, queries: q }, "trpc slow procedure");
