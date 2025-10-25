@@ -1,6 +1,5 @@
 import { enqueueCommunicationOutbox } from "@Faworra/supabase/mutations";
-import type { Database, TablesInsert } from "@Faworra/supabase/types";
-import type { SupabaseClient } from "@supabase/supabase-js";
+import type { TablesInsert } from "@Faworra/supabase/types";
 import type { Context, Hono } from "hono";
 import { z } from "zod";
 import type { ApiEnv } from "../types/hono-env";
@@ -19,7 +18,9 @@ const HTTP = {
   INTERNAL_SERVER_ERROR: 500,
 } as const;
 
+/* biome-ignore lint/style/noMagicNumbers: ISO currency codes are 3-8 chars */
 const CURRENCY_CODE_MIN = 3;
+/* biome-ignore lint/style/noMagicNumbers: ISO currency codes are 3-8 chars */
 const CURRENCY_CODE_MAX = 8;
 
 async function handleCreateInvoicePayment(c: Context<ApiEnv>): Promise<Response> {

@@ -26,8 +26,11 @@ const HTTP = {
   INTERNAL_SERVER_ERROR: 500,
 } as const;
 
+/* biome-ignore lint/style/noMagicNumbers: rate limit window in ms */
 const RL_WINDOW_MS = 60_000; // 1 minute
+/* biome-ignore lint/style/noMagicNumbers: rate limit thresholds */
 const RL_START_LIMIT = 10; // 10 req / minute / IP
+/* biome-ignore lint/style/noMagicNumbers: rate limit thresholds */
 const RL_QR_LIMIT = 30; // 30 req / minute / externalId+IP
 
 export function registerProviderRoutes(app: Hono<ApiEnv>) {

@@ -15,7 +15,8 @@ const HTTP = {
   INTERNAL_SERVER_ERROR: 500,
 } as const;
 
-const MAX_UPLOAD_BYTES = 25 * 1024 * 1024; // 25MB limit
+/* biome-ignore lint/style/noMagicNumbers: configuration constant for 25MB upload limit */
+const MAX_UPLOAD_BYTES = 25 * 1024 * 1024; // 25MB
 const HTTP_URL_REGEX = /^https?:\/\//i;
 
 async function handleUploadProductMedia(c: Context<ApiEnv>): Promise<Response> {

@@ -7,17 +7,42 @@ import { requireAuthTeam, requireScopes } from "../middleware/auth";
 
 const app = new Hono<ApiEnv>();
 
+const HTTP = {
+  BAD_REQUEST: 400,
+  CREATED: 201,
+  NOT_FOUND: 404,
+  INTERNAL_SERVER_ERROR: 500,
+} as const;
+
+/* biome-ignore lint/style/noMagicNumbers: validation thresholds */
+const NAME_MIN = 1;
+/* biome-ignore lint/style/noMagicNumbers: validation thresholds */
+const NAME_MAX = 100;
+/* biome-ignore lint/style/noMagicNumbers: validation thresholds */
+const SCOPES_MIN = 1;
+/* biome-ignore lint/style/noMagicNumbers: validation thresholds */
+const EXPIRES_MIN_DAYS = 1;
+/* biome-ignore lint/style/noMagicNumbers: validation thresholds */
+const EXPIRES_MAX_DAYS = 365;
+const SPECIAL_SCOPE_REGEX = /^(read|write|admin):/;
+
 // Schema for creating API keys
 const createApiKeySchema = z.object({
-  name: z.string().min(1).max(100),
-  scopes: z.array(z.string()).min(1),
-  expiresInDays: z.number().int().min(1).max(365).optional().default(365),
+  name: z.string().min(NAME_MIN).max(NAME_MAX),
+  scopes: z.array(z.string()).min(SCOPES_MIN),
+  expiresInDays: z
+    .number()
+    .int()
+    .min(EXPIRES_MIN_DAYS)
+    .max(EXPIRES_MAX_DAYS)
+    .optional()
+    .default(EXPIRES_MAX_DAYS),
 });
 
 // Schema for updating API keys
 const updateApiKeySchema = z.object({
-  name: z.string().min(1).max(100).optional(),
-  scopes: z.array(z.string()).min(1).optional(),
+  name: z.string().min(NAME_MIN).max(NAME_MAX).optional(),
+  scopes: z.array(z.string()).min(SCOPES_MIN).optional(),
 });
 
 // List all available scopes
@@ -35,7 +60,7 @@ app.get("/scopes", requireAuthTeam, async (c) =>
         .filter(([key]) => key.startsWith("admin:"))
         .reduce((acc, [key, value]) => ({ ...acc, [key]: value }), {}),
       special: Object.entries(ApiKeyScopes)
-        .filter(([key]) => !key.match(/^(read|write|admin):/))
+        .filter(([key]) => !key.match(SPECIAL_SCOPE_REGEX))
         .reduce((acc, [key, value]) => ({ ...acc, [key]: value }), {}),
     },
   })
@@ -60,7 +85,7 @@ app.post(
             error: "Invalid scopes",
             invalid: scopeValidation.invalid,
           },
-          400
+          HTTP.BAD_REQUEST
         );
       }
 
@@ -71,7 +96,7 @@ app.post(
           {
             error: "API key with this name already exists",
           },
-          400
+          HTTP.BAD_REQUEST
         );
       }
 
@@ -95,15 +120,14 @@ app.post(
           createdAt: apiKey.createdAt,
           warning: "This token will only be shown once. Please save it securely.",
         },
-        201
+        HTTP.CREATED
       );
     } catch (error) {
-      console.error("API key creation error:", error);
       return c.json(
         {
           error: "Failed to create API key",
         },
-        500
+        HTTP.INTERNAL_SERVER_ERROR
       );
     }
   }
@@ -129,12 +153,11 @@ app.get("/", requireAuthTeam, async (c) => {
       })),
     });
   } catch (error) {
-    console.error("API key listing error:", error);
     return c.json(
       {
         error: "Failed to list API keys",
       },
-      500
+      HTTP.INTERNAL_SERVER_ERROR
     );
   }
 });
@@ -153,7 +176,7 @@ app.get("/:id", requireAuthTeam, async (c) => {
         {
           error: "API key not found",
         },
-        404
+        HTTP.NOT_FOUND
       );
     }
 
@@ -169,12 +192,11 @@ app.get("/:id", requireAuthTeam, async (c) => {
       user: apiKey.user,
     });
   } catch (error) {
-    console.error("API key fetch error:", error);
     return c.json(
       {
         error: "Failed to fetch API key",
       },
-      500
+      HTTP.INTERNAL_SERVER_ERROR
     );
   }
 });
@@ -200,7 +222,7 @@ app.put(
           {
             error: "API key not found",
           },
-          404
+          HTTP.NOT_FOUND
         );
       }
 
@@ -209,7 +231,7 @@ app.put(
           {
             error: "Cannot update revoked API key",
           },
-          400
+          HTTP.BAD_REQUEST
         );
       }
 
@@ -222,7 +244,7 @@ app.put(
               error: "Invalid scopes",
               invalid: scopeValidation.invalid,
             },
-            400
+            HTTP.BAD_REQUEST
           );
         }
       }
@@ -237,7 +259,7 @@ app.put(
           {
             error: "API key with this name already exists",
           },
-          400
+          HTTP.BAD_REQUEST
         );
       }
 
@@ -249,12 +271,11 @@ app.put(
         updated: updates,
       });
     } catch (error) {
-      console.error("API key update error:", error);
       return c.json(
         {
           error: "Failed to update API key",
         },
-        500
+        HTTP.INTERNAL_SERVER_ERROR
       );
     }
   }
@@ -275,7 +296,7 @@ app.delete("/:id", requireAuthTeam, requireScopes(["admin:system"]), async (c) =
         {
           error: "API key not found",
         },
-        404
+        HTTP.NOT_FOUND
       );
     }
 
@@ -284,7 +305,7 @@ app.delete("/:id", requireAuthTeam, requireScopes(["admin:system"]), async (c) =
         {
           error: "API key is already revoked",
         },
-        400
+        HTTP.BAD_REQUEST
       );
     }
 
@@ -296,12 +317,11 @@ app.delete("/:id", requireAuthTeam, requireScopes(["admin:system"]), async (c) =
       revokedAt: new Date().toISOString(),
     });
   } catch (error) {
-    console.error("API key revocation error:", error);
     return c.json(
       {
         error: "Failed to revoke API key",
       },
-      500
+      HTTP.INTERNAL_SERVER_ERROR
     );
   }
 });
