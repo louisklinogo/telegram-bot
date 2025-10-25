@@ -1,0 +1,15 @@
+{
+  "name": "@Faworra/cache",
+  "version": "0.1.0",
+  "private": true,
+  "exports": {
+    "./api-key-cache": {
+      "types": "./src/api-key-cache.ts",
+      "default": "./src/api-key-cache.ts"
+    }
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "typescript": "^5"
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "name": "@Faworra/auth",
+  "version": "0.1.0",
+  "private": true,
+  "exports": {
+    "./api-keys": {
+      "types": "./src/api-keys.ts",
+      "default": "./src/api-keys.ts"
+    }
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "@types/bcryptjs": "^2.4.6",
+    "@Faworra/cache": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0"
+  }
+}

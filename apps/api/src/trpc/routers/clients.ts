@@ -1,16 +1,19 @@
+import {
+  createClient,
+  deleteClient,
+  getClientById,
+  getClients,
+  getEnrichedClientById,
+  getEnrichedClients,
+  updateClient,
+} from "@Faworra/database/queries";
 import { z } from "zod";
 import { createTRPCRouter, teamProcedure } from "../init";
-import {
-  getClients,
-  getClientById,
-  getEnrichedClients,
-  getEnrichedClientById,
-  createClient,
-  updateClient,
-  deleteClient,
-} from "@cimantikos/database/queries";
 
 // Validation schemas
+const MIN_LIMIT = 1;
+const MAX_LIMIT = 100;
+const DEFAULT_LIMIT = 50;
 const clientInsertSchema = z.object({
   name: z.string().min(1, "Name is required"),
   whatsapp: z.string().min(1, "WhatsApp number is required"),
@@ -37,14 +40,14 @@ export const clientsRouter = createTRPCRouter({
       z
         .object({
           search: z.string().optional(),
-          limit: z.number().min(1).max(100).default(50),
+          limit: z.number().min(MIN_LIMIT).max(MAX_LIMIT).default(DEFAULT_LIMIT),
           cursor: z.string().optional(), // cursor is the last client ID
         })
-        .optional(),
+        .optional()
     )
     .query(async ({ ctx, input }) => {
-      const limit = input?.limit ?? 50;
-      
+      const limit = input?.limit ?? DEFAULT_LIMIT;
+
       const clients = await getEnrichedClients(ctx.db, {
         teamId: ctx.teamId,
         search: input?.search,
@@ -52,7 +55,7 @@ export const clientsRouter = createTRPCRouter({
         cursor: input?.cursor,
       });
 
-      let nextCursor: string | undefined = undefined;
+      let nextCursor: string | undefined;
       if (clients.length > limit) {
         const nextItem = clients.pop(); // Remove the extra item
         nextCursor = nextItem!.id;
@@ -65,17 +68,17 @@ export const clientsRouter = createTRPCRouter({
     }),
 
   // Get a single client by ID
-  byId: teamProcedure.input(z.object({ id: z.string().uuid() })).query(async ({ ctx, input }) => {
-    return getClientById(ctx.db, input.id, ctx.teamId);
-  }),
+  byId: teamProcedure
+    .input(z.object({ id: z.string().uuid() }))
+    .query(async ({ ctx, input }) => getClientById(ctx.db, input.id, ctx.teamId)),
 
   // Create a new client
-  create: teamProcedure.input(clientInsertSchema).mutation(async ({ ctx, input }) => {
-    return createClient(ctx.db, {
+  create: teamProcedure.input(clientInsertSchema).mutation(async ({ ctx, input }) =>
+    createClient(ctx.db, {
       ...input,
       teamId: ctx.teamId,
-    });
-  }),
+    })
+  ),
 
   // Update an existing client
   update: teamProcedure.input(clientUpdateSchema).mutation(async ({ ctx, input }) => {
@@ -86,7 +89,5 @@ export const clientsRouter = createTRPCRouter({
   // Delete a client (soft delete)
   delete: teamProcedure
     .input(z.object({ id: z.string().uuid() }))
-    .mutation(async ({ ctx, input }) => {
-      return deleteClient(ctx.db, input.id, ctx.teamId);
-    }),
+    .mutation(async ({ ctx, input }) => deleteClient(ctx.db, input.id, ctx.teamId)),
 });

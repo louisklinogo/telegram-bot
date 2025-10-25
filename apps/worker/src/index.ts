@@ -1,7 +1,7 @@
 import "dotenv/config";
-import { createServerClient } from "@cimantikos/supabase";
-import { startBaileysForAccount } from "./providers/baileys";
+import { createServerClient } from "@Faworra/supabase";
 import type { WASocket } from "@whiskeysockets/baileys";
+import { startBaileysForAccount } from "./providers/baileys";
 import { Registry } from "./providers/registry";
 
 function randomId(len = 24) {
@@ -61,7 +61,7 @@ async function processOutbox() {
   const { data, error } = await supabase
     .from("communication_outbox")
     .select(
-      "id, account_id, recipient, content, team_id, client_message_id, media_path, media_type, media_filename, caption",
+      "id, account_id, recipient, content, team_id, client_message_id, media_path, media_type, media_filename, caption"
     )
     .eq("status", "queued")
     .limit(10);
@@ -180,7 +180,7 @@ async function ensureThread(
   accountId: string,
   jid: string,
   teamId: string,
-  supabase: ReturnType<typeof createServerClient>,
+  supabase: ReturnType<typeof createServerClient>
 ) {
   const externalContactId = jid.split("@")[0];
   const { data: t } = await supabase

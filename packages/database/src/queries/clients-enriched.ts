@@ -1,4 +1,4 @@
-import { eq, and, isNull, desc, sql } from "drizzle-orm";
+import { and, desc, eq, isNull, sql } from "drizzle-orm";
 import type { DbClient } from "../client";
 import { clients, orders } from "../schema";
 
@@ -12,7 +12,7 @@ export async function getEnrichedClients(
     search?: string;
     limit?: number;
     cursor?: string;
-  },
+  }
 ) {
   const { teamId, search, limit = 50, cursor } = params;
 
@@ -27,11 +27,11 @@ export async function getEnrichedClients(
   if (search) {
     conditions.push(
       sql`(
-        ${clients.name} ILIKE ${'%' + search + '%'} OR 
-        ${clients.email} ILIKE ${'%' + search + '%'} OR 
-        ${clients.phone} ILIKE ${'%' + search + '%'} OR 
-        ${clients.whatsapp} ILIKE ${'%' + search + '%'}
-      )`,
+        ${clients.name} ILIKE ${"%" + search + "%"} OR 
+        ${clients.email} ILIKE ${"%" + search + "%"} OR 
+        ${clients.phone} ILIKE ${"%" + search + "%"} OR 
+        ${clients.whatsapp} ILIKE ${"%" + search + "%"}
+      )`
     );
   }
 
@@ -92,11 +92,7 @@ export async function getEnrichedClients(
 /**
  * Get enriched client by ID with aggregated data
  */
-export async function getEnrichedClientById(
-  db: DbClient,
-  id: string,
-  teamId: string,
-) {
+export async function getEnrichedClientById(db: DbClient, id: string, teamId: string) {
   const result = await db
     .select({
       id: clients.id,
@@ -143,13 +139,7 @@ export async function getEnrichedClientById(
       `,
     })
     .from(clients)
-    .where(
-      and(
-        eq(clients.id, id),
-        eq(clients.teamId, teamId),
-        isNull(clients.deletedAt)
-      )
-    )
+    .where(and(eq(clients.id, id), eq(clients.teamId, teamId), isNull(clients.deletedAt)))
     .limit(1);
 
   return result[0] || null;

@@ -1,4 +1,4 @@
-import { getEnvConfig, validateEnvironmentVariables } from "@cimantikos/config";
+import { getEnvConfig, validateEnvironmentVariables } from "@Faworra/config";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
 type SupabaseInstance = SupabaseClient<any, any, any>;
@@ -7,7 +7,7 @@ let serviceClient: SupabaseInstance | null = null;
 let anonClient: SupabaseInstance | null = null;
 
 const ensureEnv = () => {
-  if (!serviceClient && !anonClient) {
+  if (!(serviceClient || anonClient)) {
     validateEnvironmentVariables();
   }
   return getEnvConfig();

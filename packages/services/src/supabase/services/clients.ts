@@ -63,7 +63,7 @@ export async function upsertClient(input: UpsertClientInput): Promise<ClientReco
       {
         onConflict: "phone",
         ignoreDuplicates: false,
-      },
+      }
     )
     .select("*")
     .maybeSingle();

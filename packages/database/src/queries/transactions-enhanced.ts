@@ -1,12 +1,13 @@
-import { and, desc, eq, isNull, sql, lt, or, gte, lte, inArray, ilike } from "drizzle-orm";
+import { and, desc, eq, gte, inArray, isNull, lt, lte, or, sql } from "drizzle-orm";
 import type { DbClient } from "../client";
 import {
-  transactions,
   clients,
-  transactionCategories,
-  transactionTags,
-  transactionAttachments,
   tags,
+  transactionAllocations,
+  transactionAttachments,
+  transactionCategories,
+  transactions,
+  transactionTags,
   users,
 } from "../schema";
 
@@ -33,6 +34,7 @@ export async function getTransactionsEnriched(
     categories?: string[];
     tags?: string[];
     assignedId?: string;
+    assignees?: string[];
     search?: string;
     startDate?: Date;
     endDate?: Date;
@@ -40,6 +42,9 @@ export async function getTransactionsEnriched(
     accounts?: string[];
     amountMin?: number;
     amountMax?: number;
+    isRecurring?: boolean;
+    fulfilled?: boolean; // derived: attachments OR completed
+    includeTags?: boolean; // controls whether to aggregate tag data
     limit?: number;
     cursor?: { date: Date | null; id: string } | null;
   }
@@ -51,6 +56,7 @@ export async function getTransactionsEnriched(
     categories,
     tags: tagIds,
     assignedId,
+    assignees,
     search,
     startDate,
     endDate,
@@ -58,11 +64,33 @@ export async function getTransactionsEnriched(
     accounts,
     amountMin,
     amountMax,
+    isRecurring,
+    fulfilled,
+    includeTags = true,
     limit = 50,
     cursor,
   } = params;
 
   // Build where conditions
+  // Build attachment/tag EXISTS subqueries per Midday style
+  const attachmentsExist = sql`EXISTS (
+    SELECT 1 FROM transaction_attachments ta
+    WHERE ta.transaction_id = ${transactions.id}
+      AND ta.team_id = ${teamId}
+  )`;
+
+  const tagsExist = (tagIds: string[]) => sql`EXISTS (
+    SELECT 1
+    FROM transaction_tags tt
+    JOIN tags t ON t.id = tt.tag_id
+    WHERE tt.transaction_id = ${transactions.id}
+      AND tt.team_id = ${teamId}
+      AND t.id = ANY(ARRAY[${sql.join(
+        tagIds.map((id) => sql`${id}`),
+        sql`, `
+      )}])
+  )`;
+
   const whereConditions = and(
     eq(transactions.teamId, teamId),
     isNull(transactions.deletedAt),
@@ -72,35 +100,49 @@ export async function getTransactionsEnriched(
       ? inArray(transactions.categorySlug, categories)
       : sql`true`,
     assignedId ? eq(transactions.assignedId, assignedId) : sql`true`,
-    accounts && accounts.length > 0 ? inArray(transactions.accountId, accounts as any) : sql`true`,
-    search
-      ? or(
-          ilike(transactions.name, `%${search}%`),
-          ilike(transactions.description, `%${search}%`),
-          ilike(transactions.counterpartyName, `%${search}%`)
-        )
+    assignees && assignees.length > 0
+      ? inArray(transactions.assignedId, assignees as any)
       : sql`true`,
+    accounts && accounts.length > 0 ? inArray(transactions.accountId, accounts as any) : sql`true`,
+    isRecurring != null ? eq(transactions.recurring, isRecurring) : sql`true`,
+    search ? sql`fts_vector @@ websearch_to_tsquery('english', ${search})` : sql`true`,
     amountMin != null ? gte(transactions.amount, amountMin as any) : sql`true`,
     amountMax != null ? lte(transactions.amount, amountMax as any) : sql`true`,
     startDate ? gte(transactions.date, startDate.toISOString().slice(0, 10)) : sql`true`,
     endDate ? lte(transactions.date, endDate.toISOString().slice(0, 10)) : sql`true`,
+    // Attachments include/exclude in WHERE via EXISTS
+    hasAttachments === true ? attachmentsExist : sql`true`,
+    hasAttachments === false ? sql`NOT (${attachmentsExist})` : sql`true`,
+    // Fulfilled derived flag
+    fulfilled === true
+      ? sql`( ${attachmentsExist} OR ${eq(transactions.status, "completed" as any)} )`
+      : sql`true`,
+    fulfilled === false
+      ? sql`NOT ( ${attachmentsExist} OR ${eq(transactions.status, "completed" as any)} )`
+      : sql`true`,
+    // Tags filter via EXISTS
+    tagIds && tagIds.length > 0 ? tagsExist(tagIds) : sql`true`,
     cursor?.date
       ? or(
-          lt(transactions.date, cursor.date.toISOString().slice(0, 10)),
-          and(eq(transactions.date, cursor.date.toISOString().slice(0, 10)), lt(transactions.id, cursor.id))
+          lt(
+            transactions.date,
+            typeof cursor.date === "string" ? cursor.date : cursor.date.toISOString().slice(0, 10)
+          ),
+          and(
+            eq(
+              transactions.date,
+              typeof cursor.date === "string" ? cursor.date : cursor.date.toISOString().slice(0, 10)
+            ),
+            lt(transactions.id, cursor.id)
+          )
         )
       : sql`true`
   );
 
   // Base query with aggregations
-  const query = db
-    .select({
-      transaction: transactions,
-      client: clients,
-      category: transactionCategories,
-      assignedUser: users,
-      // Aggregate tags
-      tags: sql<TransactionTagJson[]>`
+  // Build dynamic select fields
+  const tagSelect = includeTags
+    ? sql<TransactionTagJson[]>`
         COALESCE(
           json_agg(
             DISTINCT jsonb_build_object(
@@ -111,12 +153,38 @@ export async function getTransactionsEnriched(
           ) FILTER (WHERE ${tags.id} IS NOT NULL),
           '[]'::json
         )
-      `,
-      // Count attachments
-      attachmentCount: sql<number>`
-        COUNT(DISTINCT ${transactionAttachments.id})
-      `,
-    })
+      `
+    : sql<TransactionTagJson[]>`'[]'::json`;
+
+  const baseSelect = {
+    transaction: {
+      id: transactions.id,
+      date: transactions.date,
+      description: transactions.description,
+      paymentReference: transactions.paymentReference,
+      type: transactions.type,
+      status: transactions.status,
+      amount: transactions.amount,
+      categorySlug: transactions.categorySlug,
+      paymentMethod: transactions.paymentMethod,
+      excludeFromAnalytics: transactions.excludeFromAnalytics,
+      enrichmentCompleted: transactions.enrichmentCompleted,
+      manual: transactions.manual,
+      currency: transactions.currency,
+      transactionNumber: transactions.transactionNumber,
+    },
+    client: { id: clients.id, name: clients.name },
+    category: {
+      id: transactionCategories.id,
+      name: transactionCategories.name,
+      slug: transactionCategories.slug,
+    },
+    assignedUser: { id: users.id, fullName: users.fullName, email: users.email },
+    tags: tagSelect,
+  } as const;
+
+  const baseFrom = db
+    .select(baseSelect)
     .from(transactions)
     .leftJoin(clients, eq(transactions.clientId, clients.id))
     .leftJoin(
@@ -126,37 +194,23 @@ export async function getTransactionsEnriched(
         eq(transactions.categorySlug, transactionCategories.slug)
       )
     )
-    .leftJoin(users, eq(transactions.assignedId, users.id))
+    .leftJoin(users, eq(transactions.assignedId, users.id));
+
+  const queryWithTags = baseFrom
     .leftJoin(transactionTags, eq(transactions.id, transactionTags.transactionId))
     .leftJoin(tags, eq(transactionTags.tagId, tags.id))
-    .leftJoin(transactionAttachments, eq(transactions.id, transactionAttachments.transactionId))
     .where(whereConditions)
-    .groupBy(
-      transactions.id,
-      clients.id,
-      transactionCategories.id,
-      users.id
-    )
+    .groupBy(transactions.id, clients.id, transactionCategories.id, users.id)
     .orderBy(desc(transactions.date), desc(transactions.id))
     .limit(limit);
 
-  const results = await query;
+  const queryNoTags = baseFrom
+    .where(whereConditions)
+    .groupBy(transactions.id, clients.id, transactionCategories.id, users.id)
+    .orderBy(desc(transactions.date), desc(transactions.id))
+    .limit(limit);
 
-  // Apply attachment filter if specified
-  if (hasAttachments !== undefined) {
-    return results.filter((r) =>
-      hasAttachments ? r.attachmentCount > 0 : r.attachmentCount === 0
-    );
-  }
-
-  // Apply tag filter if specified
-  if (tagIds && tagIds.length > 0) {
-    return results.filter((r) => {
-      const transactionTagIds = r.tags.map((t) => t.id);
-      return tagIds.some((tagId) => transactionTagIds.includes(tagId));
-    });
-  }
-
+  const results = await (includeTags ? queryWithTags : queryNoTags);
   return results;
 }
 
@@ -217,8 +271,16 @@ export async function updateTransactionsBulk(
       status?: "pending" | "completed" | "failed" | "cancelled";
       assignedId?: string | null;
       recurring?: boolean;
-      frequency?: "weekly" | "biweekly" | "monthly" | "semi_monthly" | "annually" | "irregular" | null;
+      frequency?:
+        | "weekly"
+        | "biweekly"
+        | "monthly"
+        | "semi_monthly"
+        | "annually"
+        | "irregular"
+        | null;
       excludeFromAnalytics?: boolean;
+      notes?: string | null;
     };
   }
 ) {
@@ -260,7 +322,9 @@ export async function softDeleteTransactionsBulk(
         eq(transactions.teamId, teamId),
         inArray(transactions.id, transactionIds),
         isNull(transactions.deletedAt),
-        eq(transactions.manual, true)
+        eq(transactions.manual, true),
+        // Ensure not allocated to any invoice
+        sql`NOT EXISTS (SELECT 1 FROM transaction_allocations ta WHERE ta.transaction_id = ${transactions.id})`
       )
     )
     .returning({ id: transactions.id });
@@ -338,6 +402,25 @@ export async function getTransactionById(
     .limit(1);
 
   return result[0];
+}
+
+/**
+ * Get min/max transaction amounts for a team (for dynamic slider bounds)
+ */
+export async function getTransactionAmountBounds(db: DbClient, params: { teamId: string }) {
+  const { teamId } = params;
+  const rows = await db
+    .select({
+      min: sql<number>`MIN(${transactions.amount})`,
+      max: sql<number>`MAX(${transactions.amount})`,
+    })
+    .from(transactions)
+    .where(and(eq(transactions.teamId, teamId), isNull(transactions.deletedAt)))
+    .limit(1);
+
+  const min = rows[0]?.min ?? 0;
+  const max = rows[0]?.max ?? 0;
+  return { min, max };
 }
 
 /**

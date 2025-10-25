@@ -1,6 +1,6 @@
-import { eq, and, isNull, desc, lt, or } from "drizzle-orm";
+import { and, desc, eq, isNull, lt, or, sql } from "drizzle-orm";
 import type { DbClient } from "../client";
-import { orders, clients, orderItems } from "../schema";
+import { clients, orderItems, orders } from "../schema";
 
 /**
  * Get all orders for a team with client information
@@ -10,12 +10,19 @@ export async function getOrdersWithClients(
   params: {
     teamId: string;
     limit?: number;
-    cursor?: { createdAt: Date | null; id: string } | null;
-  },
+    cursor?: { createdAt: Date | string | null; id: string } | null;
+  }
 ) {
   const { teamId, limit = 50, cursor } = params;
 
   const baseWhere = and(eq(orders.teamId, teamId), isNull(orders.deletedAt));
+
+  const cursorDate =
+    cursor?.createdAt instanceof Date
+      ? cursor.createdAt
+      : cursor?.createdAt
+        ? new Date(cursor.createdAt)
+        : null;
 
   return await db
     .select({
@@ -25,15 +32,15 @@ export async function getOrdersWithClients(
     .from(orders)
     .leftJoin(clients, eq(orders.clientId, clients.id))
     .where(
-      cursor?.createdAt
+      cursorDate && cursor
         ? and(
             baseWhere,
             or(
-              lt(orders.createdAt, cursor.createdAt),
-              and(eq(orders.createdAt, cursor.createdAt), lt(orders.id, cursor.id)),
-            ),
+              lt(orders.createdAt, cursorDate),
+              and(eq(orders.createdAt, cursorDate), lt(orders.id, cursor.id))
+            )
           )
-        : baseWhere,
+        : baseWhere
     )
     .orderBy(desc(orders.createdAt), desc(orders.id))
     .limit(limit);
@@ -80,21 +87,80 @@ export async function createOrder(db: DbClient, data: typeof orders.$inferInsert
 export async function createOrderWithItems(
   db: DbClient,
   data: typeof orders.$inferInsert,
-  items: Array<{ name: string; quantity: number; unit_cost: number; total_cost: number }> = [],
+  items: Array<{ name: string; quantity: number; unit_cost: number; total_cost: number }> = []
 ) {
   return await db.transaction(async (tx) => {
+    const IS_DEV = process.env.NODE_ENV !== "production";
+
+    // Create order first
     const [created] = await tx.insert(orders).values(data).returning();
-    if (items.length > 0) {
-      await tx.insert(orderItems).values(
-        items.map((it) => ({
-          orderId: created.id,
-          name: it.name,
-          quantity: it.quantity,
-          unitPrice: String(it.unit_cost) as any,
-          total: String(it.total_cost) as any,
-        })) as any,
-      );
+
+    if (!created?.id) {
+      throw new Error("Failed to create order - no ID returned");
     }
+
+    if (IS_DEV) console.log("Created order with ID:", created.id);
+
+    // Create order items if any
+    if (items.length > 0) {
+      if (IS_DEV) {
+        console.log("Creating order items for order:", created.id);
+        console.log("Items to create:", JSON.stringify(items, null, 2));
+      }
+
+      try {
+        // Map items to proper format for bulk insert
+        const itemsToInsert = items.map((item, index) => {
+          if (IS_DEV) console.log(`Mapping item ${index + 1}:`, item);
+          const unit = Number(item.unit_cost);
+          const qty = Number(item.quantity);
+          const total = qty * unit;
+          return {
+            orderId: created.id,
+            name: item.name,
+            quantity: item.quantity,
+            unitPrice: unit.toFixed(2), // derive from unit_cost
+            total: total.toFixed(2), // server-side compute
+          };
+        });
+
+        if (IS_DEV) console.log("Bulk inserting items:", JSON.stringify(itemsToInsert, null, 2));
+
+        // Bulk insert all items at once
+        const insertedItems = await tx.insert(orderItems).values(itemsToInsert).returning();
+
+        if (IS_DEV)
+          console.log(
+            "✅ Successfully created",
+            insertedItems.length,
+            "order items:",
+            insertedItems.map((i) => ({ id: i.id, name: i.name }))
+          );
+
+        if (insertedItems.length !== items.length) {
+          throw new Error(
+            `Expected ${items.length} items to be created, but only ${insertedItems.length} were returned`
+          );
+        }
+      } catch (itemError) {
+        const e: any = itemError;
+        if (IS_DEV) {
+          console.error("Failed to insert order items. Postgres error:", {
+            message: e?.message,
+            code: e?.code,
+            detail: e?.detail,
+            hint: e?.hint,
+            table: e?.table,
+            schema: e?.schema,
+            column: e?.column,
+            constraint: e?.constraint,
+          });
+          console.error("Original items data:", items);
+        }
+        throw itemError;
+      }
+    }
+
     return created;
   });
 }
@@ -106,7 +172,7 @@ export async function updateOrder(
   db: DbClient,
   id: string,
   teamId: string,
-  data: Partial<typeof orders.$inferInsert>,
+  data: Partial<typeof orders.$inferInsert>
 ) {
   const result = await db
     .update(orders)
@@ -125,7 +191,7 @@ export async function updateOrderWithItems(
   id: string,
   teamId: string,
   data: Partial<typeof orders.$inferInsert>,
-  items?: Array<{ name: string; quantity: number; unit_cost: number; total_cost: number }>,
+  items?: Array<{ name: string; quantity: number; unit_cost: number; total_cost: number }>
 ) {
   return await db.transaction(async (tx) => {
     const [updated] = await tx
@@ -137,15 +203,37 @@ export async function updateOrderWithItems(
     if (items) {
       await tx.delete(orderItems).where(eq(orderItems.orderId, id));
       if (items.length > 0) {
-        await tx.insert(orderItems).values(
-          items.map((it) => ({
+        const IS_DEV = process.env.NODE_ENV !== "production";
+        const itemsToInsert = items.map((it) => {
+          const unit = Number(it.unit_cost);
+          const qty = Number(it.quantity);
+          const total = qty * unit;
+          return {
             orderId: id,
             name: it.name,
             quantity: it.quantity,
-            unitPrice: String(it.unit_cost) as any,
-            total: String(it.total_cost) as any,
-          })) as any,
-        );
+            unitPrice: unit.toFixed(2),
+            total: total.toFixed(2),
+          };
+        });
+        try {
+          await tx.insert(orderItems).values(itemsToInsert);
+        } catch (err) {
+          const e: any = err;
+          if (IS_DEV) {
+            console.error("Failed to insert order items on update. Postgres error:", {
+              message: e?.message,
+              code: e?.code,
+              detail: e?.detail,
+              hint: e?.hint,
+              table: e?.table,
+              schema: e?.schema,
+              column: e?.column,
+              constraint: e?.constraint,
+            });
+          }
+          throw err;
+        }
       }
     }
     return updated;

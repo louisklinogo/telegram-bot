@@ -1,6 +1,6 @@
 /**
  * Simple Supabase queries (SELECT operations)
- * For complex queries, use @cimantikos/database package with Drizzle
+ * For complex queries, use @Faworra/database package with Drizzle
  */
 
 export * from "./clients";

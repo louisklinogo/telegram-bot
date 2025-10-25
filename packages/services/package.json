@@ -1,5 +1,5 @@
 {
-  "name": "@cimantikos/services",
+  "name": "@Faworra/services",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -9,7 +9,7 @@
     "build": "node ../../node_modules/typescript/lib/tsc.js -p tsconfig.build.json"
   },
   "dependencies": {
-    "@cimantikos/config": "workspace:*",
+    "@Faworra/config": "workspace:*",
     "@notionhq/client": "^2.2.15",
     "@supabase/supabase-js": "^2.58.0",
     "cloudinary": "^2.7.0",

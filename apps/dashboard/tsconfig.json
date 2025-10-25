@@ -1,0 +1,70 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "target": "ES2017",
+    "lib": ["dom", "dom.iterable", "esnext"],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "preserve",
+    "incremental": true,
+    "baseUrl": "./",
+    "paths": {
+      "@Faworra/domain": ["../../packages/domain/src/index.ts"],
+      "@Faworra/domain/*": ["../../packages/domain/src/*"],
+
+      "@Faworra/services": ["../../packages/services/src/index.ts"],
+      "@Faworra/services/*": ["../../packages/services/src/*"],
+
+      "@Faworra/config": ["../../packages/config/src/index.ts"],
+      "@Faworra/config/*": ["../../packages/config/src/*"],
+
+      "@Faworra/database/*": ["../../packages/database/src/*"],
+      "@Faworra/database": ["../../packages/database/src/index.ts"],
+      "@Faworra/database/schema": ["../../packages/database/src/schema.ts"],
+
+      "@Faworra/ui": ["../../packages/ui/src/index.ts"],
+      "@Faworra/ui/*": [
+        "../../packages/ui/src/*",
+        "../../packages/ui/src/components/*"
+      ],
+
+      "@Faworra/api/*": ["../../apps/api/src/*"],
+      "@Faworra/api/trpc/*": ["../../apps/api/src/trpc/*"],
+      "@Faworra/middleware/*": ["../../packages/middleware/src/*"],
+
+      "@Faworra/supabase/*": ["../../packages/supabase/src/*"],
+      "@Faworra/supabase/server": [
+        "../../packages/supabase/src/client/server.ts"
+      ],
+      "@Faworra/supabase/client": [
+        "../../packages/supabase/src/client/index.ts"
+      ],
+      "@Faworra/supabase/browser": [
+        "../../packages/supabase/src/client/browser.ts"
+      ],
+
+      "@Faworra/schemas": ["../../packages/schemas/src/index.ts"],
+      "@Faworra/schemas/*": ["../../packages/schemas/src/*"],
+
+      "@Faworra/analytics/*": ["../../packages/analytics/src/*"],
+      "@Faworra/auth/*": ["../../packages/auth/src/*"],
+      "@Faworra/cache/*": ["../../packages/cache/src/*"],
+
+      "@/*": ["./src/*"]
+    },
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ]
+  },
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
+  "exclude": ["node_modules"]
+}

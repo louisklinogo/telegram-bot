@@ -1,4 +1,4 @@
-import { getEnvConfig } from "@cimantikos/config";
+import { getEnvConfig } from "@Faworra/config";
 import { v2 as cloudinary } from "cloudinary";
 
 let isCloudinaryConfigured = false;
@@ -54,13 +54,13 @@ export async function uploadToCloudinary(
     public_id?: string;
     resource_type?: "image" | "video" | "raw" | "auto";
     transformation?: any;
-  } = {},
+  } = {}
 ) {
   const cloudinaryInstance = getCloudinaryInstance();
 
   const uploadOptions = {
     resource_type: "auto" as const,
-    folder: "cimantikos-invoices",
+    folder: "Faworra-invoices",
     use_filename: false,
     unique_filename: true,
     overwrite: false,
@@ -70,7 +70,7 @@ export async function uploadToCloudinary(
   };
 
   try {
-    console.log(`☁️ Uploading to Cloudinary with options:`, uploadOptions);
+    console.log("☁️ Uploading to Cloudinary with options:", uploadOptions);
     const result = await cloudinaryInstance.uploader.upload(filePath, uploadOptions);
     console.log(`✅ File uploaded to Cloudinary: ${result.public_id}`);
     return result;
@@ -87,7 +87,7 @@ export async function uploadToCloudinary(
  */
 export async function deleteFromCloudinary(
   publicId: string,
-  resourceType: "image" | "video" | "raw" = "raw",
+  resourceType: "image" | "video" | "raw" = "raw"
 ) {
   const cloudinaryInstance = getCloudinaryInstance();
 
@@ -114,7 +114,7 @@ export function generateCloudinaryUrl(
     resource_type?: "image" | "video" | "raw";
     secure?: boolean;
     transformation?: any;
-  } = {},
+  } = {}
 ) {
   const cloudinaryInstance = getCloudinaryInstance();
 

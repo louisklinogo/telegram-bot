@@ -1,18 +1,18 @@
-import { z } from "zod";
-import { createTRPCRouter, teamProcedure } from "../init";
 import {
-  getInvoicesWithOrder,
-  getInvoiceById,
-  getInvoiceWithItems,
-  getNextInvoiceNumber,
-  updateInvoiceStatus,
-  updateInvoice,
   createInvoice,
   createInvoiceWithItems,
-  updateInvoiceWithItems,
   deleteInvoice,
-} from "@cimantikos/database/queries";
-import { getOrderWithItemsById } from "@cimantikos/database/queries";
+  getInvoiceById,
+  getInvoicesWithOrder,
+  getInvoiceWithItems,
+  getNextInvoiceNumber,
+  getOrderWithItemsById,
+  updateInvoice,
+  updateInvoiceStatus,
+  updateInvoiceWithItems,
+} from "@Faworra/database/queries";
+import { z } from "zod";
+import { createTRPCRouter, teamProcedure } from "../init";
 
 // Validation schemas
 const invoiceItemSchema = z.object({
@@ -30,7 +30,9 @@ const invoiceCreateSchema = z.object({
   tax: z.number().min(0).default(0),
   discount: z.number().min(0).default(0),
   amount: z.number().min(0),
-  status: z.enum(["draft", "sent", "partially_paid", "paid", "overdue", "cancelled"]).default("draft"),
+  status: z
+    .enum(["draft", "sent", "partially_paid", "paid", "overdue", "cancelled"])
+    .default("draft"),
   dueDate: z.string().datetime().nullable().optional(),
   notes: z.string().nullable().optional(),
   items: z.array(invoiceItemSchema).min(1, "At least one item is required"),
@@ -55,7 +57,7 @@ export const invoicesRouter = createTRPCRouter({
           limit: z.number().min(1).max(100).default(50),
           cursor: z.object({ createdAt: z.string().nullable(), id: z.string() }).nullish(),
         })
-        .optional(),
+        .optional()
     )
     .query(async ({ ctx, input }) => {
       const rows = await getInvoicesWithOrder(ctx.db, {
@@ -91,9 +93,9 @@ export const invoicesRouter = createTRPCRouter({
     .query(async ({ ctx, input }) => getInvoiceWithItems(ctx.db, input.id, ctx.teamId)),
 
   // Get next invoice number
-  getNextNumber: teamProcedure.query(async ({ ctx }) => {
-    return { invoiceNumber: await getNextInvoiceNumber(ctx.db, ctx.teamId) };
-  }),
+  getNextNumber: teamProcedure.query(async ({ ctx }) => ({
+    invoiceNumber: await getNextInvoiceNumber(ctx.db, ctx.teamId),
+  })),
 
   // Get default settings for new invoice (optionally from order)
   defaultSettings: teamProcedure
@@ -158,17 +160,17 @@ export const invoicesRouter = createTRPCRouter({
         id: z.string().uuid(),
         status: z.string(),
         paidAt: z.string().datetime().optional(),
-      }),
+      })
     )
-    .mutation(async ({ ctx, input }) => {
-      return updateInvoiceStatus(
+    .mutation(async ({ ctx, input }) =>
+      updateInvoiceStatus(
         ctx.db,
         input.id,
         ctx.teamId,
         input.status,
-        input.paidAt ? new Date(input.paidAt) : null,
-      );
-    }),
+        input.paidAt ? new Date(input.paidAt) : null
+      )
+    ),
 
   update: teamProcedure
     .input(
@@ -180,7 +182,7 @@ export const invoicesRouter = createTRPCRouter({
         dueDate: z.string().datetime().nullable().optional(),
         paidAt: z.string().datetime().nullable().optional(),
         notes: z.string().nullable().optional(),
-      }),
+      })
     )
     .mutation(async ({ ctx, input }) => {
       const { id, ...rest } = input as any;
@@ -188,61 +190,55 @@ export const invoicesRouter = createTRPCRouter({
     }),
 
   // Create invoice with line items
-  create: teamProcedure
-    .input(invoiceCreateSchema)
-    .mutation(async ({ ctx, input }) => {
-      const { items, ...invoiceData } = input;
+  create: teamProcedure.input(invoiceCreateSchema).mutation(async ({ ctx, input }) => {
+    const { items, ...invoiceData } = input;
 
-      const invoice = await createInvoiceWithItems(
-        ctx.db,
-        {
-          ...invoiceData,
-          teamId: ctx.teamId,
-          dueDate: invoiceData.dueDate ? new Date(invoiceData.dueDate).toISOString() : null,
-        } as any,
-        items.map((item) => ({
-          ...item,
-          unitPrice: String(item.unitPrice),
-          total: String(item.total),
-        })),
-      );
+    const invoice = await createInvoiceWithItems(
+      ctx.db,
+      {
+        ...invoiceData,
+        teamId: ctx.teamId,
+        dueDate: invoiceData.dueDate ? new Date(invoiceData.dueDate).toISOString() : null,
+      } as any,
+      items.map((item) => ({
+        ...item,
+        unitPrice: String(item.unitPrice),
+        total: String(item.total),
+      }))
+    );
 
-      return invoice;
-    }),
+    return invoice;
+  }),
 
   // Update draft invoice (only if status is draft)
-  updateDraft: teamProcedure
-    .input(invoiceUpdateSchema)
-    .mutation(async ({ ctx, input }) => {
-      const { id, items, ...invoiceData } = input;
+  updateDraft: teamProcedure.input(invoiceUpdateSchema).mutation(async ({ ctx, input }) => {
+    const { id, items, ...invoiceData } = input;
 
-      const updated = await updateInvoiceWithItems(
-        ctx.db,
-        id,
-        ctx.teamId,
-        {
-          ...invoiceData,
-          dueDate: invoiceData.dueDate ? new Date(invoiceData.dueDate).toISOString() : undefined,
-        } as any,
-        items?.map((item) => ({
-          ...item,
-          unitPrice: String(item.unitPrice),
-          total: String(item.total),
-        })),
-      );
+    const updated = await updateInvoiceWithItems(
+      ctx.db,
+      id,
+      ctx.teamId,
+      {
+        ...invoiceData,
+        dueDate: invoiceData.dueDate ? new Date(invoiceData.dueDate).toISOString() : undefined,
+      } as any,
+      items?.map((item) => ({
+        ...item,
+        unitPrice: String(item.unitPrice),
+        total: String(item.total),
+      }))
+    );
 
-      return updated;
-    }),
+    return updated;
+  }),
 
   // Send invoice (mark as sent, makes it immutable)
-  send: teamProcedure
-    .input(z.object({ id: z.string().uuid() }))
-    .mutation(async ({ ctx, input }) => {
-      return updateInvoice(ctx.db, input.id, ctx.teamId, {
-        status: "sent",
-        sentAt: new Date().toISOString(),
-      } as any);
-    }),
+  send: teamProcedure.input(z.object({ id: z.string().uuid() })).mutation(async ({ ctx, input }) =>
+    updateInvoice(ctx.db, input.id, ctx.teamId, {
+      status: "sent",
+      sentAt: new Date().toISOString(),
+    } as any)
+  ),
 
   delete: teamProcedure
     .input(z.object({ id: z.string().uuid() }))

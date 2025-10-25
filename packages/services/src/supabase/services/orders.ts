@@ -27,7 +27,7 @@ const DEFAULT_ORDER_STATUS = "Generated";
 async function generateSequentialNumber(
   table: string,
   column: string,
-  prefix: string,
+  prefix: string
 ): Promise<string> {
   const supabase = getSupabaseServiceClient();
 
@@ -47,7 +47,7 @@ async function generateSequentialNumber(
   if (typeof lastNumber === "string") {
     const match = lastNumber.match(/(\d+)$/);
     if (match) {
-      const next = (parseInt(match[1], 10) || 0) + 1;
+      const next = (Number.parseInt(match[1], 10) || 0) + 1;
       return `${prefix}${next.toString().padStart(4, "0")}`;
     }
   }
@@ -56,7 +56,7 @@ async function generateSequentialNumber(
 }
 
 export async function createOrderWithItems(
-  input: CreateOrderInput,
+  input: CreateOrderInput
 ): Promise<{ order: OrderRecord; items: OrderItemRecord[] }> {
   const supabase = getSupabaseServiceClient();
   const orderNumber = await generateSequentialNumber(ORDER_TABLE, "order_number", ORDER_PREFIX);

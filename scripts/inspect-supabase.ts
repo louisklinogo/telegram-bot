@@ -26,7 +26,7 @@ async function main() {
        from pg_class c
        join pg_namespace n on n.oid = c.relnamespace
        where n.nspname = 'public' and c.relkind = 'r' and c.relname = any($1)`,
-      [tables],
+      [tables]
     );
 
     // Policies per table
@@ -37,7 +37,7 @@ async function main() {
        join pg_namespace ns on ns.oid = tab.relnamespace
        where ns.nspname = 'public' and tab.relname = any($1)
        order by tab.relname, pol.polname`,
-      [tables],
+      [tables]
     );
 
     // Indexes
@@ -46,7 +46,7 @@ async function main() {
        from pg_indexes
        where schemaname = 'public' and tablename = any($1)
        order by tablename, indexname`,
-      [tables],
+      [tables]
     );
 
     console.log("--- RLS Status ---");

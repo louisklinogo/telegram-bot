@@ -56,6 +56,126 @@ export type Database = {
           },
         ]
       }
+      api_key_usage: {
+        Row: {
+          api_key_id: string
+          created_at: string
+          endpoint: string
+          id: string
+          ip_address: unknown
+          method: string
+          request_size_bytes: number | null
+          response_size_bytes: number | null
+          response_time_ms: number | null
+          status_code: number
+          team_id: string
+          user_agent: string | null
+        }
+        Insert: {
+          api_key_id: string
+          created_at?: string
+          endpoint: string
+          id?: string
+          ip_address?: unknown
+          method: string
+          request_size_bytes?: number | null
+          response_size_bytes?: number | null
+          response_time_ms?: number | null
+          status_code: number
+          team_id: string
+          user_agent?: string | null
+        }
+        Update: {
+          api_key_id?: string
+          created_at?: string
+          endpoint?: string
+          id?: string
+          ip_address?: unknown
+          method?: string
+          request_size_bytes?: number | null
+          response_size_bytes?: number | null
+          response_time_ms?: number | null
+          status_code?: number
+          team_id?: string
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "api_key_usage_api_key_id_fkey"
+            columns: ["api_key_id"]
+            isOneToOne: false
+            referencedRelation: "api_keys"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "api_key_usage_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      api_keys: {
+        Row: {
+          created_at: string
+          expires_at: string | null
+          id: string
+          is_active: boolean
+          key_hash: string
+          key_prefix: string
+          last_used_at: string | null
+          name: string
+          scopes: Json
+          team_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          key_hash: string
+          key_prefix: string
+          last_used_at?: string | null
+          name: string
+          scopes?: Json
+          team_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          key_hash?: string
+          key_prefix?: string
+          last_used_at?: string | null
+          name?: string
+          scopes?: Json
+          team_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "api_keys_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "api_keys_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       appointments: {
         Row: {
           client_id: string | null
@@ -839,6 +959,47 @@ export type Database = {
           },
         ]
       }
+      inventory_locations: {
+        Row: {
+          address: string | null
+          code: string | null
+          created_at: string
+          id: string
+          is_default: boolean
+          name: string
+          team_id: string
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          code?: string | null
+          created_at?: string
+          id?: string
+          is_default?: boolean
+          name: string
+          team_id: string
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          code?: string | null
+          created_at?: string
+          id?: string
+          is_default?: boolean
+          name?: string
+          team_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inventory_locations_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       invoice_items: {
         Row: {
           created_at: string
@@ -890,13 +1051,17 @@ export type Database = {
       invoices: {
         Row: {
           amount: number
+          conversation_id: string | null
           created_at: string
+          created_by_id: string | null
+          created_by_type: string | null
           currency: string
           deleted_at: string | null
           discount: number | null
           due_date: string | null
           exchange_rate: number | null
           id: string
+          idempotency_key: string | null
           invoice_number: string
           invoice_url: string | null
           notes: string | null
@@ -904,6 +1069,7 @@ export type Database = {
           paid_amount: number | null
           paid_at: string | null
           sent_at: string | null
+          source: string | null
           status: Database["public"]["Enums"]["invoice_status"]
           subtotal: number
           tax: number | null
@@ -914,13 +1080,17 @@ export type Database = {
         }
         Insert: {
           amount: number
+          conversation_id?: string | null
           created_at?: string
+          created_by_id?: string | null
+          created_by_type?: string | null
           currency?: string
           deleted_at?: string | null
           discount?: number | null
           due_date?: string | null
           exchange_rate?: number | null
           id?: string
+          idempotency_key?: string | null
           invoice_number: string
           invoice_url?: string | null
           notes?: string | null
@@ -928,6 +1098,7 @@ export type Database = {
           paid_amount?: number | null
           paid_at?: string | null
           sent_at?: string | null
+          source?: string | null
           status?: Database["public"]["Enums"]["invoice_status"]
           subtotal: number
           tax?: number | null
@@ -938,13 +1109,17 @@ export type Database = {
         }
         Update: {
           amount?: number
+          conversation_id?: string | null
           created_at?: string
+          created_by_id?: string | null
+          created_by_type?: string | null
           currency?: string
           deleted_at?: string | null
           discount?: number | null
           due_date?: string | null
           exchange_rate?: number | null
           id?: string
+          idempotency_key?: string | null
           invoice_number?: string
           invoice_url?: string | null
           notes?: string | null
@@ -952,6 +1127,7 @@ export type Database = {
           paid_amount?: number | null
           paid_at?: string | null
           sent_at?: string | null
+          source?: string | null
           status?: Database["public"]["Enums"]["invoice_status"]
           subtotal?: number
           tax?: number | null
@@ -973,6 +1149,118 @@ export type Database = {
             columns: ["team_id"]
             isOneToOne: false
             referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      leads: {
+        Row: {
+          created_at: string
+          customer_id: string | null
+          id: string
+          instagram_contact_id: string | null
+          last_interaction_at: string | null
+          message_count: number
+          metadata: Json
+          notes: string | null
+          owner_user_id: string | null
+          prospect_handle: string | null
+          prospect_name: string | null
+          prospect_phone: string | null
+          qualification: string
+          score: number
+          source: string
+          status: string
+          team_id: string
+          thread_id: string | null
+          updated_at: string
+          whatsapp_contact_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          customer_id?: string | null
+          id?: string
+          instagram_contact_id?: string | null
+          last_interaction_at?: string | null
+          message_count?: number
+          metadata?: Json
+          notes?: string | null
+          owner_user_id?: string | null
+          prospect_handle?: string | null
+          prospect_name?: string | null
+          prospect_phone?: string | null
+          qualification?: string
+          score?: number
+          source: string
+          status?: string
+          team_id: string
+          thread_id?: string | null
+          updated_at?: string
+          whatsapp_contact_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          customer_id?: string | null
+          id?: string
+          instagram_contact_id?: string | null
+          last_interaction_at?: string | null
+          message_count?: number
+          metadata?: Json
+          notes?: string | null
+          owner_user_id?: string | null
+          prospect_handle?: string | null
+          prospect_name?: string | null
+          prospect_phone?: string | null
+          qualification?: string
+          score?: number
+          source?: string
+          status?: string
+          team_id?: string
+          thread_id?: string | null
+          updated_at?: string
+          whatsapp_contact_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "leads_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leads_instagram_contact_fk"
+            columns: ["instagram_contact_id"]
+            isOneToOne: false
+            referencedRelation: "instagram_contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leads_owner_user_id_fkey"
+            columns: ["owner_user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leads_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leads_thread_id_fkey"
+            columns: ["thread_id"]
+            isOneToOne: false
+            referencedRelation: "communication_threads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leads_whatsapp_contact_fk"
+            columns: ["whatsapp_contact_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_contacts"
             referencedColumns: ["id"]
           },
         ]
@@ -1177,6 +1465,230 @@ export type Database = {
           },
         ]
       }
+      oauth_access_tokens: {
+        Row: {
+          application_id: string
+          created_at: string
+          expires_at: string
+          id: string
+          last_used_at: string | null
+          refresh_token: string | null
+          refresh_token_expires_at: string | null
+          revoked: boolean | null
+          revoked_at: string | null
+          scopes: string[]
+          team_id: string
+          token: string
+          user_id: string
+        }
+        Insert: {
+          application_id: string
+          created_at?: string
+          expires_at: string
+          id?: string
+          last_used_at?: string | null
+          refresh_token?: string | null
+          refresh_token_expires_at?: string | null
+          revoked?: boolean | null
+          revoked_at?: string | null
+          scopes: string[]
+          team_id: string
+          token: string
+          user_id: string
+        }
+        Update: {
+          application_id?: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          last_used_at?: string | null
+          refresh_token?: string | null
+          refresh_token_expires_at?: string | null
+          revoked?: boolean | null
+          revoked_at?: string | null
+          scopes?: string[]
+          team_id?: string
+          token?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "oauth_access_tokens_application_id_fkey"
+            columns: ["application_id"]
+            isOneToOne: false
+            referencedRelation: "oauth_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "oauth_access_tokens_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "oauth_access_tokens_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      oauth_applications: {
+        Row: {
+          active: boolean | null
+          client_id: string
+          client_secret: string
+          created_at: string
+          created_by: string
+          description: string | null
+          developer_name: string | null
+          id: string
+          install_url: string | null
+          is_public: boolean | null
+          logo_url: string | null
+          name: string
+          overview: string | null
+          redirect_uris: string[]
+          scopes: string[]
+          screenshots: string[] | null
+          slug: string
+          status: string | null
+          team_id: string
+          updated_at: string
+          website: string | null
+        }
+        Insert: {
+          active?: boolean | null
+          client_id: string
+          client_secret: string
+          created_at?: string
+          created_by: string
+          description?: string | null
+          developer_name?: string | null
+          id?: string
+          install_url?: string | null
+          is_public?: boolean | null
+          logo_url?: string | null
+          name: string
+          overview?: string | null
+          redirect_uris: string[]
+          scopes?: string[]
+          screenshots?: string[] | null
+          slug: string
+          status?: string | null
+          team_id: string
+          updated_at?: string
+          website?: string | null
+        }
+        Update: {
+          active?: boolean | null
+          client_id?: string
+          client_secret?: string
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          developer_name?: string | null
+          id?: string
+          install_url?: string | null
+          is_public?: boolean | null
+          logo_url?: string | null
+          name?: string
+          overview?: string | null
+          redirect_uris?: string[]
+          scopes?: string[]
+          screenshots?: string[] | null
+          slug?: string
+          status?: string | null
+          team_id?: string
+          updated_at?: string
+          website?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "oauth_applications_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "oauth_applications_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      oauth_authorization_codes: {
+        Row: {
+          application_id: string
+          code: string
+          code_challenge: string | null
+          code_challenge_method: string | null
+          created_at: string
+          expires_at: string
+          id: string
+          redirect_uri: string
+          scopes: string[]
+          team_id: string
+          used: boolean | null
+          user_id: string
+        }
+        Insert: {
+          application_id: string
+          code: string
+          code_challenge?: string | null
+          code_challenge_method?: string | null
+          created_at?: string
+          expires_at: string
+          id?: string
+          redirect_uri: string
+          scopes: string[]
+          team_id: string
+          used?: boolean | null
+          user_id: string
+        }
+        Update: {
+          application_id?: string
+          code?: string
+          code_challenge?: string | null
+          code_challenge_method?: string | null
+          created_at?: string
+          expires_at?: string
+          id?: string
+          redirect_uri?: string
+          scopes?: string[]
+          team_id?: string
+          used?: boolean | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "oauth_authorization_codes_application_id_fkey"
+            columns: ["application_id"]
+            isOneToOne: false
+            referencedRelation: "oauth_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "oauth_authorization_codes_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "oauth_authorization_codes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       order_items: {
         Row: {
           created_at: string
@@ -1221,13 +1733,18 @@ export type Database = {
           cancelled_at: string | null
           client_id: string | null
           completed_at: string | null
+          conversation_id: string | null
           created_at: string
+          created_by_id: string | null
+          created_by_type: string | null
           deleted_at: string | null
           deposit_amount: number
           due_date: string | null
           id: string
+          idempotency_key: string | null
           notes: string | null
           order_number: string
+          source: string | null
           status: Database["public"]["Enums"]["order_status"]
           team_id: string
           total_price: number
@@ -1238,13 +1755,18 @@ export type Database = {
           cancelled_at?: string | null
           client_id?: string | null
           completed_at?: string | null
+          conversation_id?: string | null
           created_at?: string
+          created_by_id?: string | null
+          created_by_type?: string | null
           deleted_at?: string | null
           deposit_amount?: number
           due_date?: string | null
           id?: string
+          idempotency_key?: string | null
           notes?: string | null
           order_number: string
+          source?: string | null
           status?: Database["public"]["Enums"]["order_status"]
           team_id: string
           total_price?: number
@@ -1255,13 +1777,18 @@ export type Database = {
           cancelled_at?: string | null
           client_id?: string | null
           completed_at?: string | null
+          conversation_id?: string | null
           created_at?: string
+          created_by_id?: string | null
+          created_by_type?: string | null
           deleted_at?: string | null
           deposit_amount?: number
           due_date?: string | null
           id?: string
+          idempotency_key?: string | null
           notes?: string | null
           order_number?: string
+          source?: string | null
           status?: Database["public"]["Enums"]["order_status"]
           team_id?: string
           total_price?: number
@@ -1277,6 +1804,368 @@ export type Database = {
           },
           {
             foreignKeyName: "orders_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      product_categories: {
+        Row: {
+          color: string | null
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          parent_id: string | null
+          slug: string
+          system: boolean
+          team_id: string
+          updated_at: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          parent_id?: string | null
+          slug: string
+          system?: boolean
+          team_id: string
+          updated_at?: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          parent_id?: string | null
+          slug?: string
+          system?: boolean
+          team_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_categories_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "product_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_categories_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      product_category_mappings: {
+        Row: {
+          created_at: string
+          id: string
+          product_category_id: string
+          team_id: string
+          transaction_category_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          product_category_id: string
+          team_id: string
+          transaction_category_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          product_category_id?: string
+          team_id?: string
+          transaction_category_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_category_mappings_product_category_id_fkey"
+            columns: ["product_category_id"]
+            isOneToOne: false
+            referencedRelation: "product_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_category_mappings_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_category_mappings_transaction_category_id_fkey"
+            columns: ["transaction_category_id"]
+            isOneToOne: false
+            referencedRelation: "transaction_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      product_inventory: {
+        Row: {
+          allocated: number
+          location_id: string
+          on_hand: number
+          safety_stock: number
+          team_id: string
+          updated_at: string
+          variant_id: string
+        }
+        Insert: {
+          allocated?: number
+          location_id: string
+          on_hand?: number
+          safety_stock?: number
+          team_id: string
+          updated_at?: string
+          variant_id: string
+        }
+        Update: {
+          allocated?: number
+          location_id?: string
+          on_hand?: number
+          safety_stock?: number
+          team_id?: string
+          updated_at?: string
+          variant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_product_inventory_team"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_inventory_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "inventory_locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_inventory_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "product_variants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      product_media: {
+        Row: {
+          alt: string | null
+          created_at: string
+          height: number | null
+          id: string
+          is_primary: boolean
+          mime_type: string | null
+          path: string
+          position: number | null
+          product_id: string
+          size_bytes: number | null
+          team_id: string
+          variant_id: string | null
+          width: number | null
+        }
+        Insert: {
+          alt?: string | null
+          created_at?: string
+          height?: number | null
+          id?: string
+          is_primary?: boolean
+          mime_type?: string | null
+          path: string
+          position?: number | null
+          product_id: string
+          size_bytes?: number | null
+          team_id: string
+          variant_id?: string | null
+          width?: number | null
+        }
+        Update: {
+          alt?: string | null
+          created_at?: string
+          height?: number | null
+          id?: string
+          is_primary?: boolean
+          mime_type?: string | null
+          path?: string
+          position?: number | null
+          product_id?: string
+          size_bytes?: number | null
+          team_id?: string
+          variant_id?: string | null
+          width?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_media_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_media_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_media_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "product_variants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      product_variants: {
+        Row: {
+          availability_date: string | null
+          backorder_policy: string | null
+          barcode: string | null
+          capacity_per_period: number | null
+          cost: number | null
+          created_at: string
+          currency: string | null
+          fulfillment_type: Database["public"]["Enums"]["fulfillment_type"]
+          id: string
+          lead_time_days: number | null
+          name: string | null
+          pack_size: number | null
+          price: number | null
+          product_id: string
+          sku: string | null
+          status: Database["public"]["Enums"]["product_status"]
+          stock_managed: boolean
+          team_id: string
+          unit_of_measure: string | null
+          updated_at: string
+        }
+        Insert: {
+          availability_date?: string | null
+          backorder_policy?: string | null
+          barcode?: string | null
+          capacity_per_period?: number | null
+          cost?: number | null
+          created_at?: string
+          currency?: string | null
+          fulfillment_type?: Database["public"]["Enums"]["fulfillment_type"]
+          id?: string
+          lead_time_days?: number | null
+          name?: string | null
+          pack_size?: number | null
+          price?: number | null
+          product_id: string
+          sku?: string | null
+          status?: Database["public"]["Enums"]["product_status"]
+          stock_managed?: boolean
+          team_id: string
+          unit_of_measure?: string | null
+          updated_at?: string
+        }
+        Update: {
+          availability_date?: string | null
+          backorder_policy?: string | null
+          barcode?: string | null
+          capacity_per_period?: number | null
+          cost?: number | null
+          created_at?: string
+          currency?: string | null
+          fulfillment_type?: Database["public"]["Enums"]["fulfillment_type"]
+          id?: string
+          lead_time_days?: number | null
+          name?: string | null
+          pack_size?: number | null
+          price?: number | null
+          product_id?: string
+          sku?: string | null
+          status?: Database["public"]["Enums"]["product_status"]
+          stock_managed?: boolean
+          team_id?: string
+          unit_of_measure?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_variants_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_variants_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      products: {
+        Row: {
+          attributes: Json
+          category_slug: string | null
+          created_at: string
+          deleted_at: string | null
+          description: string | null
+          id: string
+          name: string
+          slug: string | null
+          status: Database["public"]["Enums"]["product_status"]
+          tags: Json
+          team_id: string
+          type: Database["public"]["Enums"]["product_type"]
+          updated_at: string
+        }
+        Insert: {
+          attributes?: Json
+          category_slug?: string | null
+          created_at?: string
+          deleted_at?: string | null
+          description?: string | null
+          id?: string
+          name: string
+          slug?: string | null
+          status?: Database["public"]["Enums"]["product_status"]
+          tags?: Json
+          team_id: string
+          type?: Database["public"]["Enums"]["product_type"]
+          updated_at?: string
+        }
+        Update: {
+          attributes?: Json
+          category_slug?: string | null
+          created_at?: string
+          deleted_at?: string | null
+          description?: string | null
+          id?: string
+          name?: string
+          slug?: string | null
+          status?: Database["public"]["Enums"]["product_status"]
+          tags?: Json
+          team_id?: string
+          type?: Database["public"]["Enums"]["product_type"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "products_team_id_fkey"
             columns: ["team_id"]
             isOneToOne: false
             referencedRelation: "teams"
@@ -1315,6 +2204,60 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      team_daily_orders_summary: {
+        Row: {
+          completed_count: number
+          completed_value_sum: number
+          created_count: number
+          created_count_excl_cancelled: number
+          created_value_sum_excl_cancelled: number
+          day: string
+          team_id: string
+          updated_at: string
+        }
+        Insert: {
+          completed_count?: number
+          completed_value_sum?: number
+          created_count?: number
+          created_count_excl_cancelled?: number
+          created_value_sum_excl_cancelled?: number
+          day: string
+          team_id: string
+          updated_at?: string
+        }
+        Update: {
+          completed_count?: number
+          completed_value_sum?: number
+          created_count?: number
+          created_count_excl_cancelled?: number
+          created_value_sum_excl_cancelled?: number
+          day?: string
+          team_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      team_order_counters: {
+        Row: {
+          counter: number
+          team_id: string
+          updated_at: string
+          year: number
+        }
+        Insert: {
+          counter?: number
+          team_id: string
+          updated_at?: string
+          year: number
+        }
+        Update: {
+          counter?: number
+          team_id?: string
+          updated_at?: string
+          year?: number
+        }
+        Relationships: []
       }
       teams: {
         Row: {
@@ -1782,7 +2725,7 @@ export type Database = {
           enrichment_completed: boolean | null
           exclude_from_analytics: boolean
           frequency: Database["public"]["Enums"]["transaction_frequency"] | null
-          fts_vector: unknown | null
+          fts_vector: unknown
           id: string
           internal_id: string
           invoice_id: string | null
@@ -1823,7 +2766,7 @@ export type Database = {
           frequency?:
             | Database["public"]["Enums"]["transaction_frequency"]
             | null
-          fts_vector?: unknown | null
+          fts_vector?: unknown
           id?: string
           internal_id: string
           invoice_id?: string | null
@@ -1864,7 +2807,7 @@ export type Database = {
           frequency?:
             | Database["public"]["Enums"]["transaction_frequency"]
             | null
-          fts_vector?: unknown | null
+          fts_vector?: unknown
           id?: string
           internal_id?: string
           invoice_id?: string | null
@@ -2220,6 +3163,18 @@ export type Database = {
       }
     }
     Functions: {
+      add_daily_orders_delta: {
+        Args: {
+          p_completed: number
+          p_completed_val: number
+          p_created: number
+          p_created_nc: number
+          p_created_val: number
+          p_day: string
+          p_team_id: string
+        }
+        Returns: undefined
+      }
       fuzzy_search_transactions: {
         Args: {
           p_limit?: number
@@ -2236,34 +3191,12 @@ export type Database = {
           transaction_id: string
         }[]
       }
-      gtrgm_compress: {
-        Args: { "": unknown }
-        Returns: unknown
-      }
-      gtrgm_decompress: {
-        Args: { "": unknown }
-        Returns: unknown
-      }
-      gtrgm_in: {
-        Args: { "": unknown }
-        Returns: unknown
-      }
-      gtrgm_options: {
-        Args: { "": unknown }
-        Returns: undefined
-      }
-      gtrgm_out: {
-        Args: { "": unknown }
-        Returns: unknown
-      }
+      next_order_number: { Args: { p_team_id: string }; Returns: string }
       recalc_invoice_payments: {
         Args: { p_invoice_id: string }
         Returns: undefined
       }
-      recalc_order_totals: {
-        Args: { p_order_id: string }
-        Returns: undefined
-      }
+      recalc_order_totals: { Args: { p_order_id: string }; Returns: undefined }
       search_transactions: {
         Args: { p_limit?: number; p_query: string; p_team_id: string }
         Returns: {
@@ -2275,30 +3208,18 @@ export type Database = {
           transaction_id: string
         }[]
       }
-      set_limit: {
-        Args: { "": number }
-        Returns: number
-      }
-      show_limit: {
-        Args: Record<PropertyKey, never>
-        Returns: number
-      }
-      show_trgm: {
-        Args: { "": string }
-        Returns: string[]
-      }
-      unaccent: {
-        Args: { "": string }
-        Returns: string
-      }
-      unaccent_init: {
-        Args: { "": unknown }
-        Returns: unknown
+      show_limit: { Args: never; Returns: number }
+      show_trgm: { Args: { "": string }; Returns: string[] }
+      unaccent: { Args: { "": string }; Returns: string }
+      update_lead_from_thread_id: {
+        Args: { p_thread_id: string }
+        Returns: undefined
       }
     }
     Enums: {
       appointment_status: "scheduled" | "completed" | "cancelled" | "no_show"
       comm_message_status: "queued" | "sent" | "delivered" | "read" | "failed"
+      fulfillment_type: "stocked" | "dropship" | "made_to_order" | "preorder"
       invoice_status:
         | "draft"
         | "sent"
@@ -2307,6 +3228,8 @@ export type Database = {
         | "cancelled"
         | "partially_paid"
       order_status: "generated" | "in_progress" | "completed" | "cancelled"
+      product_status: "active" | "draft" | "archived"
+      product_type: "physical" | "service" | "digital" | "bundle"
       team_role: "owner" | "admin" | "agent" | "viewer"
       transaction_frequency:
         | "weekly"
@@ -2453,6 +3376,7 @@ export const Constants = {
     Enums: {
       appointment_status: ["scheduled", "completed", "cancelled", "no_show"],
       comm_message_status: ["queued", "sent", "delivered", "read", "failed"],
+      fulfillment_type: ["stocked", "dropship", "made_to_order", "preorder"],
       invoice_status: [
         "draft",
         "sent",
@@ -2462,6 +3386,8 @@ export const Constants = {
         "partially_paid",
       ],
       order_status: ["generated", "in_progress", "completed", "cancelled"],
+      product_status: ["active", "draft", "archived"],
+      product_type: ["physical", "service", "digital", "bundle"],
       team_role: ["owner", "admin", "agent", "viewer"],
       transaction_frequency: [
         "weekly",

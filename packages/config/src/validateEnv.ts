@@ -14,13 +14,13 @@ const envSchema = z.object({
   // Server configuration
   PORT: z
     .string()
-    .transform((val) => parseInt(val, 10))
-    .pipe(z.number().int().min(1).max(65535))
+    .transform((val) => Number.parseInt(val, 10))
+    .pipe(z.number().int().min(1).max(65_535))
     .default("8080"),
   API_PORT: z
     .string()
-    .transform((val) => parseInt(val, 10))
-    .pipe(z.number().int().min(1).max(65535))
+    .transform((val) => Number.parseInt(val, 10))
+    .pipe(z.number().int().min(1).max(65_535))
     .default("3001")
     .optional(),
   WEBHOOK_URL: z.string().url().optional(),
@@ -249,7 +249,7 @@ export function validateEnvironmentVariables(): EnvConfig {
 export function getEnvConfig(): EnvConfig {
   if (!validatedEnv) {
     throw new Error(
-      "Environment variables not validated. Call validateEnvironmentVariables() first.",
+      "Environment variables not validated. Call validateEnvironmentVariables() first."
     );
   }
   return validatedEnv;
@@ -311,7 +311,7 @@ export function getRedactedEnvInfo(): Record<string, string> {
  * Utility function to redact secrets for safe logging
  * Shows first/last characters and masks the middle
  */
-function redactSecret(secret: string, startChars: number = 4, endChars: number = 4): string {
+function redactSecret(secret: string, startChars = 4, endChars = 4): string {
   if (!secret || secret.length < startChars + endChars + 3) {
     return "***REDACTED***";
   }

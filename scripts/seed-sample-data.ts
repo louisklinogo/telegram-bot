@@ -1,7 +1,7 @@
 #!/usr/bin/env bun
 
 import "dotenv/config";
-import { getSupabaseServiceClient } from "@cimantikos/services";
+import { getSupabaseServiceClient } from "@Faworra/services";
 
 async function seedData() {
   console.log("🌱 Seeding sample data...\n");

@@ -13,35 +13,37 @@
     "isolatedModules": true,
     "baseUrl": ".",
     "paths": {
-      "@cimantikos/domain": ["packages/domain/src/index.ts"],
-      "@cimantikos/domain/*": ["packages/domain/src/*"],
+      "@Faworra/domain": ["packages/domain/src/index.ts"],
+      "@Faworra/domain/*": ["packages/domain/src/*"],
 
-      "@cimantikos/services": ["packages/services/src/index.ts"],
-      "@cimantikos/services/*": ["packages/services/src/*"],
+      "@Faworra/services": ["packages/services/src/index.ts"],
+      "@Faworra/services/*": ["packages/services/src/*"],
 
-      "@cimantikos/config": ["packages/config/src/index.ts"],
-      "@cimantikos/config/*": ["packages/config/src/*"],
+      "@Faworra/config": ["packages/config/src/index.ts"],
+      "@Faworra/config/*": ["packages/config/src/*"],
 
-      "@cimantikos/database/*": ["packages/database/src/*"],
-      "@cimantikos/database": ["packages/database/src/index.ts"],
-      "@cimantikos/database/schema": ["packages/database/src/schema.ts"],
+      "@Faworra/database/*": ["packages/database/src/*"],
+      "@Faworra/database": ["packages/database/src/index.ts"],
+      "@Faworra/database/schema": ["packages/database/src/schema.ts"],
 
-      "@cimantikos/ui": ["packages/ui/src/index.ts"],
-      "@cimantikos/ui/*": [
-        "packages/ui/src/*",
-        "packages/ui/src/components/*"
-      ],
+      "@Faworra/ui": ["packages/ui/src/index.ts"],
+      "@Faworra/ui/*": ["packages/ui/src/*", "packages/ui/src/components/*"],
 
-      "@cimantikos/api/*": ["apps/api/src/*"],
-      "@cimantikos/api/trpc/*": ["apps/api/src/trpc/*"],
+      "@Faworra/api/*": ["apps/api/src/*"],
+      "@Faworra/middleware/*": ["packages/middleware/src/*"],
+      "@Faworra/api/trpc/*": ["apps/api/src/trpc/*"],
 
-      "@cimantikos/supabase/*": ["packages/supabase/src/*"],
-      "@cimantikos/supabase/server": ["packages/supabase/src/client/server.ts"],
-      "@cimantikos/supabase/client": ["packages/supabase/src/client/index.ts"],
-      "@cimantikos/supabase/browser": ["packages/supabase/src/client/browser.ts"],
+      "@Faworra/supabase/*": ["packages/supabase/src/*"],
+      "@Faworra/supabase/server": ["packages/supabase/src/client/server.ts"],
+      "@Faworra/supabase/client": ["packages/supabase/src/client/index.ts"],
+      "@Faworra/supabase/browser": ["packages/supabase/src/client/browser.ts"],
 
-      "@cimantikos/schemas": ["packages/schemas/src/index.ts"],
-      "@cimantikos/schemas/*": ["packages/schemas/src/*"]
+      "@Faworra/schemas": ["packages/schemas/src/index.ts"],
+      "@Faworra/schemas/*": ["packages/schemas/src/*"],
+
+      "@Faworra/analytics/*": ["packages/analytics/src/*"],
+      "@Faworra/auth/*": ["packages/auth/src/*"],
+      "@Faworra/cache/*": ["packages/cache/src/*"]
     }
   }
 }

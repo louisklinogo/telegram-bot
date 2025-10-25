@@ -1,20 +1,21 @@
-import {
-  pgTable,
-  text,
-  uuid,
-  timestamp,
-  numeric,
-  jsonb,
-  index,
-  varchar,
-  check,
-  primaryKey,
-  integer,
-  boolean,
-  pgEnum,
-  date,
-} from "drizzle-orm/pg-core";
 import { relations, sql } from "drizzle-orm";
+import {
+  boolean,
+  check,
+  date,
+  index,
+  integer,
+  jsonb,
+  numeric,
+  pgEnum,
+  pgTable,
+  primaryKey,
+  text,
+  timestamp,
+  uniqueIndex,
+  uuid,
+  varchar,
+} from "drizzle-orm/pg-core";
 
 // ============================================================================
 // Enums for transactions
@@ -80,8 +81,22 @@ export const appointmentStatusEnum = pgEnum("appointment_status", [
   "no_show",
 ]);
 
+// ============================================================================
+// Enums for products
+// ============================================================================
+export const productStatusEnum = pgEnum("product_status", ["active", "draft", "archived"]);
+
+export const productTypeEnum = pgEnum("product_type", ["physical", "service", "digital", "bundle"]);
+
+export const fulfillmentTypeEnum = pgEnum("fulfillment_type", [
+  "stocked",
+  "dropship",
+  "made_to_order",
+  "preorder",
+]);
+
 /**
- * Schema V2 - Cimantikós Clothing Company
+ * Schema V2 - FaworraClothing Company
  * All monetary values are in Ghana Cedis (GHS)
  */
 
@@ -124,9 +139,9 @@ export const teamMemberships = pgTable(
     pk: primaryKey({ columns: [table.teamId, table.userId], name: "team_memberships_pkey" }),
     roleCheck: check(
       "chk_team_memberships_role",
-      sql`${table.role} in ('owner','manager','agent','custom')`,
+      sql`${table.role} in ('owner','manager','agent','custom')`
     ),
-  }),
+  })
 );
 
 // Clients table - Core customer information (team-scoped)
@@ -163,7 +178,7 @@ export const clients = pgTable(
     whatsappIdx: index("idx_clients_whatsapp").on(table.whatsapp),
     emailIdx: index("idx_clients_email").on(table.email),
     deletedAtIdx: index("idx_clients_deleted_at").on(table.deletedAt),
-  }),
+  })
 );
 
 // Orders table - Tailoring orders with items
@@ -186,6 +201,12 @@ export const orders = pgTable(
     // Additional Info
     notes: text("notes"),
     dueDate: timestamp("due_date", { withTimezone: true }),
+    // Audit / provenance for agents & idempotency
+    idempotencyKey: text("idempotency_key"),
+    createdByType: text("created_by_type"), // user|agent|system
+    createdById: uuid("created_by_id"),
+    source: text("source"), // e.g., ui|api|agent
+    conversationId: text("conversation_id"),
     // Metadata
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
@@ -197,10 +218,14 @@ export const orders = pgTable(
     teamIdIdx: index("idx_orders_team_id").on(table.teamId),
     clientIdIdx: index("idx_orders_client_id").on(table.clientId),
     statusIdx: index("idx_orders_status").on(table.status),
-    teamOrderUnique: index("uq_orders_team_order").on(table.teamId, table.orderNumber),
+    teamOrderUnique: uniqueIndex("uniq_orders_team_order_number").on(
+      table.teamId,
+      table.orderNumber
+    ),
+    idempIdx: index("idx_orders_idempotency_key").on(table.idempotencyKey),
     createdAtIdx: index("idx_orders_created_at").on(table.createdAt),
     deletedAtIdx: index("idx_orders_deleted_at").on(table.deletedAt),
-  }),
+  })
 );
 
 // Invoices table - Billing and payment tracking
@@ -232,6 +257,12 @@ export const invoices = pgTable(
     invoiceUrl: text("invoice_url"), // PDF URL
     // Additional Info
     notes: text("notes"),
+    // Audit for agents & idempotency
+    idempotencyKey: text("idempotency_key"),
+    createdByType: text("created_by_type"),
+    createdById: uuid("created_by_id"),
+    source: text("source"),
+    conversationId: text("conversation_id"),
     // Metadata
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
@@ -243,9 +274,10 @@ export const invoices = pgTable(
     statusIdx: index("idx_invoices_status").on(table.status),
     sentAtIdx: index("idx_invoices_sent_at").on(table.sentAt),
     teamInvoiceUnique: index("uq_invoices_team_invoice").on(table.teamId, table.invoiceNumber),
+    idempIdx: index("idx_invoices_idempotency_key").on(table.idempotencyKey),
     createdAtIdx: index("idx_invoices_created_at").on(table.createdAt),
     deletedAtIdx: index("idx_invoices_deleted_at").on(table.deletedAt),
-  }),
+  })
 );
 
 // Invoice Items table - Line items for invoices (snapshot from order items)
@@ -265,7 +297,7 @@ export const invoiceItems = pgTable(
   },
   (table) => ({
     invoiceIdIdx: index("idx_invoice_items_invoice_id").on(table.invoiceId),
-  }),
+  })
 );
 
 // Measurements table - Customer measurements for tailoring
@@ -287,7 +319,9 @@ export const measurements = pgTable(
     // Versioning System
     version: integer("version").default(1).notNull(), // Version number (1, 2, 3...)
     measurementGroupId: uuid("measurement_group_id"), // Groups all versions together
-    previousVersionId: uuid("previous_version_id").references((): any => measurements.id, { onDelete: "set null" }), // Links to parent version
+    previousVersionId: uuid("previous_version_id").references((): any => measurements.id, {
+      onDelete: "set null",
+    }), // Links to parent version
     isActive: boolean("is_active").default(true).notNull(), // Current active version for client
     tags: text("tags").array().default(sql`ARRAY[]::text[]`), // Flexible tags (replaces garment_type)
     // Additional Info
@@ -308,7 +342,7 @@ export const measurements = pgTable(
     measurementGroupIdIdx: index("idx_measurements_group_id").on(table.measurementGroupId),
     clientActiveIdx: index("idx_measurements_client_active").on(table.clientId, table.isActive),
     tagsIdx: index("idx_measurements_tags").on(table.tags),
-  }),
+  })
 );
 
 // Relations
@@ -351,6 +385,73 @@ export const measurementsRelations = relations(measurements, ({ one }) => ({
   }),
 }));
 
+// ============================================================================
+// Leads (Sales pipeline entries linked to contacts/threads)
+// ============================================================================
+export const leads = pgTable(
+  "leads",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    teamId: uuid("team_id")
+      .notNull()
+      .references(() => teams.id, { onDelete: "cascade" }),
+    threadId: uuid("thread_id").references(() => communicationThreads.id, {
+      onDelete: "set null",
+    }),
+    customerId: uuid("customer_id").references(() => clients.id, { onDelete: "set null" }),
+    ownerUserId: uuid("owner_user_id").references(() => users.id, { onDelete: "set null" }),
+    // Immutable prospect snapshot (captured at lead creation)
+    prospectName: text("prospect_name"),
+    prospectPhone: varchar("prospect_phone", { length: 50 }),
+    prospectHandle: text("prospect_handle"),
+    whatsappContactId: uuid("whatsapp_contact_id").references(() => whatsappContacts.id, {
+      onDelete: "set null",
+    }),
+    instagramContactId: uuid("instagram_contact_id").references(() => instagramContacts.id, {
+      onDelete: "set null",
+    }),
+    source: varchar("source", { length: 32 }).notNull(), // whatsapp|instagram|email|telegram
+    status: varchar("status", { length: 32 }).default("new").notNull(), // new|interested|qualified|converted|lost
+    score: integer("score").default(0).notNull(), // 0-100
+    qualification: varchar("qualification", { length: 16 }).default("cold").notNull(), // hot|warm|cold
+    messageCount: integer("message_count").default(0).notNull(),
+    lastInteractionAt: timestamp("last_interaction_at", { withTimezone: true }),
+    notes: text("notes"),
+    metadata: jsonb("metadata").default(sql`'{}'::jsonb`).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => ({
+    teamIdx: index("idx_leads_team").on(table.teamId),
+    teamStatusIdx: index("idx_leads_team_status").on(table.teamId, table.status),
+    teamScoreIdx: index("idx_leads_team_score").on(table.teamId, table.score),
+    lastInteractionIdx: index("idx_leads_last_interaction").on(
+      table.teamId,
+      table.lastInteractionAt,
+      table.id
+    ),
+    uniqueTeamThread: uniqueIndex("uq_leads_team_thread").on(table.teamId, table.threadId),
+  })
+);
+
+export const leadsRelations = relations(leads, ({ one }) => ({
+  team: one(teams, { fields: [leads.teamId], references: [teams.id] }),
+  thread: one(communicationThreads, {
+    fields: [leads.threadId],
+    references: [communicationThreads.id],
+  }),
+  client: one(clients, { fields: [leads.customerId], references: [clients.id] }),
+  owner: one(users, { fields: [leads.ownerUserId], references: [users.id] }),
+  whatsappContact: one(whatsappContacts, {
+    fields: [leads.whatsappContactId],
+    references: [whatsappContacts.id],
+  }),
+  instagramContact: one(instagramContacts, {
+    fields: [leads.instagramContactId],
+    references: [instagramContacts.id],
+  }),
+}));
+
 export const teamsRelations = relations(teams, ({ many }) => ({
   clients: many(clients),
   orders: many(orders),
@@ -363,12 +464,219 @@ export const teamsRelations = relations(teams, ({ many }) => ({
   transactionTags: many(transactionTags),
   transactionAttachments: many(transactionAttachments),
   tags: many(tags),
+  leads: many(leads),
 }));
 
 export const usersRelations = relations(users, ({ many }) => ({
   memberships: many(teamMemberships),
   assignedTransactions: many(transactions),
   uploadedAttachments: many(transactionAttachments),
+}));
+
+// ============================================================================
+// Products domain
+// ============================================================================
+
+export const products = pgTable(
+  "products",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    teamId: uuid("team_id")
+      .notNull()
+      .references(() => teams.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    slug: varchar("slug", { length: 120 }),
+    type: productTypeEnum("type").default("physical").notNull(),
+    status: productStatusEnum("status").default("active").notNull(),
+    description: text("description"),
+    categorySlug: varchar("category_slug", { length: 120 }),
+    tags: jsonb("tags").$type<string[]>().default(sql`'[]'::jsonb`).notNull(),
+    attributes: jsonb("attributes").default(sql`'{}'::jsonb`).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+    deletedAt: timestamp("deleted_at", { withTimezone: true }),
+  },
+  (table) => ({
+    teamIdx: index("idx_products_team").on(table.teamId),
+    teamNameIdx: index("idx_products_team_name").on(table.teamId, table.name),
+    teamSlugUnique: uniqueIndex("uq_products_team_slug").on(table.teamId, table.slug),
+    statusIdx: index("idx_products_status").on(table.status),
+  })
+);
+
+export const inventoryLocations = pgTable(
+  "inventory_locations",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    teamId: uuid("team_id")
+      .notNull()
+      .references(() => teams.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    code: varchar("code", { length: 32 }),
+    isDefault: boolean("is_default").default(false).notNull(),
+    address: text("address"),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => ({
+    teamIdx: index("idx_locations_team").on(table.teamId),
+    teamCodeUnique: uniqueIndex("uq_locations_team_code").on(table.teamId, table.code),
+  })
+);
+
+export const productVariants = pgTable(
+  "product_variants",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    teamId: uuid("team_id")
+      .notNull()
+      .references(() => teams.id, { onDelete: "cascade" }),
+    productId: uuid("product_id")
+      .notNull()
+      .references(() => products.id, { onDelete: "cascade" }),
+    name: text("name"),
+    sku: varchar("sku", { length: 64 }),
+    barcode: varchar("barcode", { length: 64 }),
+    unitOfMeasure: varchar("unit_of_measure", { length: 32 }),
+    packSize: numeric("pack_size", { precision: 10, scale: 3 }),
+    price: numeric("price", { precision: 12, scale: 2 }),
+    currency: varchar("currency", { length: 8 }),
+    cost: numeric("cost", { precision: 12, scale: 2 }),
+    status: productStatusEnum("status").default("active").notNull(),
+    fulfillmentType: fulfillmentTypeEnum("fulfillment_type").default("stocked").notNull(),
+    stockManaged: boolean("stock_managed").default(true).notNull(),
+    leadTimeDays: integer("lead_time_days"),
+    availabilityDate: date("availability_date"),
+    backorderPolicy: varchar("backorder_policy", { length: 16 }), // deny|allow|preorder
+    capacityPerPeriod: integer("capacity_per_period"),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => ({
+    teamIdx: index("idx_variants_team").on(table.teamId),
+    productIdx: index("idx_variants_product").on(table.productId),
+    teamSkuUnique: uniqueIndex("uq_variants_team_sku").on(table.teamId, table.sku),
+    statusIdx: index("idx_variants_status").on(table.status),
+  })
+);
+
+export const productInventory = pgTable(
+  "product_inventory",
+  {
+    teamId: uuid("team_id")
+      .notNull()
+      .references(() => teams.id, { onDelete: "cascade" }),
+    variantId: uuid("variant_id")
+      .notNull()
+      .references(() => productVariants.id, { onDelete: "cascade" }),
+    locationId: uuid("location_id")
+      .notNull()
+      .references(() => inventoryLocations.id, { onDelete: "cascade" }),
+    onHand: integer("on_hand").default(0).notNull(),
+    allocated: integer("allocated").default(0).notNull(),
+    safetyStock: integer("safety_stock").default(0).notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => ({
+    pk: primaryKey({ columns: [table.variantId, table.locationId], name: "pk_product_inventory" }),
+    teamIdx: index("idx_product_inventory_team").on(table.teamId),
+  })
+);
+
+export const productsRelations = relations(products, ({ many, one }) => ({
+  variants: many(productVariants),
+}));
+
+export const productVariantsRelations = relations(productVariants, ({ one, many }) => ({
+  product: one(products, {
+    fields: [productVariants.productId],
+    references: [products.id],
+  }),
+  inventory: many(productInventory),
+}));
+
+export const inventoryLocationsRelations = relations(inventoryLocations, ({ many }) => ({
+  inventory: many(productInventory),
+}));
+
+export const productInventoryRelations = relations(productInventory, ({ one }) => ({
+  variant: one(productVariants, {
+    fields: [productInventory.variantId],
+    references: [productVariants.id],
+  }),
+  location: one(inventoryLocations, {
+    fields: [productInventory.locationId],
+    references: [inventoryLocations.id],
+  }),
+}));
+
+// Product Categories (hierarchical, team-specific)
+export const productCategories = pgTable(
+  "product_categories",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    teamId: uuid("team_id")
+      .notNull()
+      .references(() => teams.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    slug: text("slug").notNull(),
+    color: text("color"),
+    description: text("description"),
+    parentId: uuid("parent_id").references((): any => productCategories.id, {
+      onDelete: "set null",
+    }),
+    system: boolean("system").default(false).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => ({
+    teamIdx: index("idx_product_categories_team_id").on(table.teamId),
+    parentIdx: index("idx_product_categories_parent_id").on(table.parentId),
+    slugIdx: index("idx_product_categories_slug").on(table.slug),
+    uniqueSlugPerTeam: index("unique_product_category_slug_per_team").on(table.teamId, table.slug),
+  })
+);
+
+export const productCategoriesRelations = relations(productCategories, ({ many }) => ({
+  // children relation via parentId handled at query layer
+  // products: many(products) - products keep a slug reference only for now
+}));
+
+// Product media: normalized images/files per product or variant
+export const productMedia = pgTable(
+  "product_media",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    teamId: uuid("team_id")
+      .notNull()
+      .references(() => teams.id, { onDelete: "cascade" }),
+    productId: uuid("product_id")
+      .notNull()
+      .references(() => products.id, { onDelete: "cascade" }),
+    variantId: uuid("variant_id").references(() => productVariants.id, { onDelete: "cascade" }),
+    path: text("path").notNull(),
+    alt: text("alt"),
+    isPrimary: boolean("is_primary").default(false).notNull(),
+    position: integer("position"),
+    width: integer("width"),
+    height: integer("height"),
+    sizeBytes: integer("size_bytes"),
+    mimeType: varchar("mime_type", { length: 128 }),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => ({
+    teamIdx: index("idx_product_media_team").on(table.teamId),
+    productIdx: index("idx_product_media_product").on(table.productId),
+    variantIdx: index("idx_product_media_variant").on(table.variantId),
+  })
+);
+
+export const productMediaRelations = relations(productMedia, ({ one }) => ({
+  product: one(products, { fields: [productMedia.productId], references: [products.id] }),
+  variant: one(productVariants, {
+    fields: [productMedia.variantId],
+    references: [productVariants.id],
+  }),
 }));
 
 // Communications domain
@@ -392,9 +700,9 @@ export const communicationAccounts = pgTable(
     teamProviderExternalUnique: index("uq_comm_accounts_team_provider_external").on(
       table.teamId,
       table.provider,
-      table.externalId,
+      table.externalId
     ),
-  }),
+  })
 );
 
 export const communicationThreads = pgTable(
@@ -428,15 +736,15 @@ export const communicationThreads = pgTable(
     teamIdx: index("idx_comm_threads_team").on(table.teamId),
     accountContactUnique: index("uq_comm_threads_account_contact").on(
       table.accountId,
-      table.externalContactId,
+      table.externalContactId
     ),
     paginationIdx: index("idx_comm_threads_pagination").on(
       table.teamId,
       table.status,
       table.lastMessageAt,
-      table.id,
+      table.id
     ),
-  }),
+  })
 );
 
 export const communicationMessages = pgTable(
@@ -467,7 +775,7 @@ export const communicationMessages = pgTable(
   (table) => ({
     teamIdx: index("idx_comm_messages_team").on(table.teamId),
     threadIdx: index("idx_comm_messages_thread").on(table.threadId),
-  }),
+  })
 );
 
 export const messageAttachments = pgTable("message_attachments", {
@@ -535,10 +843,10 @@ export const financialAccounts = pgTable(
     teamProviderExternal: index("uq_fin_accounts_team_provider_external").on(
       table.teamId,
       table.provider,
-      table.externalId,
+      table.externalId
     ),
     statusIdx: index("idx_fin_accounts_status").on(table.status),
-  }),
+  })
 );
 
 // Financial transactions (Enhanced with Midday patterns)
@@ -549,20 +857,20 @@ export const transactions = pgTable(
     teamId: uuid("team_id")
       .notNull()
       .references(() => teams.id, { onDelete: "cascade" }),
-    
+
     // Core fields
     date: date("date").notNull(), // Accounting date (separate from createdAt)
     name: text("name").notNull(), // Transaction name/title
     description: text("description"), // Longer details (nullable in live DB)
     internalId: text("internal_id").notNull(), // For deduplication
-    
+
     // Financial
     amount: numeric("amount", { precision: 10, scale: 2 }).notNull(),
     currency: varchar("currency", { length: 3 }).default("GHS").notNull(),
     balance: numeric("balance", { precision: 10, scale: 2 }), // Running balance (NEW)
     baseAmount: numeric("base_amount", { precision: 10, scale: 2 }), // Converted to base currency (NEW)
     baseCurrency: varchar("base_currency", { length: 3 }), // Team's base currency (NEW)
-    
+
     // Classification
     type: transactionTypeEnum("type").notNull(),
     category: varchar("category", { length: 100 }), // DEPRECATED: Keep for migration
@@ -570,14 +878,14 @@ export const transactions = pgTable(
     // Live DB uses varchar(50) for payment_method
     paymentMethod: varchar("payment_method", { length: 50 }),
     status: transactionStatusEnum("status").default("completed"),
-    
+
     // Relationships
     clientId: uuid("client_id").references(() => clients.id, { onDelete: "set null" }),
     orderId: uuid("order_id").references(() => orders.id, { onDelete: "set null" }),
     invoiceId: uuid("invoice_id").references(() => invoices.id, { onDelete: "set null" }),
     assignedId: uuid("assigned_id").references(() => users.id, { onDelete: "set null" }), // Who owns/manages (NEW)
     accountId: uuid("account_id").references(() => financialAccounts.id, { onDelete: "set null" }),
-    
+
     // Metadata
     transactionNumber: varchar("transaction_number", { length: 50 }).notNull(),
     counterpartyName: text("counterparty_name"), // Who paid/received (NEW)
@@ -585,15 +893,15 @@ export const transactions = pgTable(
     paymentReference: varchar("payment_reference", { length: 100 }),
     notes: text("notes"),
     manual: boolean("manual").default(false), // User-created vs bank-imported (NEW)
-    
+
     // Recurring transactions (NEW)
     recurring: boolean("recurring").default(false),
     frequency: transactionFrequencyEnum("frequency"),
-    
+
     // AI enrichment (NEW)
     enrichmentCompleted: boolean("enrichment_completed").default(false),
     excludeFromAnalytics: boolean("exclude_from_analytics").default(false).notNull(),
-    
+
     // Timestamps
     transactionDate: timestamp("transaction_date", { withTimezone: true }).defaultNow().notNull(),
     dueDate: timestamp("due_date", { withTimezone: true }),
@@ -614,13 +922,10 @@ export const transactions = pgTable(
       table.status,
       table.date
     ),
-    teamTypeIdx: index("idx_transactions_team_type_date").on(
-      table.teamId,
-      table.type,
-      table.date
-    ),
+    teamTypeIdx: index("idx_transactions_team_type_date").on(table.teamId, table.type, table.date),
     internalIdIdx: index("idx_transactions_internal_id").on(table.internalId),
     accountIdx: index("idx_transactions_account_id").on(table.accountId),
+    teamAmountIdx: index("idx_transactions_team_amount").on(table.teamId, table.amount),
   })
 );
 
@@ -692,6 +997,30 @@ export const transactionTags = pgTable(
   })
 );
 
+// Mapping between product categories and transaction categories (per team)
+export const productCategoryMappings = pgTable(
+  "product_category_mappings",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    teamId: uuid("team_id")
+      .notNull()
+      .references(() => teams.id, { onDelete: "cascade" }),
+    productCategoryId: uuid("product_category_id")
+      .notNull()
+      .references(() => productCategories.id, { onDelete: "cascade" }),
+    transactionCategoryId: uuid("transaction_category_id")
+      .notNull()
+      .references((): any => transactionCategories.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => ({
+    teamIdx: index("idx_pcm_team").on(table.teamId),
+    productIdx: index("idx_pcm_product_category").on(table.productCategoryId),
+    transactionIdx: index("idx_pcm_transaction_category").on(table.transactionCategoryId),
+    uniquePerTeam: uniqueIndex("uq_pcm_team_product").on(table.teamId, table.productCategoryId),
+  })
+);
+
 // Transaction Attachments (receipts, invoices, documents)
 export const transactionAttachments = pgTable(
   "transaction_attachments",
@@ -713,9 +1042,7 @@ export const transactionAttachments = pgTable(
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   },
   (table) => ({
-    transactionIdx: index("idx_transaction_attachments_transaction_id").on(
-      table.transactionId
-    ),
+    transactionIdx: index("idx_transaction_attachments_transaction_id").on(table.transactionId),
     teamIdx: index("idx_transaction_attachments_team_id").on(table.teamId),
     typeIdx: index("idx_transaction_attachments_type").on(table.type),
     checksumIdx: index("idx_transaction_attachments_checksum").on(table.checksum),
@@ -741,17 +1068,70 @@ export const tags = pgTable(
 );
 
 // Order items (row-per-item)
-export const orderItems = pgTable("order_items", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  orderId: uuid("order_id")
-    .notNull()
-    .references(() => orders.id, { onDelete: "cascade" }),
-  name: text("name").notNull(),
-  quantity: integer("quantity").default(1).notNull(),
-  unitPrice: numeric("unit_price", { precision: 10, scale: 2 }).default("0").notNull(),
-  total: numeric("total", { precision: 10, scale: 2 }).default("0").notNull(),
-  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
-});
+export const orderItems = pgTable(
+  "order_items",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    orderId: uuid("order_id")
+      .notNull()
+      .references(() => orders.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    quantity: integer("quantity").default(1).notNull(),
+    // Use canonical column names used by existing DB (unit_price, total)
+    unitPrice: numeric("unit_price", { precision: 10, scale: 2 }).default("0").notNull(),
+    total: numeric("total", { precision: 10, scale: 2 }).default("0").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => ({
+    // Match live DB index from order_items_order_id_idx
+    orderIdIdx: index("order_items_order_id_idx").on(table.orderId),
+    // Check constraint from live DB
+    quantityCheck: check("order_items_quantity_check", sql`quantity > 0`),
+  })
+);
+
+// Daily analytics summary (team scoped, day-granular)
+export const teamDailyOrdersSummary = pgTable(
+  "team_daily_orders_summary",
+  {
+    teamId: uuid("team_id").notNull(),
+    day: date("day").notNull(),
+    createdCount: integer("created_count").default(0).notNull(),
+    createdCountExclCancelled: integer("created_count_excl_cancelled").default(0).notNull(),
+    createdValueSumExclCancelled: numeric("created_value_sum_excl_cancelled", {
+      precision: 12,
+      scale: 2,
+    })
+      .default("0")
+      .notNull(),
+    completedCount: integer("completed_count").default(0).notNull(),
+    completedValueSum: numeric("completed_value_sum", { precision: 12, scale: 2 })
+      .default("0")
+      .notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => ({
+    pk: primaryKey({ columns: [table.teamId, table.day], name: "team_daily_orders_summary_pkey" }),
+  })
+);
+
+// Re-export Drizzle helpers to ensure single-module type identity across workspace
+export {
+  and,
+  asc,
+  desc,
+  eq,
+  gt,
+  gte,
+  ilike,
+  inArray,
+  isNull,
+  lt,
+  lte,
+  ne,
+  or,
+  sql,
+} from "drizzle-orm";
 
 // Contacts for channels
 export const whatsappContacts = pgTable("whatsapp_contacts", {
@@ -920,7 +1300,7 @@ export const documents = pgTable(
     clientIdIdx: index("idx_documents_client_id").on(table.clientId),
     createdAtIdx: index("idx_documents_created_at").on(table.createdAt),
     deletedAtIdx: index("idx_documents_deleted_at").on(table.deletedAt),
-  }),
+  })
 );
 
 // Appointments (align with live Supabase)
@@ -1010,24 +1390,21 @@ export const transactionsRelations = relations(transactions, ({ one, many }) => 
   allocations: many(transactionAllocations),
 }));
 
-export const transactionCategoriesRelations = relations(
-  transactionCategories,
-  ({ one, many }) => ({
-    team: one(teams, {
-      fields: [transactionCategories.teamId],
-      references: [teams.id],
-    }),
-    parent: one(transactionCategories, {
-      fields: [transactionCategories.parentId],
-      references: [transactionCategories.id],
-      relationName: "parent_child",
-    }),
-    children: many(transactionCategories, {
-      relationName: "parent_child",
-    }),
-    transactions: many(transactions),
-  })
-);
+export const transactionCategoriesRelations = relations(transactionCategories, ({ one, many }) => ({
+  team: one(teams, {
+    fields: [transactionCategories.teamId],
+    references: [teams.id],
+  }),
+  parent: one(transactionCategories, {
+    fields: [transactionCategories.parentId],
+    references: [transactionCategories.id],
+    relationName: "parent_child",
+  }),
+  children: many(transactionCategories, {
+    relationName: "parent_child",
+  }),
+  transactions: many(transactions),
+}));
 
 export const transactionTagsRelations = relations(transactionTags, ({ one }) => ({
   team: one(teams, {
@@ -1044,23 +1421,20 @@ export const transactionTagsRelations = relations(transactionTags, ({ one }) => 
   }),
 }));
 
-export const transactionAttachmentsRelations = relations(
-  transactionAttachments,
-  ({ one }) => ({
-    team: one(teams, {
-      fields: [transactionAttachments.teamId],
-      references: [teams.id],
-    }),
-    transaction: one(transactions, {
-      fields: [transactionAttachments.transactionId],
-      references: [transactions.id],
-    }),
-    uploader: one(users, {
-      fields: [transactionAttachments.uploadedBy],
-      references: [users.id],
-    }),
-  })
-);
+export const transactionAttachmentsRelations = relations(transactionAttachments, ({ one }) => ({
+  team: one(teams, {
+    fields: [transactionAttachments.teamId],
+    references: [teams.id],
+  }),
+  transaction: one(transactions, {
+    fields: [transactionAttachments.transactionId],
+    references: [transactions.id],
+  }),
+  uploader: one(users, {
+    fields: [transactionAttachments.uploadedBy],
+    references: [users.id],
+  }),
+}));
 
 export const tagsRelations = relations(tags, ({ one, many }) => ({
   team: one(teams, {

@@ -22,9 +22,6 @@ out/
 *~
 .DS_Store
 
-# Logs
-logs/
-*.log
 
 # Runtime data
 pids/
@@ -119,14 +116,25 @@ apps/*/.mastra/
 # Workspace data artifacts
 data/
 
+# Supabase ephemeral state
+supabase/.temp/
+
 # WhatsApp session files (contain encryption keys)
 apps/worker/.sessions/
 .sessions/
 
+# Local runtime logs (keep out of Git; view locally when needed)
+logs/
+
 # Embedded git repositories
-evolution-api
-midday
+evolution-api/
+midday/
+v0*
+whatsapp/
 
 # Secret files with tokens/keys
 docs/essentials.txt
 token.txt
+
+# Archived local notes and assets
+.archived/

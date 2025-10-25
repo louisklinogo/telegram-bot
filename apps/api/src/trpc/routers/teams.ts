@@ -1,9 +1,10 @@
+import { getTeamMembers } from "@Faworra/database/queries";
+// Import Drizzle helpers from database schema to ensure single-module type identity
+import { and, eq, teams, users, usersOnTeam } from "@Faworra/database/schema";
+import { createClient } from "@supabase/supabase-js";
+import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "../init";
-import { TRPCError } from "@trpc/server";
-import { createClient } from "@supabase/supabase-js";
-import { and, eq } from "drizzle-orm";
-import { teams, users, usersOnTeam } from "@cimantikos/database/schema";
 
 export const teamsRouter = createTRPCRouter({
   // List teams for the authenticated user
@@ -16,12 +17,20 @@ export const teamsRouter = createTRPCRouter({
     return rows.filter((r) => r.id);
   }),
 
-  // Get current team id for the user
+  // Get current team info for the user (id + baseCurrency)
   current: protectedProcedure.query(async ({ ctx }) => {
     const row = await ctx.db.query.users.findFirst({
       where: (u, { eq }) => eq(u.id, ctx.userId!),
     });
-    return { teamId: row?.currentTeamId ?? null };
+    const teamId = row?.currentTeamId ?? null;
+    if (!teamId)
+      return { teamId: null as string | null, baseCurrency: undefined as string | undefined };
+    const settings = await ctx.db
+      .select({ baseCurrency: teams.baseCurrency })
+      .from(teams)
+      .where(eq(teams.id, teamId))
+      .limit(1);
+    return { teamId, baseCurrency: settings[0]?.baseCurrency };
   }),
 
   // Set current team id (only if user is a member)
@@ -36,15 +45,26 @@ export const teamsRouter = createTRPCRouter({
       if (!membership.length) {
         throw new TRPCError({ code: "FORBIDDEN", message: "Not a member of this team" });
       }
-      await ctx.db.update(users).set({ currentTeamId: input.teamId }).where(eq(users.id, ctx.userId!));
+      await ctx.db
+        .update(users)
+        .set({ currentTeamId: input.teamId })
+        .where(eq(users.id, ctx.userId!));
       return { success: true };
     }),
+
+  // Get team members for assignee filtering
+  members: protectedProcedure.query(async ({ ctx }) => {
+    if (!ctx.teamId) {
+      throw new TRPCError({ code: "BAD_REQUEST", message: "No current team" });
+    }
+    return getTeamMembers(ctx.db, { teamId: ctx.teamId });
+  }),
 
   create: protectedProcedure
     .input(
       z.object({
         name: z.string().min(1).max(255),
-      }),
+      })
     )
     .mutation(async ({ ctx, input }) => {
       // ctx.userId is guaranteed by protectedProcedure
@@ -58,7 +78,7 @@ export const teamsRouter = createTRPCRouter({
             persistSession: false,
             autoRefreshToken: false,
           },
-        },
+        }
       );
 
       // Ensure a user profile row exists (FK required by users_on_team)
@@ -68,7 +88,10 @@ export const teamsRouter = createTRPCRouter({
           .upsert({ id: ctx.userId!, email: ctx.session?.email || null }, { onConflict: "id" });
         if (userUpsertErr) {
           console.error("Upsert user failed:", userUpsertErr.message);
-          throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to create user profile" });
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Failed to create user profile",
+          });
         }
       }
 

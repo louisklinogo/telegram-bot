@@ -31,7 +31,7 @@
 2) Lockfiles
    - Keep only root bun.lock (apps/admin/bun.lock already removed; re-check none remains).
 3) TypeScript
-   - tsconfig.base.json stays the shared base (paths for @cimantikos/{config,services,domain}).
+   - tsconfig.base.json stays the shared base (paths for @Faworra/{config,services,domain}).
    - Ensure each app/package tsconfig extends base and sets local rootDir/outDir.
 
 ## Phase 2 — Domain & Services Consolidation
@@ -45,7 +45,7 @@
    - Update packages/domain/src/index.ts to export only the canonical set to eliminate TS2308 duplicate export errors.
 2) Ensure packages/services exports a stable surface:
    - src/index.ts re-exports: cloudinary, supabaseClient, supabaseDatabase, supabase/* (types + services CRUDs).
-   - services depends on @cimantikos/config and @cimantikos/domain as needed.
+   - services depends on @Faworra/config and @Faworra/domain as needed.
 3) packages/config
    - validateEnv: keep NEXT_PUBLIC_SUPABASE_URL/NEXT_PUBLIC_SUPABASE_ANON_KEY mapping logic.
 

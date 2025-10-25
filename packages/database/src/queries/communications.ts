@@ -1,10 +1,11 @@
-import { eq, and, desc, lt, or } from "drizzle-orm";
+import { and, desc, eq, lt, or } from "drizzle-orm";
 import type { DbClient } from "../client";
 import {
-  communicationThreads,
-  communicationMessages,
-  communicationAccounts,
   clients,
+  communicationAccounts,
+  communicationMessages,
+  communicationThreads,
+  leads,
 } from "../schema";
 
 /**
@@ -32,13 +33,13 @@ export async function getThreadsByStatus(
     status: string;
     limit?: number;
     cursor?: { lastMessageAt: Date | null; id: string } | null;
-  },
+  }
 ) {
   const { teamId, status, limit = 50, cursor } = params;
 
   const baseWhere = and(
     eq(communicationThreads.teamId, teamId),
-    eq(communicationThreads.status, status),
+    eq(communicationThreads.status, status)
   );
 
   const rows = await db
@@ -46,10 +47,18 @@ export async function getThreadsByStatus(
       thread: communicationThreads,
       account: communicationAccounts,
       client: clients,
+      lead: leads,
     })
     .from(communicationThreads)
     .leftJoin(communicationAccounts, eq(communicationThreads.accountId, communicationAccounts.id))
     .leftJoin(clients, eq(communicationThreads.customerId, clients.id))
+    .leftJoin(
+      leads,
+      and(
+        eq(leads.teamId, communicationThreads.teamId),
+        eq(leads.threadId, communicationThreads.id)
+      )
+    )
     .where(
       cursor?.lastMessageAt
         ? and(
@@ -60,11 +69,11 @@ export async function getThreadsByStatus(
               // Tie-break on id when same timestamp
               and(
                 eq(communicationThreads.lastMessageAt, cursor.lastMessageAt),
-                lt(communicationThreads.id, cursor.id),
-              ),
-            ),
+                lt(communicationThreads.id, cursor.id)
+              )
+            )
           )
-        : baseWhere,
+        : baseWhere
     )
     .orderBy(desc(communicationThreads.lastMessageAt), desc(communicationThreads.id))
     .limit(limit);
@@ -79,13 +88,13 @@ export async function getThreadMessages(
   db: DbClient,
   threadId: string,
   teamId: string,
-  limit = 100,
+  limit = 100
 ) {
   return await db
     .select()
     .from(communicationMessages)
     .where(
-      and(eq(communicationMessages.threadId, threadId), eq(communicationMessages.teamId, teamId)),
+      and(eq(communicationMessages.threadId, threadId), eq(communicationMessages.teamId, teamId))
     )
     .orderBy(desc(communicationMessages.createdAt))
     .limit(limit);

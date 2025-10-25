@@ -1,0 +1,31 @@
+"use client";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { formatAmount } from "@/lib/format-currency";
+
+export function TransactionsPendingPayments({
+  amount,
+  currency,
+  loading = false,
+}: {
+  amount: number;
+  currency: string;
+  loading?: boolean;
+}) {
+  return (
+    <Card className="h-[200px]">
+      <CardHeader className="pb-3">
+        {loading ? (
+          <div className="h-8 w-32 animate-pulse rounded bg-muted" />
+        ) : (
+          <CardTitle className="font-medium text-2xl text-amber-600">
+            {formatAmount({ currency, amount })}
+          </CardTitle>
+        )}
+      </CardHeader>
+      <CardContent className="pb-[34px]">
+        <div>Pending Payments</div>
+        <div className="text-muted-foreground text-sm">Awaiting collection</div>
+      </CardContent>
+    </Card>
+  );
+}

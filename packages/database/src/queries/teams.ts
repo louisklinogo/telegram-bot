@@ -1,6 +1,6 @@
 import { eq } from "drizzle-orm";
 import type { DbClient } from "../client";
-import { teams, usersOnTeam } from "../schema";
+import { teams, users, usersOnTeam } from "../schema";
 
 export async function getUserTeams(db: DbClient, userId: string) {
   return await db
@@ -35,4 +35,19 @@ export async function getTeamById(db: DbClient, teamId: string) {
     .where(eq(teams.id, teamId))
     .limit(1);
   return result[0] || null;
+}
+
+export async function getTeamMembers(db: DbClient, params: { teamId: string }) {
+  return await db
+    .select({
+      id: users.id,
+      email: users.email,
+      fullName: users.fullName,
+      role: usersOnTeam.role,
+      createdAt: usersOnTeam.createdAt,
+    })
+    .from(usersOnTeam)
+    .innerJoin(users, eq(usersOnTeam.userId, users.id))
+    .where(eq(usersOnTeam.teamId, params.teamId))
+    .orderBy(users.fullName);
 }

@@ -1,5 +1,5 @@
 {
-  "name": "@cimantikos/ui",
+  "name": "@Faworra/ui",
   "version": "0.1.0",
   "private": true,
   "sideEffects": false,
@@ -47,13 +47,14 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "tailwind-merge": "^3.3.1",
-    "react-hook-form": "^7.54.2",
-    "@hookform/resolvers": "^3.9.1",
     "zod": "^3.24.1"
   },
   "peerDependencies": {
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "lucide-react": "^0.544.0",
+    "react-hook-form": "^7.63.0",
+    "@hookform/resolvers": "^5.2.2"
   },
   "devDependencies": {
     "@types/react": "^19",

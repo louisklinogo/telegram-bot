@@ -1,5 +1,5 @@
+import type { Database } from "@Faworra/supabase/types";
 import { createBrowserClient as createSSRBrowserClient } from "@supabase/ssr";
-import type { Database } from "@cimantikos/supabase/types";
 
 /**
  * Browser-side Supabase client for use in Client Components
@@ -8,7 +8,7 @@ import type { Database } from "@cimantikos/supabase/types";
 export function createBrowserClient() {
   return createSSRBrowserClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   );
 }
 

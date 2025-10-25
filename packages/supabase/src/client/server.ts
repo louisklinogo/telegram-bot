@@ -1,6 +1,6 @@
+import type { Database } from "@Faworra/supabase/types";
 import { createServerClient as createSSRClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
-import type { Database } from "@cimantikos/supabase/types";
 
 type CreateClientOptions = {
   admin?: boolean;
@@ -44,20 +44,18 @@ export async function createServerClient(options?: CreateClientOptions) {
 
 // Suppress noisy Supabase warnings about getSession authenticity in server logs
 // We use middleware cookie refresh and tRPC token validation; this message is expected
-const IGNORE_WARNINGS = [
-  "Using the user object as returned from supabase.auth.getSession()",
-];
+const IGNORE_WARNINGS = ["Using the user object as returned from supabase.auth.getSession()"];
 const originalWarn = console.warn;
 const originalLog = console.log;
 console.warn = (...args: any[]) => {
   const match = args.find((arg) =>
-    typeof arg === "string" ? IGNORE_WARNINGS.some((w) => arg.includes(w)) : false,
+    typeof arg === "string" ? IGNORE_WARNINGS.some((w) => arg.includes(w)) : false
   );
   if (!match) originalWarn(...args);
 };
 console.log = (...args: any[]) => {
   const match = args.find((arg) =>
-    typeof arg === "string" ? IGNORE_WARNINGS.some((w) => arg.includes(w)) : false,
+    typeof arg === "string" ? IGNORE_WARNINGS.some((w) => arg.includes(w)) : false
   );
   if (!match) originalLog(...args);
 };

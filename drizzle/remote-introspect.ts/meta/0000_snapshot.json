@@ -254,12 +254,8 @@
           "tableFrom": "clients",
           "tableTo": "teams",
           "schemaTo": "public",
-          "columnsFrom": [
-            "team_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["team_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -277,18 +273,14 @@
           "name": "Allow all operations for service role",
           "as": "PERMISSIVE",
           "for": "ALL",
-          "to": [
-            "public"
-          ],
+          "to": ["public"],
           "using": "true"
         },
         "clients_select": {
           "name": "clients_select",
           "as": "PERMISSIVE",
           "for": "SELECT",
-          "to": [
-            "authenticated"
-          ]
+          "to": ["authenticated"]
         }
       },
       "isRLSEnabled": true
@@ -559,12 +551,8 @@
           "tableFrom": "orders",
           "tableTo": "clients",
           "schemaTo": "public",
-          "columnsFrom": [
-            "client_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["client_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         },
@@ -573,12 +561,8 @@
           "tableFrom": "orders",
           "tableTo": "teams",
           "schemaTo": "public",
-          "columnsFrom": [
-            "team_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["team_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -586,9 +570,7 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
         "orders_order_number_key": {
-          "columns": [
-            "order_number"
-          ],
+          "columns": ["order_number"],
           "nullsNotDistinct": false,
           "name": "orders_order_number_key"
         }
@@ -612,18 +594,14 @@
           "name": "Allow all operations for service role",
           "as": "PERMISSIVE",
           "for": "ALL",
-          "to": [
-            "public"
-          ],
+          "to": ["public"],
           "using": "true"
         },
         "orders_select": {
           "name": "orders_select",
           "as": "PERMISSIVE",
           "for": "SELECT",
-          "to": [
-            "authenticated"
-          ]
+          "to": ["authenticated"]
         }
       },
       "isRLSEnabled": true
@@ -898,12 +876,8 @@
           "tableFrom": "measurements",
           "tableTo": "clients",
           "schemaTo": "public",
-          "columnsFrom": [
-            "client_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["client_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -912,12 +886,8 @@
           "tableFrom": "measurements",
           "tableTo": "measurements",
           "schemaTo": "public",
-          "columnsFrom": [
-            "previous_version_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["previous_version_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         },
@@ -926,12 +896,8 @@
           "tableFrom": "measurements",
           "tableTo": "teams",
           "schemaTo": "public",
-          "columnsFrom": [
-            "team_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["team_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -949,18 +915,14 @@
           "name": "Allow all operations for service role",
           "as": "PERMISSIVE",
           "for": "ALL",
-          "to": [
-            "public"
-          ],
+          "to": ["public"],
           "using": "true"
         },
         "measurements_select": {
           "name": "measurements_select",
           "as": "PERMISSIVE",
           "for": "SELECT",
-          "to": [
-            "authenticated"
-          ]
+          "to": ["authenticated"]
         }
       },
       "isRLSEnabled": true
@@ -1150,12 +1112,8 @@
           "tableFrom": "communication_accounts",
           "tableTo": "teams",
           "schemaTo": "public",
-          "columnsFrom": [
-            "team_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["team_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1168,9 +1126,7 @@
           "name": "comm_accounts_rw",
           "as": "PERMISSIVE",
           "for": "ALL",
-          "to": [
-            "authenticated"
-          ],
+          "to": ["authenticated"],
           "withCheck": "(team_id = ANY (private.get_teams_for_authenticated_user()))",
           "using": "(team_id = ANY (private.get_teams_for_authenticated_user()))"
         }
@@ -1387,12 +1343,8 @@
           "tableFrom": "communication_threads",
           "tableTo": "communication_accounts",
           "schemaTo": "public",
-          "columnsFrom": [
-            "account_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["account_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -1401,12 +1353,8 @@
           "tableFrom": "communication_threads",
           "tableTo": "users",
           "schemaTo": "public",
-          "columnsFrom": [
-            "assigned_user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["assigned_user_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         },
@@ -1415,12 +1363,8 @@
           "tableFrom": "communication_threads",
           "tableTo": "clients",
           "schemaTo": "public",
-          "columnsFrom": [
-            "customer_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["customer_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         },
@@ -1429,12 +1373,8 @@
           "tableFrom": "communication_threads",
           "tableTo": "instagram_contacts",
           "schemaTo": "public",
-          "columnsFrom": [
-            "instagram_contact_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["instagram_contact_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         },
@@ -1443,12 +1383,8 @@
           "tableFrom": "communication_threads",
           "tableTo": "teams",
           "schemaTo": "public",
-          "columnsFrom": [
-            "team_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["team_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -1457,12 +1393,8 @@
           "tableFrom": "communication_threads",
           "tableTo": "whatsapp_contacts",
           "schemaTo": "public",
-          "columnsFrom": [
-            "whatsapp_contact_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["whatsapp_contact_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -1475,9 +1407,7 @@
           "name": "comm_threads_rw",
           "as": "PERMISSIVE",
           "for": "ALL",
-          "to": [
-            "authenticated"
-          ],
+          "to": ["authenticated"],
           "withCheck": "(team_id = ANY (private.get_teams_for_authenticated_user()))",
           "using": "(team_id = ANY (private.get_teams_for_authenticated_user()))"
         }
@@ -1694,12 +1624,8 @@
           "tableFrom": "communication_messages",
           "tableTo": "teams",
           "schemaTo": "public",
-          "columnsFrom": [
-            "team_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["team_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -1708,12 +1634,8 @@
           "tableFrom": "communication_messages",
           "tableTo": "communication_threads",
           "schemaTo": "public",
-          "columnsFrom": [
-            "thread_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["thread_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1726,9 +1648,7 @@
           "name": "comm_messages_rw",
           "as": "PERMISSIVE",
           "for": "ALL",
-          "to": [
-            "authenticated"
-          ],
+          "to": ["authenticated"],
           "withCheck": "(team_id = ANY (private.get_teams_for_authenticated_user()))",
           "using": "(team_id = ANY (private.get_teams_for_authenticated_user()))"
         }
@@ -1779,12 +1699,8 @@
           "tableFrom": "users",
           "tableTo": "teams",
           "schemaTo": "public",
-          "columnsFrom": [
-            "current_team_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["current_team_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -1797,26 +1713,20 @@
           "name": "Enable insert for users based on user_id",
           "as": "PERMISSIVE",
           "for": "INSERT",
-          "to": [
-            "public"
-          ],
+          "to": ["public"],
           "withCheck": "(( SELECT auth.uid() AS uid) = id)"
         },
         "users_select_self": {
           "name": "users_select_self",
           "as": "PERMISSIVE",
           "for": "SELECT",
-          "to": [
-            "authenticated"
-          ]
+          "to": ["authenticated"]
         },
         "users_update_self": {
           "name": "users_update_self",
           "as": "PERMISSIVE",
           "for": "UPDATE",
-          "to": [
-            "authenticated"
-          ]
+          "to": ["authenticated"]
         }
       },
       "isRLSEnabled": true
@@ -1882,12 +1792,8 @@
           "tableFrom": "transaction_allocations",
           "tableTo": "invoices",
           "schemaTo": "public",
-          "columnsFrom": [
-            "invoice_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["invoice_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -1896,12 +1802,8 @@
           "tableFrom": "transaction_allocations",
           "tableTo": "transactions",
           "schemaTo": "public",
-          "columnsFrom": [
-            "transaction_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["transaction_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1909,10 +1811,7 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
         "transaction_allocations_transaction_id_invoice_id_key": {
-          "columns": [
-            "transaction_id",
-            "invoice_id"
-          ],
+          "columns": ["transaction_id", "invoice_id"],
           "nullsNotDistinct": false,
           "name": "transaction_allocations_transaction_id_invoice_id_key"
         }
@@ -1928,9 +1827,7 @@
           "name": "team_transaction_allocations_all",
           "as": "PERMISSIVE",
           "for": "ALL",
-          "to": [
-            "public"
-          ],
+          "to": ["public"],
           "withCheck": "((EXISTS ( SELECT 1\n   FROM (transactions t\n     JOIN users_on_team u ON ((u.team_id = t.team_id)))\n  WHERE ((t.id = transaction_allocations.transaction_id) AND (u.user_id = auth.uid())))) OR (EXISTS ( SELECT 1\n   FROM (invoices i\n     JOIN users_on_team u ON ((u.team_id = i.team_id)))\n  WHERE ((i.id = transaction_allocations.invoice_id) AND (u.user_id = auth.uid())))))",
           "using": "((EXISTS ( SELECT 1\n   FROM (transactions t\n     JOIN users_on_team u ON ((u.team_id = t.team_id)))\n  WHERE ((t.id = transaction_allocations.transaction_id) AND (u.user_id = auth.uid())))) OR (EXISTS ( SELECT 1\n   FROM (invoices i\n     JOIN users_on_team u ON ((u.team_id = i.team_id)))\n  WHERE ((i.id = transaction_allocations.invoice_id) AND (u.user_id = auth.uid())))))"
         }
@@ -2019,12 +1916,8 @@
           "tableFrom": "invoice_items",
           "tableTo": "invoices",
           "schemaTo": "public",
-          "columnsFrom": [
-            "invoice_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["invoice_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -2033,12 +1926,8 @@
           "tableFrom": "invoice_items",
           "tableTo": "order_items",
           "schemaTo": "public",
-          "columnsFrom": [
-            "order_item_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["order_item_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -2357,12 +2246,8 @@
           "tableFrom": "invoices",
           "tableTo": "orders",
           "schemaTo": "public",
-          "columnsFrom": [
-            "order_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["order_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         },
@@ -2371,12 +2256,8 @@
           "tableFrom": "invoices",
           "tableTo": "teams",
           "schemaTo": "public",
-          "columnsFrom": [
-            "team_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["team_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -2384,9 +2265,7 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
         "invoices_invoice_number_key": {
-          "columns": [
-            "invoice_number"
-          ],
+          "columns": ["invoice_number"],
           "nullsNotDistinct": false,
           "name": "invoices_invoice_number_key"
         }
@@ -2410,18 +2289,14 @@
           "name": "Allow all operations for service role",
           "as": "PERMISSIVE",
           "for": "ALL",
-          "to": [
-            "public"
-          ],
+          "to": ["public"],
           "using": "true"
         },
         "invoices_select": {
           "name": "invoices_select",
           "as": "PERMISSIVE",
           "for": "SELECT",
-          "to": [
-            "authenticated"
-          ]
+          "to": ["authenticated"]
         }
       },
       "isRLSEnabled": true
@@ -2502,12 +2377,8 @@
           "tableFrom": "order_items",
           "tableTo": "orders",
           "schemaTo": "public",
-          "columnsFrom": [
-            "order_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["order_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -2579,12 +2450,8 @@
           "tableFrom": "message_attachments",
           "tableTo": "communication_messages",
           "schemaTo": "public",
-          "columnsFrom": [
-            "message_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["message_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -2597,9 +2464,7 @@
           "name": "msg_attachments_rw",
           "as": "PERMISSIVE",
           "for": "ALL",
-          "to": [
-            "authenticated"
-          ],
+          "to": ["authenticated"],
           "withCheck": "(EXISTS ( SELECT 1\n   FROM communication_messages m\n  WHERE ((m.id = message_attachments.message_id) AND (m.team_id = ANY (private.get_teams_for_authenticated_user())))))",
           "using": "(EXISTS ( SELECT 1\n   FROM communication_messages m\n  WHERE ((m.id = message_attachments.message_id) AND (m.team_id = ANY (private.get_teams_for_authenticated_user())))))"
         }
@@ -2698,12 +2563,8 @@
           "tableFrom": "bank_statements",
           "tableTo": "teams",
           "schemaTo": "public",
-          "columnsFrom": [
-            "team_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["team_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -2716,9 +2577,7 @@
           "name": "bank_statements_rw",
           "as": "PERMISSIVE",
           "for": "ALL",
-          "to": [
-            "authenticated"
-          ],
+          "to": ["authenticated"],
           "withCheck": "(team_id = ANY (private.get_teams_for_authenticated_user()))",
           "using": "(team_id = ANY (private.get_teams_for_authenticated_user()))"
         }
@@ -2859,12 +2718,8 @@
           "tableFrom": "communication_outbox",
           "tableTo": "communication_accounts",
           "schemaTo": "public",
-          "columnsFrom": [
-            "account_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["account_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -2873,12 +2728,8 @@
           "tableFrom": "communication_outbox",
           "tableTo": "teams",
           "schemaTo": "public",
-          "columnsFrom": [
-            "team_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["team_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -2891,9 +2742,7 @@
           "name": "comm_outbox_rw",
           "as": "PERMISSIVE",
           "for": "ALL",
-          "to": [
-            "authenticated"
-          ],
+          "to": ["authenticated"],
           "withCheck": "(team_id = ANY (private.get_teams_for_authenticated_user()))",
           "using": "(team_id = ANY (private.get_teams_for_authenticated_user()))"
         }
@@ -2950,12 +2799,8 @@
           "tableFrom": "message_delivery",
           "tableTo": "communication_messages",
           "schemaTo": "public",
-          "columnsFrom": [
-            "message_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["message_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -2968,9 +2813,7 @@
           "name": "team_message_delivery_all",
           "as": "PERMISSIVE",
           "for": "ALL",
-          "to": [
-            "public"
-          ],
+          "to": ["public"],
           "withCheck": "(EXISTS ( SELECT 1\n   FROM (communication_messages m\n     JOIN users_on_team u ON ((u.team_id = m.team_id)))\n  WHERE ((m.id = message_delivery.message_id) AND (u.user_id = auth.uid()))))",
           "using": "(EXISTS ( SELECT 1\n   FROM (communication_messages m\n     JOIN users_on_team u ON ((u.team_id = m.team_id)))\n  WHERE ((m.id = message_delivery.message_id) AND (u.user_id = auth.uid()))))"
         }
@@ -3056,12 +2899,8 @@
           "tableFrom": "users_on_team",
           "tableTo": "teams",
           "schemaTo": "public",
-          "columnsFrom": [
-            "team_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["team_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -3070,12 +2909,8 @@
           "tableFrom": "users_on_team",
           "tableTo": "users",
           "schemaTo": "public",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -3083,10 +2918,7 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
         "users_on_team_user_id_team_id_key": {
-          "columns": [
-            "user_id",
-            "team_id"
-          ],
+          "columns": ["user_id", "team_id"],
           "nullsNotDistinct": false,
           "name": "users_on_team_user_id_team_id_key"
         }
@@ -3097,9 +2929,7 @@
           "name": "users_on_team_rw",
           "as": "PERMISSIVE",
           "for": "ALL",
-          "to": [
-            "authenticated"
-          ],
+          "to": ["authenticated"],
           "withCheck": "((team_id = ANY (private.get_teams_for_authenticated_user())) OR (user_id = auth.uid()))",
           "using": "((team_id = ANY (private.get_teams_for_authenticated_user())) OR (user_id = auth.uid()))"
         }
@@ -3182,12 +3012,8 @@
           "tableFrom": "user_invites",
           "tableTo": "users",
           "schemaTo": "public",
-          "columnsFrom": [
-            "invited_by"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["invited_by"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         },
@@ -3196,12 +3022,8 @@
           "tableFrom": "user_invites",
           "tableTo": "teams",
           "schemaTo": "public",
-          "columnsFrom": [
-            "team_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["team_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -3209,17 +3031,12 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
         "user_invites_team_id_email_key": {
-          "columns": [
-            "team_id",
-            "email"
-          ],
+          "columns": ["team_id", "email"],
           "nullsNotDistinct": false,
           "name": "user_invites_team_id_email_key"
         },
         "user_invites_code_key": {
-          "columns": [
-            "code"
-          ],
+          "columns": ["code"],
           "nullsNotDistinct": false,
           "name": "user_invites_code_key"
         }
@@ -3230,18 +3047,14 @@
           "name": "user_invites_select_by_email",
           "as": "PERMISSIVE",
           "for": "SELECT",
-          "to": [
-            "authenticated"
-          ],
+          "to": ["authenticated"],
           "using": "((auth.jwt() ->> 'email'::text) = email)"
         },
         "user_invites_team_rw": {
           "name": "user_invites_team_rw",
           "as": "PERMISSIVE",
           "for": "ALL",
-          "to": [
-            "authenticated"
-          ]
+          "to": ["authenticated"]
         }
       },
       "isRLSEnabled": true
@@ -3332,12 +3145,8 @@
           "tableFrom": "whatsapp_contacts",
           "tableTo": "teams",
           "schemaTo": "public",
-          "columnsFrom": [
-            "team_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["team_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -3345,10 +3154,7 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
         "whatsapp_contacts_team_id_wa_id_key": {
-          "columns": [
-            "team_id",
-            "wa_id"
-          ],
+          "columns": ["team_id", "wa_id"],
           "nullsNotDistinct": false,
           "name": "whatsapp_contacts_team_id_wa_id_key"
         }
@@ -3359,9 +3165,7 @@
           "name": "team_whatsapp_contacts_all",
           "as": "PERMISSIVE",
           "for": "ALL",
-          "to": [
-            "public"
-          ],
+          "to": ["public"],
           "withCheck": "(team_id IN ( SELECT users_on_team.team_id\n   FROM users_on_team\n  WHERE (users_on_team.user_id = auth.uid())))",
           "using": "(team_id IN ( SELECT users_on_team.team_id\n   FROM users_on_team\n  WHERE (users_on_team.user_id = auth.uid())))"
         }
@@ -3454,12 +3258,8 @@
           "tableFrom": "instagram_contacts",
           "tableTo": "teams",
           "schemaTo": "public",
-          "columnsFrom": [
-            "team_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["team_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -3467,10 +3267,7 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
         "instagram_contacts_team_id_username_key": {
-          "columns": [
-            "team_id",
-            "username"
-          ],
+          "columns": ["team_id", "username"],
           "nullsNotDistinct": false,
           "name": "instagram_contacts_team_id_username_key"
         }
@@ -3481,9 +3278,7 @@
           "name": "team_instagram_contacts_all",
           "as": "PERMISSIVE",
           "for": "ALL",
-          "to": [
-            "public"
-          ],
+          "to": ["public"],
           "withCheck": "(team_id IN ( SELECT users_on_team.team_id\n   FROM users_on_team\n  WHERE (users_on_team.user_id = auth.uid())))",
           "using": "(team_id IN ( SELECT users_on_team.team_id\n   FROM users_on_team\n  WHERE (users_on_team.user_id = auth.uid())))"
         }
@@ -3558,12 +3353,8 @@
           "tableFrom": "activities",
           "tableTo": "teams",
           "schemaTo": "public",
-          "columnsFrom": [
-            "team_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["team_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -3572,12 +3363,8 @@
           "tableFrom": "activities",
           "tableTo": "users",
           "schemaTo": "public",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -3590,9 +3377,7 @@
           "name": "activities_rw",
           "as": "PERMISSIVE",
           "for": "ALL",
-          "to": [
-            "authenticated"
-          ],
+          "to": ["authenticated"],
           "withCheck": "(team_id = ANY (private.get_teams_for_authenticated_user()))",
           "using": "(team_id = ANY (private.get_teams_for_authenticated_user()))"
         }
@@ -3687,12 +3472,8 @@
           "tableFrom": "notification_settings",
           "tableTo": "teams",
           "schemaTo": "public",
-          "columnsFrom": [
-            "team_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["team_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -3701,12 +3482,8 @@
           "tableFrom": "notification_settings",
           "tableTo": "users",
           "schemaTo": "public",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -3714,12 +3491,7 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
         "notification_settings_user_id_team_id_notification_type_cha_key": {
-          "columns": [
-            "user_id",
-            "team_id",
-            "notification_type",
-            "channel"
-          ],
+          "columns": ["user_id", "team_id", "notification_type", "channel"],
           "nullsNotDistinct": false,
           "name": "notification_settings_user_id_team_id_notification_type_cha_key"
         }
@@ -3730,9 +3502,7 @@
           "name": "notif_rw",
           "as": "PERMISSIVE",
           "for": "ALL",
-          "to": [
-            "authenticated"
-          ],
+          "to": ["authenticated"],
           "withCheck": "((user_id = auth.uid()) AND (team_id = ANY (private.get_teams_for_authenticated_user())))",
           "using": "((user_id = auth.uid()) AND (team_id = ANY (private.get_teams_for_authenticated_user())))"
         }
@@ -3818,12 +3588,8 @@
           "tableFrom": "bank_statement_lines",
           "tableTo": "bank_statements",
           "schemaTo": "public",
-          "columnsFrom": [
-            "statement_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["statement_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -3836,9 +3602,7 @@
           "name": "bank_statement_lines_rw",
           "as": "PERMISSIVE",
           "for": "ALL",
-          "to": [
-            "authenticated"
-          ],
+          "to": ["authenticated"],
           "withCheck": "(EXISTS ( SELECT 1\n   FROM bank_statements s\n  WHERE ((s.id = bank_statement_lines.statement_id) AND (s.team_id = ANY (private.get_teams_for_authenticated_user())))))",
           "using": "(EXISTS ( SELECT 1\n   FROM bank_statements s\n  WHERE ((s.id = bank_statement_lines.statement_id) AND (s.team_id = ANY (private.get_teams_for_authenticated_user())))))"
         }
@@ -3889,12 +3653,8 @@
           "tableFrom": "bank_statement_allocations",
           "tableTo": "bank_statement_lines",
           "schemaTo": "public",
-          "columnsFrom": [
-            "line_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["line_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -3903,12 +3663,8 @@
           "tableFrom": "bank_statement_allocations",
           "tableTo": "transactions",
           "schemaTo": "public",
-          "columnsFrom": [
-            "transaction_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["transaction_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -3916,10 +3672,7 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
         "bank_statement_allocations_line_id_transaction_id_key": {
-          "columns": [
-            "line_id",
-            "transaction_id"
-          ],
+          "columns": ["line_id", "transaction_id"],
           "nullsNotDistinct": false,
           "name": "bank_statement_allocations_line_id_transaction_id_key"
         }
@@ -3935,9 +3688,7 @@
           "name": "bank_statement_allocations_rw",
           "as": "PERMISSIVE",
           "for": "ALL",
-          "to": [
-            "authenticated"
-          ],
+          "to": ["authenticated"],
           "withCheck": "(EXISTS ( SELECT 1\n   FROM (bank_statement_lines l\n     JOIN bank_statements s ON ((s.id = l.statement_id)))\n  WHERE ((l.id = bank_statement_allocations.line_id) AND (s.team_id = ANY (private.get_teams_for_authenticated_user())))))",
           "using": "(EXISTS ( SELECT 1\n   FROM (bank_statement_lines l\n     JOIN bank_statements s ON ((s.id = l.statement_id)))\n  WHERE ((l.id = bank_statement_allocations.line_id) AND (s.team_id = ANY (private.get_teams_for_authenticated_user())))))"
         }
@@ -4050,12 +3801,8 @@
           "tableFrom": "appointments",
           "tableTo": "clients",
           "schemaTo": "public",
-          "columnsFrom": [
-            "client_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["client_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         },
@@ -4064,12 +3811,8 @@
           "tableFrom": "appointments",
           "tableTo": "users",
           "schemaTo": "public",
-          "columnsFrom": [
-            "staff_user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["staff_user_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         },
@@ -4078,12 +3821,8 @@
           "tableFrom": "appointments",
           "tableTo": "teams",
           "schemaTo": "public",
-          "columnsFrom": [
-            "team_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["team_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -4096,9 +3835,7 @@
           "name": "appointments_rw",
           "as": "PERMISSIVE",
           "for": "ALL",
-          "to": [
-            "authenticated"
-          ],
+          "to": ["authenticated"],
           "withCheck": "(team_id = ANY (private.get_teams_for_authenticated_user()))",
           "using": "(team_id = ANY (private.get_teams_for_authenticated_user()))"
         }
@@ -4202,12 +3939,8 @@
           "tableFrom": "communication_templates",
           "tableTo": "teams",
           "schemaTo": "public",
-          "columnsFrom": [
-            "team_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["team_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -4215,11 +3948,7 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
         "communication_templates_team_id_provider_name_key": {
-          "columns": [
-            "team_id",
-            "provider",
-            "name"
-          ],
+          "columns": ["team_id", "provider", "name"],
           "nullsNotDistinct": false,
           "name": "communication_templates_team_id_provider_name_key"
         }
@@ -4230,9 +3959,7 @@
           "name": "comm_templates_rw",
           "as": "PERMISSIVE",
           "for": "ALL",
-          "to": [
-            "authenticated"
-          ],
+          "to": ["authenticated"],
           "withCheck": "(team_id = ANY (private.get_teams_for_authenticated_user()))",
           "using": "(team_id = ANY (private.get_teams_for_authenticated_user()))"
         }
@@ -4498,12 +4225,8 @@
           "tableFrom": "documents",
           "tableTo": "clients",
           "schemaTo": "public",
-          "columnsFrom": [
-            "client_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["client_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         },
@@ -4512,12 +4235,8 @@
           "tableFrom": "documents",
           "tableTo": "invoices",
           "schemaTo": "public",
-          "columnsFrom": [
-            "invoice_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["invoice_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         },
@@ -4526,12 +4245,8 @@
           "tableFrom": "documents",
           "tableTo": "orders",
           "schemaTo": "public",
-          "columnsFrom": [
-            "order_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["order_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         },
@@ -4540,12 +4255,8 @@
           "tableFrom": "documents",
           "tableTo": "teams",
           "schemaTo": "public",
-          "columnsFrom": [
-            "team_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["team_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -4554,12 +4265,8 @@
           "tableFrom": "documents",
           "tableTo": "users",
           "schemaTo": "public",
-          "columnsFrom": [
-            "uploaded_by"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["uploaded_by"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -4713,12 +4420,8 @@
           "tableFrom": "transaction_categories",
           "tableTo": "transaction_categories",
           "schemaTo": "public",
-          "columnsFrom": [
-            "parent_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["parent_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         },
@@ -4727,12 +4430,8 @@
           "tableFrom": "transaction_categories",
           "tableTo": "teams",
           "schemaTo": "public",
-          "columnsFrom": [
-            "team_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["team_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -4740,10 +4439,7 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
         "unique_category_slug_per_team": {
-          "columns": [
-            "team_id",
-            "slug"
-          ],
+          "columns": ["team_id", "slug"],
           "nullsNotDistinct": false,
           "name": "unique_category_slug_per_team"
         }
@@ -4829,12 +4525,8 @@
           "tableFrom": "tags",
           "tableTo": "teams",
           "schemaTo": "public",
-          "columnsFrom": [
-            "team_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["team_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -4842,10 +4534,7 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
         "unique_tag_name_per_team": {
-          "columns": [
-            "team_id",
-            "name"
-          ],
+          "columns": ["team_id", "name"],
           "nullsNotDistinct": false,
           "name": "unique_tag_name_per_team"
         }
@@ -4977,12 +4666,8 @@
           "tableFrom": "transaction_tags",
           "tableTo": "tags",
           "schemaTo": "public",
-          "columnsFrom": [
-            "tag_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["tag_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -4991,12 +4676,8 @@
           "tableFrom": "transaction_tags",
           "tableTo": "teams",
           "schemaTo": "public",
-          "columnsFrom": [
-            "team_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["team_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -5005,12 +4686,8 @@
           "tableFrom": "transaction_tags",
           "tableTo": "transactions",
           "schemaTo": "public",
-          "columnsFrom": [
-            "transaction_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["transaction_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -5018,10 +4695,7 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
         "unique_transaction_tag": {
-          "columns": [
-            "transaction_id",
-            "tag_id"
-          ],
+          "columns": ["transaction_id", "tag_id"],
           "nullsNotDistinct": false,
           "name": "unique_transaction_tag"
         }
@@ -5671,12 +5345,8 @@
           "tableFrom": "transactions",
           "tableTo": "users",
           "schemaTo": "public",
-          "columnsFrom": [
-            "assigned_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["assigned_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         },
@@ -5685,14 +5355,8 @@
           "tableFrom": "transactions",
           "tableTo": "transaction_categories",
           "schemaTo": "public",
-          "columnsFrom": [
-            "team_id",
-            "category_slug"
-          ],
-          "columnsTo": [
-            "team_id",
-            "slug"
-          ],
+          "columnsFrom": ["team_id", "category_slug"],
+          "columnsTo": ["team_id", "slug"],
           "onDelete": "set null",
           "onUpdate": "no action"
         },
@@ -5701,12 +5365,8 @@
           "tableFrom": "transactions",
           "tableTo": "clients",
           "schemaTo": "public",
-          "columnsFrom": [
-            "client_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["client_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         },
@@ -5715,12 +5375,8 @@
           "tableFrom": "transactions",
           "tableTo": "invoices",
           "schemaTo": "public",
-          "columnsFrom": [
-            "invoice_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["invoice_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         },
@@ -5729,12 +5385,8 @@
           "tableFrom": "transactions",
           "tableTo": "orders",
           "schemaTo": "public",
-          "columnsFrom": [
-            "order_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["order_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         },
@@ -5743,12 +5395,8 @@
           "tableFrom": "transactions",
           "tableTo": "teams",
           "schemaTo": "public",
-          "columnsFrom": [
-            "team_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["team_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -5756,16 +5404,12 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
         "transactions_transaction_number_key": {
-          "columns": [
-            "transaction_number"
-          ],
+          "columns": ["transaction_number"],
           "nullsNotDistinct": false,
           "name": "transactions_transaction_number_key"
         },
         "transactions_internal_id_unique": {
-          "columns": [
-            "internal_id"
-          ],
+          "columns": ["internal_id"],
           "nullsNotDistinct": false,
           "name": "transactions_internal_id_unique"
         }
@@ -5789,9 +5433,7 @@
           "name": "transactions_select",
           "as": "PERMISSIVE",
           "for": "SELECT",
-          "to": [
-            "authenticated"
-          ],
+          "to": ["authenticated"],
           "using": "(team_id = ANY (private.get_teams_for_authenticated_user()))"
         }
       },
@@ -5961,12 +5603,8 @@
           "tableFrom": "transaction_attachments",
           "tableTo": "teams",
           "schemaTo": "public",
-          "columnsFrom": [
-            "team_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["team_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -5975,12 +5613,8 @@
           "tableFrom": "transaction_attachments",
           "tableTo": "transactions",
           "schemaTo": "public",
-          "columnsFrom": [
-            "transaction_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["transaction_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -5989,12 +5623,8 @@
           "tableFrom": "transaction_attachments",
           "tableTo": "users",
           "schemaTo": "public",
-          "columnsFrom": [
-            "uploaded_by"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["uploaded_by"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -6018,54 +5648,27 @@
   "enums": {
     "public.appointment_status": {
       "name": "appointment_status",
-      "values": [
-        "scheduled",
-        "completed",
-        "cancelled",
-        "no_show"
-      ],
+      "values": ["scheduled", "completed", "cancelled", "no_show"],
       "schema": "public"
     },
     "public.comm_message_status": {
       "name": "comm_message_status",
-      "values": [
-        "queued",
-        "sent",
-        "delivered",
-        "read",
-        "failed"
-      ],
+      "values": ["queued", "sent", "delivered", "read", "failed"],
       "schema": "public"
     },
     "public.invoice_status": {
       "name": "invoice_status",
-      "values": [
-        "pending",
-        "sent",
-        "paid",
-        "overdue",
-        "cancelled"
-      ],
+      "values": ["pending", "sent", "paid", "overdue", "cancelled"],
       "schema": "public"
     },
     "public.order_status": {
       "name": "order_status",
-      "values": [
-        "generated",
-        "in_progress",
-        "completed",
-        "cancelled"
-      ],
+      "values": ["generated", "in_progress", "completed", "cancelled"],
       "schema": "public"
     },
     "public.team_role": {
       "name": "team_role",
-      "values": [
-        "owner",
-        "admin",
-        "agent",
-        "viewer"
-      ],
+      "values": ["owner", "admin", "agent", "viewer"],
       "schema": "public"
     },
     "public.transaction_frequency": {
@@ -6094,22 +5697,12 @@
     },
     "public.transaction_status": {
       "name": "transaction_status",
-      "values": [
-        "pending",
-        "completed",
-        "failed",
-        "cancelled"
-      ],
+      "values": ["pending", "completed", "failed", "cancelled"],
       "schema": "public"
     },
     "public.transaction_type": {
       "name": "transaction_type",
-      "values": [
-        "payment",
-        "expense",
-        "refund",
-        "adjustment"
-      ],
+      "values": ["payment", "expense", "refund", "adjustment"],
       "schema": "public"
     }
   },
