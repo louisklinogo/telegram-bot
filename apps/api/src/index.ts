@@ -13,6 +13,7 @@ import { registerWebhookRoutes } from "./rest/webhooks";
 import { createTRPCContext } from "./trpc/init";
 import { appRouter } from "./trpc/routers/_app";
 import type { ApiEnv } from "./types/hono-env";
+import baseLogger from "./lib/logger";
 
 const app = new Hono<ApiEnv>();
 
@@ -26,6 +27,26 @@ app.use(
 );
 
 app.get("/health", (c) => c.json({ status: "ok" }));
+
+// Request logger middleware
+app.use("*", async (c, next) => {
+  const reqId = crypto.randomUUID();
+  const ip =
+    c.req.header("x-forwarded-for")?.split(",")[0]?.trim() ||
+    c.req.header("x-real-ip") ||
+    c.req.header("cf-connecting-ip") ||
+    "unknown";
+  const logger = baseLogger.child({ reqId, ip });
+  c.set("logger", logger);
+  const start = Date.now();
+  logger.info({ method: c.req.method, path: c.req.path }, "request:start");
+  try {
+    await next();
+  } finally {
+    const durationMs = Date.now() - start;
+    logger.info({ status: c.res.status, durationMs }, "request:end");
+  }
+});
 
 app.use(
   "/trpc/*",

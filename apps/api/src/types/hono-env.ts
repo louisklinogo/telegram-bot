@@ -1,6 +1,7 @@
 import type { ApiKey } from "@Faworra/auth/api-keys";
 import type { Database } from "@Faworra/supabase/types";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import type baseLogger from "../lib/logger";
 
 export type AuthSession = {
   userId: string;
@@ -23,5 +24,6 @@ export type ApiEnv = {
     session: AuthSession;
     apiKeyUsageStart: number;
     apiKeyId: string;
+    logger: typeof baseLogger;
   };
 };

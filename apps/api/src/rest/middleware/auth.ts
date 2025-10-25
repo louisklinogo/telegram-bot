@@ -153,6 +153,15 @@ export const requireAuthTeam: MiddlewareHandler<ApiEnv> = async (c, next) => {
   c.set("teamId", session.teamId);
   c.set("session", session);
   c.set("supabaseAdmin", createAdminClient());
+  try {
+    const l = c.get("logger");
+    if (l) {
+      c.set(
+        "logger",
+        l.child({ userId: session.userId, teamId: session.teamId, authType: session.type })
+      );
+    }
+  } catch {}
 
   if (session.type === "api_key" && session.apiKey) {
     const originalNext = next;
