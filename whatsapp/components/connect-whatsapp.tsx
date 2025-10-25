@@ -1,9 +1,9 @@
 "use client";
 
-import { useUserQuery } from "@/hooks/use-user";
 import { Icons } from "@midday/ui/icons";
 import { SubmitButton } from "@midday/ui/submit-button";
 import { useState } from "react";
+import { useUserQuery } from "@/hooks/use-user";
 import { WhatsAppModal } from "./whatsapp-modal";
 
 export function ConnectWhatsApp() {
@@ -21,10 +21,10 @@ export function ConnectWhatsApp() {
   return (
     <>
       <SubmitButton
-        className="px-6 py-4 w-full font-medium h-[40px]"
-        variant="outline"
-        onClick={handleConnect}
+        className="h-[40px] w-full px-6 py-4 font-medium"
         isSubmitting={false}
+        onClick={handleConnect}
+        variant="outline"
       >
         <div className="flex items-center space-x-2">
           <Icons.WhatsApp className="size-[22px]" />
@@ -33,9 +33,9 @@ export function ConnectWhatsApp() {
       </SubmitButton>
 
       <WhatsAppModal
+        inboxId={user.team.inboxId}
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        inboxId={user.team.inboxId}
       />
     </>
   );

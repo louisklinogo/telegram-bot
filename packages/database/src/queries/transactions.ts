@@ -50,16 +50,29 @@ export async function getTransactionStats(
     pending_payments: string | null;
     completed_transactions: number | null;
   }>`
-    SELECT 
-      COALESCE(SUM(CASE WHEN t.type = 'payment' AND t.status = 'completed' AND t.exclude_from_analytics IS NOT TRUE THEN t.amount ELSE 0 END), 0) AS total_income,
-      COALESCE(SUM(CASE WHEN t.type = 'expense' AND t.status = 'completed' AND t.exclude_from_analytics IS NOT TRUE THEN t.amount ELSE 0 END), 0) AS total_expenses,
-      COALESCE(SUM(CASE WHEN t.type = 'payment' AND t.status = 'pending' AND t.exclude_from_analytics IS NOT TRUE THEN t.amount ELSE 0 END), 0) AS pending_payments,
-      COUNT(*) FILTER (WHERE t.status = 'completed') AS completed_transactions
+    SELECT
+      COALESCE(SUM(t.amount) FILTER (
+        WHERE t.type = 'payment' AND t.status = 'completed' AND t.exclude_from_analytics IS NOT TRUE
+      ), 0) AS total_income,
+      COALESCE(SUM(t.amount) FILTER (
+        WHERE t.type = 'expense' AND t.status = 'completed' AND t.exclude_from_analytics IS NOT TRUE
+      ), 0) AS total_expenses,
+      COALESCE(SUM(t.amount) FILTER (
+        WHERE t.type = 'payment' AND t.status = 'pending' AND t.exclude_from_analytics IS NOT TRUE
+      ), 0) AS pending_payments,
+      COUNT(*) FILTER (
+        WHERE t.status = 'completed'
+          AND t.exclude_from_analytics IS NOT TRUE
+          AND (c.id IS NULL OR c.excluded IS NOT TRUE)
+      ) AS completed_transactions
     FROM transactions t
     LEFT JOIN transaction_categories c
       ON c.team_id = t.team_id AND c.slug = t.category_slug
     WHERE t.team_id = ${teamId}
       AND t.deleted_at IS NULL
+      -- reduce scanned rows for better index usage
+      AND t.status IN ('completed','pending')
+      AND t.type IN ('payment','expense')
       ${startStr ? sql`AND t.date >= ${startStr}` : sql``}
       ${endStr ? sql`AND t.date <= ${endStr}` : sql``}
       AND (c.id IS NULL OR c.excluded IS NOT TRUE)

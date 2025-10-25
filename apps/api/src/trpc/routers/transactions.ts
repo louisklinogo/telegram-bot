@@ -54,11 +54,13 @@ async function insertPaymentWithExtras(
   }
 ) {
   const trxNumber = `TX-${Date.now()}`;
+  const trxDt = input.transactionDate ? new Date(input.transactionDate) : new Date();
+  const dateOnly = trxDt.toISOString().slice(0, 10);
   const [created] = await ctx.db
     .insert(transactions)
     .values({
       teamId: ctx.teamId,
-      date: new Date().toISOString().slice(0, 10),
+      date: dateOnly as any,
       name: input.description ?? `Payment ${trxNumber}`,
       internalId: trxNumber,
       transactionNumber: trxNumber,
@@ -72,7 +74,7 @@ async function insertPaymentWithExtras(
       invoiceId: input.invoiceId ?? null,
       paymentMethod: input.paymentMethod ?? null,
       paymentReference: input.paymentReference ?? null,
-      transactionDate: input.transactionDate ? new Date(input.transactionDate) : new Date(),
+      transactionDate: trxDt,
       // Payments created via the Transactions form are considered manual entries
       manual: true,
       excludeFromAnalytics: input.excludeFromAnalytics ?? false,

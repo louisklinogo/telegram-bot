@@ -6,7 +6,7 @@ import {
   whatsappVerificationSchema,
   whatsappWebhookSchema,
 } from "@api/schemas/whatsapp";
-import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
+import { createRoute, OpenAPIHono } from "@hono/zod-openapi";
 import { LogEvents } from "@midday/events/events";
 import { setupAnalytics } from "@midday/events/server";
 import type { ProcessAttachmentPayload } from "@midday/jobs/schema";
@@ -355,7 +355,7 @@ async function processWhatsAppMessage(
         filePath: item.file_path,
         mimetype: item.content_type,
         size: item.size,
-        teamId: teamId,
+        teamId,
         referenceId: item.reference_id,
       } satisfies ProcessAttachmentPayload,
     }))
@@ -364,7 +364,7 @@ async function processWhatsAppMessage(
   // Send notification for WhatsApp attachments
   await tasks.trigger("notification", {
     type: "inbox_new",
-    teamId: teamId,
+    teamId,
     totalCount: uploadedAttachments.length,
     inboxType: "whatsapp",
   });

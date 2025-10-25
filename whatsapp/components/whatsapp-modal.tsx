@@ -69,32 +69,32 @@ export function WhatsAppModal({ isOpen, onClose, inboxId }: WhatsAppModalProps) 
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog onOpenChange={onClose} open={isOpen}>
       <DialogContent className="sm:max-w-md">
         <div className="flex flex-col items-center space-y-6 p-8 pt-10">
           {isGenerating ? (
-            <div className="flex items-center justify-center w-64 h-64 border-2 border-dashed border-gray-300 rounded-lg">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900" />
+            <div className="flex h-64 w-64 items-center justify-center rounded-lg border-2 border-gray-300 border-dashed">
+              <div className="h-8 w-8 animate-spin rounded-full border-gray-900 border-b-2" />
             </div>
           ) : (
             <div className="bg-white">
-              <img src={qrCodeUrl} alt="WhatsApp QR Code" className="size-40" />
+              <img alt="WhatsApp QR Code" className="size-40" src={qrCodeUrl} />
             </div>
           )}
 
-          <div className="flex flex-col sm:flex-row gap-4 w-full border-t-[1px] pt-8">
-            <Button onClick={openWhatsApp} className="flex-1" variant="default">
+          <div className="flex w-full flex-col gap-4 border-t-[1px] pt-8 sm:flex-row">
+            <Button className="flex-1" onClick={openWhatsApp} variant="default">
               <Icons.WhatsApp className="mr-2 h-4 w-4" />
               Open WhatsApp
             </Button>
-            <Button onClick={copyToClipboard} variant="outline" className="flex-1">
+            <Button className="flex-1" onClick={copyToClipboard} variant="outline">
               <Icons.Copy className="mr-2 h-4 w-4" />
               Copy Link
             </Button>
           </div>
 
-          <div className="text-xs text-[#878787] text-center max-w-sm">
-            <ol className="list-decimal list-inside space-y-1 mt-1">
+          <div className="max-w-sm text-center text-[#878787] text-xs">
+            <ol className="mt-1 list-inside list-decimal space-y-1">
               <li>Send the pre-filled message to start the conversation</li>
               <li>Forward or send photos of your receipts and invoices</li>
               <li>We'll automatically extract the data and process them</li>
