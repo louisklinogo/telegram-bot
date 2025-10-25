@@ -130,6 +130,7 @@ logs/
 evolution-api/
 midday/
 v0*
+whatsapp/
 
 # Secret files with tokens/keys
 docs/essentials.txt

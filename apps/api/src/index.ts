@@ -47,7 +47,9 @@ registerInvoicesRoutes(app);
 registerTransactionsRoutes(app);
 registerProductsRoutes(app);
 
+const DEFAULT_API_PORT = 3001;
+
 export default {
-  port: process.env.API_PORT ? Number(process.env.API_PORT) : 3001,
+  port: process.env.API_PORT ? Number(process.env.API_PORT) : DEFAULT_API_PORT,
   fetch: app.fetch,
 };

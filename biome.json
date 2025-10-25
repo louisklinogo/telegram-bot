@@ -7,7 +7,7 @@
   },
   "files": {
     "ignoreUnknown": true,
-    "experimentalScannerIgnores": ["midday**"]
+    "experimentalScannerIgnores": ["midday**", "whatsapp/**"]
   },
   "formatter": {
     "enabled": true,

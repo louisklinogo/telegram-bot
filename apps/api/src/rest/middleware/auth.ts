@@ -2,11 +2,10 @@ import { AuthEvents, trackAuthEvent } from "@Faworra/analytics/auth-events";
 import type { ApiKey } from "@Faworra/auth/api-keys";
 import { apiKeyService } from "@Faworra/auth/api-keys";
 import { RateLimiters } from "@Faworra/middleware/rate-limiter";
-import type { MiddlewareHandler } from "hono";
+import type { Context, MiddlewareHandler } from "hono";
 import { createAdminClient, createClient } from "../../services/supabase";
 import type { ApiEnv } from "../../types/hono-env";
-
-export interface AuthSession {
+export type AuthSession = {
   userId: string;
   teamId: string;
   user: {
@@ -17,134 +16,150 @@ export interface AuthSession {
   type: "jwt" | "api_key";
   scopes?: string[];
   apiKey?: ApiKey;
+};
+
+const HTTP = {
+  OK: 200,
+  UNAUTHORIZED: 401,
+  FORBIDDEN: 403,
+  INTERNAL_SERVER_ERROR: 500,
+} as const;
+
+const BEARER_PREFIX = "Bearer ";
+
+type AuthResult = { session: AuthSession } | { error: Response };
+
+function getBearerToken(c: Context<ApiEnv>): string | undefined {
+  const authHeader = c.req.header("authorization") || c.req.header("Authorization");
+  return authHeader?.startsWith(BEARER_PREFIX)
+    ? authHeader.slice(BEARER_PREFIX.length)
+    : undefined;
+}
+
+async function authenticateApiKey(c: Context<ApiEnv>, token: string): Promise<AuthResult> {
+  const validation = await apiKeyService.validateApiKey(token);
+  if (!(validation.valid && validation.apiKey)) {
+    await trackAuthEvent({
+      event: "SignIn.Failed",
+      error: validation.error || "Invalid API key",
+      errorType: "invalid_api_key",
+    });
+    return {
+      error: c.json(
+        { error: "Invalid API key", details: validation.error },
+        HTTP.UNAUTHORIZED
+      ),
+    };
+  }
+
+  const apiKey = validation.apiKey;
+  await trackAuthEvent(AuthEvents.apiKeyUsed(apiKey.userId, apiKey.teamId, apiKey.scopes));
+  c.set("apiKeyUsageStart", Date.now());
+  c.set("apiKeyId", apiKey.id);
+
+  const session: AuthSession = {
+    userId: apiKey.userId,
+    teamId: apiKey.teamId,
+    user: {
+      id: apiKey.userId,
+      email: apiKey.user?.email,
+      fullName: apiKey.user?.fullName,
+    },
+    type: "api_key",
+    scopes: apiKey.scopes,
+    apiKey,
+  };
+
+  return { session };
+}
+
+async function authenticateJwt(c: Context<ApiEnv>, token: string): Promise<AuthResult> {
+  const supabase = createClient();
+  const admin = createAdminClient();
+
+  const { data: userRes, error: authErr } = await supabase.auth.getUser(token);
+  if (authErr || !userRes?.user) {
+    await trackAuthEvent({
+      event: "SignIn.Failed",
+      error: authErr?.message || "Invalid user token",
+      errorType: "invalid_jwt",
+    });
+    return { error: c.json({ error: "Invalid token" }, HTTP.UNAUTHORIZED) };
+  }
+
+  const userId = userRes.user.id;
+  const { data: uRow, error: uErr } = await admin
+    .from("users")
+    .select("current_team_id")
+    .eq("id", userId)
+    .maybeSingle<{ current_team_id: string | null }>();
+
+  if (uErr) {
+    return { error: c.json({ error: uErr.message }, HTTP.INTERNAL_SERVER_ERROR) };
+  }
+
+  const teamId = uRow?.current_team_id || null;
+  if (!teamId) {
+    await trackAuthEvent({
+      event: "SignIn.Failed",
+      userId,
+      error: "No team selected",
+      errorType: "no_team_selected",
+    });
+    return { error: c.json({ error: "No team selected" }, HTTP.FORBIDDEN) };
+  }
+
+  const session: AuthSession = {
+    userId,
+    teamId,
+    user: {
+      id: userId,
+      email: userRes.user.email,
+      fullName: userRes.user.user_metadata?.full_name,
+    },
+    type: "jwt",
+  };
+
+  await trackAuthEvent({
+    event: "TokenRefresh",
+    userId,
+    metadata: { teamId, tokenType: "jwt" },
+  });
+
+  return { session };
 }
 
 export const requireAuthTeam: MiddlewareHandler<ApiEnv> = async (c, next) => {
-  const authHeader = c.req.header("authorization") || c.req.header("Authorization");
-  const token = authHeader?.startsWith("Bearer ") ? authHeader.substring(7) : undefined;
-
+  const token = getBearerToken(c);
   if (!token) {
     await trackAuthEvent({
       event: "SignIn.Failed",
       error: "Missing authorization header",
       errorType: "missing_token",
     });
-    return c.json({ error: "Unauthorized" }, 401);
+    return c.json({ error: "Unauthorized" }, HTTP.UNAUTHORIZED);
   }
 
-  let session: AuthSession;
+  const result = token.startsWith("faw_api_")
+    ? await authenticateApiKey(c, token)
+    : await authenticateJwt(c, token);
 
-  // Handle API Keys (faw_api_*)
-  if (token.startsWith("faw_api_")) {
-    const validation = await apiKeyService.validateApiKey(token);
-
-    if (!(validation.valid && validation.apiKey)) {
-      await trackAuthEvent({
-        event: "SignIn.Failed",
-        error: validation.error || "Invalid API key",
-        errorType: "invalid_api_key",
-      });
-      return c.json(
-        {
-          error: "Invalid API key",
-          details: validation.error,
-        },
-        401
-      );
-    }
-
-    const apiKey = validation.apiKey;
-
-    // Track API key usage in analytics
-    await trackAuthEvent(AuthEvents.apiKeyUsed(apiKey.userId, apiKey.teamId, apiKey.scopes));
-
-    // Log detailed API key usage for monitoring
-    const startTime = Date.now();
-    c.set("apiKeyUsageStart", startTime);
-    c.set("apiKeyId", apiKey.id);
-
-    session = {
-      userId: apiKey.userId,
-      teamId: apiKey.teamId,
-      user: {
-        id: apiKey.userId,
-        email: apiKey.user?.email,
-        fullName: apiKey.user?.fullName,
-      },
-      type: "api_key",
-      scopes: apiKey.scopes,
-      apiKey,
-    };
+  if ("error" in result) {
+    return result.error;
   }
-  // Handle JWT tokens (existing logic)
-  else {
-    const supabase = createClient();
-    const admin = createAdminClient();
+  const { session } = result;
 
-    const { data: userRes, error: authErr } = await supabase.auth.getUser(token);
-    if (authErr || !userRes?.user) {
-      await trackAuthEvent({
-        event: "SignIn.Failed",
-        error: authErr?.message || "Invalid user token",
-        errorType: "invalid_jwt",
-      });
-      return c.json({ error: "Invalid token" }, 401);
-    }
-
-    const userId = userRes.user.id;
-
-    const { data: uRow, error: uErr } = await admin
-      .from("users")
-      .select("current_team_id")
-      .eq("id", userId)
-      .maybeSingle<{ current_team_id: string | null }>();
-
-    if (uErr) return c.json({ error: uErr.message }, 500);
-
-    const teamId = uRow?.current_team_id || null;
-    if (!teamId) {
-      await trackAuthEvent({
-        event: "SignIn.Failed",
-        userId,
-        error: "No team selected",
-        errorType: "no_team_selected",
-      });
-      return c.json({ error: "No team selected" }, 403);
-    }
-
-    session = {
-      userId,
-      teamId,
-      user: {
-        id: userId,
-        email: userRes.user.email,
-        fullName: userRes.user.user_metadata?.full_name,
-      },
-      type: "jwt",
-    };
-
-    // Track successful JWT access
-    await trackAuthEvent({
-      event: "TokenRefresh", // Using existing event type for API access
-      userId,
-      metadata: { teamId, tokenType: "jwt" },
-    });
-  }
-
-  // Set context
   c.set("userId", session.userId);
   c.set("teamId", session.teamId);
   c.set("session", session);
   c.set("supabaseAdmin", createAdminClient());
 
-  // Log API key usage after request completion
   if (session.type === "api_key" && session.apiKey) {
     const originalNext = next;
     const wrappedNext = async () => {
       try {
         await originalNext();
       } finally {
-        // Log usage after response
         const startTime = c.get("apiKeyUsageStart") as number;
         const responseTime = Date.now() - startTime;
 
@@ -152,13 +167,13 @@ export const requireAuthTeam: MiddlewareHandler<ApiEnv> = async (c, next) => {
           .logUsage(session.apiKey!.id, session.teamId, {
             endpoint: c.req.path,
             method: c.req.method,
-            statusCode: c.res.status || 200,
+            statusCode: c.res.status || HTTP.OK,
             ipAddress: c.req.header("x-forwarded-for") || c.req.header("x-real-ip") || "unknown",
             userAgent: c.req.header("user-agent"),
             responseTimeMs: responseTime,
           })
-          .catch((err) => {
-            console.error("Failed to log API key usage:", err);
+          .catch(() => {
+            // ignore logging errors
           });
       }
     };
@@ -206,7 +221,7 @@ export const requireScopes = (requiredScopes: string[]): MiddlewareHandler<ApiEn
             granted: userScopes,
             missing: missingScopes,
           },
-          403
+          HTTP.FORBIDDEN
         );
       }
     }
