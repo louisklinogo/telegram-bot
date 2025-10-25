@@ -3,6 +3,7 @@ import { trpcServer } from "@hono/trpc-server";
 import type { MiddlewareHandler } from "hono";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
+import baseLogger from "./lib/logger";
 import { registerCommunicationsRoutes } from "./rest/communications";
 import { registerInvoicesRoutes } from "./rest/invoices";
 import { requireAuthTeam } from "./rest/middleware/auth";
@@ -13,7 +14,6 @@ import { registerWebhookRoutes } from "./rest/webhooks";
 import { createTRPCContext } from "./trpc/init";
 import { appRouter } from "./trpc/routers/_app";
 import type { ApiEnv } from "./types/hono-env";
-import baseLogger from "./lib/logger";
 
 const app = new Hono<ApiEnv>();
 

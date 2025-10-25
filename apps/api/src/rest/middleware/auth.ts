@@ -161,7 +161,9 @@ export const requireAuthTeam: MiddlewareHandler<ApiEnv> = async (c, next) => {
         l.child({ userId: session.userId, teamId: session.teamId, authType: session.type })
       );
     }
-  } catch {}
+  } catch (_err) {
+    // ignore logger enrichment errors
+  }
 
   if (session.type === "api_key" && session.apiKey) {
     const originalNext = next;

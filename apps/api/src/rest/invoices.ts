@@ -18,9 +18,7 @@ const HTTP = {
   INTERNAL_SERVER_ERROR: 500,
 } as const;
 
-/* biome-ignore lint/style/noMagicNumbers: ISO currency codes are 3-8 chars */
 const CURRENCY_CODE_MIN = 3;
-/* biome-ignore lint/style/noMagicNumbers: ISO currency codes are 3-8 chars */
 const CURRENCY_CODE_MAX = 8;
 
 async function handleCreateInvoicePayment(c: Context<ApiEnv>): Promise<Response> {

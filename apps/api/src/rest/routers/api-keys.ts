@@ -46,25 +46,19 @@ const updateApiKeySchema = z.object({
 });
 
 // List all available scopes
-app.get("/scopes", requireAuthTeam, async (c) =>
-  c.json({
+app.get("/scopes", requireAuthTeam, (c) => {
+  const entries = Object.entries(ApiKeyScopes);
+  const toObject = (es: [string, string][]) => Object.fromEntries(es);
+  return c.json({
     scopes: ApiKeyScopes,
     categories: {
-      read: Object.entries(ApiKeyScopes)
-        .filter(([key]) => key.startsWith("read:"))
-        .reduce((acc, [key, value]) => ({ ...acc, [key]: value }), {}),
-      write: Object.entries(ApiKeyScopes)
-        .filter(([key]) => key.startsWith("write:"))
-        .reduce((acc, [key, value]) => ({ ...acc, [key]: value }), {}),
-      admin: Object.entries(ApiKeyScopes)
-        .filter(([key]) => key.startsWith("admin:"))
-        .reduce((acc, [key, value]) => ({ ...acc, [key]: value }), {}),
-      special: Object.entries(ApiKeyScopes)
-        .filter(([key]) => !key.match(SPECIAL_SCOPE_REGEX))
-        .reduce((acc, [key, value]) => ({ ...acc, [key]: value }), {}),
+      read: toObject(entries.filter(([k]) => k.startsWith("read:"))),
+      write: toObject(entries.filter(([k]) => k.startsWith("write:"))),
+      admin: toObject(entries.filter(([k]) => k.startsWith("admin:"))),
+      special: toObject(entries.filter(([k]) => !k.match(SPECIAL_SCOPE_REGEX))),
     },
-  })
-);
+  });
+});
 
 // Create a new API key
 app.post(
@@ -122,7 +116,7 @@ app.post(
         },
         HTTP.CREATED
       );
-    } catch (error) {
+    } catch (_error) {
       return c.json(
         {
           error: "Failed to create API key",
@@ -152,7 +146,7 @@ app.get("/", requireAuthTeam, async (c) => {
         // Never return hashedToken or token
       })),
     });
-  } catch (error) {
+  } catch (_error) {
     return c.json(
       {
         error: "Failed to list API keys",
@@ -191,7 +185,7 @@ app.get("/:id", requireAuthTeam, async (c) => {
       updatedAt: apiKey.updatedAt,
       user: apiKey.user,
     });
-  } catch (error) {
+  } catch (_error) {
     return c.json(
       {
         error: "Failed to fetch API key",
@@ -270,7 +264,7 @@ app.put(
         message: "API key updated successfully",
         updated: updates,
       });
-    } catch (error) {
+    } catch (_error) {
       return c.json(
         {
           error: "Failed to update API key",
@@ -316,7 +310,7 @@ app.delete("/:id", requireAuthTeam, requireScopes(["admin:system"]), async (c) =
       message: "API key revoked successfully",
       revokedAt: new Date().toISOString(),
     });
-  } catch (error) {
+  } catch (_error) {
     return c.json(
       {
         error: "Failed to revoke API key",
@@ -327,7 +321,7 @@ app.delete("/:id", requireAuthTeam, requireScopes(["admin:system"]), async (c) =
 });
 
 // Test API key endpoint - useful for debugging
-app.get("/test/validate", requireAuthTeam, async (c) => {
+app.get("/test/validate", requireAuthTeam, (c) => {
   const session = c.get("session");
 
   return c.json({

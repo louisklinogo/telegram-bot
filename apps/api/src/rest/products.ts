@@ -66,20 +66,47 @@ async function handleUploadProductMedia(c: Context<ApiEnv>): Promise<Response> {
   }
 }
 
+function parseUploadFromUrlRequest(c: Context<ApiEnv>): Promise<{ url: string; productId: string }> {
+  const ct = c.req.header("content-type") || "";
+  if (ct.includes("application/json")) {
+    return c
+      .req
+      .json()
+      .catch(() => ({}))
+      .then((body: any) => ({
+        url: typeof body?.url === "string" ? body.url : "",
+        productId: typeof body?.productId === "string" ? body.productId : "",
+      }));
+  }
+  return c.req.formData().then((form) => ({
+    url: String(form.get("url") || ""),
+    productId: String(form.get("productId") || ""),
+  }));
+}
+
+async function downloadRemote(url: string): Promise<{ buffer: ArrayBuffer; contentType: string }> {
+  const resp = await fetch(url);
+  if (!resp.ok) throw new Error(`fetch failed: ${resp.status}`);
+  const buffer = await resp.arrayBuffer();
+  const contentType = resp.headers.get("content-type") || "application/octet-stream";
+  return { buffer, contentType };
+}
+
+function buildStoragePath(teamId: string, productId: string, sourceUrl: string) {
+  let baseName = "file";
+  try {
+    const urlPath = new URL(sourceUrl).pathname;
+    baseName = urlPath.split("/").filter(Boolean).pop() || baseName;
+  } catch {}
+  const id = crypto.randomUUID();
+  const safeName = `${id}_${baseName}`;
+  const path = `${teamId}/${productId}/${safeName}`;
+  return { path, safeName };
+}
+
 async function handleUploadFromUrl(c: Context<ApiEnv>): Promise<Response> {
   try {
-    let url = "";
-    let productId = "";
-    const ct = c.req.header("content-type") || "";
-    if (ct.includes("application/json")) {
-      const body = await c.req.json().catch(() => ({}));
-      url = typeof body?.url === "string" ? body.url : "";
-      productId = typeof body?.productId === "string" ? body.productId : "";
-    } else {
-      const form = await c.req.formData();
-      url = String(form.get("url") || "");
-      productId = String(form.get("productId") || "");
-    }
+    const { url, productId } = await parseUploadFromUrlRequest(c);
     if (!(url && HTTP_URL_REGEX.test(url))) {
       return c.json({ error: "valid url is required" }, HTTP.BAD_REQUEST);
     }
@@ -87,36 +114,19 @@ async function handleUploadFromUrl(c: Context<ApiEnv>): Promise<Response> {
       return c.json({ error: "productId is required" }, HTTP.BAD_REQUEST);
     }
 
-    const teamId = c.get("teamId") as string;
-    const supabase = c.get("supabaseAdmin");
-
-    const resp = await fetch(url);
-    if (!resp.ok) {
-      return c.json({ error: `fetch failed: ${resp.status}` }, HTTP.BAD_REQUEST);
-    }
-    const arrayBuffer = await resp.arrayBuffer();
-    const size = arrayBuffer.byteLength;
+    const { buffer, contentType } = await downloadRemote(url);
+    const size = buffer.byteLength;
     if (size > MAX_UPLOAD_BYTES) {
       return c.json({ error: "file too large" }, HTTP.PAYLOAD_TOO_LARGE);
     }
 
-    const contentType = resp.headers.get("content-type") || "application/octet-stream";
-    const urlPath = (() => {
-      try {
-        return new URL(url).pathname;
-      } catch {
-        return "/";
-      }
-    })();
-    const baseName = urlPath.split("/").filter(Boolean).pop() || "file";
-    const id = crypto.randomUUID();
-    const safeName = `${id}_${baseName}`;
-    const path = `${teamId}/${productId}/${safeName}`;
+    const teamId = c.get("teamId") as string;
+    const supabase = c.get("supabaseAdmin");
+    const { path, safeName } = buildStoragePath(teamId, productId, url);
 
-    const { error: upErr } = await supabase.storage.from("product-media").upload(path, arrayBuffer, {
-      contentType,
-      upsert: false,
-    });
+    const { error: upErr } = await supabase.storage
+      .from("product-media")
+      .upload(path, buffer, { contentType, upsert: false });
     if (upErr) {
       return c.json({ error: upErr.message }, HTTP.INTERNAL_SERVER_ERROR);
     }
