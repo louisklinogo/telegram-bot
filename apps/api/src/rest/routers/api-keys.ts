@@ -14,15 +14,10 @@ const HTTP = {
   INTERNAL_SERVER_ERROR: 500,
 } as const;
 
-/* biome-ignore lint/style/noMagicNumbers: validation thresholds */
 const NAME_MIN = 1;
-/* biome-ignore lint/style/noMagicNumbers: validation thresholds */
 const NAME_MAX = 100;
-/* biome-ignore lint/style/noMagicNumbers: validation thresholds */
 const SCOPES_MIN = 1;
-/* biome-ignore lint/style/noMagicNumbers: validation thresholds */
 const EXPIRES_MIN_DAYS = 1;
-/* biome-ignore lint/style/noMagicNumbers: validation thresholds */
 const EXPIRES_MAX_DAYS = 365;
 const SPECIAL_SCOPE_REGEX = /^(read|write|admin):/;
 

@@ -86,7 +86,9 @@ function parseUploadFromUrlRequest(c: Context<ApiEnv>): Promise<{ url: string; p
 
 async function downloadRemote(url: string): Promise<{ buffer: ArrayBuffer; contentType: string }> {
   const resp = await fetch(url);
-  if (!resp.ok) throw new Error(`fetch failed: ${resp.status}`);
+  if (!resp.ok) {
+    throw new Error(`fetch failed: ${resp.status}`);
+  }
   const buffer = await resp.arrayBuffer();
   const contentType = resp.headers.get("content-type") || "application/octet-stream";
   return { buffer, contentType };
@@ -97,7 +99,9 @@ function buildStoragePath(teamId: string, productId: string, sourceUrl: string) 
   try {
     const urlPath = new URL(sourceUrl).pathname;
     baseName = urlPath.split("/").filter(Boolean).pop() || baseName;
-  } catch {}
+  } catch (_err) {
+    // ignore URL parse errors; use default baseName
+  }
   const id = crypto.randomUUID();
   const safeName = `${id}_${baseName}`;
   const path = `${teamId}/${productId}/${safeName}`;

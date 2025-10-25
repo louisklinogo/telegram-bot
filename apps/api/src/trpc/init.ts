@@ -5,6 +5,7 @@ import { initTRPC, TRPCError } from "@trpc/server";
 import type { FetchCreateContextFnOptions } from "@trpc/server/adapters/fetch";
 import superjson from "superjson";
 import { createClient } from "../services/supabase";
+import baseLogger from "../lib/logger";
 
 export type Session = {
   userId: string;
@@ -22,7 +23,10 @@ export type TRPCContext = {
 
 export async function createTRPCContext(opts?: FetchCreateContextFnOptions): Promise<TRPCContext> {
   const authHeader = opts?.req?.headers.get("Authorization");
-  const token = authHeader?.startsWith("Bearer ") ? authHeader.substring(7) : undefined;
+  const BEARER_PREFIX = "Bearer ";
+  const token = authHeader?.startsWith(BEARER_PREFIX)
+    ? authHeader.substring(BEARER_PREFIX.length)
+    : undefined;
   const supabase = createClient();
 
   // Try to authenticate via token without relying on cookies
@@ -44,7 +48,7 @@ export async function createTRPCContext(opts?: FetchCreateContextFnOptions): Pro
         };
       }
     } catch (error) {
-      console.error("Auth error:", error);
+      baseLogger.error({ err: error }, "trpc auth error");
     }
   }
 
@@ -67,9 +71,11 @@ const t = initTRPC.context<TRPCContext>().create({
 // Timing middleware (production safe, env-gated)
 const timing = t.middleware(async ({ path, type, next }) => {
   const enable = process.env.TRPC_TIMING === "1";
-  if (!enable) return next();
-
-  const reqId = Math.random().toString(36).slice(2);
+  if (!enable) {
+    return next();
+  }
+  const REQ_ID_RADIX = 36;
+  const reqId = Math.random().toString(REQ_ID_RADIX).slice(2);
   const start = Date.now();
   return await runWithRequestContext(
     { reqId, procedure: `${type}:${path}`, startAt: start },
@@ -78,11 +84,12 @@ const timing = t.middleware(async ({ path, type, next }) => {
       const ms = Date.now() - start;
       const ctx = getRequestContext();
       const q = ctx?.queryCount ?? 0;
-      const threshold = Number(process.env.SLOW_PROCEDURE_MS ?? 200);
+      const DEFAULT_SLOW_MS = 200;
+      const threshold = Number(process.env.SLOW_PROCEDURE_MS ?? DEFAULT_SLOW_MS);
       if (ms >= threshold) {
-        console.warn(`[trpc][slow] ${ms}ms ${type}:${path} queries=${q}`);
+        baseLogger.warn({ ms, type, path, queries: q }, "trpc slow procedure");
       } else if (process.env.TRPC_LOG_ALL === "1") {
-        console.log(`[trpc] ${ms}ms ${type}:${path} queries=${q}`);
+        baseLogger.info({ ms, type, path, queries: q }, "trpc procedure");
       }
       return result;
     }
@@ -92,7 +99,7 @@ const timing = t.middleware(async ({ path, type, next }) => {
 export const createTRPCRouter = t.router;
 export const publicProcedure = t.procedure;
 
-export const protectedProcedure = t.procedure.use(timing).use(async ({ ctx, next }) => {
+export const protectedProcedure = t.procedure.use(timing).use(({ ctx, next }) => {
   if (!(ctx.session && ctx.userId)) {
     throw new TRPCError({
       code: "UNAUTHORIZED",
@@ -109,7 +116,7 @@ export const protectedProcedure = t.procedure.use(timing).use(async ({ ctx, next
   });
 });
 
-export const teamProcedure = protectedProcedure.use(async ({ ctx, next }) => {
+export const teamProcedure = protectedProcedure.use(({ ctx, next }) => {
   if (!ctx.teamId) {
     throw new TRPCError({
       code: "FORBIDDEN",
