@@ -32,11 +32,15 @@ export function ensure(
   message: string,
   status: (typeof HTTP)[keyof typeof HTTP] = HTTP.BAD_REQUEST
 ): asserts condition {
-  if (!condition) throw new HTTPException(status, { message });
+  if (!condition) {
+    throw new HTTPException(status, { message });
+  }
 }
 
 export function getAccessTokenFromHeader(header?: string | null): string | undefined {
-  if (!header) return undefined;
+  if (!header) {
+    return;
+  }
   return header.startsWith(BEARER_PREFIX) ? header.slice(BEARER_PREFIX.length) : undefined;
 }
 

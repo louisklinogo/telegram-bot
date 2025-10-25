@@ -19,14 +19,7 @@ import { HTTPException } from "hono/http-exception";
 import { z } from "zod";
 import type { ApiEnv } from "../../types/hono-env";
 import baseLogger from "../../lib/logger";
-import {
-  BEARER_PREFIX,
-  DEFAULT_SLOW_MS,
-  HTTP,
-  ensure,
-  getAccessTokenFromHeader,
-  parseScopes,
-} from "../../lib/http";
+import { HTTP, ensure, getAccessTokenFromHeader, parseScopes } from "../../lib/http";
 
 /**
  * OAuth 2.0 Server Implementation
@@ -35,13 +28,6 @@ import {
 
 const app = new OpenAPIHono<ApiEnv>();
 // Helpers to keep handlers simple
-async function parseBody(c: OpenAPIHono<ApiEnv>["req"] | any): Promise<any> {
-  const contentType = c.header ? c.header("content-type") || "" : "";
-  if (contentType.includes("application/x-www-form-urlencoded")) {
-    return c.parseBody();
-  }
-  return c.valid ? c.valid("json") : {};
-}
 
 // Apply middleware
 app.use("*", globalErrorHandler);
@@ -82,7 +68,7 @@ app.openapi(
   }),
   (c) => {
     const query = c.req.valid("query");
-    const { client_id, redirect_uri, scope, state, code_challenge } = query;
+    const { client_id: _client_id, redirect_uri, scope, state, code_challenge } = query;
 
     try {
       // Validate client_id (get application from database)
@@ -128,7 +114,9 @@ app.openapi(
 
       return c.json(applicationInfo);
     } catch (error) {
-      if (error instanceof HTTPException) throw error;
+      if (error instanceof HTTPException) {
+        throw error;
+      }
       throw new HTTPException(HTTP.BAD_REQUEST, { message: "Invalid authorization request" });
     }
   }
@@ -189,7 +177,7 @@ app.openapi(
     const authHeader = c.req.header("Authorization");
     const body = c.req.valid("json");
 
-    const { client_id, decision, scopes, redirect_uri, state, code_challenge, team_id } = body;
+    const { client_id: _client_id, decision, scopes, redirect_uri, state, code_challenge, team_id } = body;
 
     try {
       // Verify user authentication (get from JWT token)
@@ -255,7 +243,9 @@ app.openapi(
 
       return c.json({ redirect_url: redirectUrl.toString() });
     } catch (error) {
-      if (error instanceof HTTPException) throw error;
+      if (error instanceof HTTPException) {
+        throw error;
+      }
       throw new HTTPException(HTTP.BAD_REQUEST, {
         message: "Failed to process authorization decision",
       });
@@ -305,11 +295,10 @@ app.openapi(
   }),
   async (c) => {
     const logger = c.get("logger") || baseLogger;
-    const body: any = await (async () => {
-      const ct = c.req.header("content-type") || "";
-      if (ct.includes("application/x-www-form-urlencoded")) return c.req.parseBody();
-      return c.req.valid("json");
-    })();
+    const ct = c.req.header("content-type") || "";
+    const body: any = ct.includes("application/x-www-form-urlencoded")
+      ? await c.req.parseBody()
+      : c.req.valid("json");
 
     const {
       grant_type,
@@ -403,7 +392,9 @@ app.openapi(
 
       throw new HTTPException(HTTP.BAD_REQUEST, { message: "Grant type not supported" });
     } catch (error) {
-      if (error instanceof HTTPException) throw error;
+      if (error instanceof HTTPException) {
+        throw error;
+      }
       throw new HTTPException(HTTP.BAD_REQUEST, { message: "Token exchange failed" });
     }
   }
@@ -468,7 +459,9 @@ app.openapi(
 
       return c.json({ success: true });
     } catch (error) {
-      if (error instanceof HTTPException) throw error;
+      if (error instanceof HTTPException) {
+        throw error;
+      }
       throw new HTTPException(HTTP.BAD_REQUEST, { message: "Token revocation failed" });
     }
   }

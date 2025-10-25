@@ -4,9 +4,9 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { initTRPC, TRPCError } from "@trpc/server";
 import type { FetchCreateContextFnOptions } from "@trpc/server/adapters/fetch";
 import superjson from "superjson";
+import { BEARER_PREFIX, DEFAULT_SLOW_MS, REQ_ID_RADIX } from "../lib/http";
 import baseLogger from "../lib/logger";
 import { createClient } from "../services/supabase";
-import { BEARER_PREFIX, DEFAULT_SLOW_MS, REQ_ID_RADIX } from "../lib/http";
 
 export type Session = {
   userId: string;
